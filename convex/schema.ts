@@ -234,6 +234,45 @@ export default defineSchema({
   // ================================
   // HIERARCHICAL CATEGORY MANAGEMENT
   // ================================
+  
+  // Category Level Definitions (per project)
+  categoryLevelDefinitions: defineTable({
+    organizationId: v.id("organizations"),
+    projectId: v.id("projects"),
+    
+    // Level Configuration
+    level: v.number(), // 0 = root, 1 = first level, etc.
+    friendlyName: v.string(), // e.g., "Aisle", "Product Type", "Master Category"
+    description: v.optional(v.string()),
+    
+    // Display Properties
+    icon: v.optional(v.string()), // Icon for this level
+    color: v.optional(v.string()), // Color coding for this level
+    
+    // Validation Rules
+    isRequired: v.boolean(), // Must every product have a category at this level?
+    maxCategories: v.optional(v.number()), // Max categories allowed at this level
+    
+    // Ordering
+    sortOrder: v.number(),
+    
+    // Status
+    isActive: v.boolean(),
+    
+    // Metadata
+    metadata: v.any(), // Custom properties per level
+    
+    // Versioning
+    version: v.number(),
+    createdBy: v.id("users"),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+    lastModifiedBy: v.id("users")
+  })
+    .index("by_organization_project", ["organizationId", "projectId"])
+    .index("by_project_level", ["projectId", "level"])
+    .index("by_project_order", ["projectId", "sortOrder"]),
+
   categories: defineTable({
     organizationId: v.id("organizations"),
     projectId: v.id("projects"),
@@ -242,6 +281,7 @@ export default defineSchema({
     name: v.string(),
     description: v.optional(v.string()),
     handle: v.string(), // URL-friendly slug
+    externalId: v.optional(v.string()), // For import mapping (e.g., from JSON import)
     
     // Hierarchy Management
     parentId: v.optional(v.id("categories")), // Self-referencing for hierarchy
@@ -290,6 +330,7 @@ export default defineSchema({
     .index("by_level", ["organizationId", "projectId", "level"])
     .index("by_path", ["organizationId", "projectId", "path"])
     .index("by_handle", ["organizationId", "projectId", "handle"])
+    .index("by_external_id", ["organizationId", "projectId", "externalId"])
     .searchIndex("search_categories", {
       searchField: "name",
       filterFields: ["organizationId", "projectId", "level", "status"]

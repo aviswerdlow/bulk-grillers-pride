@@ -6,7 +6,7 @@ import { useQuery } from "convex/react";
 import { api } from "../../../../../../convex/_generated/api";
 import Link from "next/link";
 
-import { Plus, Settings, Users, BarChart3, Package, FolderTree } from "lucide-react";
+import { Plus, Settings, Users, BarChart3, Package, FolderTree, Bot, Upload } from "lucide-react";
 import { OrganizationGuard } from "@/components/auth/organization-guard";
 import { Tooltip } from "@/components/ui/tooltip";
 import Image from "next/image";
@@ -77,6 +77,28 @@ export default function OrganizationLayout({
               >
                 <div className="p-3 rounded-xl hover:bg-gray-800 transition-colors">
                   <FolderTree className="h-6 w-6 text-gray-300 group-hover:text-white" strokeWidth={1.5} />
+                </div>
+              </Link>
+            </Tooltip>
+            
+            <Tooltip content="AI Categorization">
+              <Link
+                href={`/${orgSlug}/ai-categorization`}
+                className="w-full flex justify-center group"
+              >
+                <div className="p-3 rounded-xl hover:bg-gray-800 transition-colors">
+                  <Bot className="h-6 w-6 text-gray-300 group-hover:text-white" strokeWidth={1.5} />
+                </div>
+              </Link>
+            </Tooltip>
+            
+            <Tooltip content="Import Data">
+              <Link
+                href={`/${orgSlug}/imports`}
+                className="w-full flex justify-center group"
+              >
+                <div className="p-3 rounded-xl hover:bg-gray-800 transition-colors">
+                  <Upload className="h-6 w-6 text-gray-300 group-hover:text-white" strokeWidth={1.5} />
                 </div>
               </Link>
             </Tooltip>

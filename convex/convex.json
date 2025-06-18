@@ -1,7 +1,10 @@
 {
-  "functions": "convex/",
-  "generateCommonJSApi": false,
   "node": {
-    "externalPackages": ["@langchain/core", "@langchain/openai", "@langchain/anthropic", "langsmith"]
+    "externalPackages": [
+      "@langchain/core",
+      "@langchain/openai",
+      "@langchain/anthropic",
+      "langsmith"
+    ]
   }
-} 
+}
