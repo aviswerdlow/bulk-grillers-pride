@@ -5,10 +5,11 @@ import { useUser, UserButton } from "@clerk/nextjs";
 import { useQuery } from "convex/react";
 import { api } from "../../../../../../convex/_generated/api";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { ShoppingCart, Plus, Settings, Users, BarChart3 } from "lucide-react";
+
+import { Plus, Settings, Users, BarChart3, Package, FolderTree, Upload } from "lucide-react";
 import { OrganizationGuard } from "@/components/auth/organization-guard";
+import { Tooltip } from "@/components/ui/tooltip";
+import Image from "next/image";
 
 export default function OrganizationLayout({
   children,
@@ -33,122 +34,111 @@ export default function OrganizationLayout({
   return (
     <OrganizationGuard orgSlug={orgSlug}>
       <div className="min-h-screen bg-gray-50">
-      {/* Top Navigation */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
-        <div className="px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            {/* Logo and Organization Selector */}
-            <div className="flex items-center space-x-4">
-              <Link href="/" className="flex items-center space-x-2">
-                <ShoppingCart className="h-8 w-8 text-blue-600" />
-                <span className="text-xl font-bold text-gray-900">Bulk</span>
-              </Link>
-              
-              {organization && (
-                <>
-                  <div className="h-6 w-px bg-gray-300" />
-                  <div className="flex items-center space-x-2">
-                    <span className="text-lg font-semibold text-gray-900">
-                      {organization.name}
-                    </span>
-                    <Badge variant="outline" className="text-xs">
-                      {organization.status}
-                    </Badge>
-                  </div>
-                </>
-              )}
-            </div>
+        {/* Floating Dark Sidebar */}
+        <nav className="fixed left-4 top-4 bottom-4 w-20 bg-gray-900 rounded-2xl shadow-2xl z-50 flex flex-col">
+          {/* Logo */}
+          <div className="pt-6 pb-6 px-4 border-b border-gray-800 relative">
+            <Link href="/" className="flex justify-center">
+              <Image 
+                src="/images/logo.png" 
+                alt="Logo" 
+                width={48} 
+                height={48}
+              />
+            </Link>
+          </div>
 
-            {/* Right side actions */}
-            <div className="flex items-center space-x-4">
-              <Button variant="outline" size="sm">
-                <Plus className="h-4 w-4 mr-2" />
-                New Project
-              </Button>
-              
+          {/* Navigation Icons */}
+          <div className="flex-1 py-6 space-y-4 px-4">
+            <Tooltip content="Dashboard">
+              <Link
+                href={`/${orgSlug}/dashboard`}
+                className="w-full flex justify-center items-center p-3 rounded-xl hover:bg-gray-800 transition-colors group"
+              >
+                <BarChart3 className="h-6 w-6 text-gray-300 group-hover:text-white" strokeWidth={1.5} />
+              </Link>
+            </Tooltip>
+            
+            <Tooltip content="Products">
+              <Link
+                href={`/${orgSlug}/products`}
+                className="w-full flex justify-center group"
+              >
+                <div className="p-3 rounded-xl hover:bg-gray-800 transition-colors">
+                  <Package className="h-6 w-6 text-gray-300 group-hover:text-white" strokeWidth={1.5} />
+                </div>
+              </Link>
+            </Tooltip>
+            
+            <Tooltip content="Categories">
+              <Link
+                href={`/${orgSlug}/categories`}
+                className="w-full flex justify-center group"
+              >
+                <div className="p-3 rounded-xl hover:bg-gray-800 transition-colors">
+                  <FolderTree className="h-6 w-6 text-gray-300 group-hover:text-white" strokeWidth={1.5} />
+                </div>
+              </Link>
+            </Tooltip>
+            
+            <Tooltip content="Team">
+              <Link
+                href={`/${orgSlug}/team`}
+                className="w-full flex justify-center group"
+              >
+                <div className="p-3 rounded-xl hover:bg-gray-800 transition-colors">
+                  <Users className="h-6 w-6 text-gray-300 group-hover:text-white" strokeWidth={1.5} />
+                </div>
+              </Link>
+            </Tooltip>
+          </div>
+
+          {/* Bottom Actions */}
+          <div className="p-4 border-t border-gray-800 space-y-3">
+            <button
+              className="w-full p-2 rounded-lg bg-blue-600 hover:bg-blue-700 transition-colors group"
+              title="New Project"
+            >
+              <Plus className="h-5 w-5 text-white mx-auto" strokeWidth={1.5} />
+            </button>
+            
+            <Tooltip content="Settings">
+              <Link
+                href={`/${orgSlug}/settings`}
+                className="w-full flex justify-center group"
+              >
+                <div className="p-3 rounded-xl hover:bg-gray-800 transition-colors">
+                  <Settings className="h-6 w-6 text-gray-300 group-hover:text-white" strokeWidth={1.5} />
+                </div>
+              </Link>
+            </Tooltip>
+          </div>
+        </nav>
+
+        {/* Main Content - with left margin to account for floating sidebar */}
+        <main className="ml-28 p-6">
+          {/* Header with Welcome message and User */}
+          <div className="flex items-center justify-end mb-6">
+            <div className="flex items-center space-x-3">
+              {organization && (
+                <div className="font-mono text-sm text-gray-900">
+                  Welcome, {organization.name}
+                </div>
+              )}
               <UserButton 
                 appearance={{
                   elements: {
-                    avatarBox: "h-8 w-8"
+                    avatarBox: "h-8 w-8 rounded-lg"
                   }
                 }}
                 afterSignOutUrl="/"
               />
             </div>
           </div>
-        </div>
-      </header>
-
-      <div className="flex">
-        {/* Sidebar Navigation */}
-        <nav className="w-64 bg-white border-r border-gray-200 min-h-screen">
-          <div className="p-4">
-            <div className="space-y-1">
-              <Link
-                href={`/${orgSlug}/dashboard`}
-                className="flex items-center px-3 py-2 text-sm font-medium text-gray-900 rounded-md hover:bg-gray-50"
-              >
-                <BarChart3 className="h-5 w-5 mr-3 text-gray-400" />
-                Dashboard
-              </Link>
-              
-              <div className="pt-4">
-                <p className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  Management
-                </p>
-                <div className="mt-2 space-y-1">
-                  <Link
-                    href={`/${orgSlug}/products`}
-                    className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-50"
-                  >
-                    Products
-                  </Link>
-                  <Link
-                    href={`/${orgSlug}/categories`}
-                    className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-50"
-                  >
-                    Categories
-                  </Link>
-                  <Link
-                    href={`/${orgSlug}/imports`}
-                    className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-50"
-                  >
-                    Import/Export
-                  </Link>
-                </div>
-              </div>
-
-              <div className="pt-4">
-                <p className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  Organization
-                </p>
-                <div className="mt-2 space-y-1">
-                  <Link
-                    href={`/${orgSlug}/team`}
-                    className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-50"
-                  >
-                    <Users className="h-4 w-4 mr-3 text-gray-400" />
-                    Team
-                  </Link>
-                  <Link
-                    href={`/${orgSlug}/settings`}
-                    className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-50"
-                  >
-                    <Settings className="h-4 w-4 mr-3 text-gray-400" />
-                    Settings
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
-        </nav>
-
-        {/* Main Content */}
-        <main className="flex-1 overflow-auto">
+          
           {children}
         </main>
       </div>
-    </div>
     </OrganizationGuard>
   );
 } 
