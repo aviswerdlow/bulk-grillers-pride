@@ -6,7 +6,7 @@ import { useQuery } from "convex/react";
 import { api } from "../../../../../../convex/_generated/api";
 import Link from "next/link";
 
-import { Plus, Settings, Users, BarChart3, Package, FolderTree, Upload } from "lucide-react";
+import { Plus, Settings, Users, BarChart3, Package, FolderTree } from "lucide-react";
 import { OrganizationGuard } from "@/components/auth/organization-guard";
 import { Tooltip } from "@/components/ui/tooltip";
 import Image from "next/image";
