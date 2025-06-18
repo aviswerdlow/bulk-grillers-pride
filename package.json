@@ -1,0 +1,48 @@
+{
+  "name": "bulk-grillers-pride",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Multi-tenant SaaS application for e-commerce product merchandising with AI-powered categorization",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "start": "turbo run start",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "type-check": "turbo run type-check",
+    "clean": "turbo run clean",
+    "dev:web": "cd apps/web && npm run dev",
+    "dev:convex": "cd convex && npx convex dev",
+    "setup": "npm install && npm run convex:setup",
+    "convex:setup": "cd convex && npx convex dev --once",
+    "convex:deploy": "cd convex && npx convex deploy"
+  },
+  "devDependencies": {
+    "@types/node": "^20.8.0",
+    "eslint": "^8.51.0",
+    "prettier": "^3.0.3",
+    "turbo": "^1.10.16",
+    "typescript": "^5.2.2"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "keywords": [
+    "e-commerce",
+    "saas",
+    "ai",
+    "product-management",
+    "categorization",
+    "multi-tenant"
+  ],
+  "author": "Bulk Grillers Pride",
+  "license": "MIT",
+  "dependencies": {
+    "convex": "^1.24.8"
+  }
+}
