@@ -37,6 +37,11 @@ export function getSlugValidationError(slug: string): string | null {
     return 'Organization URL must be less than 50 characters';
   }
 
+  // Check for invalid characters first
+  if (!/^[a-z0-9-]+$/.test(slug)) {
+    return 'Organization URL can only contain lowercase letters, numbers, and hyphens';
+  }
+
   if (!/^[a-z0-9]/.test(slug)) {
     return 'Organization URL must start with a letter or number';
   }
@@ -47,10 +52,6 @@ export function getSlugValidationError(slug: string): string | null {
 
   if (/--/.test(slug)) {
     return 'Organization URL cannot contain consecutive hyphens';
-  }
-
-  if (!/^[a-z0-9-]+$/.test(slug)) {
-    return 'Organization URL can only contain lowercase letters, numbers, and hyphens';
   }
 
   return null;

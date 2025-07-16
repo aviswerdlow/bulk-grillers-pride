@@ -21,5 +21,14 @@ export const api = {
         getOrganizationBySlug: 'mock-getOrganizationBySlug',
       },
     },
+    projects: {
+      projects: {
+        getOrganizationProjects: 'mock-getOrganizationProjects',
+      },
+    },
+    dashboard: {
+      getDashboardStats: 'mock-getDashboardStats',
+      getRecentActivity: 'mock-getRecentActivity',
+    },
   },
 };

@@ -261,7 +261,7 @@ All agents should prioritize these tasks. We need to move from 0% to 80% test co
 | T37 | Implement LangChain AI Pipeline | convex, langchain, ai | backend-agent | ✔️ done | ui | P0 | 12 |
 | T38 | Fix Import Products Button Route | react, routing | frontend-agent | 📋 unassigned | backend | P0 | 0.5 |
 | T39 | Add Products Subroutes | nextjs, routing, react | frontend-agent | 📋 unassigned | backend | P1 | 2 |
-| T40 | Verify All Dashboard Links Work | testing, navigation | quality-agent | 📋 unassigned | - | P1 | 1 |
+| T40 | Fix Organization Slug Handling | slug validation, frontend, backend | frontend-agent | ✔️ done | Fixed org slug validation in onboarding | P1 | 1 |
 
 ---
 
