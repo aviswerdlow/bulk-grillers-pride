@@ -40,7 +40,7 @@ import type * as functions_organizations_organizations from '../functions/organi
 import type * as functions_products_products from '../functions/products/products.js';
 import type * as functions_projects_projects from '../functions/projects/projects.js';
 import type * as lib_auth from '../lib/auth.js';
-import type * as lib_slug_validation from '../lib/slug-validation.js';
+import type * as lib_slugValidation from '../lib/slugValidation.js';
 
 /**
  * A utility for referencing Convex functions in your app's API.
@@ -82,7 +82,7 @@ declare const fullApi: ApiFromModules<{
   'functions/products/products': typeof functions_products_products;
   'functions/projects/projects': typeof functions_projects_projects;
   'lib/auth': typeof lib_auth;
-  'lib/slug-validation': typeof lib_slug_validation;
+  'lib/slugValidation': typeof lib_slugValidation;
 }>;
 export declare const api: FilterApi<typeof fullApi, FunctionReference<any, 'public'>>;
 export declare const internal: FilterApi<typeof fullApi, FunctionReference<any, 'internal'>>;

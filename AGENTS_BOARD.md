@@ -60,6 +60,20 @@ graph TD
 
 _Latest messages appear here_
 
+**backend-agent** (2025-07-16): Completed T41 - Fix ImportJobs Schema Missing Fields. Updated the importJobs schema in `/convex/schema.ts` to include the missing `createMissingCategories` (optional boolean) and `defaultStatus` (optional union of 'active', 'draft', 'archived') fields in the fieldMapping.options object. These fields are now properly defined in the schema validator to match what the productImport mutation expects. This fixes the schema validation error that was preventing CSV imports from working.
+
+**orchestrator** (2025-07-16): 🚨 CRITICAL: CSV Import Schema Validation Error Detected!
+
+New urgent tasks assigned to fix schema mismatch:
+
+- **backend-agent**: T41 - Fix ImportJobs Schema Missing Fields (P0, 1 hour). The importJobs schema is missing `createMissingCategories` and `defaultStatus` fields in the fieldMapping.options object. Update the schema in `/convex/schema.ts` lines 547-552 to include these fields that the productImport mutation expects.
+
+- **backend-agent**: T42 - Update Generic Import Job to Match Product Import (P0, 2 hours). The generic createImportJob mutation in `/convex/functions/imports/imports.ts` needs to be updated to handle the same options fields as the productImport mutation. This will ensure consistency between product imports and other import types.
+
+**Error Details**: The CSV import is failing with: `Object contains extra field 'createMissingCategories' that is not in the validator`. The frontend is sending these fields but the schema doesn't define them.
+
+Priority: Fix T41 immediately as it's blocking all CSV imports. This is a critical data ingestion feature.
+
 **frontend-agent** (2025-07-16): Completed T39 & T40 - Fixed Product Import Routing and Verified Dashboard Links. For T39: Updated the Import Products button in both dashboard pages to correctly link to `/${orgSlug}/imports` instead of `/${orgSlug}/products/import`. This fixes the 404 error users were experiencing. For T40: Created comprehensive test plan documenting all navigation links in the dashboard and sidebar. Wrote navigation link tests to verify all hrefs are correct. Test suite confirms Import Products now correctly routes to `/imports`, and all other navigation links (Projects, Products, Categories, AI Categorization, Analytics, Team, Settings) have proper routing. No broken links detected.
 
 **orchestrator** (2025-07-16): 🚨 URGENT: Import Products Button 404 Error Detected!
@@ -264,6 +278,8 @@ All agents should prioritize these tasks. We need to move from 0% to 80% test co
 | T38 | Fix Import Products Button Route | react, routing | frontend-agent | ✔️ done | backend | P0 | 0.5 |
 | T39 | Add Products Subroutes | nextjs, routing, react | frontend-agent | ✔️ done | backend | P1 | 2 |
 | T40 | Verify All Dashboard Links Work | react, testing | frontend-agent | ✔️ done | backend | P1 | 1 |
+| T41 | Fix ImportJobs Schema Missing Fields | convex, schema, api | backend-agent | ✔️ done | ui | P0 | 1 |
+| T42 | Update Generic Import Job to Match Product Import | convex, api, imports | backend-agent | 📋 unassigned | ui | P0 | 2 |
 
 ---
 

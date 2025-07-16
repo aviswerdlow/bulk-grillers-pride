@@ -549,6 +549,10 @@ export default defineSchema({
         delimiter: v.string(),
         skipEmptyRows: v.boolean(),
         duplicateHandling: v.union(v.literal('skip'), v.literal('update'), v.literal('create')),
+        createMissingCategories: v.optional(v.boolean()),
+        defaultStatus: v.optional(
+          v.union(v.literal('active'), v.literal('draft'), v.literal('archived'))
+        ),
       }),
     }),
 

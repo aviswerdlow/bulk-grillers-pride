@@ -1,6 +1,6 @@
 import { v } from 'convex/values';
 import { mutation, query } from '../../_generated/server';
-import { isValidSlug, getSlugValidationError } from '../../lib/slug-validation';
+import { isValidSlug, getSlugValidationError } from '../../lib/slugValidation';
 
 // Create a new organization
 export const create = mutation({
