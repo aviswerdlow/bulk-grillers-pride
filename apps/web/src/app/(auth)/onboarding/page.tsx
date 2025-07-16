@@ -46,18 +46,43 @@ export default function OnboardingPage() {
   // Auto-generate slug from name
   const handleNameChange = (name: string) => {
     setOrganizationName(name);
-    const slug = name
-      .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/-+/g, '-')
-      .trim();
+    const slug = sanitizeSlug(name);
     setOrganizationSlug(slug);
+
+    // Validate the generated slug
+    if (slug) {
+      const error = getSlugValidationError(slug);
+      setSlugError(error);
+    } else {
+      setSlugError(null);
+    }
+  };
+
+  // Handle manual slug changes
+  const handleSlugChange = (slug: string) => {
+    // Only allow lowercase and hyphens while typing
+    const cleanedSlug = slug.toLowerCase().replace(/[^a-z0-9-]/g, '');
+    setOrganizationSlug(cleanedSlug);
+
+    // Validate the slug
+    if (cleanedSlug) {
+      const error = getSlugValidationError(cleanedSlug);
+      setSlugError(error);
+    } else {
+      setSlugError(null);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !organizationName || !organizationSlug) return;
+
+    // Final validation before submission
+    if (!isValidSlug(organizationSlug)) {
+      const error = getSlugValidationError(organizationSlug);
+      setSlugError(error || 'Invalid organization URL');
+      return;
+    }
 
     setIsCreating(true);
     try {
@@ -72,8 +97,14 @@ export default function OnboardingPage() {
 
       toast.success('Organization created successfully!');
       router.push(`/${organizationSlug}/dashboard`);
-    } catch {
-      toast.error('Failed to create organization. Please try again.');
+    } catch (error: any) {
+      // Check if it's a slug conflict error
+      if (error?.message?.includes('slug already exists')) {
+        setSlugError('This organization URL is already taken. Please choose another.');
+        toast.error('Organization URL already taken');
+      } else {
+        toast.error('Failed to create organization. Please try again.');
+      }
     } finally {
       setIsCreating(false);
     }
@@ -140,19 +171,24 @@ export default function OnboardingPage() {
                   type="text"
                   placeholder="e.g., acme-store"
                   value={organizationSlug}
-                  onChange={(e) => setOrganizationSlug(e.target.value)}
+                  onChange={(e) => handleSlugChange(e.target.value)}
                   required
                   disabled={isCreating}
+                  className={slugError ? 'border-red-500' : ''}
                 />
-                <p className="text-xs text-gray-500 mt-1">
-                  This will be your organization&apos;s URL: /{organizationSlug}
-                </p>
+                {slugError ? (
+                  <p className="text-xs text-red-500 mt-1">{slugError}</p>
+                ) : (
+                  <p className="text-xs text-gray-500 mt-1">
+                    This will be your organization&apos;s URL: /{organizationSlug}
+                  </p>
+                )}
               </div>
 
               <Button
                 type="submit"
                 className="w-full"
-                disabled={!organizationName || !organizationSlug || isCreating}
+                disabled={!organizationName || !organizationSlug || isCreating || !!slugError}
               >
                 {isCreating ? (
                   <>

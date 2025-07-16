@@ -451,7 +451,7 @@ export default function OrganizationDashboard() {
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
             <div className="space-y-3">
               <Button variant="outline" className="w-full justify-start" asChild>
-                <Link href={`/${orgSlug}/products/import`}>
+                <Link href={`/${orgSlug}/imports`}>
                   <Upload className="h-4 w-4 mr-2" />
                   Import Products
                 </Link>
