@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '../../../../../../../../convex/_generated/api';
-import { useUser } from '@clerk/nextjs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -35,7 +34,6 @@ export default function NewProjectPage() {
   const params = useParams();
   const router = useRouter();
   const orgSlug = params.orgSlug as string;
-  const { user } = useUser();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Get organization
@@ -44,10 +42,7 @@ export default function NewProjectPage() {
   });
 
   // Get current user
-  const currentUser = useQuery(
-    api.functions.auth.users.getUserByClerkId,
-    user?.id ? { clerkId: user.id } : 'skip'
-  );
+  const currentUser = useQuery(api.functions.auth.users.current);
 
   // Create project mutation
   const createProject = useMutation(api.functions.projects.projects.createProject);
@@ -103,7 +98,9 @@ export default function NewProjectPage() {
       });
 
       toast.success('Project created successfully!');
-      router.push(`/${orgSlug}/${data.slug}/dashboard`);
+      // TODO: Navigate to project dashboard once it's created
+      // For now, go back to projects list
+      router.push(`/${orgSlug}/projects`);
     } catch (error) {
       console.error('Failed to create project:', error);
       if (error instanceof Error && error.message.includes('slug already exists')) {
@@ -117,7 +114,7 @@ export default function NewProjectPage() {
   };
 
   // Loading state
-  if (organization === undefined || (user && currentUser === undefined)) {
+  if (organization === undefined || currentUser === undefined) {
     return <PageLoading text="Loading..." />;
   }
 

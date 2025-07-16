@@ -116,10 +116,10 @@ export default function ProjectsPage() {
                   {/* Actions */}
                   <div className="flex gap-2">
                     <Button variant="outline" size="sm" className="flex-1" asChild>
-                      <Link href={`/${orgSlug}/${project.slug}/products`}>View Products</Link>
+                      <Link href={`/${orgSlug}/products`}>View Products</Link>
                     </Button>
                     <Button size="sm" className="flex-1" asChild>
-                      <Link href={`/${orgSlug}/${project.slug}/dashboard`}>Dashboard</Link>
+                      <Link href={`/${orgSlug}/dashboard`}>Dashboard</Link>
                     </Button>
                   </div>
                 </div>
