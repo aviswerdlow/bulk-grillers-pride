@@ -1,0 +1,14 @@
+name: CI Status
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types:
+      - completed
+
+jobs:
+  update-badge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Update README badge
+        run: echo "Badge will show CI status automatically via GitHub's built-in badge system"

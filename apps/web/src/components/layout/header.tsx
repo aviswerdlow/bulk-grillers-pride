@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { ShoppingCart, User } from "lucide-react";
-import { LogoutButton } from "@/components/auth/logout-button";
-import { useUser } from "@clerk/nextjs";
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { ShoppingCart, User, Loader2 } from 'lucide-react';
+import { LogoutButton } from '@/components/auth/logout-button';
+import { useUser } from '@clerk/nextjs';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,10 +13,10 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from '@/components/ui/dropdown-menu';
 
 export function Header() {
-  const { isSignedIn, user } = useUser();
+  const { isSignedIn, user, isLoaded } = useUser();
 
   return (
     <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
@@ -24,17 +24,31 @@ export function Header() {
         <div className="flex items-center space-x-2">
           <ShoppingCart className="h-8 w-8 text-blue-600" />
           <span className="text-2xl font-bold text-gray-900">Bulk</span>
-          <Badge variant="outline" className="text-xs">BETA</Badge>
+          <Badge variant="outline" className="text-xs">
+            BETA
+          </Badge>
         </div>
-        
+
         <nav className="hidden md:flex items-center space-x-6">
-          <Link href="#features" className="text-gray-600 hover:text-gray-900">Features</Link>
-          <Link href="#pricing" className="text-gray-600 hover:text-gray-900">Pricing</Link>
-          <Link href="#docs" className="text-gray-600 hover:text-gray-900">Docs</Link>
+          <Link href="#features" className="text-gray-600 hover:text-gray-900">
+            Features
+          </Link>
+          <Link href="#pricing" className="text-gray-600 hover:text-gray-900">
+            Pricing
+          </Link>
+          <Link href="#docs" className="text-gray-600 hover:text-gray-900">
+            Docs
+          </Link>
         </nav>
 
         <div className="flex items-center space-x-3">
-          {isSignedIn ? (
+          {!isLoaded ? (
+            // Loading state
+            <Button variant="ghost" disabled className="flex items-center space-x-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span className="hidden sm:inline">Loading...</span>
+            </Button>
+          ) : isSignedIn ? (
             // Authenticated user menu - Note: Dashboard navigation is handled by organization layout
             <div className="flex items-center space-x-3">
               <DropdownMenu>
@@ -72,4 +86,4 @@ export function Header() {
       </div>
     </header>
   );
-} 
+}

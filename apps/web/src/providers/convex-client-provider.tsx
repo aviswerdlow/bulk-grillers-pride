@@ -1,32 +1,32 @@
-"use client";
+'use client';
 
-import { ConvexReactClient } from "convex/react";
-import { ClerkProvider, useAuth } from "@clerk/nextjs";
-import { ConvexProviderWithClerk } from "convex/react-clerk";
-import { useMemo } from "react";
+import { ConvexReactClient } from 'convex/react';
+import { ClerkProvider, useAuth } from '@clerk/nextjs';
+import { ConvexProviderWithClerk } from 'convex/react-clerk';
+import { useMemo } from 'react';
 
-export function ConvexClientProvider({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export function ConvexClientProvider({ children }: { children: React.ReactNode }) {
   // Initialize Convex client inside component to ensure env vars are available
   const convex = useMemo(() => {
     const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
+    console.log('[ConvexClientProvider] Convex URL:', convexUrl);
+
     if (!convexUrl) {
       throw new Error(
-        "Missing NEXT_PUBLIC_CONVEX_URL environment variable. " +
-        "Make sure to run `convex dev` and check your .env.local file."
+        'Missing NEXT_PUBLIC_CONVEX_URL environment variable. ' +
+          'Make sure to run `convex dev` and check your .env.local file.'
       );
     }
-    return new ConvexReactClient(convexUrl);
+    const client = new ConvexReactClient(convexUrl);
+    console.log('[ConvexClientProvider] Convex client created');
+    return client;
   }, []);
 
   const clerkKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
   if (!clerkKey) {
     throw new Error(
-      "Missing NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY environment variable. " +
-      "Check your .env.local file."
+      'Missing NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY environment variable. ' +
+        'Check your .env.local file.'
     );
   }
 
@@ -37,4 +37,4 @@ export function ConvexClientProvider({
       </ConvexProviderWithClerk>
     </ClerkProvider>
   );
-} 
+}

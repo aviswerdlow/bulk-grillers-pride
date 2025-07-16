@@ -1,34 +1,42 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { useUser } from "@clerk/nextjs";
-import { useMutation, useQuery } from "convex/react";
-import { api } from "../../../../../../convex/_generated/api";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { ShoppingCart, Loader2 } from "lucide-react";
-import { toast } from "sonner";
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useUser } from '@clerk/nextjs';
+import { useMutation, useQuery } from 'convex/react';
+import { api } from '../../../../../../convex/_generated/api';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { ShoppingCart, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function OnboardingPage() {
   const { user } = useUser();
   const router = useRouter();
-  const [organizationName, setOrganizationName] = useState("");
-  const [organizationSlug, setOrganizationSlug] = useState("");
+  const [organizationName, setOrganizationName] = useState('');
+  const [organizationSlug, setOrganizationSlug] = useState('');
   const [isCreating, setIsCreating] = useState(false);
 
   const storeUser = useMutation(api.functions.auth.users.store);
   const createOrganization = useMutation(api.functions.organizations.organizations.create);
-  
+
   // Check if user already has organizations - moved to top level
   const userWithOrgs = useQuery(api.functions.auth.users.currentWithOrganizations);
-  
+
+  console.log('[OnboardingPage] userWithOrgs query result:', userWithOrgs);
+
   // If user has organizations, redirect to their first organization's dashboard
   useEffect(() => {
+    console.log('[OnboardingPage] Checking redirect:', {
+      hasUserWithOrgs: !!userWithOrgs,
+      hasOrganizations: userWithOrgs?.organizations?.length || 0,
+    });
+
     if (userWithOrgs && userWithOrgs.organizations && userWithOrgs.organizations.length > 0) {
       const firstOrg = userWithOrgs.organizations[0];
+      console.log('[OnboardingPage] Redirecting to:', `/${firstOrg.slug}/dashboard`);
       router.push(`/${firstOrg.slug}/dashboard`);
     }
   }, [userWithOrgs, router]);
@@ -38,9 +46,9 @@ export default function OnboardingPage() {
     setOrganizationName(name);
     const slug = name
       .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, "")
-      .replace(/\s+/g, "-")
-      .replace(/-+/g, "-")
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
       .trim();
     setOrganizationSlug(slug);
   };
@@ -60,10 +68,10 @@ export default function OnboardingPage() {
         slug: organizationSlug,
       });
 
-      toast.success("Organization created successfully!");
+      toast.success('Organization created successfully!');
       router.push(`/${organizationSlug}/dashboard`);
     } catch {
-      toast.error("Failed to create organization. Please try again.");
+      toast.error('Failed to create organization. Please try again.');
     } finally {
       setIsCreating(false);
     }
@@ -122,7 +130,7 @@ export default function OnboardingPage() {
                   disabled={isCreating}
                 />
               </div>
-              
+
               <div>
                 <Label htmlFor="orgSlug">URL Slug</Label>
                 <Input
@@ -139,9 +147,9 @@ export default function OnboardingPage() {
                 </p>
               </div>
 
-              <Button 
-                type="submit" 
-                className="w-full" 
+              <Button
+                type="submit"
+                className="w-full"
                 disabled={!organizationName || !organizationSlug || isCreating}
               >
                 {isCreating ? (
@@ -150,7 +158,7 @@ export default function OnboardingPage() {
                     Creating Organization...
                   </>
                 ) : (
-                  "Create Organization"
+                  'Create Organization'
                 )}
               </Button>
             </form>
@@ -163,4 +171,4 @@ export default function OnboardingPage() {
       </div>
     </div>
   );
-} 
+}

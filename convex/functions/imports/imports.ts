@@ -1,67 +1,50 @@
-import { v } from "convex/values";
-import { mutation, query, action } from "../../_generated/server";
+import { v } from 'convex/values';
+import { mutation, query, action } from '../../_generated/server';
 // Remove API import to avoid circular dependency
-import { Doc, Id } from "../../_generated/dataModel";
-import { internal } from "../../_generated/api";
+import { Doc, Id } from '../../_generated/dataModel';
+import { internal } from '../../_generated/api';
+import { authenticateAndAuthorize, requireRole } from '../../lib/auth';
 
 // Get import jobs for an organization
 export const getImportJobs = query({
   args: {
-    organizationId: v.id("organizations"),
-    projectId: v.optional(v.id("projects")),
-    importType: v.optional(v.union(v.literal("products"), v.literal("categories"), v.literal("variants"))),
-    status: v.optional(v.union(
-      v.literal("uploaded"), 
-      v.literal("validating"), 
-      v.literal("importing"), 
-      v.literal("completed"), 
-      v.literal("failed")
-    )),
+    organizationId: v.id('organizations'),
+    projectId: v.optional(v.id('projects')),
+    importType: v.optional(
+      v.union(v.literal('products'), v.literal('categories'), v.literal('variants'))
+    ),
+    status: v.optional(
+      v.union(
+        v.literal('uploaded'),
+        v.literal('validating'),
+        v.literal('importing'),
+        v.literal('completed'),
+        v.literal('failed')
+      )
+    ),
     limit: v.optional(v.number()),
   },
   handler: async (ctx, { organizationId, projectId, importType, status, limit = 50 }) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Not authenticated");
-
-    // Verify user has access to this organization
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
-      .unique();
-
-    if (!user) throw new Error("User not found");
-
-    const membership = await ctx.db
-      .query("organizationMemberships")
-      .withIndex("by_organization_user", (q) => 
-        q.eq("organizationId", organizationId).eq("userId", user._id)
-      )
-      .filter((q) => q.eq(q.field("status"), "active"))
-      .unique();
-
-    if (!membership) throw new Error("Access denied");
+    // Authenticate and authorize in one call - reduces 3 DB queries to 2
+    const { user, membership } = await authenticateAndAuthorize(ctx, organizationId);
 
     let query = ctx.db
-      .query("importJobs")
-      .withIndex("by_organization_project", (q) => 
-        q.eq("organizationId", organizationId)
-      );
+      .query('importJobs')
+      .withIndex('by_organization_project', (q) => q.eq('organizationId', organizationId));
 
     if (projectId) {
-      query = query.filter((q) => q.eq(q.field("projectId"), projectId));
+      query = query.filter((q) => q.eq(q.field('projectId'), projectId));
     }
 
     if (importType) {
-      query = query.filter((q) => q.eq(q.field("importType"), importType));
+      query = query.filter((q) => q.eq(q.field('importType'), importType));
     }
 
     if (status) {
-      query = query.filter((q) => q.eq(q.field("status"), status));
+      query = query.filter((q) => q.eq(q.field('status'), status));
     }
 
-    const jobs = await query
-      .order("desc")
-      .take(limit);
+    const jobs = await query.order('desc').take(limit);
 
     return jobs;
   },
@@ -69,31 +52,31 @@ export const getImportJobs = query({
 
 // Get a single import job
 export const getImportJob = query({
-  args: { jobId: v.id("importJobs") },
+  args: { jobId: v.id('importJobs') },
   handler: async (ctx, { jobId }) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Not authenticated");
+    if (!identity) throw new Error('Not authenticated');
 
     const job = await ctx.db.get(jobId);
-    if (!job) throw new Error("Job not found");
+    if (!job) throw new Error('Job not found');
 
     // Verify user has access to this organization
     const user = await ctx.db
-      .query("users")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .query('users')
+      .withIndex('by_clerk_id', (q) => q.eq('clerkId', identity.subject))
       .unique();
 
-    if (!user) throw new Error("User not found");
+    if (!user) throw new Error('User not found');
 
     const membership = await ctx.db
-      .query("organizationMemberships")
-      .withIndex("by_organization_user", (q) => 
-        q.eq("organizationId", job.organizationId).eq("userId", user._id)
+      .query('organizationMemberships')
+      .withIndex('by_organization_user', (q) =>
+        q.eq('organizationId', job.organizationId).eq('userId', user._id)
       )
-      .filter((q) => q.eq(q.field("status"), "active"))
+      .filter((q) => q.eq(q.field('status'), 'active'))
       .unique();
 
-    if (!membership) throw new Error("Access denied");
+    if (!membership) throw new Error('Access denied');
 
     return job;
   },
@@ -102,9 +85,9 @@ export const getImportJob = query({
 // Create a new import job
 export const createImportJob = mutation({
   args: {
-    organizationId: v.id("organizations"),
-    projectId: v.id("projects"),
-    importType: v.union(v.literal("products"), v.literal("categories"), v.literal("variants")),
+    organizationId: v.id('organizations'),
+    projectId: v.id('projects'),
+    importType: v.union(v.literal('products'), v.literal('categories'), v.literal('variants')),
     fileName: v.string(),
     fileSize: v.number(),
     fileStorageId: v.string(),
@@ -114,45 +97,47 @@ export const createImportJob = mutation({
         hasHeaders: v.boolean(),
         delimiter: v.string(),
         skipEmptyRows: v.boolean(),
-        duplicateHandling: v.union(v.literal("skip"), v.literal("update"), v.literal("create"))
-      })
+        duplicateHandling: v.union(v.literal('skip'), v.literal('update'), v.literal('create')),
+      }),
     }),
-    validationRules: v.array(v.object({
-      field: v.string(),
-      type: v.string(),
-      required: v.boolean(),
-      pattern: v.optional(v.string()),
-      minLength: v.optional(v.number()),
-      maxLength: v.optional(v.number()),
-      allowedValues: v.optional(v.array(v.string()))
-    })),
+    validationRules: v.array(
+      v.object({
+        field: v.string(),
+        type: v.string(),
+        required: v.boolean(),
+        pattern: v.optional(v.string()),
+        minLength: v.optional(v.number()),
+        maxLength: v.optional(v.number()),
+        allowedValues: v.optional(v.array(v.string())),
+      })
+    ),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Not authenticated");
+    if (!identity) throw new Error('Not authenticated');
 
     const user = await ctx.db
-      .query("users")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .query('users')
+      .withIndex('by_clerk_id', (q) => q.eq('clerkId', identity.subject))
       .unique();
 
-    if (!user) throw new Error("User not found");
+    if (!user) throw new Error('User not found');
 
     // Verify user has access and permissions
     const membership = await ctx.db
-      .query("organizationMemberships")
-      .withIndex("by_organization_user", (q) => 
-        q.eq("organizationId", args.organizationId).eq("userId", user._id)
+      .query('organizationMemberships')
+      .withIndex('by_organization_user', (q) =>
+        q.eq('organizationId', args.organizationId).eq('userId', user._id)
       )
-      .filter((q) => q.eq(q.field("status"), "active"))
+      .filter((q) => q.eq(q.field('status'), 'active'))
       .unique();
 
-    if (!membership || !["owner", "admin", "editor"].includes(membership.role)) {
-      throw new Error("Insufficient permissions");
+    if (!membership || !['owner', 'admin', 'editor'].includes(membership.role)) {
+      throw new Error('Insufficient permissions');
     }
 
     const now = Date.now();
-    const jobId = await ctx.db.insert("importJobs", {
+    const jobId = await ctx.db.insert('importJobs', {
       organizationId: args.organizationId,
       projectId: args.projectId,
       importType: args.importType,
@@ -161,7 +146,7 @@ export const createImportJob = mutation({
       fileStorageId: args.fileStorageId,
       fieldMapping: args.fieldMapping,
       validationRules: args.validationRules,
-      status: "uploaded",
+      status: 'uploaded',
       progress: {
         totalRows: 0,
         processedRows: 0,
@@ -182,31 +167,33 @@ export const createImportJob = mutation({
     });
 
     // Create audit log
-    await ctx.db.insert("auditLogs", {
+    await ctx.db.insert('auditLogs', {
       organizationId: args.organizationId,
-      eventType: "CREATE",
-      entityType: "importJobs",
+      eventType: 'CREATE',
+      entityType: 'importJobs',
       entityId: jobId,
-      changes: [{
-        field: "*",
-        oldValue: null,
-        newValue: {
-          importType: args.importType,
-          fileName: args.fileName,
-          fileSize: args.fileSize,
+      changes: [
+        {
+          field: '*',
+          oldValue: null,
+          newValue: {
+            importType: args.importType,
+            fileName: args.fileName,
+            fileSize: args.fileSize,
+          },
+          changeType: 'added' as const,
         },
-        changeType: "added" as const,
-      }],
+      ],
       context: {
-        action: "create_import_job",
-        source: "web" as const,
+        action: 'create_import_job',
+        source: 'web' as const,
       },
       performedBy: {
-        type: "user" as const,
+        type: 'user' as const,
         userId: user._id,
         userEmail: user.email,
       },
-      metadata: { 
+      metadata: {
         projectId: args.projectId,
         fileName: args.fileName,
       },
@@ -218,7 +205,7 @@ export const createImportJob = mutation({
     // await ctx.scheduler.runAfter(0, internal.functions.imports.imports.processImportJob, {
     //   jobId,
     // });
-    console.log("Import job created, scheduler disabled for build");
+    console.log('Import job created, scheduler disabled for build');
 
     return jobId;
   },
@@ -226,45 +213,48 @@ export const createImportJob = mutation({
 
 // Process an import job (action for file processing)
 export const processImportJob = action({
-  args: { jobId: v.id("importJobs") },
+  args: { jobId: v.id('importJobs') },
   handler: async (ctx, { jobId }) => {
     // TODO: Get the job - temporarily hardcoded for build
-    const job = { status: "uploaded", progress: { totalRows: 0 } } as any;
-    if (!job) throw new Error("Job not found");
+    const job = { status: 'uploaded', progress: { totalRows: 0 } } as any;
+    if (!job) throw new Error('Job not found');
 
-    if (job.status !== "uploaded") {
+    if (job.status !== 'uploaded') {
       console.log(`Job ${jobId} is not uploaded, skipping processing`);
       return;
     }
 
     try {
       // TODO: Update job status to validating - disabled for build
-      console.log("Would update job status");
+      console.log('Would update job status');
 
       // TODO: Get file from storage - disabled for build
       const fileEntry = null;
 
       // TODO: This functionality is disabled for build - will be re-enabled after API regeneration
-      console.log("File processing disabled for build");
-
+      console.log('File processing disabled for build');
     } catch (error) {
       console.error(`Error processing import job ${jobId}:`, error);
-      
+
       // TODO: Mark job as failed - disabled for build
-      console.log("Would mark job as failed");
+      console.log('Would mark job as failed');
     }
   },
 });
 
 // File parsing helper function (CSV and JSON)
-async function parseImportFile(content: string, fileName: string, options: {
-  hasHeaders: boolean;
-  delimiter: string;
-  skipEmptyRows: boolean;
-}) {
+async function parseImportFile(
+  content: string,
+  fileName: string,
+  options: {
+    hasHeaders: boolean;
+    delimiter: string;
+    skipEmptyRows: boolean;
+  }
+) {
   // Determine file type from extension
   const isJson = fileName.toLowerCase().endsWith('.json');
-  
+
   if (isJson) {
     try {
       const data = JSON.parse(content);
@@ -276,7 +266,7 @@ async function parseImportFile(content: string, fileName: string, options: {
   }
 
   // CSV parsing logic
-  const lines = content.split('\n').filter(line => {
+  const lines = content.split('\n').filter((line) => {
     return options.skipEmptyRows ? line.trim().length > 0 : true;
   });
 
@@ -289,7 +279,7 @@ async function parseImportFile(content: string, fileName: string, options: {
   let dataStartIndex = 0;
 
   if (options.hasHeaders && lines.length > 0) {
-    headers = lines[0].split(delimiter).map(h => h.trim().replace(/"/g, ''));
+    headers = lines[0].split(delimiter).map((h) => h.trim().replace(/"/g, ''));
     dataStartIndex = 1;
   } else {
     // Generate default headers if no headers provided
@@ -299,13 +289,13 @@ async function parseImportFile(content: string, fileName: string, options: {
 
   const rows = [];
   for (let i = dataStartIndex; i < lines.length; i++) {
-    const values = lines[i].split(delimiter).map(v => v.trim().replace(/"/g, ''));
-    
+    const values = lines[i].split(delimiter).map((v) => v.trim().replace(/"/g, ''));
+
     const row: Record<string, string> = {};
     headers.forEach((header, index) => {
       row[header] = values[index] || '';
     });
-    
+
     rows.push(row);
   }
 
@@ -332,16 +322,16 @@ async function validateImportData(
     column: string;
     value: string;
     error: string;
-    severity: "error" | "warning";
+    severity: 'error' | 'warning';
   }> = [];
 
   data.forEach((row, index) => {
     let isRowValid = true;
     const processedRow: Record<string, any> = { ...row };
 
-    validationRules.forEach(rule => {
+    validationRules.forEach((rule) => {
       const value = row[rule.field];
-      
+
       // Required field validation
       if (rule.required && (!value || value.trim() === '')) {
         errors.push({
@@ -349,7 +339,7 @@ async function validateImportData(
           column: rule.field,
           value: value || '',
           error: `${rule.field} is required`,
-          severity: "error"
+          severity: 'error',
         });
         isRowValid = false;
         return;
@@ -365,7 +355,7 @@ async function validateImportData(
               column: rule.field,
               value,
               error: `${rule.field} must be a valid number`,
-              severity: "error"
+              severity: 'error',
             });
             isRowValid = false;
           } else {
@@ -382,7 +372,7 @@ async function validateImportData(
               column: rule.field,
               value,
               error: `${rule.field} format is invalid`,
-              severity: "error"
+              severity: 'error',
             });
             isRowValid = false;
           }
@@ -395,7 +385,7 @@ async function validateImportData(
             column: rule.field,
             value,
             error: `${rule.field} must be at least ${rule.minLength} characters`,
-            severity: "error"
+            severity: 'error',
           });
           isRowValid = false;
         }
@@ -406,7 +396,7 @@ async function validateImportData(
             column: rule.field,
             value,
             error: `${rule.field} must be no more than ${rule.maxLength} characters`,
-            severity: "error"
+            severity: 'error',
           });
           isRowValid = false;
         }
@@ -418,7 +408,7 @@ async function validateImportData(
             column: rule.field,
             value,
             error: `${rule.field} must be one of: ${rule.allowedValues.join(', ')}`,
-            severity: "error"
+            severity: 'error',
           });
           isRowValid = false;
         }
@@ -453,11 +443,14 @@ async function importValidRecords(
   };
 
   if (importType === 'categories') {
-    console.log(`Would import ${validRows.length} hierarchical categories with level names:`, fieldMappings.levelNames);
+    console.log(
+      `Would import ${validRows.length} hierarchical categories with level names:`,
+      fieldMappings.levelNames
+    );
   } else {
     console.log(`Would import ${validRows.length} ${importType} records`);
   }
-  
+
   return result;
 }
 
@@ -477,15 +470,18 @@ async function processHierarchicalCategories(
 ) {
   // Sort categories by level to ensure parent categories are created first
   const sortedCategories = categories.sort((a, b) => a.level - b.level);
-  
+
   // Group categories by level for processing
-  const categoriesByLevel = sortedCategories.reduce((acc, category) => {
-    if (!acc[category.level]) {
-      acc[category.level] = [];
-    }
-    acc[category.level].push(category);
-    return acc;
-  }, {} as Record<number, typeof categories>);
+  const categoriesByLevel = sortedCategories.reduce(
+    (acc, category) => {
+      if (!acc[category.level]) {
+        acc[category.level] = [];
+      }
+      acc[category.level].push(category);
+      return acc;
+    },
+    {} as Record<number, typeof categories>
+  );
 
   const result = {
     created: 0,
@@ -494,7 +490,7 @@ async function processHierarchicalCategories(
     createdIds: [] as string[],
     updatedIds: [] as string[],
     skippedIds: [] as string[],
-    levelStats: {} as Record<string, number>
+    levelStats: {} as Record<string, number>,
   };
 
   // Process each level in order
@@ -502,31 +498,32 @@ async function processHierarchicalCategories(
     const levelNum = parseInt(level);
     const levelName = levelNames[levelNum] || `Level ${levelNum}`;
     const levelCategories = categoriesByLevel[levelNum];
-    
-    console.log(`Processing ${levelCategories.length} categories at level ${levelNum} (${levelName})`);
-    
+
+    console.log(
+      `Processing ${levelCategories.length} categories at level ${levelNum} (${levelName})`
+    );
+
     for (const category of levelCategories) {
       try {
         // Generate handle from name
         const handle = generateHandle(category.name);
-        
+
         // TODO: After API regeneration, create actual category with:
         // - externalId: category.category_id (for mapping)
         // - name: category.name
-        // - level: category.level  
+        // - level: category.level
         // - friendlyLevelName: levelName
         // - handle: generated handle
         // - parentId: determined by level hierarchy logic
-        
+
         result.created++;
         result.createdIds.push(category.category_id);
-        
+
         // Track level statistics
         if (!result.levelStats[levelName]) {
           result.levelStats[levelName] = 0;
         }
         result.levelStats[levelName]++;
-        
       } catch (error) {
         console.error(`Error importing category ${category.name}:`, error);
         result.skipped++;
@@ -552,13 +549,13 @@ function generateHandle(name: string): string {
 // Update job status
 export const updateJobStatus = mutation({
   args: {
-    jobId: v.id("importJobs"),
+    jobId: v.id('importJobs'),
     status: v.union(
-      v.literal("uploaded"), 
-      v.literal("validating"), 
-      v.literal("importing"), 
-      v.literal("completed"), 
-      v.literal("failed")
+      v.literal('uploaded'),
+      v.literal('validating'),
+      v.literal('importing'),
+      v.literal('completed'),
+      v.literal('failed')
     ),
   },
   handler: async (ctx, { jobId, status }) => {
@@ -572,14 +569,14 @@ export const updateJobStatus = mutation({
 // Complete import with results
 export const completeImport = mutation({
   args: {
-    jobId: v.id("importJobs"),
+    jobId: v.id('importJobs'),
     results: v.any(),
   },
   handler: async (ctx, { jobId, results }) => {
     const now = Date.now();
-    
+
     await ctx.db.patch(jobId, {
-      status: "completed",
+      status: 'completed',
       progress: results.progress,
       validationErrors: results.validationErrors,
       importResults: results.importResults,
@@ -594,7 +591,7 @@ export const generateUploadUrl = mutation({
   args: {},
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Not authenticated");
+    if (!identity) throw new Error('Not authenticated');
 
     return await ctx.storage.generateUploadUrl();
   },
@@ -603,54 +600,54 @@ export const generateUploadUrl = mutation({
 // Complete file upload and create file entry
 export const completeFileUpload = mutation({
   args: {
-    organizationId: v.id("organizations"),
+    organizationId: v.id('organizations'),
     fileName: v.string(),
     fileSize: v.number(),
     mimeType: v.string(),
-    storageId: v.id("_storage"),
+    storageId: v.id('_storage'),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Not authenticated");
+    if (!identity) throw new Error('Not authenticated');
 
     const user = await ctx.db
-      .query("users")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .query('users')
+      .withIndex('by_clerk_id', (q) => q.eq('clerkId', identity.subject))
       .unique();
 
-    if (!user) throw new Error("User not found");
+    if (!user) throw new Error('User not found');
 
     // Verify user has access and permissions
     const membership = await ctx.db
-      .query("organizationMemberships")
-      .withIndex("by_organization_user", (q) => 
-        q.eq("organizationId", args.organizationId).eq("userId", user._id)
+      .query('organizationMemberships')
+      .withIndex('by_organization_user', (q) =>
+        q.eq('organizationId', args.organizationId).eq('userId', user._id)
       )
-      .filter((q) => q.eq(q.field("status"), "active"))
+      .filter((q) => q.eq(q.field('status'), 'active'))
       .unique();
 
-    if (!membership || !["owner", "admin", "editor"].includes(membership.role)) {
-      throw new Error("Insufficient permissions");
+    if (!membership || !['owner', 'admin', 'editor'].includes(membership.role)) {
+      throw new Error('Insufficient permissions');
     }
 
     // Get file URL from storage
     const fileUrl = await ctx.storage.getUrl(args.storageId);
-    
-    const fileEntryId = await ctx.db.insert("fileStorageEntries", {
+
+    const fileEntryId = await ctx.db.insert('fileStorageEntries', {
       organizationId: args.organizationId,
       fileName: args.fileName,
       originalName: args.fileName,
       mimeType: args.mimeType,
       fileSize: args.fileSize,
       storageId: args.storageId,
-      url: fileUrl || "",
-      fileType: "csv_import",
-      purpose: "CSV import for product/category data",
+      url: fileUrl || '',
+      fileType: 'csv_import',
+      purpose: 'CSV import for product/category data',
       linkedRecords: [],
       isPublic: false,
       allowedUsers: [user._id],
       isTemporary: true,
-      expiresAt: Date.now() + (24 * 60 * 60 * 1000), // 24 hours
+      expiresAt: Date.now() + 24 * 60 * 60 * 1000, // 24 hours
       uploadedBy: user._id,
       createdAt: Date.now(),
     });
@@ -661,14 +658,14 @@ export const completeFileUpload = mutation({
 
 // Get file entry by storage ID
 export const getFileEntry = query({
-  args: { storageId: v.id("_storage") },
+  args: { storageId: v.id('_storage') },
   handler: async (ctx, { storageId }) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Not authenticated");
+    if (!identity) throw new Error('Not authenticated');
 
     const fileEntry = await ctx.db
-      .query("fileStorageEntries")
-      .filter((q) => q.eq(q.field("storageId"), storageId))
+      .query('fileStorageEntries')
+      .filter((q) => q.eq(q.field('storageId'), storageId))
       .unique();
 
     return fileEntry;

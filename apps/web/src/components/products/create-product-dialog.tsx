@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useMutation } from "convex/react";
-import { api } from "../../../../../convex/_generated/api";
-import { Id } from "../../../../../convex/_generated/dataModel";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { toast } from "sonner";
+import { useState } from 'react';
+import { useMutation } from 'convex/react';
+import { api } from '../../../../../convex/_generated/api';
+import { Id } from '../../../../../convex/_generated/dataModel';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { toast } from 'sonner';
 
 import {
   Dialog,
@@ -15,19 +15,26 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { X } from "lucide-react";
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { X } from 'lucide-react';
+import { BaseDialogProps } from '@/types/ui';
 
 // Product creation form schema
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const createProductSchema = z.object({
-  title: z.string().min(1, "Title is required"),
+  title: z.string().min(1, 'Title is required'),
   description: z.string().optional(),
   vendor: z.string().optional(),
   productType: z.string().optional(),
@@ -35,16 +42,14 @@ const createProductSchema = z.object({
   seoTitle: z.string().optional(),
   seoDescription: z.string().optional(),
   tags: z.array(z.string()).default([]),
-  status: z.enum(["active", "draft", "archived"]).default("draft"),
+  status: z.enum(['active', 'draft', 'archived']).default('draft'),
 });
 
 type CreateProductForm = z.infer<typeof createProductSchema>;
 
-interface CreateProductDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  organizationId: Id<"organizations">;
-  projectId: Id<"projects">;
+interface CreateProductDialogProps extends BaseDialogProps {
+  organizationId: Id<'organizations'>;
+  projectId: Id<'projects'>;
 }
 
 export function CreateProductDialog({
@@ -54,7 +59,7 @@ export function CreateProductDialog({
   projectId,
 }: CreateProductDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [currentTag, setCurrentTag] = useState("");
+  const [currentTag, setCurrentTag] = useState('');
   const [tags, setTags] = useState<string[]>([]);
 
   const createProduct = useMutation(api.functions.products.products.createProduct);
@@ -68,7 +73,7 @@ export function CreateProductDialog({
     // watch,
   } = useForm<CreateProductForm>({
     defaultValues: {
-      status: "draft",
+      status: 'draft',
       tags: [],
     },
   });
@@ -79,38 +84,38 @@ export function CreateProductDialog({
   const generateHandle = (title: string) => {
     return title
       .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, "")
-      .replace(/\s+/g, "-")
-      .replace(/-+/g, "-")
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
       .trim();
   };
 
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newTitle = e.target.value;
-    setValue("title", newTitle);
-    
+    setValue('title', newTitle);
+
     // Auto-generate handle if it&apos;s not been manually set
     const handle = generateHandle(newTitle);
-    setValue("handle", handle);
+    setValue('handle', handle);
   };
 
   const addTag = () => {
     if (currentTag.trim() && !tags.includes(currentTag.trim())) {
       const newTags = [...tags, currentTag.trim()];
       setTags(newTags);
-      setValue("tags", newTags);
-      setCurrentTag("");
+      setValue('tags', newTags);
+      setCurrentTag('');
     }
   };
 
   const removeTag = (tagToRemove: string) => {
-    const newTags = tags.filter(tag => tag !== tagToRemove);
+    const newTags = tags.filter((tag) => tag !== tagToRemove);
     setTags(newTags);
-    setValue("tags", newTags);
+    setValue('tags', newTags);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
+    if (e.key === 'Enter') {
       e.preventDefault();
       addTag();
     }
@@ -135,13 +140,13 @@ export function CreateProductDialog({
         status: data.status,
       });
 
-      toast.success("Product created successfully");
+      toast.success('Product created successfully');
       reset();
       setTags([]);
       onOpenChange(false);
     } catch (error) {
-      console.error("Failed to create product:", error);
-      toast.error("Failed to create product. Please try again.");
+      console.error('Failed to create product:', error);
+      toast.error('Failed to create product. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -151,7 +156,7 @@ export function CreateProductDialog({
     if (!open) {
       reset();
       setTags([]);
-      setCurrentTag("");
+      setCurrentTag('');
     }
     onOpenChange(open);
   };
@@ -170,34 +175,28 @@ export function CreateProductDialog({
           {/* Basic Information */}
           <div className="space-y-4">
             <h3 className="text-sm font-medium">Basic Information</h3>
-            
+
             <div className="space-y-2">
               <Label htmlFor="title">Title *</Label>
               <Input
                 id="title"
-                {...register("title")}
+                {...register('title')}
                 onChange={handleTitleChange}
                 placeholder="Enter product title"
               />
-              {errors.title && (
-                <p className="text-sm text-destructive">{errors.title.message}</p>
-              )}
+              {errors.title && <p className="text-sm text-destructive">{errors.title.message}</p>}
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="handle">Handle</Label>
-              <Input
-                id="handle"
-                {...register("handle")}
-                placeholder="product-handle"
-              />
+              <Input id="handle" {...register('handle')} placeholder="product-handle" />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="description">Description</Label>
               <Textarea
                 id="description"
-                {...register("description")}
+                {...register('description')}
                 placeholder="Describe your product..."
                 rows={3}
               />
@@ -206,18 +205,14 @@ export function CreateProductDialog({
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="vendor">Vendor</Label>
-                <Input
-                  id="vendor"
-                  {...register("vendor")}
-                  placeholder="Brand or vendor name"
-                />
+                <Input id="vendor" {...register('vendor')} placeholder="Brand or vendor name" />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="productType">Product Type</Label>
                 <Input
                   id="productType"
-                  {...register("productType")}
+                  {...register('productType')}
                   placeholder="e.g., T-Shirt, Book, Electronics"
                 />
               </div>
@@ -227,7 +222,9 @@ export function CreateProductDialog({
               <Label htmlFor="status">Status</Label>
               <Select
                 defaultValue="draft"
-                onValueChange={(value) => setValue("status", value as "active" | "draft" | "archived")}
+                onValueChange={(value) =>
+                  setValue('status', value as 'active' | 'draft' | 'archived')
+                }
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -244,7 +241,7 @@ export function CreateProductDialog({
           {/* Tags */}
           <div className="space-y-4">
             <h3 className="text-sm font-medium">Tags</h3>
-            
+
             <div className="space-y-2">
               <Label htmlFor="tags">Add Tags</Label>
               <div className="flex gap-2">
@@ -284,21 +281,17 @@ export function CreateProductDialog({
           {/* SEO */}
           <div className="space-y-4">
             <h3 className="text-sm font-medium">SEO (Optional)</h3>
-            
+
             <div className="space-y-2">
               <Label htmlFor="seoTitle">SEO Title</Label>
-              <Input
-                id="seoTitle"
-                {...register("seoTitle")}
-                placeholder="SEO-optimized title"
-              />
+              <Input id="seoTitle" {...register('seoTitle')} placeholder="SEO-optimized title" />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="seoDescription">SEO Description</Label>
               <Textarea
                 id="seoDescription"
-                {...register("seoDescription")}
+                {...register('seoDescription')}
                 placeholder="SEO meta description"
                 rows={2}
               />
@@ -315,7 +308,7 @@ export function CreateProductDialog({
               Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Creating..." : "Create Product"}
+              {isSubmitting ? 'Creating...' : 'Create Product'}
             </Button>
           </DialogFooter>
         </form>

@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useMutation } from "convex/react";
-import { api } from "../../../../../convex/_generated/api";
-import { Id } from "../../../../../convex/_generated/dataModel";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { toast } from "sonner";
+import { useState } from 'react';
+import { useMutation } from 'convex/react';
+import { api } from '../../../../../convex/_generated/api';
+import { Id } from '../../../../../convex/_generated/dataModel';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { toast } from 'sonner';
 
 import {
   Dialog,
@@ -15,29 +15,34 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Upload, FileText, Package, FolderTree, Tag } from "lucide-react";
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Upload, FileText, Package, FolderTree, Tag } from 'lucide-react';
+import { BaseDialogProps } from '@/types/ui';
 
 // Import job form schema
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const createImportJobSchema = z.object({
-  importType: z.enum(["products", "categories", "variants"]),
-  duplicateHandling: z.enum(["skip", "update", "create"]),
+  importType: z.enum(['products', 'categories', 'variants']),
+  duplicateHandling: z.enum(['skip', 'update', 'create']),
   hasHeaders: z.boolean(),
   delimiter: z.string(),
 });
 
 type CreateImportJobForm = z.infer<typeof createImportJobSchema>;
 
-interface CreateImportJobDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  organizationId: Id<"organizations">;
-  projectId: Id<"projects">;
+interface CreateImportJobDialogProps extends BaseDialogProps {
+  organizationId: Id<'organizations'>;
+  projectId: Id<'projects'>;
 }
 
 export function CreateImportJobDialog({
@@ -66,18 +71,18 @@ export function CreateImportJobDialog({
     watch,
   } = useForm<CreateImportJobForm>({
     defaultValues: {
-      importType: "products",
-      duplicateHandling: "skip",
+      importType: 'products',
+      duplicateHandling: 'skip',
       hasHeaders: true,
-      delimiter: ",",
+      delimiter: ',',
     },
   });
 
-  const importType = watch("importType");
+  const importType = watch('importType');
 
   const onSubmit = async (data: CreateImportJobForm) => {
     if (!selectedFile) {
-      toast.error("Please select a file to import");
+      toast.error('Please select a file to import');
       return;
     }
 
@@ -89,8 +94,8 @@ export function CreateImportJobDialog({
 
       // Step 2: Upload file to Convex storage
       const result = await fetch(uploadUrl, {
-        method: "POST",
-        headers: { "Content-Type": selectedFile.type },
+        method: 'POST',
+        headers: { 'Content-Type': selectedFile.type },
         body: selectedFile,
       });
 
@@ -120,18 +125,18 @@ export function CreateImportJobDialog({
             delimiter: data.delimiter,
             skipEmptyRows: true,
             duplicateHandling: data.duplicateHandling,
-          }
+          },
         },
         validationRules: getDefaultValidationRules(data.importType),
       });
 
-      toast.success("Import job created successfully");
+      toast.success('Import job created successfully');
       reset();
       setSelectedFile(null);
       onOpenChange(false);
     } catch (error) {
-      console.error("Failed to create import job:", error);
-      toast.error("Failed to create import job. Please try again.");
+      console.error('Failed to create import job:', error);
+      toast.error('Failed to create import job. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -150,20 +155,24 @@ export function CreateImportJobDialog({
     if (file) {
       // Validate file type
       const allowedTypes = [
-        "text/csv",
-        "application/vnd.ms-excel",
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        "application/json"
+        'text/csv',
+        'application/vnd.ms-excel',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/json',
       ];
-      
-      if (!allowedTypes.includes(file.type) && !file.name.endsWith('.csv') && !file.name.endsWith('.json')) {
-        toast.error("Please select a CSV, Excel, or JSON file");
+
+      if (
+        !allowedTypes.includes(file.type) &&
+        !file.name.endsWith('.csv') &&
+        !file.name.endsWith('.json')
+      ) {
+        toast.error('Please select a CSV, Excel, or JSON file');
         return;
       }
 
       // Validate file size (max 10MB)
       if (file.size > 10 * 1024 * 1024) {
-        toast.error("File size must be less than 10MB");
+        toast.error('File size must be less than 10MB');
         return;
       }
 
@@ -173,11 +182,11 @@ export function CreateImportJobDialog({
 
   const getImportTypeIcon = (type: string) => {
     switch (type) {
-      case "products":
+      case 'products':
         return <Package className="h-5 w-5 text-blue-600" />;
-      case "categories":
+      case 'categories':
         return <FolderTree className="h-5 w-5 text-green-600" />;
-      case "variants":
+      case 'variants':
         return <Tag className="h-5 w-5 text-purple-600" />;
       default:
         return <FileText className="h-5 w-5" />;
@@ -186,14 +195,14 @@ export function CreateImportJobDialog({
 
   const getImportTypeDescription = (type: string) => {
     switch (type) {
-      case "products":
-        return "Import product catalog with titles, descriptions, pricing, and basic information";
-      case "categories":
-        return "Import category hierarchy from JSON with level-based organization (Aisle → Product Type → Master Category → Category → Sub Category)";
-      case "variants":
-        return "Import product variants with SKUs, options, pricing, and inventory data";
+      case 'products':
+        return 'Import product catalog with titles, descriptions, pricing, and basic information';
+      case 'categories':
+        return 'Import category hierarchy from JSON with level-based organization (Aisle → Product Type → Master Category → Category → Sub Category)';
+      case 'variants':
+        return 'Import product variants with SKUs, options, pricing, and inventory data';
       default:
-        return "";
+        return '';
     }
   };
 
@@ -215,13 +224,15 @@ export function CreateImportJobDialog({
           <div className="space-y-3">
             <Label>What would you like to import?</Label>
             <div className="grid grid-cols-1 gap-3">
-              {["products", "categories", "variants"].map((type) => (
-                <Card 
+              {['products', 'categories', 'variants'].map((type) => (
+                <Card
                   key={type}
                   className={`cursor-pointer transition-colors ${
-                    importType === type ? "ring-2 ring-primary" : "hover:bg-gray-50"
+                    importType === type ? 'ring-2 ring-primary' : 'hover:bg-gray-50'
                   }`}
-                  onClick={() => setValue("importType", type as "products" | "categories" | "variants")}
+                  onClick={() =>
+                    setValue('importType', type as 'products' | 'categories' | 'variants')
+                  }
                 >
                   <CardContent className="p-4">
                     <div className="flex items-center gap-3">
@@ -234,7 +245,7 @@ export function CreateImportJobDialog({
                       </div>
                       <input
                         type="radio"
-                        {...register("importType")}
+                        {...register('importType')}
                         value={type}
                         className="ml-auto"
                       />
@@ -280,13 +291,15 @@ export function CreateImportJobDialog({
           {/* Import Options */}
           <div className="space-y-4">
             <h3 className="font-medium">Import Options</h3>
-            
+
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Duplicate Handling</Label>
                 <Select
-                  value={watch("duplicateHandling")}
-                  onValueChange={(value) => setValue("duplicateHandling", value as "skip" | "update" | "create")}
+                  value={watch('duplicateHandling')}
+                  onValueChange={(value) =>
+                    setValue('duplicateHandling', value as 'skip' | 'update' | 'create')
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -302,8 +315,8 @@ export function CreateImportJobDialog({
               <div className="space-y-2">
                 <Label>CSV Delimiter</Label>
                 <Select
-                  value={watch("delimiter")}
-                  onValueChange={(value) => setValue("delimiter", value)}
+                  value={watch('delimiter')}
+                  onValueChange={(value) => setValue('delimiter', value)}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -321,7 +334,7 @@ export function CreateImportJobDialog({
               <input
                 type="checkbox"
                 id="hasHeaders"
-                {...register("hasHeaders")}
+                {...register('hasHeaders')}
                 className="rounded border-gray-300"
               />
               <Label htmlFor="hasHeaders">First row contains headers</Label>
@@ -345,11 +358,11 @@ export function CreateImportJobDialog({
                 </div>
                 <div className="flex justify-between text-sm">
                   <span>Duplicate handling:</span>
-                  <span className="font-medium">{watch("duplicateHandling")}</span>
+                  <span className="font-medium">{watch('duplicateHandling')}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span>Headers:</span>
-                  <span className="font-medium">{watch("hasHeaders") ? "Yes" : "No"}</span>
+                  <span className="font-medium">{watch('hasHeaders') ? 'Yes' : 'No'}</span>
                 </div>
               </CardContent>
             </Card>
@@ -364,11 +377,8 @@ export function CreateImportJobDialog({
             >
               Cancel
             </Button>
-            <Button 
-              type="submit" 
-              disabled={isSubmitting || !selectedFile}
-            >
-              {isSubmitting ? "Starting Import..." : "Start Import"}
+            <Button type="submit" disabled={isSubmitting || !selectedFile}>
+              {isSubmitting ? 'Starting Import...' : 'Start Import'}
             </Button>
           </DialogFooter>
         </form>
@@ -380,7 +390,7 @@ export function CreateImportJobDialog({
 // Helper functions for default mappings and validation rules
 function getDefaultFieldMapping(importType: string) {
   switch (importType) {
-    case "products":
+    case 'products':
       return {
         title: 0,
         description: 1,
@@ -389,22 +399,22 @@ function getDefaultFieldMapping(importType: string) {
         handle: 4,
         tags: 5,
       };
-    case "categories":
+    case 'categories':
       return {
-        category_id: "category_id",
-        name: "name", 
-        level: "level",
-        created_at: "created_at",
-        updated_at: "updated_at",
+        category_id: 'category_id',
+        name: 'name',
+        level: 'level',
+        created_at: 'created_at',
+        updated_at: 'updated_at',
         levelNames: {
-          1: "Aisle",
-          2: "Product Type", 
-          3: "Master Category",
-          4: "Category",
-          5: "Sub Category"
-        }
+          1: 'Aisle',
+          2: 'Product Type',
+          3: 'Master Category',
+          4: 'Category',
+          5: 'Sub Category',
+        },
       };
-    case "variants":
+    case 'variants':
       return {
         sku: 0,
         productHandle: 1,
@@ -420,23 +430,23 @@ function getDefaultFieldMapping(importType: string) {
 
 function getDefaultValidationRules(importType: string) {
   switch (importType) {
-    case "products":
+    case 'products':
       return [
-        { field: "title", type: "string", required: true, minLength: 1, maxLength: 255 },
-        { field: "handle", type: "string", required: false, pattern: "^[a-z0-9-]+$" },
-        { field: "vendor", type: "string", required: false, maxLength: 100 },
+        { field: 'title', type: 'string', required: true, minLength: 1, maxLength: 255 },
+        { field: 'handle', type: 'string', required: false, pattern: '^[a-z0-9-]+$' },
+        { field: 'vendor', type: 'string', required: false, maxLength: 100 },
       ];
-    case "categories":
+    case 'categories':
       return [
-        { field: "category_id", type: "string", required: true, minLength: 1 },
-        { field: "name", type: "string", required: true, minLength: 1, maxLength: 100 },
-        { field: "level", type: "number", required: true },
+        { field: 'category_id', type: 'string', required: true, minLength: 1 },
+        { field: 'name', type: 'string', required: true, minLength: 1, maxLength: 100 },
+        { field: 'level', type: 'number', required: true },
       ];
-    case "variants":
+    case 'variants':
       return [
-        { field: "sku", type: "string", required: true, minLength: 1 },
-        { field: "price", type: "number", required: true },
-        { field: "inventoryQuantity", type: "number", required: false },
+        { field: 'sku', type: 'string', required: true, minLength: 1 },
+        { field: 'price', type: 'number', required: true },
+        { field: 'inventoryQuantity', type: 'number', required: false },
       ];
     default:
       return [];

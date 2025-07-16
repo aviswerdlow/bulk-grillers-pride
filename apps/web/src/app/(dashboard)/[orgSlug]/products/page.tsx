@@ -1,20 +1,53 @@
-"use client";
+'use client';
 
-import { useQuery } from "convex/react";
-import { api } from "../../../../../../../convex/_generated/api";
-import { useParams } from "next/navigation";
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Search, Filter, MoreHorizontal, Package, Tag, Eye, Edit, Trash2 } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { CreateProductDialog } from "@/components/products/create-product-dialog";
-import { EditProductDialog } from "@/components/products/edit-product-dialog";
-import { Loading } from "@/components/loading";
+import { useQuery } from 'convex/react';
+import { api } from '../../../../../../../convex/_generated/api';
+import { useParams } from 'next/navigation';
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+  Plus,
+  Search,
+  Filter,
+  MoreHorizontal,
+  Package,
+  Tag,
+  Eye,
+  Edit,
+  Trash2,
+  Grid,
+  List,
+} from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { CreateProductDialog } from '@/components/products/create-product-dialog';
+import { EditProductDialog } from '@/components/products/edit-product-dialog';
+import { ProductCard } from '@/components/products/product-card';
+import { ProductCardSkeleton } from '@/components/products/product-card-skeleton';
+import { Loading } from '@/components/loading';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 
 interface Product {
   _id: string;
@@ -31,9 +64,10 @@ interface Product {
 export default function ProductsPage() {
   const params = useParams();
   const orgSlug = params.orgSlug as string;
-  
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [editingProduct, setEditingProduct] = useState<any>(null);
@@ -46,7 +80,7 @@ export default function ProductsPage() {
   // Get projects for this organization
   const projects = useQuery(
     api.functions.projects.projects.getOrganizationProjects,
-    organization ? { organizationId: organization._id } : "skip"
+    organization ? { organizationId: organization._id } : 'skip'
   );
 
   // Use first project for now (TODO: add project selection)
@@ -57,11 +91,14 @@ export default function ProductsPage() {
   const productsResult = useQuery(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (api as any).functions.products.products.getProjectProducts,
-    currentProject ? {
-      organizationId: organization!._id,
-      projectId: currentProject._id,
-      status: statusFilter === "all" ? undefined : statusFilter as "active" | "draft" | "archived",
-    } : "skip"
+    currentProject
+      ? {
+          organizationId: organization!._id,
+          projectId: currentProject._id,
+          status:
+            statusFilter === 'all' ? undefined : (statusFilter as 'active' | 'draft' | 'archived'),
+        }
+      : 'skip'
   );
 
   if (organization === undefined || projects === undefined) {
@@ -92,23 +129,24 @@ export default function ProductsPage() {
   const isLoading = productsResult === undefined;
 
   // Filter products based on search term
-  const filteredProducts = products.filter((product: Product) =>
-    product.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.handle.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (product.vendor && product.vendor.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (product.productType && product.productType.toLowerCase().includes(searchTerm.toLowerCase()))
+  const filteredProducts = products.filter(
+    (product: Product) =>
+      product.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.handle.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (product.vendor && product.vendor.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (product.productType && product.productType.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
-      case "active":
-        return "default";
-      case "draft":
-        return "secondary";
-      case "archived":
-        return "outline";
+      case 'active':
+        return 'default';
+      case 'draft':
+        return 'secondary';
+      case 'archived':
+        return 'outline';
       default:
-        return "secondary";
+        return 'secondary';
     }
   };
 
@@ -119,7 +157,7 @@ export default function ProductsPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Products</h1>
           <p className="text-muted-foreground">
-            Manage your product catalog for {currentProject?.name || "your project"}
+            Manage your product catalog for {currentProject?.name || 'your project'}
           </p>
         </div>
         <Button onClick={() => setShowCreateDialog(true)}>
@@ -142,22 +180,26 @@ export default function ProductsPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Active</CardTitle>
-            <Badge variant="default" className="h-4 text-xs">●</Badge>
+            <Badge variant="default" className="h-4 text-xs">
+              ●
+            </Badge>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {products.filter(p => p.status === "active").length}
+              {products.filter((p) => p.status === 'active').length}
             </div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Draft</CardTitle>
-            <Badge variant="secondary" className="h-4 text-xs">●</Badge>
+            <Badge variant="secondary" className="h-4 text-xs">
+              ●
+            </Badge>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {products.filter(p => p.status === "draft").length}
+              {products.filter((p) => p.status === 'draft').length}
             </div>
           </CardContent>
         </Card>
@@ -168,7 +210,7 @@ export default function ProductsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {new Set(products.flatMap(p => p.categories)).size}
+              {new Set(products.flatMap((p) => p.categories)).size}
             </div>
           </CardContent>
         </Card>
@@ -199,31 +241,65 @@ export default function ProductsPage() {
                 <SelectItem value="archived">Archived</SelectItem>
               </SelectContent>
             </Select>
+            <ToggleGroup
+              type="single"
+              value={viewMode}
+              onValueChange={(value: string) => value && setViewMode(value as 'grid' | 'list')}
+              className="border rounded-md"
+            >
+              <ToggleGroupItem value="grid" aria-label="Grid view">
+                <Grid className="h-4 w-4" />
+              </ToggleGroupItem>
+              <ToggleGroupItem value="list" aria-label="List view">
+                <List className="h-4 w-4" />
+              </ToggleGroupItem>
+            </ToggleGroup>
           </div>
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="flex justify-center py-8">
-              <Loading size="md" text="Loading products..." />
-            </div>
+            viewMode === 'grid' ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {[...Array(8)].map((_, i) => (
+                  <ProductCardSkeleton key={i} />
+                ))}
+              </div>
+            ) : (
+              <div className="flex justify-center py-8">
+                <Loading size="md" text="Loading products..." />
+              </div>
+            )
           ) : filteredProducts.length === 0 ? (
-            <div className="text-center py-8">
-              <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">
-                {searchTerm || statusFilter !== "all" ? "No products found" : "No products yet"}
-              </h3>
-              <p className="text-muted-foreground mb-4">
-                {searchTerm || statusFilter !== "all" 
-                  ? "Try adjusting your search or filters"
-                  : "Get started by creating your first product"
-                }
-              </p>
-              {!searchTerm && statusFilter === "all" && (
-                <Button onClick={() => setShowCreateDialog(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Product
-                </Button>
-              )}
+            <div className={viewMode === 'grid' ? 'col-span-full' : ''}>
+              <div className="text-center py-8">
+                <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2">
+                  {searchTerm || statusFilter !== 'all' ? 'No products found' : 'No products yet'}
+                </h3>
+                <p className="text-muted-foreground mb-4">
+                  {searchTerm || statusFilter !== 'all'
+                    ? 'Try adjusting your search or filters'
+                    : 'Get started by creating your first product'}
+                </p>
+                {!searchTerm && statusFilter === 'all' && (
+                  <Button onClick={() => setShowCreateDialog(true)}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Product
+                  </Button>
+                )}
+              </div>
+            </div>
+          ) : viewMode === 'grid' ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {filteredProducts.map((product: Product) => (
+                <ProductCard
+                  key={product._id}
+                  product={product}
+                  onEdit={() => setEditingProduct(product)}
+                  onView={() => console.log('View product:', product._id)}
+                  onArchive={() => console.log('Archive product:', product._id)}
+                />
+              ))}
             </div>
           ) : (
             <Table>
@@ -244,9 +320,7 @@ export default function ProductsPage() {
                     <TableCell>
                       <div>
                         <div className="font-medium">{product.title}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {product.handle}
-                        </div>
+                        <div className="text-sm text-muted-foreground">{product.handle}</div>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -254,20 +328,20 @@ export default function ProductsPage() {
                         {product.status}
                       </Badge>
                     </TableCell>
+                    <TableCell className="text-muted-foreground">{product.vendor || '—'}</TableCell>
                     <TableCell className="text-muted-foreground">
-                      {product.vendor || "—"}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {product.productType || "—"}
+                      {product.productType || '—'}
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-1">
                         {product.categories.length > 0 ? (
-                          product.categories.slice(0, 2).map((categoryId: string, index: number) => (
-                            <Badge key={categoryId} variant="outline" className="text-xs">
-                              Category {index + 1}
-                            </Badge>
-                          ))
+                          product.categories
+                            .slice(0, 2)
+                            .map((categoryId: string, index: number) => (
+                              <Badge key={categoryId} variant="outline" className="text-xs">
+                                Category {index + 1}
+                              </Badge>
+                            ))
                         ) : (
                           <span className="text-muted-foreground text-sm">Uncategorized</span>
                         )}
@@ -297,11 +371,11 @@ export default function ProductsPage() {
                             <Eye className="h-4 w-4 mr-2" />
                             View Details
                           </DropdownMenuItem>
-                          <DropdownMenuItem 
+                          <DropdownMenuItem
                             className="text-destructive"
                             onClick={() => {
                               // TODO: Implement delete functionality
-                              console.log("Delete product:", product._id);
+                              console.log('Delete product:', product._id);
                             }}
                           >
                             <Trash2 className="h-4 w-4 mr-2" />

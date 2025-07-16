@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { useMutation } from "convex/react";
-import { api } from "../../../../../convex/_generated/api";
-import { Doc } from "../../../../../convex/_generated/dataModel";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { toast } from "sonner";
+import { useState, useEffect } from 'react';
+import { useMutation } from 'convex/react';
+import { api } from '../../../../../convex/_generated/api';
+import { Doc } from '../../../../../convex/_generated/dataModel';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { toast } from 'sonner';
 
 import {
   Dialog,
@@ -15,19 +15,26 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { X } from "lucide-react";
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { X } from 'lucide-react';
+import { BaseDialogProps } from '@/types/ui';
 
 // Product edit form schema
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const editProductSchema = z.object({
-  title: z.string().min(1, "Title is required"),
+  title: z.string().min(1, 'Title is required'),
   description: z.string().optional(),
   vendor: z.string().optional(),
   productType: z.string().optional(),
@@ -35,24 +42,18 @@ const editProductSchema = z.object({
   seoTitle: z.string().optional(),
   seoDescription: z.string().optional(),
   tags: z.array(z.string()).default([]),
-  status: z.enum(["active", "draft", "archived"]),
+  status: z.enum(['active', 'draft', 'archived']),
 });
 
 type EditProductForm = z.infer<typeof editProductSchema>;
 
-interface EditProductDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  product: Doc<"products">;
+interface EditProductDialogProps extends BaseDialogProps {
+  product: Doc<'products'>;
 }
 
-export function EditProductDialog({
-  open,
-  onOpenChange,
-  product,
-}: EditProductDialogProps) {
+export function EditProductDialog({ open, onOpenChange, product }: EditProductDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [currentTag, setCurrentTag] = useState("");
+  const [currentTag, setCurrentTag] = useState('');
   const [tags, setTags] = useState<string[]>(product.tags || []);
 
   const updateProduct = useMutation(api.functions.products.products.updateProduct);
@@ -67,12 +68,12 @@ export function EditProductDialog({
   } = useForm<EditProductForm>({
     defaultValues: {
       title: product.title,
-      description: product.description || "",
-      vendor: product.vendor || "",
-      productType: product.productType || "",
+      description: product.description || '',
+      vendor: product.vendor || '',
+      productType: product.productType || '',
       handle: product.handle,
-      seoTitle: product.seoTitle || "",
-      seoDescription: product.seoDescription || "",
+      seoTitle: product.seoTitle || '',
+      seoDescription: product.seoDescription || '',
       tags: product.tags || [],
       status: product.status,
     },
@@ -82,12 +83,12 @@ export function EditProductDialog({
   useEffect(() => {
     reset({
       title: product.title,
-      description: product.description || "",
-      vendor: product.vendor || "",
-      productType: product.productType || "",
+      description: product.description || '',
+      vendor: product.vendor || '',
+      productType: product.productType || '',
       handle: product.handle,
-      seoTitle: product.seoTitle || "",
-      seoDescription: product.seoDescription || "",
+      seoTitle: product.seoTitle || '',
+      seoDescription: product.seoDescription || '',
       tags: product.tags || [],
       status: product.status,
     });
@@ -99,9 +100,9 @@ export function EditProductDialog({
   const generateHandle = (title: string) => {
     return title
       .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, "")
-      .replace(/\s+/g, "-")
-      .replace(/-+/g, "-")
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
       .trim();
   };
 
@@ -109,19 +110,19 @@ export function EditProductDialog({
     if (currentTag.trim() && !tags.includes(currentTag.trim())) {
       const newTags = [...tags, currentTag.trim()];
       setTags(newTags);
-      setValue("tags", newTags);
-      setCurrentTag("");
+      setValue('tags', newTags);
+      setCurrentTag('');
     }
   };
 
   const removeTag = (tagToRemove: string) => {
-    const newTags = tags.filter(tag => tag !== tagToRemove);
+    const newTags = tags.filter((tag) => tag !== tagToRemove);
     setTags(newTags);
-    setValue("tags", newTags);
+    setValue('tags', newTags);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
+    if (e.key === 'Enter') {
       e.preventDefault();
       addTag();
     }
@@ -133,20 +134,23 @@ export function EditProductDialog({
 
       // Only send fields that have changed
       const updates: Partial<EditProductForm> = {};
-      
+
       if (data.title !== product.title) updates.title = data.title;
-      if (data.description !== product.description) updates.description = data.description || undefined;
+      if (data.description !== product.description)
+        updates.description = data.description || undefined;
       if (data.vendor !== product.vendor) updates.vendor = data.vendor || undefined;
-      if (data.productType !== product.productType) updates.productType = data.productType || undefined;
+      if (data.productType !== product.productType)
+        updates.productType = data.productType || undefined;
       if (data.handle !== product.handle) updates.handle = data.handle;
       if (data.seoTitle !== product.seoTitle) updates.seoTitle = data.seoTitle || undefined;
-      if (data.seoDescription !== product.seoDescription) updates.seoDescription = data.seoDescription || undefined;
+      if (data.seoDescription !== product.seoDescription)
+        updates.seoDescription = data.seoDescription || undefined;
       if (JSON.stringify(tags) !== JSON.stringify(product.tags)) updates.tags = tags;
       if (data.status !== product.status) updates.status = data.status;
 
       // Only update if there are changes
       if (Object.keys(updates).length === 0) {
-        toast.info("No changes to save");
+        toast.info('No changes to save');
         onOpenChange(false);
         return;
       }
@@ -156,11 +160,11 @@ export function EditProductDialog({
         ...updates,
       });
 
-      toast.success("Product updated successfully");
+      toast.success('Product updated successfully');
       onOpenChange(false);
     } catch (error) {
-      console.error("Failed to update product:", error);
-      toast.error("Failed to update product. Please try again.");
+      console.error('Failed to update product:', error);
+      toast.error('Failed to update product. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -170,7 +174,7 @@ export function EditProductDialog({
     if (!open) {
       reset();
       setTags(product.tags || []);
-      setCurrentTag("");
+      setCurrentTag('');
     }
     onOpenChange(open);
   };
@@ -189,26 +193,16 @@ export function EditProductDialog({
           {/* Basic Information */}
           <div className="space-y-4">
             <h3 className="text-sm font-medium">Basic Information</h3>
-            
+
             <div className="space-y-2">
               <Label htmlFor="title">Title *</Label>
-              <Input
-                id="title"
-                {...register("title")}
-                placeholder="Enter product title"
-              />
-              {errors.title && (
-                <p className="text-sm text-destructive">{errors.title.message}</p>
-              )}
+              <Input id="title" {...register('title')} placeholder="Enter product title" />
+              {errors.title && <p className="text-sm text-destructive">{errors.title.message}</p>}
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="handle">Handle</Label>
-              <Input
-                id="handle"
-                {...register("handle")}
-                placeholder="product-handle"
-              />
+              <Input id="handle" {...register('handle')} placeholder="product-handle" />
               <p className="text-xs text-muted-foreground">
                 URL-friendly identifier for this product
               </p>
@@ -218,7 +212,7 @@ export function EditProductDialog({
               <Label htmlFor="description">Description</Label>
               <Textarea
                 id="description"
-                {...register("description")}
+                {...register('description')}
                 placeholder="Describe your product..."
                 rows={3}
               />
@@ -227,18 +221,14 @@ export function EditProductDialog({
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="vendor">Vendor</Label>
-                <Input
-                  id="vendor"
-                  {...register("vendor")}
-                  placeholder="Brand or vendor name"
-                />
+                <Input id="vendor" {...register('vendor')} placeholder="Brand or vendor name" />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="productType">Product Type</Label>
                 <Input
                   id="productType"
-                  {...register("productType")}
+                  {...register('productType')}
                   placeholder="e.g., T-Shirt, Book, Electronics"
                 />
               </div>
@@ -247,8 +237,10 @@ export function EditProductDialog({
             <div className="space-y-2">
               <Label htmlFor="status">Status</Label>
               <Select
-                value={watch("status")}
-                onValueChange={(value) => setValue("status", value as "active" | "draft" | "archived")}
+                value={watch('status')}
+                onValueChange={(value) =>
+                  setValue('status', value as 'active' | 'draft' | 'archived')
+                }
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -265,7 +257,7 @@ export function EditProductDialog({
           {/* Tags */}
           <div className="space-y-4">
             <h3 className="text-sm font-medium">Tags</h3>
-            
+
             <div className="space-y-2">
               <Label htmlFor="tags">Add Tags</Label>
               <div className="flex gap-2">
@@ -305,21 +297,17 @@ export function EditProductDialog({
           {/* SEO */}
           <div className="space-y-4">
             <h3 className="text-sm font-medium">SEO (Optional)</h3>
-            
+
             <div className="space-y-2">
               <Label htmlFor="seoTitle">SEO Title</Label>
-              <Input
-                id="seoTitle"
-                {...register("seoTitle")}
-                placeholder="SEO-optimized title"
-              />
+              <Input id="seoTitle" {...register('seoTitle')} placeholder="SEO-optimized title" />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="seoDescription">SEO Description</Label>
               <Textarea
                 id="seoDescription"
-                {...register("seoDescription")}
+                {...register('seoDescription')}
                 placeholder="SEO meta description"
                 rows={2}
               />
@@ -336,7 +324,7 @@ export function EditProductDialog({
               Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Saving..." : "Save Changes"}
+              {isSubmitting ? 'Saving...' : 'Save Changes'}
             </Button>
           </DialogFooter>
         </form>

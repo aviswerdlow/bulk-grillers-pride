@@ -1,0 +1,15 @@
+# Ignore test files
+__tests__/
+*.test.ts
+*.test.js
+test-utils/
+setup/
+*.spec.ts
+*.spec.js
+
+# Ignore other development files
+*.md
+.env*
+.gitignore
+tsconfig.json
+jest.config.js

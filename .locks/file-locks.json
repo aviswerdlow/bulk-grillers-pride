@@ -1,0 +1,8 @@
+{
+  "locks": {
+    "convex/schema.ts": null,
+    "convex/convex.json": null,
+    "package.json": null,
+    "apps/web/package.json": null
+  }
+}

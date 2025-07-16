@@ -1,17 +1,37 @@
-"use client";
+'use client';
 
-import { useQuery } from "convex/react";
-import { api } from "../../../../../../../convex/_generated/api";
-import { useParams } from "next/navigation";
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Upload, FileText, CheckCircle, XCircle, AlertTriangle, Clock, Download } from "lucide-react";
-import { CreateImportJobDialog } from "@/components/imports/create-import-job-dialog";
-import { Loading } from "@/components/loading";
+import { useQuery } from 'convex/react';
+import { api } from '../../../../../../../convex/_generated/api';
+import { useParams } from 'next/navigation';
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+  Upload,
+  FileText,
+  CheckCircle,
+  XCircle,
+  AlertTriangle,
+  Clock,
+  Download,
+} from 'lucide-react';
+import { CreateImportJobDialog } from '@/components/imports/create-import-job-dialog';
+import { Loading } from '@/components/loading';
+import {
+  downloadProductsTemplate,
+  downloadVariantsTemplate,
+  downloadCategoriesTemplate,
+} from '@/utils/csv-templates';
 
 interface ImportJob {
   _id: string;
@@ -32,7 +52,7 @@ interface ImportJob {
 export default function ImportsPage() {
   const params = useParams();
   const orgSlug = params.orgSlug as string;
-  
+
   const [showCreateDialog, setShowCreateDialog] = useState(false);
 
   // Get organization
@@ -43,7 +63,7 @@ export default function ImportsPage() {
   // Get projects for this organization
   const projects = useQuery(
     api.functions.projects.projects.getOrganizationProjects,
-    organization ? { organizationId: organization._id } : "skip"
+    organization ? { organizationId: organization._id } : 'skip'
   );
 
   // Use first project for now
@@ -54,10 +74,12 @@ export default function ImportsPage() {
   const jobs = useQuery(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (api as any).functions.imports.imports.getImportJobs,
-    organization && currentProject ? {
-      organizationId: organization._id,
-      projectId: currentProject._id,
-    } : "skip"
+    organization && currentProject
+      ? {
+          organizationId: organization._id,
+          projectId: currentProject._id,
+        }
+      : 'skip'
   );
 
   if (organization === undefined || projects === undefined) {
@@ -89,14 +111,14 @@ export default function ImportsPage() {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case "completed":
+      case 'completed':
         return <CheckCircle className="h-4 w-4 text-green-600" />;
-      case "importing":
-      case "validating":
+      case 'importing':
+      case 'validating':
         return <Clock className="h-4 w-4 text-blue-600 animate-pulse" />;
-      case "failed":
+      case 'failed':
         return <XCircle className="h-4 w-4 text-red-600" />;
-      case "uploaded":
+      case 'uploaded':
         return <Upload className="h-4 w-4 text-yellow-600" />;
       default:
         return <Clock className="h-4 w-4 text-gray-600" />;
@@ -105,28 +127,28 @@ export default function ImportsPage() {
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
-      case "completed":
-        return "default";
-      case "importing":
-      case "validating":
-        return "secondary";
-      case "failed":
-        return "destructive";
-      case "uploaded":
-        return "outline";
+      case 'completed':
+        return 'default';
+      case 'importing':
+      case 'validating':
+        return 'secondary';
+      case 'failed':
+        return 'destructive';
+      case 'uploaded':
+        return 'outline';
       default:
-        return "outline";
+        return 'outline';
     }
   };
 
   const getImportTypeLabel = (importType: string) => {
     switch (importType) {
-      case "products":
-        return "Products";
-      case "categories":
-        return "Categories";
-      case "variants":
-        return "Product Variants";
+      case 'products':
+        return 'Products';
+      case 'categories':
+        return 'Categories';
+      case 'variants':
+        return 'Product Variants';
       default:
         return importType;
     }
@@ -138,62 +160,11 @@ export default function ImportsPage() {
   };
 
   const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return "0 Bytes";
+    if (bytes === 0) return '0 Bytes';
     const k = 1024;
-    const sizes = ["Bytes", "KB", "MB", "GB"];
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
-  };
-
-  const downloadCategoriesTemplate = () => {
-    const template = [
-      {
-        category_id: "aisle-001",
-        name: "Fresh Foods",
-        level: 1,
-        created_at: "2025-06-18T00:00:00.000Z",
-        updated_at: "2025-06-18T00:00:00.000Z"
-      },
-      {
-        category_id: "product-type-001", 
-        name: "Meat & Seafood",
-        level: 2,
-        created_at: "2025-06-18T00:00:00.000Z",
-        updated_at: "2025-06-18T00:00:00.000Z"
-      },
-      {
-        category_id: "master-cat-001",
-        name: "Beef",
-        level: 3,
-        created_at: "2025-06-18T00:00:00.000Z",
-        updated_at: "2025-06-18T00:00:00.000Z"
-      },
-      {
-        category_id: "category-001",
-        name: "Ground Beef",
-        level: 4,
-        created_at: "2025-06-18T00:00:00.000Z", 
-        updated_at: "2025-06-18T00:00:00.000Z"
-      },
-      {
-        category_id: "sub-cat-001",
-        name: "85/15 Ground Beef",
-        level: 5,
-        created_at: "2025-06-18T00:00:00.000Z",
-        updated_at: "2025-06-18T00:00:00.000Z"
-      }
-    ];
-
-    const dataStr = JSON.stringify(template, null, 2);
-    const dataBlob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(dataBlob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'categories-template.json';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
   return (
@@ -203,7 +174,8 @@ export default function ImportsPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Data Import</h1>
           <p className="text-muted-foreground">
-            Import products, categories, and variants from CSV files for {currentProject?.name || "your project"}
+            Import products, categories, and variants from CSV files for{' '}
+            {currentProject?.name || 'your project'}
           </p>
         </div>
         <Button onClick={() => setShowCreateDialog(true)}>
@@ -230,7 +202,7 @@ export default function ImportsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {allJobs.filter((j: ImportJob) => j.status === "completed").length}
+              {allJobs.filter((j: ImportJob) => j.status === 'completed').length}
             </div>
           </CardContent>
         </Card>
@@ -241,14 +213,19 @@ export default function ImportsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {allJobs.filter((j: ImportJob) => ["importing", "validating"].includes(j.status)).length}
+              {
+                allJobs.filter((j: ImportJob) => ['importing', 'validating'].includes(j.status))
+                  .length
+              }
             </div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Records Imported</CardTitle>
-            <Badge variant="outline" className="h-4 text-xs">Total</Badge>
+            <Badge variant="outline" className="h-4 text-xs">
+              Total
+            </Badge>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
@@ -278,32 +255,29 @@ export default function ImportsPage() {
                   </div>
                 </div>
               </div>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" onClick={downloadProductsTemplate}>
                 <Download className="h-4 w-4 mr-2" />
                 Download
               </Button>
             </div>
-            
+
             <div className="flex items-center justify-between p-4 border rounded-lg">
               <div className="flex items-center gap-3">
                 <FileText className="h-8 w-8 text-green-600" />
                 <div>
                   <div className="font-medium">Categories Template (JSON)</div>
                   <div className="text-sm text-muted-foreground">
-                    Hierarchical categories with level names (Aisle → Product Type → Master Category → Category → Sub Category)
+                    Hierarchical categories with level names (Aisle → Product Type → Master Category
+                    → Category → Sub Category)
                   </div>
                 </div>
               </div>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => downloadCategoriesTemplate()}
-              >
+              <Button variant="outline" size="sm" onClick={downloadCategoriesTemplate}>
                 <Download className="h-4 w-4 mr-2" />
                 Download JSON
               </Button>
             </div>
-            
+
             <div className="flex items-center justify-between p-4 border rounded-lg">
               <div className="flex items-center gap-3">
                 <FileText className="h-8 w-8 text-purple-600" />
@@ -314,7 +288,7 @@ export default function ImportsPage() {
                   </div>
                 </div>
               </div>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" onClick={downloadVariantsTemplate}>
                 <Download className="h-4 w-4 mr-2" />
                 Download
               </Button>
@@ -337,9 +311,7 @@ export default function ImportsPage() {
             <div className="text-center py-8">
               <Upload className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-semibold mb-2">No imports yet</h3>
-              <p className="text-muted-foreground mb-4">
-                Start by importing your first data file
-              </p>
+              <p className="text-muted-foreground mb-4">Start by importing your first data file</p>
               <Button onClick={() => setShowCreateDialog(true)}>
                 <Upload className="h-4 w-4 mr-2" />
                 Import Data
@@ -364,7 +336,15 @@ export default function ImportsPage() {
                     <TableCell>
                       <div className="flex items-center gap-2">
                         {getStatusIcon(job.status)}
-                        <Badge variant={getStatusBadgeVariant(job.status) as "default" | "secondary" | "destructive" | "outline"}>
+                        <Badge
+                          variant={
+                            getStatusBadgeVariant(job.status) as
+                              | 'default'
+                              | 'secondary'
+                              | 'destructive'
+                              | 'outline'
+                          }
+                        >
                           {job.status}
                         </Badge>
                       </div>
@@ -382,7 +362,9 @@ export default function ImportsPage() {
                       {job.progress.totalRows > 0 ? (
                         <div className="space-y-1 min-w-[120px]">
                           <div className="flex justify-between text-sm">
-                            <span>{job.progress.processedRows}/{job.progress.totalRows}</span>
+                            <span>
+                              {job.progress.processedRows}/{job.progress.totalRows}
+                            </span>
                             <span>{calculateProgress(job.progress)}%</span>
                           </div>
                           <Progress value={calculateProgress(job.progress)} className="h-2" />

@@ -1,4 +1,6 @@
-import { SignIn } from "@clerk/nextjs";
+import { SignIn } from '@clerk/nextjs';
+import { Suspense } from 'react';
+import { AuthLoading } from '@/components/auth/auth-loading';
 
 export default function SignInPage() {
   return (
@@ -8,20 +10,22 @@ export default function SignInPage() {
           <h1 className="text-2xl font-bold text-gray-900">Welcome back</h1>
           <p className="text-gray-600 mt-2">Sign in to your Bulk account</p>
         </div>
-        
-        <SignIn 
-          appearance={{
-            elements: {
-              rootBox: "mx-auto",
-              card: "shadow-lg border-0",
-            }
-          }}
-          path="/sign-in"
-          routing="path"
-          signUpUrl="/sign-up"
-          afterSignInUrl="/onboarding"
-        />
+
+        <Suspense fallback={<AuthLoading text="Loading sign in..." />}>
+          <SignIn
+            appearance={{
+              elements: {
+                rootBox: 'mx-auto',
+                card: 'shadow-lg border-0',
+              },
+            }}
+            path="/sign-in"
+            routing="path"
+            signUpUrl="/sign-up"
+            fallbackRedirectUrl="/onboarding"
+          />
+        </Suspense>
       </div>
     </div>
   );
-} 
+}

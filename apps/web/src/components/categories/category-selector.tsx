@@ -1,14 +1,14 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useQuery } from "convex/react";
-import { api } from "../../../../../convex/_generated/api";
-import { Id } from "../../../../../convex/_generated/dataModel";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import * as React from 'react';
+import { useState } from 'react';
+import { useQuery } from 'convex/react';
+import { api } from '../../../../../convex/_generated/api';
+import { Id } from '../../../../../convex/_generated/dataModel';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Label } from '@/components/ui/label';
 import {
   Dialog,
   DialogContent,
@@ -16,7 +16,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog';
 import {
   Command,
   CommandEmpty,
@@ -24,35 +24,17 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Check, ChevronDown, FolderTree, Plus, Tag, X } from "lucide-react";
-import { cn } from "@/lib/utils";
-
-interface Category {
-  _id: Id<"categories">;
-  name: string;
-  level: number;
-  path: string;
-  parentId?: Id<"categories">;
-  children?: Category[];
-}
-
-interface CategoryLevel {
-  level: number;
-  friendlyName: string;
-  description?: string;
-}
+} from '@/components/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Check, ChevronDown, FolderTree, Plus, Tag, X } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Category } from '@/types/models';
 
 interface CategorySelectorProps {
-  organizationId: Id<"organizations">;
-  projectId: Id<"projects">;
-  selectedCategories: Id<"categories">[];
-  onChange: (categories: Id<"categories">[]) => void;
+  organizationId: Id<'organizations'>;
+  projectId: Id<'projects'>;
+  selectedCategories: Id<'categories'>[];
+  onChange: (categories: Id<'categories'>[]) => void;
   multiple?: boolean;
   placeholder?: string;
   className?: string;
@@ -64,11 +46,11 @@ export function CategorySelector({
   selectedCategories,
   onChange,
   multiple = true,
-  placeholder = "Select categories...",
+  placeholder = 'Select categories...',
   className,
 }: CategorySelectorProps) {
   const [open, setOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState('');
   const [showAssignmentDialog, setShowAssignmentDialog] = useState(false);
 
   // Get category tree
@@ -79,57 +61,59 @@ export function CategorySelector({
   });
 
   // Get level definitions for friendly names
-  const levelDefinitions = useQuery(api.functions.categories.categories.getCategoryLevelDefinitions, {
+  const levelDefinitions = useQuery(api.functions.categories.categoryLevels.getCategoryLevels, {
     organizationId,
     projectId,
   });
 
-  // Get selected category details
-  const selectedCategoryDetails = useQuery(
-    api.functions.categories.categories.getSelectedCategories,
-    selectedCategories.length > 0 ? { categoryIds: selectedCategories } : "skip"
-  );
-
-  if (!categoryTree || !levelDefinitions) {
-    return (
-      <div className={cn("flex items-center justify-center p-4 border rounded-md", className)}>
-        <div className="text-muted-foreground">Loading categories...</div>
-      </div>
-    );
-  }
-
-  const flattenCategories = (categories: Category[]): Category[] => {
+  const flattenCategories = React.useCallback((categories: Category[]): Category[] => {
     const flattened: Category[] = [];
-    
-    const flatten = (cats: Category[], parentPath = "") => {
-      cats.forEach(category => {
+
+    const flatten = (cats: Category[], parentPath = '') => {
+      cats.forEach((category) => {
         flattened.push(category);
         if (category.children) {
           flatten(category.children, `${parentPath}${category.name} > `);
         }
       });
     };
-    
+
     flatten(categories);
     return flattened;
-  };
+  }, []);
+
+  // Get selected category details from the tree
+  const selectedCategoryDetails = React.useMemo(() => {
+    if (!categoryTree || selectedCategories.length === 0) return [];
+    const allCats = flattenCategories(categoryTree);
+    return allCats.filter((cat) => selectedCategories.includes(cat._id));
+  }, [categoryTree, selectedCategories, flattenCategories]);
+
+  if (!categoryTree || !levelDefinitions) {
+    return (
+      <div className={cn('flex items-center justify-center p-4 border rounded-md', className)}>
+        <div className="text-muted-foreground">Loading categories...</div>
+      </div>
+    );
+  }
 
   const allCategories = flattenCategories(categoryTree || []);
-  
-  const filteredCategories = allCategories.filter(category =>
-    category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    category.path.toLowerCase().includes(searchTerm.toLowerCase())
+
+  const filteredCategories = allCategories.filter(
+    (category) =>
+      category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      category.path.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const getLevelName = (level: number) => {
-    const levelDef = levelDefinitions?.find(l => l.level === level);
+    const levelDef = levelDefinitions?.find((l) => l.level === level);
     return levelDef?.friendlyName || `Level ${level}`;
   };
 
-  const handleSelect = (categoryId: Id<"categories">) => {
+  const handleSelect = (categoryId: Id<'categories'>) => {
     if (multiple) {
       const newSelection = selectedCategories.includes(categoryId)
-        ? selectedCategories.filter(id => id !== categoryId)
+        ? selectedCategories.filter((id) => id !== categoryId)
         : [...selectedCategories, categoryId];
       onChange(newSelection);
     } else {
@@ -138,8 +122,8 @@ export function CategorySelector({
     }
   };
 
-  const removeCategory = (categoryId: Id<"categories">) => {
-    onChange(selectedCategories.filter(id => id !== categoryId));
+  const removeCategory = (categoryId: Id<'categories'>) => {
+    onChange(selectedCategories.filter((id) => id !== categoryId));
   };
 
   const getCategoryPath = (category: Category) => {
@@ -150,11 +134,11 @@ export function CategorySelector({
     <div className={className}>
       <div className="space-y-2">
         <Label>Categories</Label>
-        
+
         {/* Selected Categories Display */}
-        {selectedCategories.length > 0 && (
+        {selectedCategories.length > 0 && selectedCategoryDetails.length > 0 && (
           <div className="flex flex-wrap gap-2 p-2 border rounded-md bg-muted/20">
-            {selectedCategoryDetails?.map((category: Category) => (
+            {selectedCategoryDetails.map((category) => (
               <Badge key={category._id} variant="secondary" className="flex items-center gap-1">
                 <span className="text-xs text-muted-foreground">
                   {getLevelName(category.level)}:
@@ -185,11 +169,9 @@ export function CategorySelector({
             >
               <div className="flex items-center gap-2">
                 <FolderTree className="h-4 w-4" />
-                {selectedCategories.length === 0 ? (
-                  placeholder
-                ) : (
-                  `${selectedCategories.length} categor${selectedCategories.length === 1 ? 'y' : 'ies'} selected`
-                )}
+                {selectedCategories.length === 0
+                  ? placeholder
+                  : `${selectedCategories.length} categor${selectedCategories.length === 1 ? 'y' : 'ies'} selected`}
               </div>
               <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
@@ -214,10 +196,8 @@ export function CategorySelector({
                       >
                         <Check
                           className={cn(
-                            "h-4 w-4",
-                            selectedCategories.includes(category._id)
-                              ? "opacity-100"
-                              : "opacity-0"
+                            'h-4 w-4',
+                            selectedCategories.includes(category._id) ? 'opacity-100' : 'opacity-0'
                           )}
                         />
                         <div className="flex-1 min-w-0">
@@ -254,7 +234,8 @@ export function CategorySelector({
         {/* Quick Actions */}
         <div className="flex gap-2 text-sm text-muted-foreground">
           <span>
-            {allCategories.length} categories available across {new Set(allCategories.map(c => c.level)).size} levels
+            {allCategories.length} categories available across{' '}
+            {new Set(allCategories.map((c) => c.level)).size} levels
           </span>
         </div>
       </div>
@@ -271,12 +252,12 @@ export function CategorySelector({
               Assign categories across different hierarchy levels for precise categorization.
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="space-y-4">
-            {levelDefinitions.map((levelDef: CategoryLevel) => {
-              const levelCategories = allCategories.filter(c => c.level === levelDef.level);
-              const selectedInLevel = selectedCategories.filter(id => 
-                allCategories.find(c => c._id === id)?.level === levelDef.level
+            {levelDefinitions.map((levelDef) => {
+              const levelCategories = allCategories.filter((c) => c.level === levelDef.level);
+              const selectedInLevel = selectedCategories.filter(
+                (id) => allCategories.find((c) => c._id === id)?.level === levelDef.level
               );
 
               return (
@@ -287,7 +268,7 @@ export function CategorySelector({
                       ({levelCategories.length} available)
                     </span>
                   </Label>
-                  
+
                   <div className="border rounded-md p-2 max-h-32 overflow-y-auto">
                     {levelCategories.length === 0 ? (
                       <div className="text-sm text-muted-foreground text-center py-2">
@@ -296,7 +277,10 @@ export function CategorySelector({
                     ) : (
                       <div className="space-y-1">
                         {levelCategories.map((category) => (
-                          <div key={category._id} className="flex items-center gap-2 p-1 hover:bg-muted rounded">
+                          <div
+                            key={category._id}
+                            className="flex items-center gap-2 p-1 hover:bg-muted rounded"
+                          >
                             <input
                               type="checkbox"
                               checked={selectedCategories.includes(category._id)}
@@ -312,7 +296,7 @@ export function CategorySelector({
                       </div>
                     )}
                   </div>
-                  
+
                   {selectedInLevel.length > 0 && (
                     <div className="text-xs text-muted-foreground">
                       {selectedInLevel.length} selected in {levelDef.friendlyName}
@@ -324,11 +308,7 @@ export function CategorySelector({
           </div>
 
           <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setShowAssignmentDialog(false)}
-            >
+            <Button type="button" variant="outline" onClick={() => setShowAssignmentDialog(false)}>
               Done
             </Button>
           </DialogFooter>

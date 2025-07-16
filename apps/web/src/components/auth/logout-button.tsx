@@ -1,48 +1,57 @@
-"use client";
+'use client';
 
-import { useClerk } from "@clerk/nextjs";
-import { Button } from "@/components/ui/button";
-import { LogOut } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useClerk } from '@clerk/nextjs';
+import { Button } from '@/components/ui/button';
+import { LogOut, Loader2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
 interface LogoutButtonProps {
-  variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
-  size?: "default" | "sm" | "lg" | "icon";
+  variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
+  size?: 'default' | 'sm' | 'lg' | 'icon';
   showIcon?: boolean;
   children?: React.ReactNode;
   className?: string;
 }
 
-export function LogoutButton({ 
-  variant = "ghost", 
-  size = "default", 
+export function LogoutButton({
+  variant = 'ghost',
+  size = 'default',
   showIcon = false,
   children,
-  className
+  className,
 }: LogoutButtonProps) {
   const { signOut } = useClerk();
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleLogout = async () => {
+    setIsLoading(true);
     try {
       await signOut({
-        redirectUrl: '/'
+        redirectUrl: '/',
       });
       router.refresh();
     } catch {
       // Logout errors are handled by Clerk
+      setIsLoading(false);
     }
   };
 
   return (
-    <Button 
-      variant={variant} 
+    <Button
+      variant={variant}
       size={size}
       onClick={handleLogout}
+      disabled={isLoading}
       className={`flex items-center gap-2 ${className || ''}`}
     >
-      {showIcon && <LogOut className="h-4 w-4" />}
-      {children || "Sign Out"}
+      {isLoading ? (
+        <Loader2 className="h-4 w-4 animate-spin" />
+      ) : (
+        showIcon && <LogOut className="h-4 w-4" />
+      )}
+      {children || (isLoading ? 'Signing out...' : 'Sign Out')}
     </Button>
   );
-} 
+}

@@ -129,6 +129,11 @@ Thumbs.db
 coverage/
 .nyc_output/
 
+# Playwright
+playwright-report/
+test-results/
+e2e/.auth/
+
 # Storybook
 storybook-static/
 
@@ -177,3 +182,11 @@ firebase-debug.log
 Network Trash Folder
 Temporary Items
 .apdisk 
+
+# Agent-specific files
+.agent-metrics/
+.locks/
+docs-agent/
+migration-agent/
+quality-agent/
+SuperClaude/
