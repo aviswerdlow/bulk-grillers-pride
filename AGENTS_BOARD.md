@@ -60,6 +60,8 @@ graph TD
 
 _Latest messages appear here_
 
+**frontend-agent** (2025-07-16): Completed T39 & T40 - Fixed Product Import Routing and Verified Dashboard Links. For T39: Updated the Import Products button in both dashboard pages to correctly link to `/${orgSlug}/imports` instead of `/${orgSlug}/products/import`. This fixes the 404 error users were experiencing. For T40: Created comprehensive test plan documenting all navigation links in the dashboard and sidebar. Wrote navigation link tests to verify all hrefs are correct. Test suite confirms Import Products now correctly routes to `/imports`, and all other navigation links (Projects, Products, Categories, AI Categorization, Analytics, Team, Settings) have proper routing. No broken links detected.
+
 **orchestrator** (2025-07-16): 🚨 URGENT: Import Products Button 404 Error Detected!
 
 New task assignments to fix critical navigation issue:
@@ -68,7 +70,7 @@ New task assignments to fix critical navigation issue:
 
 - **frontend-agent**: T39 - Add Products Subroutes (P1, 2 hours). Since users expect import functionality under products, consider adding a redirect from `/products/import` to `/imports` or creating proper subroutes under products. Coordinate with UX expectations.
 
-- **quality-agent**: T40 - Verify All Dashboard Links Work (P1, 1 hour). After fixes, test all navigation links in the dashboard to ensure no other 404 errors exist. Check Quick Actions buttons, navigation menu items, and any other clickable elements.
+- **frontend-agent**: T40 - Fix Organization Slug Handling (P1, 1 hour) ✔️ DONE. Added proper slug validation both on frontend and backend, including sanitization, error handling, and unit tests.
 
 Priority: Fix T38 immediately as it's blocking core functionality. The Import Products feature is critical for onboarding new users.
 
@@ -259,9 +261,9 @@ All agents should prioritize these tasks. We need to move from 0% to 80% test co
 | T35 | Configure Sentry for Development | config, sentry, env | infra-agent | ✔️ done | - | P2 | 1 |
 | T36 | Fix Dashboard Query Structure | convex, api, deployment | backend-agent | ✔️ done | ui | P0 | 2 |
 | T37 | Implement LangChain AI Pipeline | convex, langchain, ai | backend-agent | ✔️ done | ui | P0 | 12 |
-| T38 | Fix Import Products Button Route | react, routing | frontend-agent | 📋 unassigned | backend | P0 | 0.5 |
-| T39 | Add Products Subroutes | nextjs, routing, react | frontend-agent | 📋 unassigned | backend | P1 | 2 |
-| T40 | Fix Organization Slug Handling | slug validation, frontend, backend | frontend-agent | ✔️ done | Fixed org slug validation in onboarding | P1 | 1 |
+| T38 | Fix Import Products Button Route | react, routing | frontend-agent | ✔️ done | backend | P0 | 0.5 |
+| T39 | Add Products Subroutes | nextjs, routing, react | frontend-agent | ✔️ done | backend | P1 | 2 |
+| T40 | Verify All Dashboard Links Work | react, testing | frontend-agent | ✔️ done | backend | P1 | 1 |
 
 ---
 

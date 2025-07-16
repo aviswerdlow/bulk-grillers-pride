@@ -53,16 +53,16 @@ describe('Dashboard Navigation Tests', () => {
   describe('Quick Actions Navigation', () => {
     beforeEach(() => {
       (useQuery as jest.Mock).mockImplementation((query: any) => {
-        if (query === 'mock-getOrganizationBySlug') {
+        if (query.toString().includes('getOrganizationBySlug')) {
           return mockOrganization;
         }
-        if (query === 'mock-getOrganizationProjects') {
+        if (query.toString().includes('getOrganizationProjects')) {
           return mockProjects;
         }
-        if (query === 'mock-getDashboardStats') {
+        if (query.toString().includes('getDashboardStats')) {
           return mockDashboardStats;
         }
-        if (query === 'mock-getRecentActivity') {
+        if (query.toString().includes('getRecentActivity')) {
           return mockRecentActivity;
         }
         return undefined;
@@ -112,10 +112,10 @@ describe('Dashboard Navigation Tests', () => {
   describe('Projects Section Navigation', () => {
     it('should have correct href for View All Projects link', async () => {
       (useQuery as jest.Mock).mockImplementation((query: any) => {
-        if (query === 'mock-getOrganizationBySlug') {
+        if (query.toString().includes('getOrganizationBySlug')) {
           return mockOrganization;
         }
-        if (query === 'mock-getOrganizationProjects') {
+        if (query.toString().includes('getOrganizationProjects')) {
           return mockProjects;
         }
         return undefined;
@@ -135,10 +135,10 @@ describe('Dashboard Navigation Tests', () => {
 
     it('should have correct href for individual project links', async () => {
       (useQuery as jest.Mock).mockImplementation((query: any) => {
-        if (query.name?.includes('getOrganizationBySlug')) {
+        if (query.toString().includes('getOrganizationBySlug')) {
           return mockOrganization;
         }
-        if (query.name?.includes('getOrganizationProjects')) {
+        if (query.toString().includes('getOrganizationProjects')) {
           return mockProjects;
         }
         return undefined;
@@ -157,10 +157,10 @@ describe('Dashboard Navigation Tests', () => {
 
     it('should show Create Project link when no projects exist', async () => {
       (useQuery as jest.Mock).mockImplementation((query: any) => {
-        if (query.name?.includes('getOrganizationBySlug')) {
+        if (query === 'mock-getOrganizationBySlug') {
           return mockOrganization;
         }
-        if (query.name?.includes('getOrganizationProjects')) {
+        if (query === 'mock-getOrganizationProjects') {
           return []; // No projects
         }
         return undefined;
@@ -181,7 +181,7 @@ describe('Dashboard Navigation Tests', () => {
   describe('Header Navigation', () => {
     it('should have correct href for New Project button in header', async () => {
       (useQuery as jest.Mock).mockImplementation((query: any) => {
-        if (query.name?.includes('getOrganizationBySlug')) {
+        if (query.toString().includes('getOrganizationBySlug')) {
           return mockOrganization;
         }
         return undefined;
@@ -203,10 +203,10 @@ describe('Dashboard Navigation Tests', () => {
   describe('Recent Activity Navigation', () => {
     it('should have correct href for View All Activity link', async () => {
       (useQuery as jest.Mock).mockImplementation((query: any) => {
-        if (query.name?.includes('getOrganizationBySlug')) {
+        if (query.toString().includes('getOrganizationBySlug')) {
           return mockOrganization;
         }
-        if (query.name?.includes('getRecentActivity')) {
+        if (query.toString().includes('getRecentActivity')) {
           return mockRecentActivity;
         }
         return undefined;
@@ -228,16 +228,16 @@ describe('Dashboard Navigation Tests', () => {
   describe('All Navigation Links Summary', () => {
     it('should have all expected navigation links with correct hrefs', async () => {
       (useQuery as jest.Mock).mockImplementation((query: any) => {
-        if (query.name?.includes('getOrganizationBySlug')) {
+        if (query.toString().includes('getOrganizationBySlug')) {
           return mockOrganization;
         }
-        if (query.name?.includes('getOrganizationProjects')) {
+        if (query.toString().includes('getOrganizationProjects')) {
           return mockProjects;
         }
-        if (query.name?.includes('getDashboardStats')) {
+        if (query.toString().includes('getDashboardStats')) {
           return mockDashboardStats;
         }
-        if (query.name?.includes('getRecentActivity')) {
+        if (query.toString().includes('getRecentActivity')) {
           return mockRecentActivity;
         }
         return undefined;
