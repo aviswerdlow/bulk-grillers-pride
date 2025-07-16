@@ -2,22 +2,22 @@
 
 export function downloadProductsTemplate() {
   const headers = [
-    'title',
-    'description',
-    'vendor',
-    'productType',
-    'handle',
-    'status',
-    'tags',
-    'price',
-    'compareAtPrice',
-    'cost',
-    'sku',
-    'barcode',
-    'inventoryQuantity',
-    'weight',
-    'weightUnit',
-    'imageUrl',
+    'Title',
+    'Description',
+    'Vendor',
+    'Product Type',
+    'Handle',
+    'Status',
+    'Tags',
+    'Price',
+    'Compare At Price',
+    'Cost',
+    'SKU',
+    'Barcode',
+    'Inventory Quantity',
+    'Weight',
+    'Weight Unit',
+    'Image URL',
   ];
 
   const sampleData = [

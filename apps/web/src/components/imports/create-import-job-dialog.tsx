@@ -58,6 +58,10 @@ export function CreateImportJobDialog({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const createImportJob = useMutation((api as any).functions.imports.imports.createImportJob);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const startProductImport = useMutation(
+    (api as any).functions.imports.productImport.startProductImport
+  );
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const generateUploadUrl = useMutation((api as any).functions.imports.imports.generateUploadUrl);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const completeFileUpload = useMutation((api as any).functions.imports.imports.completeFileUpload);
@@ -111,24 +115,47 @@ export function CreateImportJobDialog({
       });
 
       // Step 4: Create import job
-      await createImportJob({
-        organizationId,
-        projectId,
-        importType: data.importType,
-        fileName: selectedFile.name,
-        fileSize: selectedFile.size,
-        fileStorageId: uploadResult.storageId,
-        fieldMapping: {
-          mappings: getDefaultFieldMapping(data.importType),
-          options: {
-            hasHeaders: data.hasHeaders,
-            delimiter: data.delimiter,
-            skipEmptyRows: true,
-            duplicateHandling: data.duplicateHandling,
+      if (data.importType === 'products') {
+        // Use the product-specific import that has working scheduler
+        await startProductImport({
+          organizationId,
+          projectId,
+          fileName: selectedFile.name,
+          fileSize: selectedFile.size,
+          fileStorageId: uploadResult.storageId,
+          fieldMapping: {
+            mappings: getDefaultFieldMapping(data.importType),
+            options: {
+              hasHeaders: data.hasHeaders,
+              delimiter: data.delimiter,
+              skipEmptyRows: true,
+              duplicateHandling: data.duplicateHandling,
+              createMissingCategories: false,
+              defaultStatus: 'draft' as const,
+            },
           },
-        },
-        validationRules: getDefaultValidationRules(data.importType),
-      });
+        });
+      } else {
+        // Use generic import for other types
+        await createImportJob({
+          organizationId,
+          projectId,
+          importType: data.importType,
+          fileName: selectedFile.name,
+          fileSize: selectedFile.size,
+          fileStorageId: uploadResult.storageId,
+          fieldMapping: {
+            mappings: getDefaultFieldMapping(data.importType),
+            options: {
+              hasHeaders: data.hasHeaders,
+              delimiter: data.delimiter,
+              skipEmptyRows: true,
+              duplicateHandling: data.duplicateHandling,
+            },
+          },
+          validationRules: getDefaultValidationRules(data.importType),
+        });
+      }
 
       toast.success('Import job created successfully');
       reset();
@@ -391,13 +418,25 @@ export function CreateImportJobDialog({
 function getDefaultFieldMapping(importType: string) {
   switch (importType) {
     case 'products':
+      // For products, map column names to product fields
+      // This assumes the CSV has headers matching these column names
       return {
-        title: 0,
-        description: 1,
-        vendor: 2,
-        productType: 3,
-        handle: 4,
-        tags: 5,
+        Title: 'title',
+        Description: 'description',
+        Vendor: 'vendor',
+        'Product Type': 'productType',
+        Handle: 'handle',
+        Tags: 'tags',
+        Status: 'status',
+        SKU: 'sku',
+        Barcode: 'barcode',
+        Price: 'price',
+        'Compare At Price': 'compareAtPrice',
+        Cost: 'cost',
+        'Inventory Quantity': 'inventoryQuantity',
+        Weight: 'weight',
+        'Weight Unit': 'weightUnit',
+        'Image URL': 'imageUrl',
       };
     case 'categories':
       return {
