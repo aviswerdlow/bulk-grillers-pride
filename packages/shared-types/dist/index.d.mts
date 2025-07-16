@@ -1,4 +1,4 @@
-type Role = "owner" | "admin" | "editor" | "viewer";
+type Role = 'owner' | 'admin' | 'editor' | 'viewer';
 declare const PERMISSIONS: {
     readonly MANAGE_ORGANIZATION: "organization:manage";
     readonly VIEW_ORGANIZATION: "organization:view";
@@ -29,18 +29,18 @@ declare const PERMISSIONS: {
     readonly EXPORT_DATA: "data:export";
     readonly VIEW_AUDIT_LOGS: "audit:view";
 };
-type Permission = typeof PERMISSIONS[keyof typeof PERMISSIONS];
+type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
 declare const ROLE_PERMISSIONS: Record<Role, readonly string[]>;
-type RoleHasPermission<R extends Role, P extends Permission> = R extends "owner" ? true : P extends typeof ROLE_PERMISSIONS[R][number] ? true : false;
+type RoleHasPermission<R extends Role, P extends Permission> = R extends 'owner' ? true : P extends (typeof ROLE_PERMISSIONS)[R][number] ? true : false;
 
-type OrganizationStatus = "active" | "suspended" | "trial";
-type MembershipStatus = "active" | "pending" | "revoked";
-type CategoryStatus = "active" | "hidden" | "archived";
-type UserStatus = "active" | "invited" | "suspended";
-type ProductStatus = "active" | "draft" | "archived";
-type ImportJobStatus = "pending" | "processing" | "completed" | "failed";
-type AIJobStatus = "pending" | "running" | "completed" | "failed" | "cancelled";
-type GenericStatus = "active" | "inactive" | "pending" | "archived";
+type OrganizationStatus = 'active' | 'suspended' | 'trial';
+type MembershipStatus = 'active' | 'pending' | 'revoked';
+type CategoryStatus = 'active' | 'hidden' | 'archived';
+type UserStatus = 'active' | 'invited' | 'suspended';
+type ProductStatus = 'active' | 'draft' | 'archived';
+type ImportJobStatus = 'pending' | 'processing' | 'completed' | 'failed';
+type AIJobStatus = 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
+type GenericStatus = 'active' | 'inactive' | 'pending' | 'archived';
 declare const STATUS_LABELS: {
     readonly organization: {
         readonly active: "Active";
@@ -98,8 +98,8 @@ declare const STATUS_COLORS: {
     readonly trial: "purple";
 };
 
-type AuditEventType = "create" | "update" | "delete" | "export" | "import" | "login" | "logout" | "invite" | "revoke" | "assign" | "unassign";
-type AuditEntityType = "organization" | "user" | "product" | "category" | "permission" | "role" | "import_job" | "ai_job";
+type AuditEventType = 'create' | 'update' | 'delete' | 'export' | 'import' | 'login' | 'logout' | 'invite' | 'revoke' | 'assign' | 'unassign';
+type AuditEntityType = 'organization' | 'user' | 'product' | 'category' | 'permission' | 'role' | 'import_job' | 'ai_job';
 interface AuditLogEntry {
     event: AuditEventType;
     entityType: AuditEntityType;
@@ -148,7 +148,7 @@ type Timestamp = number;
 type UUID = string;
 type Email = string;
 type URL = string;
-type SortDirection = "asc" | "desc";
+type SortDirection = 'asc' | 'desc';
 interface SortOptions {
     field: string;
     direction: SortDirection;

@@ -259,6 +259,14 @@ export const processProductImport = internalAction({
   },
 });
 
+// Internal query to get import job
+export const getImportJobInternal = internalQuery({
+  args: { jobId: v.id('importJobs') },
+  handler: async (ctx, { jobId }) => {
+    return await ctx.db.get(jobId);
+  },
+});
+
 // Import products action
 export const importProducts = internalAction({
   args: {
@@ -269,6 +277,12 @@ export const importProducts = internalAction({
     options: v.any(),
   },
   handler: async (ctx, { jobId, organizationId, projectId, products, options }) => {
+    // Get the import job to access createdBy
+    const job = await ctx.runQuery(internal.functions.imports.productImport.getImportJobInternal, {
+      jobId,
+    });
+    if (!job) throw new Error('Import job not found');
+
     const result = {
       created: 0,
       updated: 0,
@@ -323,6 +337,7 @@ export const importProducts = internalAction({
               projectId,
               product,
               defaultStatus: options.defaultStatus || 'draft',
+              userId: job.createdBy,
             }
           );
 
@@ -350,13 +365,6 @@ export const importProducts = internalAction({
 });
 
 // Internal mutations and queries
-export const getImportJobInternal = internalQuery({
-  args: { jobId: v.id('importJobs') },
-  handler: async (ctx, { jobId }) => {
-    return await ctx.db.get(jobId);
-  },
-});
-
 export const updateJobStatusInternal = internalMutation({
   args: {
     jobId: v.id('importJobs'),
@@ -489,8 +497,9 @@ export const createProductInternal = internalMutation({
     projectId: v.id('projects'),
     product: v.any(),
     defaultStatus: v.union(v.literal('active'), v.literal('draft'), v.literal('archived')),
+    userId: v.id('users'),
   },
-  handler: async (ctx, { organizationId, projectId, product, defaultStatus }) => {
+  handler: async (ctx, { organizationId, projectId, product, defaultStatus, userId }) => {
     const now = Date.now();
 
     // Generate handle if not provided
@@ -523,9 +532,10 @@ export const createProductInternal = internalMutation({
         : [],
       metadata: {},
       version: 1,
+      createdBy: userId,
+      lastModifiedBy: userId,
       createdAt: now,
       updatedAt: now,
-      importedAt: now,
     });
 
     // Create default variant if pricing info is provided
@@ -533,20 +543,27 @@ export const createProductInternal = internalMutation({
       await ctx.db.insert('productVariants', {
         productId,
         organizationId,
+        projectId,
         title: 'Default',
         sku: product.sku || generateSKU(product.title),
         barcode: product.barcode,
         price: product.price || 0,
         compareAtPrice: product.compareAtPrice,
-        cost: product.cost,
+        costPrice: product.cost,
         inventoryQuantity: product.inventoryQuantity || 0,
-        trackInventory: product.trackInventory !== false,
-        requiresShipping: product.requiresShipping !== false,
+        inventoryPolicy: 'deny',
+        trackQuantity: product.trackInventory !== false,
         weight: product.weight,
         weightUnit: product.weightUnit || 'lb',
-        position: 0,
+        dimensions: undefined,
+        options: [],
+        images: [],
+        metadata: {},
+        status: 'active',
+        version: 1,
         createdAt: now,
         updatedAt: now,
+        lastModifiedBy: userId,
       });
     }
 
@@ -585,7 +602,7 @@ export const updateProductInternal = internalMutation({
         await ctx.db.patch(variants[0]._id, {
           price: updates.price,
           compareAtPrice: updates.compareAtPrice,
-          cost: updates.cost,
+          costPrice: updates.cost,
           inventoryQuantity: updates.inventoryQuantity,
           weight: updates.weight,
           updatedAt: now,

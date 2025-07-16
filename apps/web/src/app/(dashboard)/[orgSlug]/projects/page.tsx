@@ -28,7 +28,7 @@ export default function ProjectsPage() {
 
   // Get dashboard stats for each project
   const projectStats = useQuery(
-    api.functions.dashboard.queries.getDashboardStats,
+    api.functions.dashboard.getDashboardStats,
     organization ? { organizationId: organization._id } : 'skip'
   );
 

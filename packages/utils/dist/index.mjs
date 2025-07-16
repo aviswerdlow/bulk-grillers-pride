@@ -155,12 +155,15 @@ function deepEqual(a, b) {
   return false;
 }
 function groupBy(array, key) {
-  return array.reduce((groups, item) => {
-    const groupKey = typeof key === "function" ? key(item) : String(item[key]);
-    if (!groups[groupKey]) groups[groupKey] = [];
-    groups[groupKey].push(item);
-    return groups;
-  }, {});
+  return array.reduce(
+    (groups, item) => {
+      const groupKey = typeof key === "function" ? key(item) : String(item[key]);
+      if (!groups[groupKey]) groups[groupKey] = [];
+      groups[groupKey].push(item);
+      return groups;
+    },
+    {}
+  );
 }
 function unique(array, key) {
   if (!key) {
@@ -178,13 +181,7 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 async function retry(fn, options = {}) {
-  const {
-    attempts = 3,
-    delay = 1e3,
-    maxDelay = 3e4,
-    factor = 2,
-    onError
-  } = options;
+  const { attempts = 3, delay = 1e3, maxDelay = 3e4, factor = 2, onError } = options;
   let lastError;
   for (let i = 0; i < attempts; i++) {
     try {

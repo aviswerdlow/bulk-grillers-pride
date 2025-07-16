@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ShoppingCart, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { sanitizeSlug, isValidSlug, getSlugValidationError } from '@/utils/slug-validation';
 
 export default function OnboardingPage() {
   const { user } = useUser();
@@ -18,6 +19,7 @@ export default function OnboardingPage() {
   const [organizationName, setOrganizationName] = useState('');
   const [organizationSlug, setOrganizationSlug] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+  const [slugError, setSlugError] = useState<string | null>(null);
 
   const storeUser = useMutation(api.functions.auth.users.store);
   const createOrganization = useMutation(api.functions.organizations.organizations.create);

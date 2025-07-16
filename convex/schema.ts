@@ -377,6 +377,26 @@ export default defineSchema({
   // ================================
   // AI WORKFLOW & JOB MANAGEMENT
   // ================================
+  // AI Categorization Feedback for improving accuracy
+  aiCategorizationFeedback: defineTable({
+    organizationId: v.id('organizations'),
+    projectId: v.id('projects'),
+    productId: v.id('products'),
+    jobId: v.id('aiCategorizationJobs'),
+    suggestedCategoryId: v.id('categories'),
+    feedback: v.union(v.literal('accepted'), v.literal('rejected'), v.literal('corrected')),
+    correctedCategoryId: v.optional(v.id('categories')),
+    reason: v.optional(v.string()),
+    confidence: v.number(),
+    userId: v.id('users'),
+    createdAt: v.number(),
+  })
+    .index('by_organization', ['organizationId'])
+    .index('by_product', ['productId'])
+    .index('by_job', ['jobId'])
+    .index('by_category', ['suggestedCategoryId'])
+    .index('by_user', ['userId']),
+
   aiCategorizationJobs: defineTable({
     organizationId: v.id('organizations'),
     projectId: v.id('projects'),

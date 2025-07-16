@@ -25,37 +25,218 @@ import {
 import Link from 'next/link';
 import { PageLoading } from '@/components/loading';
 import { formatDistanceToNow } from 'date-fns';
+import { useEffect, useRef } from 'react';
+
+// Enhanced logging utility
+const logger = {
+  info: (component: string, message: string, data?: any) => {
+    const timestamp = new Date().toISOString();
+    console.log(`[${timestamp}] [DASHBOARD-UI] [INFO] [${component}] ${message}`, data || '');
+  },
+  warn: (component: string, message: string, data?: any) => {
+    const timestamp = new Date().toISOString();
+    console.warn(`[${timestamp}] [DASHBOARD-UI] [WARN] [${component}] ${message}`, data || '');
+  },
+  error: (component: string, message: string, error?: any) => {
+    const timestamp = new Date().toISOString();
+    console.error(`[${timestamp}] [DASHBOARD-UI] [ERROR] [${component}] ${message}`, {
+      error:
+        error instanceof Error
+          ? {
+              message: error.message,
+              stack: error.stack,
+              name: error.name,
+            }
+          : error,
+    });
+  },
+};
 
 export default function OrganizationDashboard() {
   const params = useParams();
   const orgSlug = params.orgSlug as string;
-
-  const organization = useQuery(api.functions.organizations.organizations.getOrganizationBySlug, {
-    slug: orgSlug,
+  const renderCount = useRef(0);
+  const queryAttempts = useRef({
+    organization: 0,
+    projects: 0,
+    dashboardStats: 0,
+    recentActivity: 0,
   });
 
-  const projects = useQuery(
-    api.functions.projects.projects.getOrganizationProjects,
-    organization ? { organizationId: organization._id } : 'skip'
-  );
+  // Log component mount and renders
+  useEffect(() => {
+    renderCount.current++;
+    logger.info('Component', `Dashboard component rendered (render #${renderCount.current})`, {
+      orgSlug,
+      pathname: window.location.pathname,
+    });
+  }, [orgSlug]);
 
-  const dashboardStats = useQuery(
-    api.functions.dashboard.getDashboardStats,
-    organization ? { organizationId: organization._id } : 'skip'
-  );
+  // Organization query with logging
+  let organization;
+  let orgError;
+  try {
+    queryAttempts.current.organization++;
+    organization = useQuery(api.functions.organizations.organizations.getOrganizationBySlug, {
+      slug: orgSlug,
+    });
 
-  const recentActivity = useQuery(
-    api.functions.dashboard.getRecentActivity,
-    organization ? { organizationId: organization._id, limit: 5 } : 'skip'
-  );
+    if (organization !== undefined) {
+      logger.info('Query', 'Organization query successful', {
+        attempt: queryAttempts.current.organization,
+        orgId: organization?._id,
+        orgName: organization?.name,
+      });
+    }
+  } catch (error) {
+    orgError = error;
+    logger.error('Query', 'Organization query failed', error);
+  }
+
+  // Projects query with logging
+  let projects;
+  let projectsError;
+  try {
+    if (organization) {
+      queryAttempts.current.projects++;
+      projects = useQuery(api.functions.projects.projects.getOrganizationProjects, {
+        organizationId: organization._id,
+      });
+
+      if (projects !== undefined) {
+        logger.info('Query', 'Projects query successful', {
+          attempt: queryAttempts.current.projects,
+          projectCount: projects?.length,
+        });
+      }
+    } else {
+      projects = 'skip';
+    }
+  } catch (error) {
+    projectsError = error;
+    logger.error('Query', 'Projects query failed', error);
+  }
+
+  // Dashboard stats query with enhanced error handling
+  let dashboardStats;
+  let dashboardStatsError;
+  try {
+    if (organization) {
+      queryAttempts.current.dashboardStats++;
+      logger.info('Query', 'Attempting dashboard stats query', {
+        attempt: queryAttempts.current.dashboardStats,
+        organizationId: organization._id,
+      });
+
+      // Check if the function exists in the API
+      if (!api.functions.dashboard?.getDashboardStats) {
+        logger.error('Query', 'getDashboardStats function not found in API', {
+          availableFunctions: Object.keys(api.functions.dashboard || {}),
+        });
+      } else {
+        dashboardStats = useQuery(api.functions.dashboard.getDashboardStats, {
+          organizationId: organization._id,
+        });
+
+        if (dashboardStats !== undefined) {
+          logger.info('Query', 'Dashboard stats query successful', {
+            attempt: queryAttempts.current.dashboardStats,
+            stats: {
+              projects: dashboardStats?.projectsCount,
+              products: dashboardStats?.productsCount,
+              aiJobs: dashboardStats?.activeAiJobsCount,
+              teamMembers: dashboardStats?.teamMembersCount,
+            },
+          });
+        }
+      }
+    } else {
+      dashboardStats = 'skip';
+    }
+  } catch (error) {
+    dashboardStatsError = error;
+    logger.error('Query', 'Dashboard stats query failed', error);
+  }
+
+  // Recent activity query with logging
+  let recentActivity;
+  let recentActivityError;
+  try {
+    if (organization) {
+      queryAttempts.current.recentActivity++;
+      recentActivity = useQuery(api.functions.dashboard.getRecentActivity, {
+        organizationId: organization._id,
+        limit: 5,
+      });
+
+      if (recentActivity !== undefined) {
+        logger.info('Query', 'Recent activity query successful', {
+          attempt: queryAttempts.current.recentActivity,
+          activityCount: recentActivity?.length,
+        });
+      }
+    } else {
+      recentActivity = 'skip';
+    }
+  } catch (error) {
+    recentActivityError = error;
+    logger.error('Query', 'Recent activity query failed', error);
+  }
+
+  // Log any Sentry-related errors in the console
+  useEffect(() => {
+    const checkForSentryErrors = () => {
+      const performanceEntries = performance.getEntriesByType('resource');
+      const sentryRequests = performanceEntries.filter(
+        (entry) => entry.name.includes('sentry') || entry.name.includes('ingest')
+      );
+
+      if (sentryRequests.length > 0) {
+        logger.warn('Network', 'Detected Sentry-related network requests', {
+          requests: sentryRequests.map((req) => ({
+            url: req.name,
+            duration: req.duration,
+            transferSize: (req as any).transferSize,
+            responseStatus: (req as any).responseStatus,
+          })),
+        });
+      }
+    };
+
+    // Check on mount and after a delay
+    checkForSentryErrors();
+    const timer = setTimeout(checkForSentryErrors, 2000);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   // Loading state
   if (organization === undefined) {
+    logger.info('Component', 'Showing loading state');
     return <PageLoading text="Loading organization..." />;
+  }
+
+  // Error state
+  if (orgError) {
+    logger.error('Component', 'Showing error state', orgError);
+    return (
+      <div className="p-8">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900">Error loading organization</h1>
+          <p className="text-gray-600 mt-2">
+            {orgError instanceof Error ? orgError.message : 'An unexpected error occurred'}
+          </p>
+          <Button onClick={() => window.location.reload()} className="mt-4">
+            Retry
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   // Not found state
   if (!organization) {
+    logger.warn('Component', 'Organization not found', { orgSlug });
     return (
       <div className="p-8">
         <div className="text-center">
@@ -67,6 +248,14 @@ export default function OrganizationDashboard() {
       </div>
     );
   }
+
+  // Log successful render with data
+  logger.info('Component', 'Rendering dashboard with data', {
+    hasOrganization: !!organization,
+    hasProjects: projects !== 'skip' && projects !== undefined,
+    hasDashboardStats: dashboardStats !== 'skip' && dashboardStats !== undefined,
+    hasRecentActivity: recentActivity !== 'skip' && recentActivity !== undefined,
+  });
 
   return (
     <div className="p-8">
@@ -90,6 +279,26 @@ export default function OrganizationDashboard() {
         </div>
       </div>
 
+      {/* Show warning if dashboard stats failed */}
+      {dashboardStatsError && (
+        <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+          <div className="flex">
+            <AlertCircle className="h-5 w-5 text-yellow-400 mr-2" />
+            <div>
+              <h3 className="text-sm font-medium text-yellow-800">
+                Dashboard statistics unavailable
+              </h3>
+              <p className="mt-1 text-sm text-yellow-700">
+                Some statistics may not be displayed correctly. Error:{' '}
+                {dashboardStatsError instanceof Error
+                  ? dashboardStatsError.message
+                  : 'Unknown error'}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <Card>
@@ -111,8 +320,8 @@ export default function OrganizationDashboard() {
           <CardContent>
             <div className="text-2xl font-bold">{dashboardStats?.productsCount || 0}</div>
             <p className="text-xs text-muted-foreground">
-              {dashboardStats?.productsByStatus.active || 0} active,{' '}
-              {dashboardStats?.productsByStatus.draft || 0} draft
+              {dashboardStats?.productsByStatus?.active || 0} active,{' '}
+              {dashboardStats?.productsByStatus?.draft || 0} draft
             </p>
           </CardContent>
         </Card>
@@ -151,7 +360,7 @@ export default function OrganizationDashboard() {
             </Button>
           </div>
 
-          {projects && projects.length > 0 ? (
+          {projects && projects !== 'skip' && projects.length > 0 ? (
             <div className="space-y-4">
               {projects.slice(0, 3).map((project) => (
                 <Card key={project._id} className="hover:shadow-md transition-shadow">
@@ -220,7 +429,7 @@ export default function OrganizationDashboard() {
                   </div>
                   <Progress
                     value={
-                      dashboardStats
+                      dashboardStats && dashboardStats.productsCount > 0
                         ? (dashboardStats.categorizedProducts / dashboardStats.productsCount) * 100
                         : 0
                     }
@@ -242,7 +451,7 @@ export default function OrganizationDashboard() {
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
             <div className="space-y-3">
               <Button variant="outline" className="w-full justify-start" asChild>
-                <Link href={`/${orgSlug}/imports`}>
+                <Link href={`/${orgSlug}/products/import`}>
                   <Upload className="h-4 w-4 mr-2" />
                   Import Products
                 </Link>
@@ -273,7 +482,7 @@ export default function OrganizationDashboard() {
           </Button>
         </div>
 
-        {recentActivity && recentActivity.length > 0 ? (
+        {recentActivity && recentActivity !== 'skip' && recentActivity.length > 0 ? (
           <Card>
             <CardContent className="p-0">
               <div className="divide-y divide-gray-200">

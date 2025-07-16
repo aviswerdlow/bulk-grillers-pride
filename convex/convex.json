@@ -6,5 +6,6 @@
       "@langchain/anthropic",
       "langsmith"
     ]
-  }
+  },
+  "functions": "convex/functions"
 }
