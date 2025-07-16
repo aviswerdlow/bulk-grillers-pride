@@ -14,6 +14,12 @@ export const create = mutation({
       throw new Error('Not authenticated');
     }
 
+    // Validate slug format
+    if (!isValidSlug(args.slug)) {
+      const error = getSlugValidationError(args.slug);
+      throw new Error(error || 'Invalid organization slug');
+    }
+
     // Get the user record
     const user = await ctx.db
       .query('users')
