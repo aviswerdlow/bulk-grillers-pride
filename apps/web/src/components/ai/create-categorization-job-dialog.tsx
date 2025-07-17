@@ -70,6 +70,7 @@ export function CreateCategorizationJobDialog({
       organizationId,
       projectId,
       // Removed status filter to show all products (active, draft, archived)
+      limit: 1000, // Increased limit to show more products
     }
   );
 
