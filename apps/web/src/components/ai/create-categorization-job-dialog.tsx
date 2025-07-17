@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useMutation, useQuery } from "convex/react";
-import { api } from "../../../../../convex/_generated/api";
-import { Id } from "../../../../../convex/_generated/dataModel";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { toast } from "sonner";
+import { useState } from 'react';
+import { useMutation, useQuery } from 'convex/react';
+import { api } from '../../../../../convex/_generated/api';
+import { Id } from '../../../../../convex/_generated/dataModel';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { toast } from 'sonner';
 
 import {
   Dialog,
@@ -15,20 +15,26 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Bot, Zap } from "lucide-react";
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Bot, Zap } from 'lucide-react';
 
 // Categorization job form schema
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const createJobSchema = z.object({
-  jobType: z.enum(["bulk_categorization", "single_product", "validation"]),
-  prompt: z.string().min(1, "Prompt is required"),
+  jobType: z.enum(['bulk_categorization', 'single_product', 'validation']),
+  prompt: z.string().min(1, 'Prompt is required'),
   batchSize: z.number().min(1).max(50).optional(),
 });
 
@@ -37,8 +43,8 @@ type CreateJobForm = z.infer<typeof createJobSchema>;
 interface CreateCategorizationJobDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  organizationId: Id<"organizations">;
-  projectId: Id<"projects">;
+  organizationId: Id<'organizations'>;
+  projectId: Id<'projects'>;
 }
 
 export function CreateCategorizationJobDialog({
@@ -63,7 +69,7 @@ export function CreateCategorizationJobDialog({
     {
       organizationId,
       projectId,
-      status: "active",
+      // Removed status filter to show all products (active, draft, archived)
     }
   );
 
@@ -80,7 +86,7 @@ export function CreateCategorizationJobDialog({
     watch,
   } = useForm<CreateJobForm>({
     defaultValues: {
-      jobType: "bulk_categorization",
+      jobType: 'bulk_categorization',
       prompt: `Analyze the following product and suggest the most appropriate categories based on:
 - Product title and description
 - Product type and vendor
@@ -91,12 +97,12 @@ Please provide categories with confidence scores and rationale for each suggesti
     },
   });
 
-  const jobType = watch("jobType");
+  const jobType = watch('jobType');
   const products = productsResult?.page || [];
 
   const onSubmit = async (data: CreateJobForm) => {
     if (selectedProducts.length === 0) {
-      toast.error("Please select at least one product");
+      toast.error('Please select at least one product');
       return;
     }
 
@@ -107,9 +113,9 @@ Please provide categories with confidence scores and rationale for each suggesti
         organizationId,
         projectId,
         jobType: data.jobType,
-        productIds: selectedProducts as Id<"products">[],
-        aiProvider: "openai", // Default for now
-        aiModel: "gpt-4", // Default for now
+        productIds: selectedProducts as Id<'products'>[],
+        aiProvider: 'openai', // Default for now
+        aiModel: 'gpt-4', // Default for now
         prompt: data.prompt,
         batchSize: data.batchSize,
         notifications: {
@@ -119,13 +125,13 @@ Please provide categories with confidence scores and rationale for each suggesti
         },
       });
 
-      toast.success("Categorization job created successfully");
+      toast.success('Categorization job created successfully');
       reset();
       setSelectedProducts([]);
       onOpenChange(false);
     } catch (error) {
-      console.error("Failed to create job:", error);
-      toast.error("Failed to create categorization job. Please try again.");
+      console.error('Failed to create job:', error);
+      toast.error('Failed to create categorization job. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -140,10 +146,8 @@ Please provide categories with confidence scores and rationale for each suggesti
   };
 
   const toggleProductSelection = (productId: string) => {
-    setSelectedProducts(prev => 
-      prev.includes(productId)
-        ? prev.filter(id => id !== productId)
-        : [...prev, productId]
+    setSelectedProducts((prev) =>
+      prev.includes(productId) ? prev.filter((id) => id !== productId) : [...prev, productId]
     );
   };
 
@@ -174,7 +178,12 @@ Please provide categories with confidence scores and rationale for each suggesti
             <Label>Categorization Type</Label>
             <Select
               value={jobType}
-              onValueChange={(value) => setValue("jobType", value as "bulk_categorization" | "single_product" | "validation")}
+              onValueChange={(value) =>
+                setValue(
+                  'jobType',
+                  value as 'bulk_categorization' | 'single_product' | 'validation'
+                )
+              }
             >
               <SelectTrigger>
                 <SelectValue />
@@ -185,7 +194,9 @@ Please provide categories with confidence scores and rationale for each suggesti
                     <Zap className="h-4 w-4" />
                     <div>
                       <div className="font-medium">Bulk Categorization</div>
-                      <div className="text-sm text-muted-foreground">Process multiple products at once</div>
+                      <div className="text-sm text-muted-foreground">
+                        Process multiple products at once
+                      </div>
                     </div>
                   </div>
                 </SelectItem>
@@ -194,7 +205,9 @@ Please provide categories with confidence scores and rationale for each suggesti
                     <Bot className="h-4 w-4" />
                     <div>
                       <div className="font-medium">Category Validation</div>
-                      <div className="text-sm text-muted-foreground">Review and improve existing categories</div>
+                      <div className="text-sm text-muted-foreground">
+                        Review and improve existing categories
+                      </div>
                     </div>
                   </div>
                 </SelectItem>
@@ -215,47 +228,61 @@ Please provide categories with confidence scores and rationale for each suggesti
                 </Button>
               </div>
             </div>
-            
+
             <Card className="max-h-48 overflow-y-auto">
               <CardContent className="p-3 space-y-2">
                 {products.length === 0 ? (
                   <p className="text-sm text-muted-foreground text-center py-4">
-                    No active products found
+                    No products found. Please import products first.
                   </p>
                 ) : (
-                  products.map((product: { _id: string; title: string; vendor?: string; productType?: string; categories: string[] }) => (
-                    <div key={product._id} className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        id={product._id}
-                        checked={selectedProducts.includes(product._id)}
-                        onChange={() => toggleProductSelection(product._id)}
-                        className="rounded border-gray-300"
-                      />
-                      <label htmlFor={product._id} className="flex-1 cursor-pointer">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <div className="font-medium text-sm">{product.title}</div>
-                            <div className="text-xs text-muted-foreground">
-                              {product.vendor && `${product.vendor} • `}
-                              {product.productType || "No type"}
+                  products.map(
+                    (product: {
+                      _id: string;
+                      title: string;
+                      vendor?: string;
+                      productType?: string;
+                      categories: string[];
+                      status?: string;
+                    }) => (
+                      <div key={product._id} className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id={product._id}
+                          checked={selectedProducts.includes(product._id)}
+                          onChange={() => toggleProductSelection(product._id)}
+                          className="rounded border-gray-300"
+                        />
+                        <label htmlFor={product._id} className="flex-1 cursor-pointer">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <div className="font-medium text-sm">{product.title}</div>
+                              <div className="text-xs text-muted-foreground">
+                                {product.vendor && `${product.vendor} • `}
+                                {product.productType || 'No type'}
+                              </div>
+                            </div>
+                            <div className="flex gap-1">
+                              {product.status === 'draft' && (
+                                <Badge variant="outline" className="text-xs">
+                                  Draft
+                                </Badge>
+                              )}
+                              {product.categories.length > 0 ? (
+                                <Badge variant="outline" className="text-xs">
+                                  {product.categories.length} categories
+                                </Badge>
+                              ) : (
+                                <Badge variant="secondary" className="text-xs">
+                                  Uncategorized
+                                </Badge>
+                              )}
                             </div>
                           </div>
-                          <div className="flex gap-1">
-                            {product.categories.length > 0 ? (
-                              <Badge variant="outline" className="text-xs">
-                                {product.categories.length} categories
-                              </Badge>
-                            ) : (
-                              <Badge variant="secondary" className="text-xs">
-                                Uncategorized
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                      </label>
-                    </div>
-                  ))
+                        </label>
+                      </div>
+                    )
+                  )
                 )}
               </CardContent>
             </Card>
@@ -266,21 +293,19 @@ Please provide categories with confidence scores and rationale for each suggesti
             <Label htmlFor="prompt">AI Prompt</Label>
             <Textarea
               id="prompt"
-              {...register("prompt")}
+              {...register('prompt')}
               placeholder="Describe how the AI should categorize your products..."
               rows={4}
             />
-            {errors.prompt && (
-              <p className="text-sm text-destructive">{errors.prompt.message}</p>
-            )}
+            {errors.prompt && <p className="text-sm text-destructive">{errors.prompt.message}</p>}
           </div>
 
           {/* Batch Size */}
           <div className="space-y-3">
             <Label htmlFor="batchSize">Batch Size (products per request)</Label>
             <Select
-              value={watch("batchSize")?.toString() || "10"}
-              onValueChange={(value) => setValue("batchSize", parseInt(value))}
+              value={watch('batchSize')?.toString() || '10'}
+              onValueChange={(value) => setValue('batchSize', parseInt(value))}
             >
               <SelectTrigger>
                 <SelectValue />
@@ -308,7 +333,7 @@ Please provide categories with confidence scores and rationale for each suggesti
                 <div className="flex justify-between text-sm">
                   <span>Estimated batches:</span>
                   <span className="font-medium">
-                    {Math.ceil(selectedProducts.length / (watch("batchSize") || 10))}
+                    {Math.ceil(selectedProducts.length / (watch('batchSize') || 10))}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
@@ -328,11 +353,10 @@ Please provide categories with confidence scores and rationale for each suggesti
             >
               Cancel
             </Button>
-            <Button 
-              type="submit" 
-              disabled={isSubmitting || selectedProducts.length === 0}
-            >
-              {isSubmitting ? "Starting..." : `Start Categorization (${selectedProducts.length} products)`}
+            <Button type="submit" disabled={isSubmitting || selectedProducts.length === 0}>
+              {isSubmitting
+                ? 'Starting...'
+                : `Start Categorization (${selectedProducts.length} products)`}
             </Button>
           </DialogFooter>
         </form>

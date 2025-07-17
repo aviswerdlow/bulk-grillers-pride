@@ -1,0 +1,15 @@
+{"name":"aiCategorizationJobs","id":10001}
+{"name":"auditLogs","id":10002}
+{"name":"categories","id":10003}
+{"name":"categoryProductAssignments","id":10004}
+{"name":"dataVersions","id":10005}
+{"name":"fileStorageEntries","id":10006}
+{"name":"importJobs","id":10007}
+{"name":"organizationMemberships","id":10008}
+{"name":"organizations","id":10009}
+{"name":"productVariants","id":10010}
+{"name":"products","id":10011}
+{"name":"projects","id":10012}
+{"name":"users","id":10013}
+{"name":"workflowStates","id":10014}
+{"name":"categoryLevelDefinitions","id":10015}
