@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@/test-utils';
+import { render, screen, fireEvent } from '@/__tests__/test-utils';
 import { ProductCard } from '../product-card';
 import { Product } from '@/types/models';
 

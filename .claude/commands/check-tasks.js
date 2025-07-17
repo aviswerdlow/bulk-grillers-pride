@@ -45,7 +45,7 @@ function parseTasks() {
 
     // Find the Tasks with Required Skills table
     const tableMatch = content.match(
-      /## Tasks with Required Skills[\s\S]*?\n\|[^|]+\|[^|]+\|[^|]+\|[^|]+\|[^|]+\|[^|]+\|[^|]+\|[^|]+\|\n\|([\s\S]*?)(?=\n\n|\n---|\n##|$)/
+      /## Tasks with Required Skills[\s\S]*?\n\| --- \|.*?\|\n([\s\S]*?)(?=\n\n## |$)/
     );
     if (!tableMatch) {
       console.error('❌ No Tasks table found in AGENTS_BOARD.md');
@@ -76,6 +76,8 @@ function parseTasks() {
           taskStatus = 'blocked';
         } else if (status.includes('ready') || status.includes('✨')) {
           taskStatus = 'ready';
+        } else if (status.includes('unassigned') || status.includes('📋')) {
+          taskStatus = 'unassigned';
         } else if (status.includes('assigned') || status.includes('✅')) {
           taskStatus = 'assigned';
         }
@@ -111,8 +113,8 @@ function getAgentSkills(agentId) {
 
     if (primaryMatch) {
       const skillsText = primaryMatch[1];
-      // Match patterns like "- jest: Testing framework..." or just "- jest"
-      const skillMatches = skillsText.matchAll(/[-•]\s*(\w+)(?:\s*:|,|\s|$)/g);
+      // Match patterns like "- jest: Testing framework..." or just "- jest" or "- ci-cd"
+      const skillMatches = skillsText.matchAll(/[-•]\s*([\w-]+)(?:\s*:|,|\s|$)/g);
       for (const match of skillMatches) {
         skills.push(match[1].toLowerCase());
       }
@@ -152,7 +154,8 @@ function isTaskAppropriate(task, agentId, skills) {
   }
 
   // Check if task is already assigned to another agent
-  if (task.owner && task.owner !== agentId && task.owner !== '📋 unassigned') {
+  // Note: owner field contains suggested agent even when unassigned
+  if (task.status === 'in-progress' && task.owner && task.owner !== agentId) {
     return false;
   }
 
@@ -221,6 +224,7 @@ function checkTasks() {
 
   for (const task of tasks) {
     if (task.status === 'done') continue;
+
 
     if (isTaskAppropriate(task, agentId, skills)) {
       if (task.status === 'blocked') {

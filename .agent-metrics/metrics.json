@@ -1,1 +1,7 @@
-{"agents": {}}
+{
+  "agents": {},
+  "infra-agent": {
+    "tasks_completed": 1,
+    "total_time": 0
+  }
+}

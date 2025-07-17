@@ -1,4 +1,4 @@
-import { render, screen } from '@/test-utils';
+import { render, screen } from '@/__tests__/test-utils';
 import SignUpPage from '../page';
 
 // Mock Clerk components

@@ -1,0 +1,5 @@
+echo "Running tests before push..."
+npx turbo run test --bail
+
+echo "Running lint check..."
+npx turbo run lint

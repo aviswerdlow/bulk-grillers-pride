@@ -1,6 +1,6 @@
-import { render, screen, fireEvent, waitFor } from '@/test-utils';
+import { render, screen, fireEvent, waitFor } from '@/__tests__/test-utils';
 import OnboardingPage from '../page';
-import { mockUseQuery, mockUseMutation, mockUseUser } from '@/test-utils';
+import { mockUseQuery, mockUseMutation, mockUseUser } from '@/__tests__/test-utils';
 import { useRouter } from 'next/navigation';
 
 // Mock Next.js router
