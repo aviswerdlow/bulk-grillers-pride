@@ -18,6 +18,7 @@ A multi-tenant SaaS application for e-commerce product merchandising with AI-pow
 - **Backend**: Convex (serverless functions + real-time database)
 - **Authentication**: Clerk
 - **AI Integration**: OpenAI, Anthropic, Google Gemini
+- **Build System**: Turbo v2 (40-60% faster builds with remote caching)
 - **Testing**: Jest, React Testing Library, Playwright
 - **CI/CD**: GitHub Actions, Vercel
 
