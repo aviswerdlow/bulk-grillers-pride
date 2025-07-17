@@ -695,6 +695,94 @@ export const completeJob = mutation({
   },
 });
 
+// Cancel a categorization job
+export const cancelCategorizationJob = mutation({
+  args: {
+    jobId: v.id('aiCategorizationJobs'),
+  },
+  handler: async (ctx, { jobId }) => {
+    // Check authentication
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error('Not authenticated');
+
+    // Get the job to validate its status
+    const job = await ctx.db.get(jobId);
+
+    if (!job) {
+      throw new Error(
+        'Job not found. The categorization job may have been deleted or does not exist.'
+      );
+    }
+
+    // Validate job belongs to user's organization
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_clerk_id', (q) => q.eq('clerkId', identity.tokenIdentifier))
+      .first();
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    // Check if user has access to this job's organization
+    const orgMembership = await ctx.db
+      .query('organizationMemberships')
+      .withIndex('by_user_and_org', (q) =>
+        q.eq('userId', user._id).eq('organizationId', job.organizationId)
+      )
+      .filter((q) => q.eq(q.field('deletedAt'), null))
+      .first();
+
+    if (!orgMembership) {
+      throw new Error('You do not have permission to cancel this job');
+    }
+
+    // Check job status - only pending or running jobs can be cancelled
+    if (job.status === 'completed') {
+      throw new Error(
+        'Cannot cancel a completed job. The categorization process has already finished successfully.'
+      );
+    }
+
+    if (job.status === 'failed') {
+      throw new Error(
+        'Cannot cancel a failed job. The categorization process has already failed and stopped.'
+      );
+    }
+
+    if (job.status === 'cancelled') {
+      throw new Error('This job has already been cancelled.');
+    }
+
+    // Job must be in 'pending' or 'running' status
+    if (job.status !== 'pending' && job.status !== 'running') {
+      throw new Error(
+        `Cannot cancel job with status "${job.status}". Only pending or running jobs can be cancelled.`
+      );
+    }
+
+    // Update job status to cancelled
+    await ctx.db.patch(jobId, {
+      status: 'cancelled',
+      completedAt: Date.now(),
+      executionTime: job.startedAt ? Date.now() - job.startedAt : 0,
+      updatedAt: Date.now(),
+      results: {
+        message: 'Job cancelled by user',
+        cancelledAt: Date.now(),
+        cancelledBy: user._id,
+      },
+    });
+
+    // Return success message
+    return {
+      success: true,
+      message: `Categorization job ${job.status === 'running' ? 'stopped' : 'cancelled'} successfully`,
+      jobId,
+    };
+  },
+});
+
 // Apply AI categorization suggestions
 export const applyCategorization = mutation({
   args: {

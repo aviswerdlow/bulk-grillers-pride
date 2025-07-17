@@ -60,6 +60,18 @@ graph TD
 
 _Latest messages appear here_
 
+**backend-agent** (2025-07-17): Completed T50 - Add AI Job Status Validation. Created the `cancelCategorizationJob` mutation in `/convex/functions/ai/categorization.ts` with comprehensive validation:
+
+- Validates job exists before attempting cancellation
+- Checks user authentication and organization permissions
+- Only allows cancellation of 'pending' or 'running' jobs
+- Provides specific error messages for different scenarios (completed, failed, already cancelled)
+- Records cancellation metadata (who cancelled, when, execution time)
+- Created comprehensive test suite with 9 test cases covering all validation scenarios
+  Testing confirms all edge cases are properly handled with meaningful error messages.
+
+**frontend-agent** (2025-07-17): Starting T31 - Write Frontend Tests. The React testing infrastructure is already set up (verified by quality-agent in T26). I'll write comprehensive tests for all frontend components including auth, dashboard, products, categories, and imports. Target is 80%+ coverage for critical business logic.
+
 **migration-agent** (2025-07-16): Completed T43 - Import Convex Snapshot Data. Successfully imported 183 categories and 5 categoryLevelDefinitions from the provided snapshot. The import required ID transformation since the data came from a different Convex organization. Created transformation script at `/scripts/transform-import-ids.js` to map old organization/project/user IDs to current deployment IDs. Documented the complete process in `/docs/IMPORT_PROCESS.md`. Categories now have proper hierarchical structure with parent-child relationships intact. Some tables (auditLogs, organizationMemberships) were skipped due to conflicts but the critical category data was successfully imported.
 
 **orchestrator** (2025-07-16): 🚀 DATA MIGRATION TASK ASSIGNED!
@@ -287,7 +299,7 @@ All agents should prioritize these tasks. We need to move from 0% to 80% test co
 | T28 | Create Shared Types | typescript, react, ui-components | frontend-agent | ✔️ done | backend | P0 | 2 |
 | T29 | Test High-Complexity Convex Files | convex, testing, typescript | backend-agent | ✔️ done | ui | P1 | 8 |
 | T30 | Create Testing Documentation | markdown, writing | docs-agent | ✔️ done | code-logic | P1 | 3 |
-| T31 | Write Frontend Tests | jest, react, testing | quality-agent | ✨ ready | production-code | P0 | 8 |
+| T31 | Write Frontend Tests | jest, react, testing | frontend-agent | 🏃 in-progress | production-code | P0 | 8 |
 | T32 | Fix Dashboard Query Deployment | convex, deployment, debug | backend-agent | ✔️ done | - | P0 | 1 |
 | T33 | Update Clerk Deprecated Props | react, clerk, auth | frontend-agent | ✔️ done | backend | P1 | 1 |
 | T34 | Fix Image Aspect Ratio Warning | react, nextjs, ui | frontend-agent | ✔️ done | backend | P2 | 0.5 |
@@ -298,7 +310,8 @@ All agents should prioritize these tasks. We need to move from 0% to 80% test co
 | T39 | Add Products Subroutes | nextjs, routing, react | frontend-agent | ✔️ done | backend | P1 | 2 |
 | T40 | Verify All Dashboard Links Work | react, testing | frontend-agent | ✔️ done | backend | P1 | 1 |
 | T41 | Fix ImportJobs Schema Missing Fields | convex, schema, api | backend-agent | ✔️ done | ui | P0 | 1 |
-| T42 | Update Generic Import Job to Match Product Import | convex, api, imports | backend-agent | 📋 unassigned | ui | P0 | 2 |
+| T42 | Update Generic Import Job to Match Product Import | convex, api, imports | backend-agent | ✔️ done | ui | P0 | 2 |
+| T50 | Add AI Job Status Validation | convex, api, typescript | backend-agent | ✔️ done | ui | P2 | 2 |
 | T43 | Import Convex Snapshot Data | data-transform, schema-migration, convex | migration-agent | ✔️ done | ui | P0 | 4 |
 
 ---
