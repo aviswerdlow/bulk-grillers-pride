@@ -49,7 +49,7 @@
     "playwright": "^1.54.1",
     "prettier": "^3.0.3",
     "ts-jest": "^29.4.0",
-    "turbo": "^1.10.16",
+    "turbo": "^2.5.5",
     "typescript": "^5.2.2"
   },
   "lint-staged": {
@@ -73,5 +73,6 @@
   "license": "MIT",
   "dependencies": {
     "convex": "^1.24.8"
-  }
+  },
+  "packageManager": "npm@11.4.2"
 }
