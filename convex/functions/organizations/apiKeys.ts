@@ -19,11 +19,20 @@ export const updateApiKeys = mutation({
       throw new Error('Not authenticated');
     }
 
+    // Get the user from Clerk ID
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_clerk_id', (q) => q.eq('clerkId', identity.subject))
+      .unique();
+    if (!user) {
+      throw new Error('User not found');
+    }
+
     // Check if user has permission (owner or admin)
     const membership = await ctx.db
       .query('organizationMemberships')
-      .withIndex('by_user_org', (q) =>
-        q.eq('userId', identity.tokenIdentifier).eq('organizationId', args.organizationId)
+      .withIndex('by_organization_user', (q) =>
+        q.eq('organizationId', args.organizationId).eq('userId', user._id)
       )
       .unique();
 
@@ -53,15 +62,11 @@ export const updateApiKeys = mutation({
 
     // Create audit log
     await ctx.db.insert('auditLogs', {
-      action: 'update_api_key',
+      eventType: 'UPDATE',
       entityType: 'organization',
       entityId: args.organizationId,
       organizationId: args.organizationId,
-      userId: identity.tokenIdentifier,
-      userEmail: identity.email || '',
       timestamp: Date.now(),
-      ipAddress: null,
-      userAgent: null,
       metadata: {
         provider: args.provider,
         // Don't log the actual API key for security
@@ -76,6 +81,19 @@ export const updateApiKeys = mutation({
           changeType: org.settings.apiKeys[args.provider] ? 'modified' : 'added',
         },
       ],
+      context: {
+        action: 'update_api_key',
+        source: 'web' as const,
+        userAgent: undefined,
+        ipAddress: undefined,
+        sessionId: undefined,
+      },
+      performedBy: {
+        type: 'user' as const,
+        userId: user._id,
+        userEmail: identity.email || '',
+      },
+      isRollbackable: false,
     });
 
     return {
@@ -100,11 +118,20 @@ export const removeApiKey = mutation({
       throw new Error('Not authenticated');
     }
 
+    // Get the user from Clerk ID
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_clerk_id', (q) => q.eq('clerkId', identity.subject))
+      .unique();
+    if (!user) {
+      throw new Error('User not found');
+    }
+
     // Check if user has permission (owner or admin)
     const membership = await ctx.db
       .query('organizationMemberships')
-      .withIndex('by_user_org', (q) =>
-        q.eq('userId', identity.tokenIdentifier).eq('organizationId', args.organizationId)
+      .withIndex('by_organization_user', (q) =>
+        q.eq('organizationId', args.organizationId).eq('userId', user._id)
       )
       .unique();
 
@@ -134,15 +161,11 @@ export const removeApiKey = mutation({
 
     // Create audit log
     await ctx.db.insert('auditLogs', {
-      action: 'remove_api_key',
+      eventType: 'DELETE',
       entityType: 'organization',
       entityId: args.organizationId,
       organizationId: args.organizationId,
-      userId: identity.tokenIdentifier,
-      userEmail: identity.email || '',
       timestamp: Date.now(),
-      ipAddress: null,
-      userAgent: null,
       metadata: {
         provider: args.provider,
       },
@@ -151,9 +174,22 @@ export const removeApiKey = mutation({
           field: `apiKeys.${args.provider}`,
           oldValue: '[REDACTED]',
           newValue: null,
-          changeType: 'deleted',
+          changeType: 'removed',
         },
       ],
+      context: {
+        action: 'remove_api_key',
+        source: 'web' as const,
+        userAgent: undefined,
+        ipAddress: undefined,
+        sessionId: undefined,
+      },
+      performedBy: {
+        type: 'user' as const,
+        userId: user._id,
+        userEmail: identity.email || '',
+      },
+      isRollbackable: false,
     });
 
     return {
@@ -178,11 +214,20 @@ export const getMaskedApiKeys = query({
       throw new Error('Not authenticated');
     }
 
+    // Get the user from Clerk ID
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_clerk_id', (q) => q.eq('clerkId', identity.subject))
+      .unique();
+    if (!user) {
+      throw new Error('User not found');
+    }
+
     // Check if user has permission (any member can view masked keys)
     const membership = await ctx.db
       .query('organizationMemberships')
-      .withIndex('by_user_org', (q) =>
-        q.eq('userId', identity.tokenIdentifier).eq('organizationId', args.organizationId)
+      .withIndex('by_organization_user', (q) =>
+        q.eq('organizationId', args.organizationId).eq('userId', user._id)
       )
       .unique();
 
@@ -237,11 +282,20 @@ export const hasApiKey = query({
       throw new Error('Not authenticated');
     }
 
+    // Get the user from Clerk ID
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_clerk_id', (q) => q.eq('clerkId', identity.subject))
+      .unique();
+    if (!user) {
+      throw new Error('User not found');
+    }
+
     // Check if user has permission
     const membership = await ctx.db
       .query('organizationMemberships')
-      .withIndex('by_user_org', (q) =>
-        q.eq('userId', identity.tokenIdentifier).eq('organizationId', args.organizationId)
+      .withIndex('by_organization_user', (q) =>
+        q.eq('organizationId', args.organizationId).eq('userId', user._id)
       )
       .unique();
 

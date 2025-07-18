@@ -576,7 +576,26 @@ export const updateJobStatusInternal = internalMutation({
 
     if (args.startedAt) updates.startedAt = args.startedAt;
     if (args.completedAt) updates.completedAt = args.completedAt;
-    if (args.error) updates.errors = [{ message: args.error, timestamp: Date.now() }];
+    if (args.error) {
+      // Determine error type based on the error message
+      let errorType = 'general_error';
+      
+      if (args.error.includes('API key') || args.error.includes('provider')) {
+        errorType = 'configuration_error';
+      } else if (args.error.includes('not found')) {
+        errorType = 'not_found_error';
+      } else if (args.error.includes('permission') || args.error.includes('Access denied')) {
+        errorType = 'permission_error';
+      } else if (args.error.includes('authenticated')) {
+        errorType = 'authentication_error';
+      }
+      
+      updates.errors = [{ 
+        type: errorType,
+        message: args.error, 
+        timestamp: Date.now() 
+      }];
+    }
 
     await ctx.db.patch(args.jobId, updates);
   },

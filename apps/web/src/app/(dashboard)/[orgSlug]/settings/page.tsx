@@ -3,6 +3,7 @@
 import { useParams } from 'next/navigation';
 import { useQuery } from 'convex/react';
 import { api } from '../../../../../../../convex/_generated/api';
+import { Id } from '../../../../../../../convex/_generated/dataModel';
 import { PageLoading } from '@/components/loading';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -27,8 +28,18 @@ import {
   CheckCircle,
 } from 'lucide-react';
 import { useState } from 'react';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { useMutation } from 'convex/react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 export default function OrganizationSettingsPage() {
   const params = useParams();
@@ -147,10 +158,7 @@ function GeneralSettings({
   const handleSave = async () => {
     setIsSaving(true);
     // TODO: Implement organization update mutation
-    toast({
-      title: "Settings updated",
-      description: "Your organization settings have been saved.",
-    });
+    toast.success("Organization settings updated successfully");
     setIsSaving(false);
   };
 
@@ -232,35 +240,46 @@ function GeneralSettings({
 }
 
 // API Keys Settings Component
-function ApiKeysSettings({ organizationId }: { organizationId: string }) {
+function ApiKeysSettings({ organizationId }: { organizationId: Id<'organizations'> }) {
   const [showKey, setShowKey] = useState<Record<string, boolean>>({});
+  const [deletingKey, setDeletingKey] = useState<string | null>(null);
   
-  // TODO: Replace with actual API keys query
-  const apiKeys = [
-    {
-      id: '1',
-      name: 'OpenAI API Key',
-      provider: 'openai',
-      lastUsed: '2024-01-15',
-      status: 'active',
-      maskedKey: 'sk-...abc123',
-    },
-    {
-      id: '2',
-      name: 'Anthropic API Key',
-      provider: 'anthropic',
-      lastUsed: 'Never',
-      status: 'inactive',
-      maskedKey: 'sk-ant-...xyz789',
-    },
-  ];
+  // Query for masked API keys
+  const maskedApiKeys = useQuery(api.functions.organizations.apiKeys.getMaskedApiKeys, {
+    organizationId,
+  });
+  
+  // Mutation for removing API keys
+  const removeApiKey = useMutation(api.functions.organizations.apiKeys.removeApiKey);
+  
+  // Transform the masked API keys into the format we need for display
+  const apiKeys = maskedApiKeys
+    ? Object.entries(maskedApiKeys).map(([provider, maskedKey]) => ({
+        id: provider,
+        name: `${provider.charAt(0).toUpperCase() + provider.slice(1)} API Key`,
+        provider,
+        lastUsed: 'Recently', // We don't track last used in the current implementation
+        status: 'active' as const,
+        maskedKey,
+      }))
+    : [];
 
   const handleCopyKey = (key: string) => {
     navigator.clipboard.writeText(key);
-    toast({
-      title: "API key copied",
-      description: "The API key has been copied to your clipboard.",
-    });
+    toast.success("API key copied to clipboard");
+  };
+
+  const handleDeleteKey = async (provider: string) => {
+    try {
+      await removeApiKey({
+        organizationId,
+        provider: provider as 'openai' | 'anthropic' | 'gemini',
+      });
+      toast.success(`${provider} API key removed successfully`);
+      setDeletingKey(null);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to remove API key");
+    }
   };
 
   return (
@@ -319,7 +338,12 @@ function ApiKeysSettings({ organizationId }: { organizationId: string }) {
                     </Button>
                   </div>
                 </div>
-                <Button variant="ghost" size="sm" className="text-red-600">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-red-600"
+                  onClick={() => setDeletingKey(apiKey.provider)}
+                >
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
@@ -356,6 +380,28 @@ function ApiKeysSettings({ organizationId }: { organizationId: string }) {
           </div>
         </CardContent>
       </Card>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deletingKey !== null} onOpenChange={(open) => !open && setDeletingKey(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove API Key</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove the {deletingKey} API key? This action cannot be undone
+              and may affect AI categorization functionality.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700 text-white"
+              onClick={() => deletingKey && handleDeleteKey(deletingKey)}
+            >
+              Remove API Key
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
