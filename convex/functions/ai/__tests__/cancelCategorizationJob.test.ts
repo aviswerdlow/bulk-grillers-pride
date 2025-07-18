@@ -31,19 +31,28 @@ describe('cancelCategorizationJob', () => {
     mockCtx = {
       auth: {
         getUserIdentity: jest.fn().mockResolvedValue({
-          tokenIdentifier: 'user_test123',
+          subject: 'user_test123',
         }),
       },
       db: {
         get: jest.fn().mockResolvedValue(mockJob),
         patch: jest.fn().mockResolvedValue(undefined),
-        query: jest.fn().mockReturnValue({
-          withIndex: jest.fn().mockReturnValue({
-            first: jest.fn().mockResolvedValue(mockUser),
-            filter: jest.fn().mockReturnValue({
-              first: jest.fn().mockResolvedValue(mockOrgMembership),
-            }),
-          }),
+        query: jest.fn().mockImplementation((table) => {
+          if (table === 'users') {
+            return {
+              withIndex: jest.fn().mockReturnValue({
+                unique: jest.fn().mockResolvedValue(mockUser),
+              }),
+            };
+          } else if (table === 'organizationMemberships') {
+            return {
+              withIndex: jest.fn().mockReturnValue({
+                filter: jest.fn().mockReturnValue({
+                  unique: jest.fn().mockResolvedValue(mockOrgMembership),
+                }),
+              }),
+            };
+          }
         }),
       },
     };
@@ -148,7 +157,23 @@ describe('cancelCategorizationJob', () => {
 
   it('should throw error when user does not have permission', async () => {
     // User not member of organization
-    mockCtx.db.query().withIndex().filter().first.mockResolvedValue(null);
+    mockCtx.db.query.mockImplementation((table) => {
+      if (table === 'users') {
+        return {
+          withIndex: jest.fn().mockReturnValue({
+            unique: jest.fn().mockResolvedValue(mockUser),
+          }),
+        };
+      } else if (table === 'organizationMemberships') {
+        return {
+          withIndex: jest.fn().mockReturnValue({
+            filter: jest.fn().mockReturnValue({
+              unique: jest.fn().mockResolvedValue(null), // No membership found
+            }),
+          }),
+        };
+      }
+    });
 
     const jobId = 'job123' as Id<'aiCategorizationJobs'>;
 

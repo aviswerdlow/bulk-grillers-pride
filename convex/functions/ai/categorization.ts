@@ -82,16 +82,8 @@ export const getCategorizationJob = query({
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error('Not authenticated');
 
-    // TODO: Get job properly - temporary hardcoded for build
-    const job = {
-      status: 'pending',
-      progress: { total: 0 },
-      productIds: [],
-      categoryContext: {},
-      prompt: '',
-      aiProvider: '',
-      aiModel: '',
-    } as any;
+    // Get the job from database
+    const job = await ctx.db.get(jobId);
     if (!job) throw new Error('Job not found');
 
     // Verify user has access to this organization
@@ -267,24 +259,31 @@ export const createCategorizationJob = mutation({
 export const processCategorizationJob = internalAction({
   args: { jobId: v.id('aiCategorizationJobs') },
   handler: async (ctx, { jobId }) => {
+    console.log(`🚀 [AI-CAT] ========== STARTING AI CATEGORIZATION JOB ${jobId} ==========`);
     // Rate limiting state (simple in-memory counter, use Redis in production)
     const startTime = Date.now();
 
     try {
+      console.log(`📋 [AI-CAT] Step 1: Fetching job details for ${jobId}`);
       // Get the job using internal API
       const job = await ctx.runQuery(
         internal.functions.ai.categorization.getCategorizationJobInternal,
         { jobId }
       );
-      if (!job) throw new Error('Job not found');
+      if (!job) {
+        console.error(`❌ [AI-CAT] Job ${jobId} not found in database`);
+        throw new Error('Job not found');
+      }
+      console.log(`✅ [AI-CAT] Job found: status=${job.status}, products=${job.productIds.length}, provider=${job.aiProvider}, model=${job.aiModel}`);
 
       if (job.status !== 'pending') {
         console.log(
-          `[AI-CAT] Job ${jobId} is not pending (status: ${job.status}), skipping processing`
+          `⚠️ [AI-CAT] Job ${jobId} is not pending (status: ${job.status}), skipping processing`
         );
         return;
       }
 
+      console.log(`📋 [AI-CAT] Step 2: Updating job status to running`);
       // Update job status to running
       await ctx.runMutation(internal.functions.ai.categorization.updateJobStatusInternal, {
         jobId,
@@ -292,8 +291,9 @@ export const processCategorizationJob = internalAction({
         startedAt: Date.now(),
       });
 
-      console.log(`[AI-CAT] Starting job ${jobId} with ${job.productIds.length} products`);
+      console.log(`🎯 [AI-CAT] Starting job ${jobId} with ${job.productIds.length} products`);
 
+      console.log(`📋 [AI-CAT] Step 3: Fetching organization and API keys`);
       // Get organization with API keys
       const organization = await ctx.runQuery(
         internal.functions.ai.categorization.getOrganizationWithKeys,
@@ -302,14 +302,25 @@ export const processCategorizationJob = internalAction({
         }
       );
 
-      if (!organization) throw new Error('Organization not found');
+      if (!organization) {
+        console.error(`❌ [AI-CAT] Organization ${job.organizationId} not found`);
+        throw new Error('Organization not found');
+      }
 
+      console.log(`✅ [AI-CAT] Organization found: ${organization.name}`);
+      console.log(`🔑 [AI-CAT] Checking API key for provider: ${job.aiProvider}`);
+      
       // Get the API key for the selected provider
       const apiKey =
         organization.settings.apiKeys[job.aiProvider as keyof typeof organization.settings.apiKeys];
       if (!apiKey) {
+        console.error(`❌ [AI-CAT] No API key configured for provider: ${job.aiProvider}`);
+        console.error(`❌ [AI-CAT] Available keys: ${Object.keys(organization.settings.apiKeys).join(', ')}`);
         throw new Error(`No API key configured for provider: ${job.aiProvider}`);
       }
+      
+      console.log(`✅ [AI-CAT] API key found for ${job.aiProvider} (length: ${apiKey.length} chars)`);
+      console.log(`🔑 [AI-CAT] Key starts with: ${apiKey.substring(0, 10)}...`);
 
       // Get products to categorize
       const products = await ctx.runQuery(internal.functions.ai.categorization.getProductsByIds, {
@@ -369,9 +380,16 @@ export const processCategorizationJob = internalAction({
 
             // Process uncached products with LangChain
             console.log(
-              `[AI-CAT] Processing ${uncachedProducts.length} uncached products with ${job.aiProvider}`
+              `🤖 [AI-CAT] Processing ${uncachedProducts.length} uncached products with ${job.aiProvider}`
             );
-
+            console.log(`📊 [AI-CAT] Batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(products.length / batchSize)}`);
+            console.log(`🔧 [AI-CAT] Using model: ${job.aiModel}`);
+            console.log(`📝 [AI-CAT] Custom prompt: ${job.prompt || 'Default'}`);
+            console.log(`🔢 [AI-CAT] Category context: ${job.categoryContext?.length || 0} categories provided`);
+            
+            console.log(`🚀 [AI-CAT] Making LangChain API call NOW...`);
+            const aiCallStart = Date.now();
+            
             const aiResults = await processBatchWithLangChain(
               uncachedProducts,
               job.categoryContext as CategoryContext[],
@@ -385,6 +403,10 @@ export const processCategorizationJob = internalAction({
                 streaming: false,
               }
             );
+            
+            const aiCallDuration = Date.now() - aiCallStart;
+            console.log(`✅ [AI-CAT] LangChain API call completed in ${aiCallDuration}ms`);
+            console.log(`📊 [AI-CAT] Results: ${aiResults.length} items processed`);
 
             // Estimate output tokens
             const estimatedOutputTokens = estimateTokenCount(JSON.stringify(aiResults));
@@ -650,16 +672,8 @@ export const updateJobProgress = mutation({
     skipped: v.number(),
   },
   handler: async (ctx, { jobId, processed, successful, failed, skipped }) => {
-    // TODO: Get job properly - temporary hardcoded for build
-    const job = {
-      status: 'pending',
-      progress: { total: 0 },
-      productIds: [],
-      categoryContext: {},
-      prompt: '',
-      aiProvider: '',
-      aiModel: '',
-    } as any;
+    // Get the job from database
+    const job = await ctx.db.get(jobId);
     if (!job) throw new Error('Job not found');
 
     await ctx.db.patch(jobId, {
@@ -717,8 +731,8 @@ export const cancelCategorizationJob = mutation({
     // Validate job belongs to user's organization
     const user = await ctx.db
       .query('users')
-      .withIndex('by_clerk_id', (q) => q.eq('clerkId', identity.tokenIdentifier))
-      .first();
+      .withIndex('by_clerk_id', (q) => q.eq('clerkId', identity.subject))
+      .unique();
 
     if (!user) {
       throw new Error('User not found');
@@ -727,11 +741,11 @@ export const cancelCategorizationJob = mutation({
     // Check if user has access to this job's organization
     const orgMembership = await ctx.db
       .query('organizationMemberships')
-      .withIndex('by_user_and_org', (q) =>
-        q.eq('userId', user._id).eq('organizationId', job.organizationId)
+      .withIndex('by_organization_user', (q) =>
+        q.eq('organizationId', job.organizationId).eq('userId', user._id)
       )
-      .filter((q) => q.eq(q.field('deletedAt'), null))
-      .first();
+      .filter((q) => q.eq(q.field('status'), 'active'))
+      .unique();
 
     if (!orgMembership) {
       throw new Error('You do not have permission to cancel this job');
@@ -767,11 +781,15 @@ export const cancelCategorizationJob = mutation({
       completedAt: Date.now(),
       executionTime: job.startedAt ? Date.now() - job.startedAt : 0,
       updatedAt: Date.now(),
-      results: {
-        message: 'Job cancelled by user',
-        cancelledAt: Date.now(),
-        cancelledBy: user._id,
-      },
+      // Add cancellation info to errors array
+      errors: [
+        ...job.errors,
+        {
+          type: 'cancelled',
+          message: `Job cancelled by user ${user.email || user._id}`,
+          timestamp: Date.now(),
+        },
+      ],
     });
 
     // Return success message
@@ -819,15 +837,20 @@ export const applyCategorization = mutation({
       throw new Error('Insufficient permissions');
     }
 
-    // TODO: Apply the categorization using the existing function
-    // await ctx.runMutation(api.functions.categories.categories.assignProductToCategory, {
-    //   categoryId: args.categoryId,
-    //   productId: args.productId,
-    //   assignedBy: "ai",
-    //   confidence: args.confidence,
-    //   rationale: args.rationale,
-    // });
-    console.log('Categorization would be applied here');
+    // Apply the categorization using the existing function
+    await ctx.db.insert('categoryProductAssignments', {
+      organizationId: job.organizationId,
+      projectId: job.projectId,
+      categoryId: args.categoryId,
+      productId: args.productId,
+      assignedBy: 'ai',
+      assignedByUser: user._id,
+      confidence: args.confidence,
+      rationale: args.rationale,
+      status: 'active',
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
 
     return args.productId;
   },

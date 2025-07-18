@@ -180,6 +180,123 @@ export const updateOrganizationSettings = mutation({
   },
 });
 
+// Update organization basic info (name and slug)
+export const updateOrganization = mutation({
+  args: {
+    organizationId: v.id('organizations'),
+    name: v.optional(v.string()),
+    slug: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error('Not authenticated');
+    }
+
+    // Get the user record
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_clerk_id', (q) => q.eq('clerkId', identity.subject))
+      .unique();
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    // Check if user has permission to update organization
+    const membership = await ctx.db
+      .query('organizationMemberships')
+      .withIndex('by_organization_user', (q) =>
+        q.eq('organizationId', args.organizationId).eq('userId', user._id)
+      )
+      .filter((q) => q.eq(q.field('status'), 'active'))
+      .unique();
+
+    if (!membership || (membership.role !== 'owner' && membership.role !== 'admin')) {
+      throw new Error('Unauthorized: Only owners and admins can update organization settings');
+    }
+
+    const org = await ctx.db.get(args.organizationId);
+    if (!org) throw new Error('Organization not found');
+
+    const updates: any = {
+      updatedAt: Date.now(),
+    };
+
+    // Update name if provided
+    if (args.name !== undefined) {
+      updates.name = args.name;
+    }
+
+    // Update slug if provided
+    if (args.slug !== undefined) {
+      // Validate slug format
+      if (!isValidSlug(args.slug)) {
+        const error = getSlugValidationError(args.slug);
+        throw new Error(error || 'Invalid organization slug');
+      }
+
+      // Check if slug is unique (excluding current org)
+      const existingOrg = await ctx.db
+        .query('organizations')
+        .withIndex('by_slug', (q) => q.eq('slug', args.slug))
+        .filter((q) => q.neq(q.field('_id'), args.organizationId))
+        .unique();
+
+      if (existingOrg) {
+        throw new Error('Organization slug already exists');
+      }
+
+      updates.slug = args.slug;
+    }
+
+    await ctx.db.patch(args.organizationId, updates);
+
+    // Create audit log
+    const changes = [];
+    if (args.name !== undefined && args.name !== org.name) {
+      changes.push({
+        field: 'name',
+        oldValue: org.name,
+        newValue: args.name,
+        changeType: 'modified' as const,
+      });
+    }
+    if (args.slug !== undefined && args.slug !== org.slug) {
+      changes.push({
+        field: 'slug',
+        oldValue: org.slug,
+        newValue: args.slug,
+        changeType: 'modified' as const,
+      });
+    }
+
+    if (changes.length > 0) {
+      await ctx.db.insert('auditLogs', {
+        organizationId: args.organizationId,
+        eventType: 'UPDATE',
+        entityType: 'organizations',
+        entityId: args.organizationId,
+        changes,
+        context: {
+          action: 'update_organization',
+          source: 'web',
+        },
+        performedBy: {
+          type: 'user',
+          userId: user._id,
+          userEmail: identity.email || '',
+        },
+        metadata: {},
+        timestamp: Date.now(),
+        isRollbackable: true,
+      });
+    }
+
+    return { success: true };
+  },
+});
+
 // Check if user has permission in organization
 export const checkUserPermission = query({
   args: {

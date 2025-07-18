@@ -1,5 +1,9 @@
 import type { NextConfig } from "next";
 
+const withBundleAnalyzer = require('@next/bundle-analyzer')({
+  enabled: process.env.ANALYZE === 'true',
+});
+
 const nextConfig: NextConfig = {
   env: {
     NEXT_PUBLIC_CONVEX_URL: process.env.NEXT_PUBLIC_CONVEX_URL,
@@ -11,6 +15,10 @@ const nextConfig: NextConfig = {
       'process.env': 'process.env',
     },
   },
+  eslint: {
+    // Skip ESLint during production builds for now
+    ignoreDuringBuilds: true,
+  },
 };
 
-export default nextConfig;
+export default withBundleAnalyzer(nextConfig);

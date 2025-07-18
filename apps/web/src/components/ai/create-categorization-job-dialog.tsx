@@ -36,6 +36,8 @@ const createJobSchema = z.object({
   jobType: z.enum(['bulk_categorization', 'single_product', 'validation']),
   prompt: z.string().min(1, 'Prompt is required'),
   batchSize: z.number().min(1).max(50).optional(),
+  aiProvider: z.enum(['openai', 'anthropic', 'gemini']),
+  aiModel: z.string().min(1, 'AI model is required'),
 });
 
 type CreateJobForm = z.infer<typeof createJobSchema>;
@@ -95,11 +97,31 @@ export function CreateCategorizationJobDialog({
 
 Please provide categories with confidence scores and rationale for each suggestion.`,
       batchSize: 10,
+      aiProvider: 'openai',
+      aiModel: 'gpt-4',
     },
   });
 
   const jobType = watch('jobType');
+  const aiProvider = watch('aiProvider');
   const products = productsResult?.page || [];
+
+  // AI model options based on provider
+  const aiModelOptions = {
+    openai: [
+      { value: 'o3', label: 'O3 (Most Powerful Reasoning)', disabled: false },
+      { value: 'o3-mini', label: 'O3 Mini (Faster Reasoning)', disabled: false },
+      { value: 'o4-mini', label: 'O4 Mini (Fast & Efficient)', disabled: false },
+      { value: 'o1', label: 'O1 (Advanced Reasoning)', disabled: false },
+    ],
+    anthropic: [
+      { value: 'claude-opus-4', label: 'Claude Opus 4 (Most Powerful)', disabled: false },
+      { value: 'claude-sonnet-4', label: 'Claude Sonnet 4 (High Performance)', disabled: false },
+    ],
+    gemini: [
+      { value: 'gemini-pro', label: 'Gemini Pro (Coming Soon)', disabled: true },
+    ],
+  };
 
   const onSubmit = async (data: CreateJobForm) => {
     if (selectedProducts.length === 0) {
@@ -115,8 +137,8 @@ Please provide categories with confidence scores and rationale for each suggesti
         projectId,
         jobType: data.jobType,
         productIds: selectedProducts as Id<'products'>[],
-        aiProvider: 'openai', // Default for now
-        aiModel: 'gpt-4', // Default for now
+        aiProvider: data.aiProvider,
+        aiModel: data.aiModel,
         prompt: data.prompt,
         batchSize: data.batchSize,
         notifications: {
@@ -289,6 +311,77 @@ Please provide categories with confidence scores and rationale for each suggesti
             </Card>
           </div>
 
+          {/* AI Provider Selection */}
+          <div className="space-y-3">
+            <Label>AI Provider</Label>
+            <Select
+              value={aiProvider}
+              onValueChange={(value) => {
+                setValue('aiProvider', value as 'openai' | 'anthropic' | 'gemini');
+                // Reset model when provider changes
+                const firstModel = aiModelOptions[value as keyof typeof aiModelOptions][0];
+                if (firstModel && !firstModel.disabled) {
+                  setValue('aiModel', firstModel.value);
+                }
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="openai">
+                  <div className="flex items-center gap-2">
+                    <Bot className="h-4 w-4" />
+                    <div>
+                      <div className="font-medium">OpenAI</div>
+                      <div className="text-sm text-muted-foreground">O3 & O1 Reasoning Models</div>
+                    </div>
+                  </div>
+                </SelectItem>
+                <SelectItem value="anthropic">
+                  <div className="flex items-center gap-2">
+                    <Bot className="h-4 w-4" />
+                    <div>
+                      <div className="font-medium">Anthropic</div>
+                      <div className="text-sm text-muted-foreground">Claude Opus 4 & Sonnet 4</div>
+                    </div>
+                  </div>
+                </SelectItem>
+                <SelectItem value="gemini" disabled>
+                  <div className="flex items-center gap-2">
+                    <Bot className="h-4 w-4" />
+                    <div>
+                      <div className="font-medium">Google Gemini</div>
+                      <div className="text-sm text-muted-foreground">Coming Soon</div>
+                    </div>
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+            {errors.aiProvider && <p className="text-sm text-destructive">{errors.aiProvider.message}</p>}
+          </div>
+
+          {/* AI Model Selection */}
+          <div className="space-y-3">
+            <Label>AI Model</Label>
+            <Select
+              value={watch('aiModel')}
+              onValueChange={(value) => setValue('aiModel', value)}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {aiModelOptions[aiProvider as keyof typeof aiModelOptions].map((model) => (
+                  <SelectItem key={model.value} value={model.value} disabled={model.disabled}>
+                    {model.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {errors.aiModel && <p className="text-sm text-destructive">{errors.aiModel.message}</p>}
+          </div>
+
           {/* AI Prompt */}
           <div className="space-y-3">
             <Label htmlFor="prompt">AI Prompt</Label>
@@ -339,7 +432,15 @@ Please provide categories with confidence scores and rationale for each suggesti
                 </div>
                 <div className="flex justify-between text-sm">
                   <span>AI Provider:</span>
-                  <span className="font-medium">OpenAI GPT-4</span>
+                  <span className="font-medium">
+                    {aiProvider === 'openai' && 'OpenAI'}
+                    {aiProvider === 'anthropic' && 'Anthropic'}
+                    {aiProvider === 'gemini' && 'Google Gemini'}
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span>AI Model:</span>
+                  <span className="font-medium">{watch('aiModel')}</span>
                 </div>
               </CardContent>
             </Card>

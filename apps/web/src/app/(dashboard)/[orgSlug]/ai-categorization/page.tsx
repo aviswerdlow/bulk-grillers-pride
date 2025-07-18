@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../../../../convex/_generated/api";
 import { useParams } from "next/navigation";
 import { useState } from "react";
@@ -9,9 +9,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Progress } from "@/components/ui/progress";
-import { Bot, Zap, Clock, CheckCircle, XCircle, AlertCircle, Play } from "lucide-react";
+import { Bot, Zap, Clock, CheckCircle, XCircle, AlertCircle, Play, Square } from "lucide-react";
 import { CreateCategorizationJobDialog } from "@/components/ai/create-categorization-job-dialog";
 import { Loading } from "@/components/loading";
+import { toast } from "sonner";
 
 interface CategorizationJob {
   _id: string;
@@ -61,6 +62,13 @@ export default function AiCategorizationPage() {
     } : "skip"
   );
 
+  // Cancel job mutation
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const cancelJob = useMutation((api as any).functions.ai.categorization.cancelCategorizationJob);
+  
+  // Debug: Check if the function exists
+  // console.log('cancelCategorizationJob exists:', !!(api as any).functions?.ai?.categorization?.cancelCategorizationJob);
+
   if (organization === undefined || projects === undefined) {
     return <Loading size="lg" text="Loading AI categorization..." />;
   }
@@ -87,6 +95,16 @@ export default function AiCategorizationPage() {
 
   const allJobs = (jobs as CategorizationJob[]) || [];
   const isLoading = jobs === undefined;
+
+  const handleCancelJob = async (jobId: string) => {
+    try {
+      await cancelJob({ jobId });
+      toast.success('Categorization job cancelled');
+    } catch (error) {
+      console.error('Failed to cancel job:', error);
+      toast.error('Failed to cancel job. ' + (error instanceof Error ? error.message : 'Please try again.'));
+    }
+  };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -235,6 +253,7 @@ export default function AiCategorizationPage() {
                   <TableHead>Products</TableHead>
                   <TableHead>Created</TableHead>
                   <TableHead>Duration</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -281,6 +300,22 @@ export default function AiCategorizationPage() {
                           ? "Running..." 
                           : "—"
                       }
+                    </TableCell>
+                    <TableCell>
+                      {(job.status === 'running' || job.status === 'pending') && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleCancelJob(job._id)}
+                          className="h-8 px-2"
+                        >
+                          <Square className="h-3 w-3 mr-1" />
+                          Stop
+                        </Button>
+                      )}
+                      {job.status !== 'running' && job.status !== 'pending' && (
+                        <span className="text-muted-foreground text-sm">—</span>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}

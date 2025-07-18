@@ -15,7 +15,9 @@ import type {
 } from "convex/server";
 import type * as functions_ai_categorization from "../functions/ai/categorization.js";
 import type * as functions_ai_feedback from "../functions/ai/feedback.js";
+import type * as functions_ai_index from "../functions/ai/index.js";
 import type * as functions_ai_langchain from "../functions/ai/langchain.js";
+import type * as functions_ai_testProcessing from "../functions/ai/testProcessing.js";
 import type * as functions_auth_index from "../functions/auth/index.js";
 import type * as functions_auth_invitations from "../functions/auth/invitations.js";
 import type * as functions_auth_permissions from "../functions/auth/permissions.js";
@@ -34,6 +36,7 @@ import type * as functions_dashboard from "../functions/dashboard.js";
 import type * as functions_imports_imports from "../functions/imports/imports.js";
 import type * as functions_imports_index from "../functions/imports/index.js";
 import type * as functions_imports_productImport from "../functions/imports/productImport.js";
+import type * as functions_migrations_cleanupStuckJobs from "../functions/migrations/cleanupStuckJobs.js";
 import type * as functions_migrations_importCategories from "../functions/migrations/importCategories.js";
 import type * as functions_migrations_index from "../functions/migrations/index.js";
 import type * as functions_migrations_migrationTracking from "../functions/migrations/migrationTracking.js";
@@ -57,7 +60,9 @@ import type * as lib_slugValidation from "../lib/slugValidation.js";
 declare const fullApi: ApiFromModules<{
   "functions/ai/categorization": typeof functions_ai_categorization;
   "functions/ai/feedback": typeof functions_ai_feedback;
+  "functions/ai/index": typeof functions_ai_index;
   "functions/ai/langchain": typeof functions_ai_langchain;
+  "functions/ai/testProcessing": typeof functions_ai_testProcessing;
   "functions/auth/index": typeof functions_auth_index;
   "functions/auth/invitations": typeof functions_auth_invitations;
   "functions/auth/permissions": typeof functions_auth_permissions;
@@ -76,6 +81,7 @@ declare const fullApi: ApiFromModules<{
   "functions/imports/imports": typeof functions_imports_imports;
   "functions/imports/index": typeof functions_imports_index;
   "functions/imports/productImport": typeof functions_imports_productImport;
+  "functions/migrations/cleanupStuckJobs": typeof functions_migrations_cleanupStuckJobs;
   "functions/migrations/importCategories": typeof functions_migrations_importCategories;
   "functions/migrations/index": typeof functions_migrations_index;
   "functions/migrations/migrationTracking": typeof functions_migrations_migrationTracking;
