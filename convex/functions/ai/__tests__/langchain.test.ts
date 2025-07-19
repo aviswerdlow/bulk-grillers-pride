@@ -14,44 +14,44 @@ import {
 import { Doc } from '../../../_generated/dataModel';
 
 // Mock the LangChain imports
-vi.mock('@langchain/openai', () => ({
-  ChatOpenAI: vi.fn().mockImplementation((options) => ({
+jest.mock('@langchain/openai', () => ({
+  ChatOpenAI: jest.fn().mockImplementation((options) => ({
     ...options,
     _llmType: 'openai',
   })),
 }));
 
-vi.mock('@langchain/anthropic', () => ({
-  ChatAnthropic: vi.fn().mockImplementation((options) => ({
+jest.mock('@langchain/anthropic', () => ({
+  ChatAnthropic: jest.fn().mockImplementation((options) => ({
     ...options,
     _llmType: 'anthropic',
   })),
 }));
 
-vi.mock('@langchain/google-genai', () => ({
-  ChatGoogleGenerativeAI: vi.fn().mockImplementation((options) => ({
+jest.mock('@langchain/google-genai', () => ({
+  ChatGoogleGenerativeAI: jest.fn().mockImplementation((options) => ({
     ...options,
     _llmType: 'gemini',
   })),
 }));
 
-vi.mock('@langchain/core/prompts', () => ({
+jest.mock('@langchain/core/prompts', () => ({
   ChatPromptTemplate: {
-    fromMessages: vi.fn().mockReturnValue('mocked-prompt'),
+    fromMessages: jest.fn().mockReturnValue('mocked-prompt'),
   },
 }));
 
-vi.mock('@langchain/core/output_parsers', () => ({
+jest.mock('@langchain/core/output_parsers', () => ({
   StructuredOutputParser: {
-    fromZodSchema: vi.fn().mockReturnValue({
-      getFormatInstructions: vi.fn().mockReturnValue('format-instructions'),
+    fromZodSchema: jest.fn().mockReturnValue({
+      getFormatInstructions: jest.fn().mockReturnValue('format-instructions'),
     }),
   },
 }));
 
-vi.mock('@langchain/core/runnables', () => ({
+jest.mock('@langchain/core/runnables', () => ({
   RunnableSequence: {
-    from: vi.fn().mockReturnValue('mocked-chain'),
+    from: jest.fn().mockReturnValue('mocked-chain'),
   },
 }));
 
@@ -88,7 +88,7 @@ describe('LangChain AI Integration', () => {
       });
 
       expect(llm).toHaveProperty('apiKey', 'test-api-key');
-      expect(llm).toHaveProperty('modelName', 'gemini-1.5-pro');
+      expect(llm).toHaveProperty('model', 'gemini-1.5-pro');
       expect(llm).toHaveProperty('temperature', 0.4);
       expect(llm).toHaveProperty('maxOutputTokens', 1500);
       expect(llm).toHaveProperty('_llmType', 'gemini');
@@ -114,19 +114,19 @@ describe('LangChain AI Integration', () => {
 
   describe('Cost Estimation', () => {
     it('should calculate costs for OpenAI models', () => {
-      const cost = estimateCost('openai', 'gpt-4', 1000, 500);
+      const cost = estimateCost('openai', 'o1', 1000, 500);
       
-      expect(cost.inputCost).toBeCloseTo(0.03);
-      expect(cost.outputCost).toBeCloseTo(0.03);
-      expect(cost.totalCost).toBeCloseTo(0.06);
+      expect(cost.inputCost).toBeCloseTo(0.035);
+      expect(cost.outputCost).toBeCloseTo(0.035);
+      expect(cost.totalCost).toBeCloseTo(0.07);
     });
 
     it('should calculate costs for Anthropic models', () => {
-      const cost = estimateCost('anthropic', 'claude-3-sonnet', 2000, 1000);
+      const cost = estimateCost('anthropic', 'claude-sonnet-4', 2000, 1000);
       
-      expect(cost.inputCost).toBeCloseTo(0.006);
-      expect(cost.outputCost).toBeCloseTo(0.015);
-      expect(cost.totalCost).toBeCloseTo(0.021);
+      expect(cost.inputCost).toBeCloseTo(0.02);
+      expect(cost.outputCost).toBeCloseTo(0.05);
+      expect(cost.totalCost).toBeCloseTo(0.07);
     });
 
     it('should calculate costs for Gemini models', () => {

@@ -284,7 +284,8 @@ describe('Error Monitoring Utilities', () => {
 
       const rejectionEvent = new Event('unhandledrejection') as any;
       rejectionEvent.reason = new Error('Promise rejected');
-      rejectionEvent.promise = Promise.reject(rejectionEvent.reason);
+      // Don't create an actual rejected promise, just mock it
+      rejectionEvent.promise = { catch: jest.fn() };
 
       window.dispatchEvent(rejectionEvent);
 

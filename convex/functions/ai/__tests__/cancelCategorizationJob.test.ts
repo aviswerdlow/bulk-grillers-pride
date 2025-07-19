@@ -14,11 +14,13 @@ describe('cancelCategorizationJob', () => {
       organizationId: 'org123' as Id<'organizations'>,
       status: 'running',
       startedAt: Date.now() - 10000, // Started 10 seconds ago
+      errors: [], // Add empty errors array per schema
     };
 
     mockUser = {
       _id: 'user123' as Id<'users'>,
       clerkId: 'user_test123',
+      email: 'test@example.com',
     };
 
     mockOrgMembership = {
@@ -76,11 +78,13 @@ describe('cancelCategorizationJob', () => {
         completedAt: expect.any(Number),
         executionTime: expect.any(Number),
         updatedAt: expect.any(Number),
-        results: expect.objectContaining({
-          message: 'Job cancelled by user',
-          cancelledAt: expect.any(Number),
-          cancelledBy: mockUser._id,
-        }),
+        errors: expect.arrayContaining([
+          expect.objectContaining({
+            type: 'cancelled',
+            message: expect.stringContaining('Job cancelled by user'),
+            timestamp: expect.any(Number),
+          }),
+        ]),
       })
     );
   });

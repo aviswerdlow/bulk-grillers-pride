@@ -9,9 +9,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Package, MoreVertical, Edit, Eye, Archive, Tag, Store } from 'lucide-react';
+import { Package, MoreVertical, Edit, Eye, Archive, Tag, Store, Hash } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Product } from '@/types/models';
+import { SkuCopyButton } from '@/components/ui/sku-copy-button';
 
 interface ProductCardProps {
   product: Product;
@@ -85,6 +86,14 @@ export function ProductCard({ product, onEdit, onView, onArchive, className }: P
             <div className="flex items-center gap-2 text-sm">
               <Tag className="w-4 h-4 text-muted-foreground" />
               <span className="text-muted-foreground">{product.productType}</span>
+            </div>
+          )}
+
+          {product.sku && (
+            <div className="flex items-center gap-2 text-sm">
+              <Hash className="w-4 h-4 text-muted-foreground" />
+              <span className="text-muted-foreground font-mono">{product.sku}</span>
+              <SkuCopyButton sku={product.sku} variant="icon" />
             </div>
           )}
         </div>

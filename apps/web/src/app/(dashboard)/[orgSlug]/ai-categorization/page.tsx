@@ -11,6 +11,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Progress } from "@/components/ui/progress";
 import { Bot, Zap, Clock, CheckCircle, XCircle, AlertCircle, Play, Square } from "lucide-react";
 import { CreateCategorizationJobDialog } from "@/components/ai/create-categorization-job-dialog";
+import { JobActionsDropdown } from "@/components/ai/job-actions-dropdown";
+import { JobDetailsModal } from "@/components/ai/job-details-modal";
+import { ApiKeyStatus } from "@/components/ai/api-key-status";
+import { JobErrorAlert } from "@/components/ai/job-error-alert";
 import { Loading } from "@/components/loading";
 import { toast } from "sonner";
 
@@ -29,6 +33,12 @@ interface CategorizationJob {
   productIds: string[];
   createdAt: number;
   executionTime?: number;
+  errors?: Array<{
+    type: string;
+    message: string;
+    productId?: string;
+    timestamp: number;
+  }>;
 }
 
 export default function AiCategorizationPage() {
@@ -36,6 +46,8 @@ export default function AiCategorizationPage() {
   const orgSlug = params.orgSlug as string;
   
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
 
   // Get organization
   const organization = useQuery(api.functions.organizations.organizations.getOrganizationBySlug, {
@@ -95,6 +107,13 @@ export default function AiCategorizationPage() {
 
   const allJobs = (jobs as CategorizationJob[]) || [];
   const isLoading = jobs === undefined;
+  
+  // Find the most recent failed job with errors
+  const recentFailedJob = allJobs.find(job => 
+    job.status === "failed" && 
+    job.errors && 
+    job.errors.length > 0
+  );
 
   const handleCancelJob = async (jobId: string) => {
     try {
@@ -104,6 +123,36 @@ export default function AiCategorizationPage() {
       console.error('Failed to cancel job:', error);
       toast.error('Failed to cancel job. ' + (error instanceof Error ? error.message : 'Please try again.'));
     }
+  };
+
+  // Job action handlers
+  const handleViewDetails = (jobId: string) => {
+    setSelectedJobId(jobId);
+    setShowDetailsModal(true);
+  };
+
+  const handleViewProgress = (jobId: string) => {
+    // TODO: Implement progress tracking panel
+    toast.info('Real-time progress tracking coming soon!');
+    console.log('View progress for job:', jobId);
+  };
+
+  const handleDownloadResults = async (jobId: string) => {
+    // TODO: Implement CSV export
+    toast.info('Export functionality coming soon!');
+    console.log('Download results for job:', jobId);
+  };
+
+  const handleRerunFailed = async (jobId: string) => {
+    // TODO: Implement re-run failed items
+    toast.info('Re-run failed items coming soon!');
+    console.log('Re-run failed items for job:', jobId);
+  };
+
+  const handleDeleteJob = async (jobId: string) => {
+    // TODO: Implement job deletion
+    toast.info('Job deletion coming soon!');
+    console.log('Delete job:', jobId);
   };
 
   const getStatusIcon = (status: string) => {
@@ -173,6 +222,24 @@ export default function AiCategorizationPage() {
           Start Categorization
         </Button>
       </div>
+
+      {/* API Key Status */}
+      <ApiKeyStatus 
+        organizationId={organization._id} 
+        orgSlug={orgSlug}
+        provider={organization.settings?.aiProvider}
+      />
+
+      {/* Recent Job Error Alert */}
+      {recentFailedJob && (
+        <JobErrorAlert
+          jobId={recentFailedJob._id}
+          status={recentFailedJob.status}
+          errors={recentFailedJob.errors || []}
+          orgSlug={orgSlug}
+          onRetry={() => setShowCreateDialog(true)}
+        />
+      )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -262,9 +329,17 @@ export default function AiCategorizationPage() {
                     <TableCell>
                       <div className="flex items-center gap-2">
                         {getStatusIcon(job.status)}
-                        <Badge variant={getStatusBadgeVariant(job.status) as "default" | "secondary" | "destructive" | "outline"}>
-                          {job.status}
-                        </Badge>
+                        <div className="flex flex-col gap-1">
+                          <Badge variant={getStatusBadgeVariant(job.status) as "default" | "secondary" | "destructive" | "outline"}>
+                            {job.status}
+                          </Badge>
+                          {job.status === "failed" && job.errors && job.errors.length > 0 && (
+                            <span className="text-xs text-red-600 flex items-center gap-1">
+                              <AlertCircle className="h-3 w-3" />
+                              {job.errors[0].type === "API_KEY_ERROR" ? "API Key Error" : "Error"}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell>{getJobTypeLabel(job.jobType)}</TableCell>
@@ -302,20 +377,16 @@ export default function AiCategorizationPage() {
                       }
                     </TableCell>
                     <TableCell>
-                      {(job.status === 'running' || job.status === 'pending') && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleCancelJob(job._id)}
-                          className="h-8 px-2"
-                        >
-                          <Square className="h-3 w-3 mr-1" />
-                          Stop
-                        </Button>
-                      )}
-                      {job.status !== 'running' && job.status !== 'pending' && (
-                        <span className="text-muted-foreground text-sm">—</span>
-                      )}
+                      <JobActionsDropdown
+                        jobId={job._id}
+                        status={job.status}
+                        onViewDetails={handleViewDetails}
+                        onViewProgress={handleViewProgress}
+                        onDownloadResults={handleDownloadResults}
+                        onRerunFailed={handleRerunFailed}
+                        onCancelJob={handleCancelJob}
+                        onDeleteJob={handleDeleteJob}
+                      />
                     </TableCell>
                   </TableRow>
                 ))}
@@ -334,6 +405,13 @@ export default function AiCategorizationPage() {
           projectId={currentProject._id}
         />
       )}
+      
+      {/* Job Details Modal */}
+      <JobDetailsModal
+        open={showDetailsModal}
+        onOpenChange={setShowDetailsModal}
+        jobId={selectedJobId}
+      />
     </div>
   );
 }

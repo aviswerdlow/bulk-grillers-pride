@@ -5,23 +5,8 @@ import { CategorySelector } from '@/components/categories/category-selector';
 import { render } from '../../test-utils';
 import { useQuery } from 'convex/react';
 import { Category } from '@/types/models';
+// Import will be automatically mocked by Jest moduleNameMapper
 import { api } from '../../../../../convex/_generated/api';
-
-// Mock the convex API
-jest.mock('../../../../../convex/_generated/api', () => ({
-  api: {
-    functions: {
-      categories: {
-        categories: {
-          getCategoryTree: 'getCategoryTree',
-        },
-        categoryLevels: {
-          getCategoryLevels: 'getCategoryLevels',
-        },
-      },
-    },
-  },
-}));
 
 // Mock the convex hooks
 jest.mock('convex/react', () => ({

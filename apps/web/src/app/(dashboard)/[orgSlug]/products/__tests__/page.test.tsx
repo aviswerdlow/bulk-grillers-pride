@@ -1,4 +1,5 @@
-import { render, screen, fireEvent } from '@/__tests__/test-utils';
+import React from 'react';
+import { render, screen, fireEvent, waitFor } from '@/__tests__/test-utils';
 import ProductsPage from '../page';
 import { mockUseQuery } from '@/__tests__/test-utils';
 import { useParams } from 'next/navigation';
@@ -40,6 +41,54 @@ jest.mock('@/components/products/product-card', () => ({
 
 jest.mock('@/components/products/product-card-skeleton', () => ({
   ProductCardSkeleton: () => <div data-testid="product-skeleton" />,
+}));
+
+// Mock loading component to properly handle the size and text props
+jest.mock('@/components/loading', () => ({
+  Loading: ({ size, text }: { size?: string; text?: string }) => 
+    <div data-testid="loading" data-size={size}>{text || 'Loading...'}</div>,
+  PageLoading: ({ text }: { text?: string }) => 
+    <div data-testid="page-loading">{text || 'Loading...'}</div>,
+}));
+
+// Mock table components
+jest.mock('@/components/ui/table', () => ({
+  Table: ({ children }: any) => <table>{children}</table>,
+  TableHeader: ({ children }: any) => <thead>{children}</thead>,
+  TableBody: ({ children }: any) => <tbody>{children}</tbody>,
+  TableRow: ({ children }: any) => <tr>{children}</tr>,
+  TableHead: ({ children }: any) => <th role="columnheader">{children}</th>,
+  TableCell: ({ children }: any) => <td>{children}</td>,
+}));
+
+// Mock UI components that are causing issues
+jest.mock('@/components/ui/toggle-group', () => ({
+  ToggleGroup: ({ value, onValueChange, children }: any) => {
+    // Pass onValueChange to children
+    return (
+      <div data-testid="toggle-group" data-value={value}>
+        {React.Children.map(children, (child) => {
+          if (React.isValidElement(child)) {
+            return React.cloneElement(child, { onValueChange } as any);
+          }
+          return child;
+        })}
+      </div>
+    );
+  },
+  ToggleGroupItem: ({ value, children, onValueChange, 'aria-label': ariaLabel }: any) => (
+    <button
+      data-testid={`toggle-${value}`}
+      aria-label={ariaLabel}
+      onClick={() => {
+        if (onValueChange) {
+          onValueChange(value);
+        }
+      }}
+    >
+      {children}
+    </button>
+  ),
 }));
 
 describe('ProductsPage', () => {
@@ -134,23 +183,32 @@ describe('ProductsPage', () => {
     expect(screen.getByText('Test Product')).toBeInTheDocument();
   });
 
-  it('switches between grid and list view', () => {
-    mockUseQuery
-      .mockReturnValueOnce(mockOrganization)
-      .mockReturnValueOnce([mockProject])
-      .mockReturnValueOnce({ page: [mockProduct] });
+  it('switches between grid and list view', async () => {
+    // Mock all queries based on the query being called
+    let callCount = 0;
+    mockUseQuery.mockImplementation(() => {
+      callCount++;
+      if (callCount === 1) return mockOrganization; // getOrganizationBySlug
+      if (callCount === 2) return [mockProject];     // getOrganizationProjects
+      if (callCount === 3) return { page: [mockProduct] }; // getProjectProducts
+      return undefined;
+    });
     
-    render(<ProductsPage />);
+    const { container } = render(<ProductsPage />);
     
-    // Should start in grid view
-    expect(screen.getByTestId('product-card-prod_123')).toBeInTheDocument();
+    // Wait for the product to appear in grid view
+    await waitFor(() => {
+      expect(screen.getByTestId('product-card-prod_123')).toBeInTheDocument();
+    });
     
     // Switch to list view
     const listButton = screen.getByLabelText('List view');
     fireEvent.click(listButton);
     
-    // Should show table headers
-    expect(screen.getByRole('columnheader', { name: 'Product' })).toBeInTheDocument();
+    // Wait for table to appear
+    await waitFor(() => {
+      expect(screen.getByRole('columnheader', { name: 'Product' })).toBeInTheDocument();
+    });
     expect(screen.getByRole('columnheader', { name: 'Status' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'Vendor' })).toBeInTheDocument();
   });
@@ -252,13 +310,23 @@ describe('ProductsPage', () => {
     // Total products
     expect(screen.getByText('3')).toBeInTheDocument();
     
-    // Active count
-    const activeCard = screen.getByText('Active').closest('.space-y-0')?.nextElementSibling;
-    expect(activeCard?.textContent).toBe('2');
+    // Active count - find the card with "Active" title and check its count
+    const activeCards = screen.getAllByText('Active');
+    const activeCard = activeCards.find(card => 
+      card.getAttribute('data-slot') === 'card-title'
+    );
+    const activeCardContainer = activeCard?.closest('[data-slot="card"]');
+    const activeCount = activeCardContainer?.querySelector('[data-slot="card-content"]')?.textContent;
+    expect(activeCount).toBe('2');
     
-    // Draft count
-    const draftCard = screen.getByText('Draft').closest('.space-y-0')?.nextElementSibling;
-    expect(draftCard?.textContent).toBe('1');
+    // Draft count - find the card with "Draft" title and check its count
+    const draftCards = screen.getAllByText('Draft');
+    const draftCard = draftCards.find(card => 
+      card.getAttribute('data-slot') === 'card-title'
+    );
+    const draftCardContainer = draftCard?.closest('[data-slot="card"]');
+    const draftCount = draftCardContainer?.querySelector('[data-slot="card-content"]')?.textContent;
+    expect(draftCount).toBe('1');
   });
 
   it('shows loading skeletons in grid view while loading', () => {
@@ -273,7 +341,7 @@ describe('ProductsPage', () => {
     expect(skeletons).toHaveLength(8); // Should show 8 skeleton cards
   });
 
-  it('handles products with no vendor or type in list view', () => {
+  it('handles products with no vendor or type in list view', async () => {
     const productWithoutDetails = {
       ...mockProduct,
       vendor: undefined,
@@ -286,6 +354,11 @@ describe('ProductsPage', () => {
       .mockReturnValueOnce({ page: [productWithoutDetails] });
     
     render(<ProductsPage />);
+    
+    // Wait for loading to complete
+    await waitFor(() => {
+      expect(screen.queryByTestId('loading')).not.toBeInTheDocument();
+    });
     
     // Switch to list view
     const listButton = screen.getByLabelText('List view');

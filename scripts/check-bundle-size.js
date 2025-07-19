@@ -26,10 +26,23 @@ function formatBytes(bytes) {
 }
 
 function checkBundleSize() {
-  console.log('🔍 Checking bundle sizes...\n');
+  const jsonOutput = process.argv.includes('--json');
+  
+  if (!jsonOutput) {
+    console.log('🔍 Checking bundle sizes...\n');
+  }
 
   if (!fs.existsSync(BUILD_MANIFEST)) {
-    console.error('❌ Build manifest not found. Run `npm run build` first.');
+    if (jsonOutput) {
+      console.log(JSON.stringify({
+        passed: false,
+        error: 'Build manifest not found. Run `npm run build` first.',
+        details: [],
+        summary: {}
+      }));
+    } else {
+      console.error('❌ Build manifest not found. Run `npm run build` first.');
+    }
     process.exit(1);
   }
 
@@ -38,7 +51,12 @@ function checkBundleSize() {
   // Calculate sizes
   const results = {
     passed: true,
-    details: []
+    details: [],
+    summary: {
+      totalSize: '0 KB',
+      firstLoadJS: '0 KB',
+      routes: []
+    }
   };
 
   // Check polyfills and main files
@@ -59,6 +77,9 @@ function checkBundleSize() {
 
   const totalSizeKB = totalSize / 1024;
   const firstLoadBudget = BUDGETS['First Load JS'];
+  
+  results.summary.firstLoadJS = formatBytes(totalSize);
+  results.summary.totalSize = formatBytes(totalSize);
   
   if (totalSizeKB > firstLoadBudget) {
     results.passed = false;
@@ -85,17 +106,33 @@ function checkBundleSize() {
       results.passed = false;
       results.details.push(`❌ Route ${route}: ${formatBytes(routeSize)} (budget: ${routeBudget} KB)`);
     }
+    
+    // Add route info to summary
+    results.summary.routes.push({
+      route,
+      size: formatBytes(routeSize),
+      passed: routeSizeKB <= routeBudget
+    });
   });
 
   // Print results
-  console.log('📊 Bundle Size Report\n');
-  results.details.forEach(detail => console.log(detail));
-  
-  if (!results.passed) {
-    console.log('\n❌ Bundle size check failed. Please optimize your bundles.');
-    process.exit(1);
+  if (jsonOutput) {
+    console.log(JSON.stringify(results, null, 2));
   } else {
-    console.log('\n✅ All bundle sizes within budget!');
+    console.log('📊 Bundle Size Report\n');
+    results.details.forEach(detail => console.log(detail));
+    
+    if (!results.passed) {
+      console.log('\n❌ Bundle size check failed. Please optimize your bundles.');
+      process.exit(1);
+    } else {
+      console.log('\n✅ All bundle sizes within budget!');
+    }
+  }
+  
+  // Exit with appropriate code
+  if (!results.passed) {
+    process.exit(1);
   }
 }
 

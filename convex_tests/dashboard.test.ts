@@ -1,11 +1,11 @@
-import { expect, test, describe, beforeEach, vi } from 'vitest';
+// Jest doesn't need explicit imports for expect, test, describe, beforeEach;
 import { getDashboardStats, getRecentActivity } from '../functions/dashboard';
 import { convexTest } from 'convex-test';
 import schema from '../schema';
 
 // Mock the authenticateAndAuthorize function
-vi.mock('../lib/auth', () => ({
-  authenticateAndAuthorize: vi.fn().mockResolvedValue({
+jest.mock('../lib/auth', () => ({
+  authenticateAndAuthorize: jest.fn().mockResolvedValue({
     user: {
       _id: 'user123',
       email: 'test@example.com',

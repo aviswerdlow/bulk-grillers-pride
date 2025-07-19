@@ -9,21 +9,8 @@ jest.mock('convex/react', () => ({
   useQuery: jest.fn(),
 }));
 
-// Mock the convex API
-jest.mock('../../../../../convex/_generated/api', () => ({
-  api: {
-    functions: {
-      categories: {
-        categories: {
-          getCategoryTree: 'getCategoryTree',
-        },
-        categoryLevels: {
-          getCategoryLevels: 'getCategoryLevels',
-        },
-      },
-    },
-  },
-}));
+// Import the mocked API
+import { api } from '../../../../../convex/_generated/api';
 
 const mockUseQuery = useQuery as jest.MockedFunction<typeof useQuery>;
 

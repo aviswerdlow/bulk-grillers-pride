@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+// Jest doesn't need explicit imports for describe, it, expect, beforeEach;
 import {
   processBatchWithLangChain,
   formatProductsForPrompt,
@@ -11,9 +11,9 @@ import {
 import { Doc } from '../../_generated/dataModel';
 
 // Mock LangChain modules
-vi.mock('@langchain/openai', () => ({
-  ChatOpenAI: vi.fn().mockImplementation(() => ({
-    invoke: vi.fn().mockResolvedValue({
+jest.mock('@langchain/openai', () => ({
+  ChatOpenAI: jest.fn().mockImplementation(() => ({
+    invoke: jest.fn().mockResolvedValue({
       content: JSON.stringify([
         {
           productId: 'product1',
@@ -34,9 +34,9 @@ vi.mock('@langchain/openai', () => ({
   })),
 }));
 
-vi.mock('@langchain/anthropic', () => ({
-  ChatAnthropic: vi.fn().mockImplementation(() => ({
-    invoke: vi.fn().mockResolvedValue({
+jest.mock('@langchain/anthropic', () => ({
+  ChatAnthropic: jest.fn().mockImplementation(() => ({
+    invoke: jest.fn().mockResolvedValue({
       content: JSON.stringify([
         {
           productId: 'product1',

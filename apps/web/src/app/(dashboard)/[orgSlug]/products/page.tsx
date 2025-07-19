@@ -36,6 +36,7 @@ import {
   Grid,
   List,
 } from 'lucide-react';
+import { SkuCopyButton } from '@/components/ui/sku-copy-button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -48,18 +49,7 @@ import { ProductCard } from '@/components/products/product-card';
 import { ProductCardSkeleton } from '@/components/products/product-card-skeleton';
 import { Loading } from '@/components/loading';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-
-interface Product {
-  _id: string;
-  title: string;
-  handle: string;
-  vendor?: string;
-  productType?: string;
-  status: string;
-  createdAt: number;
-  updatedAt: number;
-  categories: string[];
-}
+import { Product } from '@/types/models';
 
 export default function ProductsPage() {
   const params = useParams();
@@ -134,7 +124,8 @@ export default function ProductsPage() {
       product.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.handle.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (product.vendor && product.vendor.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (product.productType && product.productType.toLowerCase().includes(searchTerm.toLowerCase()))
+      (product.productType && product.productType.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (product.sku && product.sku.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const getStatusBadgeVariant = (status: string) => {
@@ -223,7 +214,7 @@ export default function ProductsPage() {
             <div className="relative flex-1 max-w-sm">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input
-                placeholder="Search products..."
+                placeholder="Search by name, handle, SKU..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -306,6 +297,7 @@ export default function ProductsPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Product</TableHead>
+                  <TableHead>SKU</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Vendor</TableHead>
                   <TableHead>Type</TableHead>
@@ -322,6 +314,16 @@ export default function ProductsPage() {
                         <div className="font-medium">{product.title}</div>
                         <div className="text-sm text-muted-foreground">{product.handle}</div>
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      {product.sku ? (
+                        <div className="flex items-center gap-2">
+                          <span className="text-muted-foreground font-mono text-sm">{product.sku}</span>
+                          <SkuCopyButton sku={product.sku} variant="icon" />
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
                     </TableCell>
                     <TableCell>
                       <Badge variant={getStatusBadgeVariant(product.status)}>

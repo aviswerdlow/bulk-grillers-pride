@@ -1,15 +1,16 @@
 import { render, screen } from '@/__tests__/test-utils';
 import SignInPage from '../page';
+import { SignIn } from '@clerk/nextjs';
 
-// Mock Clerk components
-jest.mock('@clerk/nextjs', () => ({
-  SignIn: ({ fallbackRedirectUrl, signUpUrl }: any) => (
+// Update the global mock for this test
+beforeEach(() => {
+  (SignIn as jest.Mock).mockImplementation(({ fallbackRedirectUrl, signUpUrl }: any) => (
     <div data-testid="sign-in-component">
       <div data-testid="fallback-redirect-url">{fallbackRedirectUrl}</div>
       <div data-testid="sign-up-url">{signUpUrl}</div>
     </div>
-  ),
-}));
+  ));
+});
 
 describe('SignInPage', () => {
   it('renders the sign in page with correct title and description', () => {

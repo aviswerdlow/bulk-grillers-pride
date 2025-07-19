@@ -118,6 +118,7 @@ export default defineSchema({
     vendor: v.optional(v.string()),
     productType: v.optional(v.string()),
     handle: v.string(), // URL slug
+    sku: v.optional(v.string()), // Primary SKU for simple products
     status: v.union(v.literal('active'), v.literal('draft'), v.literal('archived')),
 
     // SEO & Marketing
@@ -167,6 +168,7 @@ export default defineSchema({
     .index('by_handle', ['organizationId', 'projectId', 'handle'])
     .index('by_status', ['organizationId', 'projectId', 'status'])
     .index('by_categories', ['categories'])
+    .index('by_sku', ['organizationId', 'sku'])
     .searchIndex('search_products', {
       searchField: 'title',
       filterFields: ['organizationId', 'projectId', 'status', 'productType'],
@@ -460,6 +462,26 @@ export default defineSchema({
     startedAt: v.optional(v.number()),
     completedAt: v.optional(v.number()),
     executionTime: v.optional(v.number()), // milliseconds
+
+    // Real-time Progress Tracking
+    currentBatch: v.optional(v.number()), // Current batch being processed
+    lastProcessedProduct: v.optional(
+      v.object({
+        productId: v.id('products'),
+        title: v.string(),
+        timestamp: v.number(),
+      })
+    ),
+    aiThoughts: v.optional(
+      v.array(
+        v.object({
+          timestamp: v.number(),
+          thought: v.string(),
+          productId: v.optional(v.id('products')),
+          confidence: v.optional(v.number()),
+        })
+      )
+    ),
 
     // Error Handling
     errors: v.array(

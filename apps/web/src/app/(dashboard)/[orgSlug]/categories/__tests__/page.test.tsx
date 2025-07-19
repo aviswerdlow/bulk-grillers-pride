@@ -28,6 +28,28 @@ jest.mock('@/components/categories/edit-category-dialog', () => ({
     ) : null,
 }));
 
+// Mock loading component
+jest.mock('@/components/loading', () => ({
+  Loading: ({ size, text }: { size?: string; text?: string }) => 
+    <div data-testid="loading" data-size={size}>{text || 'Loading...'}</div>,
+}));
+
+// Mock Lucide icons
+jest.mock('lucide-react', () => ({
+  Plus: () => <div>Plus Icon</div>,
+  ChevronRight: () => <div>ChevronRight Icon</div>,
+  ChevronDown: () => <div>ChevronDown Icon</div>,
+  Eye: () => <div>Eye Icon</div>,
+  EyeOff: () => <div>EyeOff Icon</div>,
+  Edit: () => <div>Edit Icon</div>,
+  Trash: () => <div>Trash Icon</div>,
+  Trash2: () => <div>Trash2 Icon</div>,
+  Search: () => <div>Search Icon</div>,
+  FolderTree: () => <div>FolderTree Icon</div>,
+  MoreHorizontal: () => <div>MoreHorizontal Icon</div>,
+  FolderPlus: () => <div>FolderPlus Icon</div>,
+}));
+
 describe('CategoriesPage', () => {
   const mockOrganization = {
     _id: 'org_123' as any,

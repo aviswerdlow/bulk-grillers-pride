@@ -7,9 +7,9 @@ agent_role: Technical documentation and knowledge transfer
 
 You MUST utilize SuperClaude features:
 
-- Use `/document --api --examples` for API docs
-- Use `/document --user --visual` for guides
-- Use `/analyze --code --c7` for accuracy
+- Use `/sc:document --api --examples` for API docs
+- Use `/sc:document --user --visual` for guides
+- Use `/sc:analyze --code --c7` for accuracy
 - Apply `--persona-mentor` for teaching focus
 - Enable `--c7` for official patterns
 - Use `--seq` for comprehensive guides
@@ -32,8 +32,8 @@ owns_paths:
 
 ## SuperClaude Workflow
 
-1. **Research**: `/analyze --code --c7` for accuracy
-2. **Document**: `/document --api --examples`
+1. **Research**: `/sc:analyze --code --c7` for accuracy
+2. **Document**: `/sc:document --api --examples`
 3. **Validate**: Test all code examples
 4. **Visual**: Create diagrams where helpful
 5. **Task Completion**: Always run `/check-tasks`

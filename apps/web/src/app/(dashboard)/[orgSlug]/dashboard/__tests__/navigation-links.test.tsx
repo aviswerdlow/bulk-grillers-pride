@@ -27,6 +27,33 @@ jest.mock('next/link', () => {
   };
 });
 
+// Mock loading component
+jest.mock('@/components/loading', () => ({
+  PageLoading: ({ text }: { text?: string }) => <div>{text || 'Loading...'}</div>,
+}));
+
+// Mock Lucide icons
+jest.mock('lucide-react', () => ({
+  ShoppingCart: () => <div>ShoppingCart Icon</div>,
+  Layers: () => <div>Layers Icon</div>,
+  Upload: () => <div>Upload Icon</div>,
+  Brain: () => <div>Brain Icon</div>,
+  Plus: () => <div>Plus Icon</div>,
+  TrendingUp: () => <div>TrendingUp Icon</div>,
+  Clock: () => <div>Clock Icon</div>,
+  Users: () => <div>Users Icon</div>,
+  Activity: () => <div>Activity Icon</div>,
+  Package: () => <div>Package Icon</div>,
+  FileText: () => <div>FileText Icon</div>,
+  CheckCircle: () => <div>CheckCircle Icon</div>,
+  AlertCircle: () => <div>AlertCircle Icon</div>,
+}));
+
+// Mock date-fns
+jest.mock('date-fns', () => ({
+  formatDistanceToNow: jest.fn(() => '2 hours ago'),
+}));
+
 describe('Dashboard Navigation Links', () => {
   const mockPush = jest.fn();
 

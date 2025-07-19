@@ -4,12 +4,53 @@ import userEvent from '@testing-library/user-event';
 import { useRouter, useParams } from 'next/navigation';
 import { useQuery } from 'convex/react';
 import OrganizationDashboard from '../page';
-import {
-  mockOrganization,
-  mockProjects,
-  mockDashboardStats,
-  mockRecentActivity,
-} from './page.test';
+// Mock data
+const mockOrganization = {
+  _id: 'org123',
+  name: 'Test Organization',
+  slug: 'test-org',
+};
+
+const mockProjects = [
+  {
+    _id: 'proj1',
+    name: 'Test Project',
+    slug: 'test-project',
+    status: 'active',
+  },
+];
+
+const mockDashboardStats = {
+  projectsCount: 5,
+  productsCount: 100,
+  activeAiJobsCount: 2,
+  teamMembersCount: 8,
+  productsByStatus: {
+    active: 80,
+    draft: 20,
+    total: 100,
+  },
+  categorizedProducts: 75,
+  uncategorizedProducts: 25,
+  recentImports: [],
+};
+
+const mockRecentActivity = [
+  {
+    _id: 'activity1',
+    timestamp: new Date().getTime(),
+    eventType: 'CREATE',
+    entityType: 'products',
+    entityId: 'prod123',
+    action: 'created',
+    performedBy: {
+      type: 'user',
+      userId: 'user123',
+      userEmail: 'test@example.com',
+      name: 'Test User',
+    },
+  },
+];
 
 // Mock Next.js navigation
 jest.mock('next/navigation', () => ({
@@ -32,6 +73,33 @@ jest.mock('next/link', () => {
 // Mock Convex
 jest.mock('convex/react', () => ({
   useQuery: jest.fn(),
+}));
+
+// Mock loading component
+jest.mock('@/components/loading', () => ({
+  PageLoading: ({ text }: { text?: string }) => <div>{text || 'Loading...'}</div>,
+}));
+
+// Mock Lucide icons
+jest.mock('lucide-react', () => ({
+  ShoppingCart: () => <div>ShoppingCart Icon</div>,
+  Layers: () => <div>Layers Icon</div>,
+  Upload: () => <div>Upload Icon</div>,
+  Brain: () => <div>Brain Icon</div>,
+  Plus: () => <div>Plus Icon</div>,
+  TrendingUp: () => <div>TrendingUp Icon</div>,
+  Clock: () => <div>Clock Icon</div>,
+  Users: () => <div>Users Icon</div>,
+  Activity: () => <div>Activity Icon</div>,
+  Package: () => <div>Package Icon</div>,
+  FileText: () => <div>FileText Icon</div>,
+  CheckCircle: () => <div>CheckCircle Icon</div>,
+  AlertCircle: () => <div>AlertCircle Icon</div>,
+}));
+
+// Mock date-fns
+jest.mock('date-fns', () => ({
+  formatDistanceToNow: jest.fn(() => '2 hours ago'),
 }));
 
 describe('Dashboard Navigation Tests', () => {

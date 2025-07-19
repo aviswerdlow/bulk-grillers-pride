@@ -14,6 +14,24 @@ jest.mock('date-fns', () => ({
   formatDistanceToNow: jest.fn(() => '2 days ago'),
 }));
 
+// Mock loading component
+jest.mock('@/components/loading', () => ({
+  Loading: ({ size, text }: { size?: string; text?: string }) => 
+    <div data-testid="loading" data-size={size}>{text || 'Loading...'}</div>,
+  PageLoading: ({ text }: { text?: string }) => 
+    <div data-testid="page-loading">{text || 'Loading...'}</div>,
+}));
+
+// Mock Lucide icons
+jest.mock('lucide-react', () => ({
+  Plus: () => <div>Plus Icon</div>,
+  Folder: () => <div>Folder Icon</div>,
+  Package: () => <div>Package Icon</div>,
+  Calendar: () => <div>Calendar Icon</div>,
+  Settings: () => <div>Settings Icon</div>,
+  Trash2: () => <div>Trash2 Icon</div>,
+}))
+
 describe('ProjectsPage', () => {
   const mockOrganization = {
     _id: 'org_123' as any,
@@ -78,7 +96,7 @@ describe('ProjectsPage', () => {
     expect(screen.getByRole('heading', { name: 'Projects' })).toBeInTheDocument();
     expect(screen.getByText('No projects yet')).toBeInTheDocument();
     expect(screen.getByText('Create your first project to start managing your e-commerce products and categories.')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Create Your First Project/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Create Your First Project/i })).toBeInTheDocument();
   });
 
   it('renders projects page with data', () => {

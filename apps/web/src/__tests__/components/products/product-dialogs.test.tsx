@@ -10,18 +10,8 @@ jest.mock('convex/react', () => ({
   useMutation: jest.fn(),
 }));
 
-// Mock the API
-jest.mock('../../../../../convex/_generated/api', () => ({
-  api: {
-    functions: {
-      products: {
-        products: {
-          createProduct: 'createProduct',
-        },
-      },
-    },
-  },
-}));
+// Import the mocked API (no need to mock it again as jest.config.js handles it)
+import { api } from '../../../../../convex/_generated/api';
 
 // Mock react-hook-form
 jest.mock('react-hook-form', () => ({

@@ -1,7 +1,7 @@
 const React = require('react');
 
 // Create providers that don't do the provider check
-const ClerkProvider = ({ children }) => children;
+const ClerkProvider = ({ children }) => React.createElement(React.Fragment, null, children);
 
 // Mock hooks
 const useAuth = jest.fn(() => ({
@@ -69,10 +69,10 @@ const useOrganizationList = jest.fn(() => ({
 }));
 
 // Mock components
-const SignIn = () => React.createElement('div', null, 'Sign In Component');
-const SignUp = () => React.createElement('div', null, 'Sign Up Component');
-const UserButton = () => React.createElement('div', null, 'User Button');
-const OrganizationSwitcher = () => React.createElement('div', null, 'Organization Switcher');
+const SignIn = jest.fn(() => React.createElement('div', null, 'Sign In Component'));
+const SignUp = jest.fn(() => React.createElement('div', null, 'Sign Up Component'));
+const UserButton = jest.fn(() => React.createElement('div', null, 'User Button'));
+const OrganizationSwitcher = jest.fn(() => React.createElement('div', null, 'Organization Switcher'));
 
 // Mock server-side functions
 const auth = () => ({

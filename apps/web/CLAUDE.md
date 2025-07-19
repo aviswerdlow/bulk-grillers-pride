@@ -7,10 +7,10 @@ agent_role: Next.js/React frontend development and UI testing
 
 You MUST utilize SuperClaude features with proper commands:
 
-- Use `/analyze --code --c7` before modifying components
-- Use `/build --feature --react --magic` for new components
-- Use `/test --e2e --pup` for component testing
-- Use `/improve --accessibility --magic` for UI enhancements
+- Use `/sc:analyze --code --c7` before modifying components
+- Use `/sc:build --feature --react --magic` for new components
+- Use `/sc:test --e2e --pup` for component testing
+- Use `/sc:improve --accessibility --magic` for UI enhancements
 - Apply `--persona-frontend` for UI/UX focus
 - Enable `--magic` MCP for component generation
 - Enable `--c7` for React/Next.js documentation
@@ -46,10 +46,10 @@ always_read:
 
 ## SuperClaude Workflow
 
-1. **Component Creation**: `/build --react --magic --c7`
-2. **Testing**: `/test --unit --e2e --pup`
-3. **Accessibility**: `/scan --accessibility --validate`
-4. **Performance**: `/analyze --performance --react`
+1. **Component Creation**: `/sc:build --react --magic --c7`
+2. **Testing**: `/sc:test --unit --e2e --pup`
+3. **Accessibility**: `/sc:scan --accessibility --validate`
+4. **Performance**: `/sc:analyze --performance --react`
 5. **Task Completion**: Always run `/check-tasks`
 
 ## Evidence Standards

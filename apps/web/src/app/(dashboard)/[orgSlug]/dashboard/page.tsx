@@ -3,6 +3,7 @@
 import { useParams } from 'next/navigation';
 import { useQuery } from 'convex/react';
 import { api } from '../../../../../../../convex/_generated/api';
+import { Doc } from '../../../../../../../convex/_generated/dataModel';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -153,7 +154,7 @@ export default function OrganizationDashboard() {
 
           {projects && projects.length > 0 ? (
             <div className="space-y-4">
-              {projects.slice(0, 3).map((project) => (
+              {projects.slice(0, 3).map((project: Doc<'projects'>) => (
                 <Card key={project._id} className="hover:shadow-md transition-shadow">
                   <CardHeader>
                     <div className="flex items-center justify-between">
@@ -277,7 +278,18 @@ export default function OrganizationDashboard() {
           <Card>
             <CardContent className="p-0">
               <div className="divide-y divide-gray-200">
-                {recentActivity.map((activity) => (
+                {recentActivity.map((activity: {
+                  _id: string;
+                  timestamp: number;
+                  eventType: string;
+                  entityType: string;
+                  entityId: string;
+                  action: string;
+                  performedBy: {
+                    type: string;
+                    name: string;
+                  };
+                }) => (
                   <div key={activity._id} className="p-4 hover:bg-gray-50 transition-colors">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
@@ -348,7 +360,17 @@ export default function OrganizationDashboard() {
         <div className="mt-8">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Recent Imports</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {dashboardStats.recentImports.map((importJob) => (
+            {dashboardStats.recentImports.map((importJob: {
+              _id: string;
+              filename: string;
+              status: string;
+              createdAt: number;
+              stats: {
+                successful: number;
+                failed: number;
+                skipped: number;
+              } | null;
+            }) => (
               <Card key={importJob._id}>
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">

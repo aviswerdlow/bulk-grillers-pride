@@ -1,6 +1,5 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+// Jest doesn't need explicit imports for describe, it, expect, beforeEach;
 import { convexTest } from '../test-helpers';
-import { api } from '../../_generated/api';
 
 describe('AI Categorization', () => {
   let ctx: any;
@@ -87,12 +86,12 @@ describe('AI Categorization', () => {
 
       // Mock auth
       ctx.auth = {
-        getUserIdentity: vi.fn().mockResolvedValue({ subject: 'user_123' }),
+        getUserIdentity: jest.fn().mockResolvedValue({ subject: 'user_123' }),
       };
 
       // Test the getCategorizationJob query
       const job = await ctx.runQuery(
-        api.functions.ai.categorization.getCategorizationJob,
+        'getCategorizationJob',
         { jobId }
       );
 
@@ -108,7 +107,7 @@ describe('AI Categorization', () => {
     it('should throw error if job not found', async () => {
       // Mock auth
       ctx.auth = {
-        getUserIdentity: vi.fn().mockResolvedValue({ subject: 'user_123' }),
+        getUserIdentity: jest.fn().mockResolvedValue({ subject: 'user_123' }),
       };
 
       // Create user
@@ -123,7 +122,7 @@ describe('AI Categorization', () => {
 
       // Test with non-existent job ID
       await expect(
-        ctx.runQuery(api.functions.ai.categorization.getCategorizationJob, {
+        ctx.runQuery('getCategorizationJob', {
           jobId: '123456789abcdef123456789' as any,
         })
       ).rejects.toThrow('Job not found');
@@ -227,12 +226,12 @@ describe('AI Categorization', () => {
 
       // Mock auth
       ctx.auth = {
-        getUserIdentity: vi.fn().mockResolvedValue({ subject: 'user_123' }),
+        getUserIdentity: jest.fn().mockResolvedValue({ subject: 'user_123' }),
       };
 
       // Apply categorization
       const result = await ctx.runMutation(
-        api.functions.ai.categorization.applyCategorization,
+        'applyCategorization',
         {
           jobId,
           productId,

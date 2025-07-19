@@ -39,6 +39,7 @@ const editProductSchema = z.object({
   vendor: z.string().optional(),
   productType: z.string().optional(),
   handle: z.string().optional(),
+  sku: z.string().optional(),
   seoTitle: z.string().optional(),
   seoDescription: z.string().optional(),
   tags: z.array(z.string()).default([]),
@@ -72,6 +73,7 @@ export function EditProductDialog({ open, onOpenChange, product }: EditProductDi
       vendor: product.vendor || '',
       productType: product.productType || '',
       handle: product.handle,
+      sku: product.sku || '',
       seoTitle: product.seoTitle || '',
       seoDescription: product.seoDescription || '',
       tags: product.tags || [],
@@ -87,6 +89,7 @@ export function EditProductDialog({ open, onOpenChange, product }: EditProductDi
       vendor: product.vendor || '',
       productType: product.productType || '',
       handle: product.handle,
+      sku: product.sku || '',
       seoTitle: product.seoTitle || '',
       seoDescription: product.seoDescription || '',
       tags: product.tags || [],
@@ -142,6 +145,7 @@ export function EditProductDialog({ open, onOpenChange, product }: EditProductDi
       if (data.productType !== product.productType)
         updates.productType = data.productType || undefined;
       if (data.handle !== product.handle) updates.handle = data.handle;
+      if (data.sku !== product.sku) updates.sku = data.sku || undefined;
       if (data.seoTitle !== product.seoTitle) updates.seoTitle = data.seoTitle || undefined;
       if (data.seoDescription !== product.seoDescription)
         updates.seoDescription = data.seoDescription || undefined;
@@ -206,6 +210,11 @@ export function EditProductDialog({ open, onOpenChange, product }: EditProductDi
               <p className="text-xs text-muted-foreground">
                 URL-friendly identifier for this product
               </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="sku">SKU</Label>
+              <Input id="sku" {...register('sku')} placeholder="SKU-123" />
             </div>
 
             <div className="space-y-2">

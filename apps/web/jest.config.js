@@ -15,10 +15,40 @@ module.exports = {
     '!<rootDir>/apps/web/src/**/__tests__/**',
     '!<rootDir>/apps/web/src/__tests__/**',
   ],
+  // Add module directories to help with resolution
+  moduleDirectories: ['node_modules', '<rootDir>'],
+  // Add resolver to handle convex imports
+  resolver: undefined,
+  // Don't ignore convex files for transformation
+  transformIgnorePatterns: [
+    'node_modules/(?!(convex|@radix-ui|cmdk)/)',
+    '!convex/_generated/',
+  ],
+  // Transform JS files from convex
+  transform: {
+    ...webProjectConfig.transform,
+    '^.+\\.js$': ['ts-jest', {
+      tsconfig: {
+        jsx: 'react',
+        allowJs: true,
+      },
+    }],
+  },
   moduleNameMapper: {
+    // Mock all variations of convex imports
+    '^(\\.{1,2}/)*\\.\\./convex/_generated/api(\\.js)?$': '<rootDir>/apps/web/src/__tests__/__mocks__/convex-api.js',
+    '^(\\.{1,2}/)*\\.\\./convex/_generated/dataModel(\\.d?\\.ts)?$': '<rootDir>/apps/web/src/__tests__/__mocks__/convex-dataModel.ts',
+    '\\.\\./\\.\\./\\.\\./\\.\\./\\.\\./convex/_generated/api(\\.js)?$': '<rootDir>/apps/web/src/__tests__/__mocks__/convex-api.js',
+    '\\.\\./\\.\\./\\.\\./\\.\\./\\.\\./convex/_generated/api$': '<rootDir>/apps/web/src/__tests__/__mocks__/convex-api.js',
+    '\\.\\./\\.\\./\\.\\./\\.\\./\\.\\./\\.\\./convex/_generated/api(\\.js)?$': '<rootDir>/apps/web/src/__tests__/__mocks__/convex-api.js',
+    '\\.\\./\\.\\./\\.\\./\\.\\./\\.\\./\\.\\./\\.\\./convex/_generated/api(\\.js)?$': '<rootDir>/apps/web/src/__tests__/__mocks__/convex-api.js',
+    '\\.\\./\\.\\./\\.\\./\\.\\./\\.\\./convex/_generated/dataModel(\\.d?\\.ts)?$': '<rootDir>/apps/web/src/__tests__/__mocks__/convex-dataModel.ts',
+    '\\.\\./\\.\\./\\.\\./\\.\\./\\.\\./\\.\\./convex/_generated/dataModel(\\.d?\\.ts)?$': '<rootDir>/apps/web/src/__tests__/__mocks__/convex-dataModel.ts',
+    '\\.\\./\\.\\./\\.\\./\\.\\./\\.\\./\\.\\./\\.\\./convex/_generated/dataModel(\\.d?\\.ts)?$': '<rootDir>/apps/web/src/__tests__/__mocks__/convex-dataModel.ts',
+    '^convex/_generated/api(\\.js)?$': '<rootDir>/apps/web/src/__tests__/__mocks__/convex-api.js',
+    '^convex/_generated/api\\.js$': '<rootDir>/apps/web/src/__tests__/__mocks__/convex-api.js',
+    '^convex/_generated/dataModel(\\.d?\\.ts)?$': '<rootDir>/apps/web/src/__tests__/__mocks__/convex-dataModel.ts',
     ...webProjectConfig.moduleNameMapper,
-    // Mock the convex generated API
-    '^.*/convex/_generated/api$': '<rootDir>/apps/web/src/__tests__/__mocks__/convex-api.ts',
     // Mock Radix UI packages
     '^@radix-ui/react-icons$': '<rootDir>/apps/web/src/__tests__/__mocks__/lucide-react.js',
     '^@radix-ui/(.*)$': '<rootDir>/apps/web/src/__tests__/__mocks__/radix-ui-all.js',
@@ -28,5 +58,9 @@ module.exports = {
     '^cmdk$': '<rootDir>/apps/web/src/__tests__/__mocks__/cmdk.js',
     // Mock Clerk
     '^@clerk/nextjs$': '<rootDir>/apps/web/src/__tests__/__mocks__/@clerk/nextjs.js',
+    // Mock UI components - commenting out to test real components
+    // '^@/components/ui/(.*)$': '<rootDir>/apps/web/src/__tests__/__mocks__/ui-components.tsx',
+    // Mock loading component
+    '^@/components/loading$': '<rootDir>/apps/web/src/__tests__/__mocks__/loading.tsx',
   },
 };

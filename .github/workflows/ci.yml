@@ -6,15 +6,22 @@ on:
   pull_request:
     branches: [main, develop]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 env:
   NODE_VERSION: '18'
   TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
   TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
+  TURBO_REMOTE_ONLY: true
 
 jobs:
-  lint:
-    name: Lint
+  setup:
+    name: Setup and Cache Dependencies
     runs-on: ubuntu-latest
+    outputs:
+      cache-key: ${{ steps.cache-key.outputs.key }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -25,8 +32,89 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Generate cache key
+        id: cache-key
+        run: |
+          echo "key=${{ runner.os }}-node-${{ env.NODE_VERSION }}-${{ hashFiles('package-lock.json') }}" >> $GITHUB_OUTPUT
+
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            apps/*/node_modules
+            packages/*/node_modules
+          key: ${{ steps.cache-key.outputs.key }}
+          restore-keys: |
+            ${{ runner.os }}-node-${{ env.NODE_VERSION }}-
+
+      - name: Restore node_modules cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            apps/*/node_modules
+            packages/*/node_modules
+          key: ${{ needs.setup.outputs.cache-key }}
+
+      - name: Restore Turbo cache
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: turbo-${{ github.sha }}
+          restore-keys: |
+            turbo-
+
+      - name: Install dependencies if cache miss
+        run: |
+          if [ ! -d "node_modules" ]; then
+            npm ci
+          fi
+
+      - name: Cache Turbo
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: turbo-${{ github.sha }}
+          restore-keys: |
+            turbo-
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    needs: setup
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Restore node_modules cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            apps/*/node_modules
+            packages/*/node_modules
+          key: ${{ needs.setup.outputs.cache-key }}
+
+      - name: Restore Turbo cache
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: turbo-${{ github.sha }}
+          restore-keys: |
+            turbo-
+
+      - name: Install dependencies if cache miss
+        run: |
+          if [ ! -d "node_modules" ]; then
+            npm ci
+          fi
 
       - name: Run linting
         run: npm run lint
@@ -44,8 +132,28 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Restore node_modules cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            apps/*/node_modules
+            packages/*/node_modules
+          key: ${{ needs.setup.outputs.cache-key }}
+
+      - name: Restore Turbo cache
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: turbo-${{ github.sha }}
+          restore-keys: |
+            turbo-
+
+      - name: Install dependencies if cache miss
+        run: |
+          if [ ! -d "node_modules" ]; then
+            npm ci
+          fi
 
       - name: Run type checking
         run: npm run type-check
@@ -55,6 +163,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
+        project: [web, convex]
         shard: [1, 2]
     steps:
       - name: Checkout repository
@@ -66,11 +175,36 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Restore node_modules cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            apps/*/node_modules
+            packages/*/node_modules
+          key: ${{ needs.setup.outputs.cache-key }}
 
-      - name: Run tests
-        run: npm run test:ci -- --shard=${{ matrix.shard }}/2
+      - name: Restore Turbo cache
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: turbo-${{ github.sha }}
+          restore-keys: |
+            turbo-
+
+      - name: Install dependencies if cache miss
+        run: |
+          if [ ! -d "node_modules" ]; then
+            npm ci
+          fi
+
+      - name: Run tests for ${{ matrix.project }} (shard ${{ matrix.shard }}/2)
+        run: |
+          if [ "${{ matrix.project }}" = "web" ]; then
+            npm run test:ci -- --selectProjects=web --testPathPattern="$([ ${{ matrix.shard }} = 1 ] && echo '(components|lib|utils)' || echo '(app|contracts)')"
+          else
+            npm run test:ci -- --selectProjects=convex --testPathPattern="$([ ${{ matrix.shard }} = 1 ] && echo '(ai|auth|categories)' || echo '(dashboard|imports|organizations|products|projects)')"
+          fi
         env:
           NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
           CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
@@ -79,7 +213,7 @@ jobs:
       - name: Upload coverage reports
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-${{ matrix.shard }}
+          name: coverage-${{ matrix.project }}-${{ matrix.shard }}
           path: coverage/
           retention-days: 1
 
@@ -121,14 +255,106 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Restore node_modules cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            apps/*/node_modules
+            packages/*/node_modules
+          key: ${{ needs.setup.outputs.cache-key }}
+
+      - name: Restore Turbo cache
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: turbo-${{ github.sha }}
+          restore-keys: |
+            turbo-
+
+      - name: Install dependencies if cache miss
+        run: |
+          if [ ! -d "node_modules" ]; then
+            npm ci
+          fi
 
       - name: Build application
         run: npm run build
         env:
           NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
           NEXT_PUBLIC_CONVEX_URL: ${{ secrets.NEXT_PUBLIC_CONVEX_URL }}
+
+      - name: Check bundle size
+        id: bundle-size
+        run: |
+          node scripts/check-bundle-size.js --json > bundle-size-report.json
+          echo "## Bundle Size Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          cat bundle-size-report.json | jq -r '
+            "### Summary\n" +
+            "- **Status**: " + (if .passed then "✅ Passed" else "❌ Failed" end) + "\n" +
+            "- **Total Bundle Size**: " + .summary.totalSize + "\n" +
+            "- **First Load JS**: " + .summary.firstLoadJS + "\n\n" +
+            "### Details\n" +
+            (.details | map("- " + .) | join("\n"))
+          ' >> $GITHUB_STEP_SUMMARY
+        continue-on-error: true
+
+      - name: Upload bundle size report
+        uses: actions/upload-artifact@v4
+        with:
+          name: bundle-size-report
+          path: bundle-size-report.json
+          retention-days: 30
+
+      - name: Comment PR with bundle size
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = JSON.parse(fs.readFileSync('bundle-size-report.json', 'utf8'));
+            
+            const comment = `## 📊 Bundle Size Report
+            
+            ${report.passed ? '✅ All bundle sizes within budget!' : '❌ Bundle size limits exceeded!'}
+            
+            **Summary:**
+            - Total Bundle Size: ${report.summary.totalSize}
+            - First Load JS: ${report.summary.firstLoadJS}
+            
+            **Details:**
+            ${report.details.map(d => `- ${d}`).join('\n')}
+            
+            ---
+            <sub>Bundle size limits: First Load JS: 200 KB, Route JS: 100 KB</sub>`;
+            
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            
+            const bundleSizeComment = comments.find(comment => 
+              comment.body.includes('📊 Bundle Size Report') && 
+              comment.user.type === 'Bot'
+            );
+            
+            if (bundleSizeComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: bundleSizeComment.id,
+                body: comment,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: comment,
+              });
+            }
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
@@ -153,8 +379,28 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Restore node_modules cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            apps/*/node_modules
+            packages/*/node_modules
+          key: ${{ needs.setup.outputs.cache-key }}
+
+      - name: Restore Turbo cache
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: turbo-${{ github.sha }}
+          restore-keys: |
+            turbo-
+
+      - name: Install dependencies if cache miss
+        run: |
+          if [ ! -d "node_modules" ]; then
+            npm ci
+          fi
 
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps

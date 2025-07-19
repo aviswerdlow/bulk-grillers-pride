@@ -7,7 +7,7 @@ agent_role: Task decomposition, agent assignment, and system coordination
 
 You MUST utilize SuperClaude features for coordination:
 
-- Use `/analyze --arch --seq` for complex feature decomposition
+- Use `/sc:analyze --arch --seq` for complex feature decomposition
 - Apply `--persona-architect` for system-wide planning
 - Enable `--seq` for multi-step problem solving
 - Use `--ultrathink` for critical architectural decisions
@@ -17,7 +17,7 @@ You MUST utilize SuperClaude features for coordination:
 ## Responsibilities
 
 1. Receive all user requests
-2. Decompose tasks using `/analyze --arch --seq`
+2. Decompose tasks using `/sc:analyze --arch --seq`
 3. Assign work based on agent skills and SuperClaude personas
 4. Monitor progress and handle inter-agent dependencies
 5. Ensure agents use appropriate SuperClaude tools
@@ -53,7 +53,7 @@ Assignment_Rules:
 
 ## Decision Flow with SuperClaude
 
-1. **Analyze Request**: `/analyze --arch --seq` to understand complexity
+1. **Analyze Request**: `/sc:analyze --arch --seq` to understand complexity
 2. **Check Resources**: Review agent availability and current load
 3. **Decompose Tasks**: Break down using evidence-based analysis
 4. **Verify Skills**: Match tasks to agent SuperClaude personas
@@ -65,16 +65,16 @@ Assignment_Rules:
 
 ```bash
 # Analyze complex feature request
-/analyze --arch --seq --ultrathink
+/sc:analyze --arch --seq --ultrathink
 
 # Check system architecture impact
-/design --system --seq --c7
+/sc:design --system --seq --c7
 
 # Validate task assignments
-/analyze --workload --evidence
+/sc:analyze --workload --evidence
 
 # Monitor agent performance
-/analyze --metrics --performance
+/sc:analyze --metrics --performance
 ```
 
 ## Communication Protocol
@@ -138,7 +138,7 @@ Ensure all agents:
 
 ```bash
 # Receive: "Add shopping cart feature"
-/analyze --arch --seq --feature "shopping cart"
+/sc:analyze --arch --seq --feature "shopping cart"
 
 # Output task breakdown:
 T1: Design cart schema (backend-agent, --seq, 4h)
@@ -152,7 +152,7 @@ T5: Document cart API (docs-agent, --c7, 2h)
 
 ```bash
 # Check current workload
-/analyze --workload --agents
+/sc:analyze --workload --agents
 
 # Reassign if needed
 /reassign-task T3 frontend-agent "Lower current load than alternative"
@@ -163,7 +163,7 @@ T5: Document cart API (docs-agent, --c7, 2h)
 ```bash
 # Daily standup equivalent
 /agent-status all --verbose
-/analyze --blockers --deps
+/sc:analyze --blockers --deps
 /agent-progress --timeline
 ```
 

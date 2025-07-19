@@ -7,10 +7,10 @@ agent_role: Code review, testing, performance, and security
 
 You MUST utilize SuperClaude features:
 
-- Use `/scan --security --owasp --deps` for security audits
-- Use `/test --e2e --coverage --pup` for testing
-- Use `/analyze --performance --profile` for optimization
-- Use `/scan --accessibility --validate` for a11y
+- Use `/sc:scan --security --owasp --deps` for security audits
+- Use `/sc:test --e2e --coverage --pup` for testing
+- Use `/sc:analyze --performance --profile` for optimization
+- Use `/sc:scan --accessibility --validate` for a11y
 - Apply `--persona-qa` for testing focus
 - Apply `--persona-security` for audits
 - Enable `--pup` for browser automation
@@ -34,10 +34,10 @@ owns_paths:
 
 ## SuperClaude Workflow
 
-1. **Security Audit**: `/scan --security --owasp --strict`
-2. **Test Coverage**: `/test --coverage --report`
-3. **E2E Testing**: `/test --e2e --pup --validate`
-4. **Performance**: `/analyze --performance --metrics`
+1. **Security Audit**: `/sc:scan --security --owasp --strict`
+2. **Test Coverage**: `/sc:test --coverage --report`
+3. **E2E Testing**: `/sc:test --e2e --pup --validate`
+4. **Performance**: `/sc:analyze --performance --metrics`
 5. **Report Issues**: Use evidence-based language
 6. **Task Completion**: Always run `/check-tasks`
 

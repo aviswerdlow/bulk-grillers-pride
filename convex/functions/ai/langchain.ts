@@ -168,7 +168,13 @@ export function initializeLLM(
 
   switch (provider) {
     case 'openai':
-      return new ChatOpenAI(commonOptions);
+      // OpenAI models don't need mapping - they exist!
+      console.log(`[LANGCHAIN] Using OpenAI model: ${model}`);
+      
+      return new ChatOpenAI({
+        ...commonOptions,
+        modelName: model,
+      });
 
     case 'anthropic':
       return new ChatAnthropic({
@@ -382,11 +388,17 @@ export function estimateCost(
 ): { inputCost: number; outputCost: number; totalCost: number } {
   // Cost per 1K tokens (approximate as of 2024)
   const pricing: Record<string, { input: number; output: number }> = {
-    // OpenAI Reasoning Models
-    'openai:o3': { input: 0.04, output: 0.08 },  // Premium reasoning model
-    'openai:o3-mini': { input: 0.02, output: 0.04 },  // Faster reasoning
-    'openai:o4-mini': { input: 0.015, output: 0.03 },  // Efficient reasoning
-    'openai:o1': { input: 0.035, output: 0.07 },  // Advanced reasoning
+    // OpenAI Models (using actual model names)
+    'openai:gpt-4-turbo-preview': { input: 0.01, output: 0.03 },  // GPT-4 Turbo
+    'openai:gpt-4o': { input: 0.005, output: 0.015 },  // GPT-4o
+    'openai:gpt-4o-mini': { input: 0.00015, output: 0.0006 },  // GPT-4o mini
+    'openai:gpt-4': { input: 0.03, output: 0.06 },  // GPT-4
+    'openai:gpt-3.5-turbo': { input: 0.0005, output: 0.0015 },  // GPT-3.5 Turbo
+    // Map custom names to actual pricing
+    'openai:o3': { input: 0.01, output: 0.03 },  // Maps to GPT-4 Turbo
+    'openai:o3-mini': { input: 0.00015, output: 0.0006 },  // Maps to GPT-4o mini
+    'openai:o4-mini': { input: 0.00015, output: 0.0006 },  // Maps to GPT-4o mini
+    'openai:o1': { input: 0.005, output: 0.015 },  // Maps to GPT-4o
     // Anthropic Claude 4
     'anthropic:claude-opus-4': { input: 0.02, output: 0.1 },  // Most powerful
     'anthropic:claude-sonnet-4': { input: 0.01, output: 0.05 },  // High performance

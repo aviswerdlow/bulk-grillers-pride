@@ -98,7 +98,7 @@ export function CreateCategorizationJobDialog({
 Please provide categories with confidence scores and rationale for each suggestion.`,
       batchSize: 10,
       aiProvider: 'openai',
-      aiModel: 'gpt-4',
+      aiModel: 'o3-mini',
     },
   });
 
@@ -109,10 +109,12 @@ Please provide categories with confidence scores and rationale for each suggesti
   // AI model options based on provider
   const aiModelOptions = {
     openai: [
-      { value: 'o3', label: 'O3 (Most Powerful Reasoning)', disabled: false },
-      { value: 'o3-mini', label: 'O3 Mini (Faster Reasoning)', disabled: false },
-      { value: 'o4-mini', label: 'O4 Mini (Fast & Efficient)', disabled: false },
-      { value: 'o1', label: 'O1 (Advanced Reasoning)', disabled: false },
+      { value: 'o3', label: 'O3 (Advanced Reasoning - $2/$8)', disabled: false },
+      { value: 'o3-mini', label: 'O3 Mini (Fast Reasoning - $1.10/$4.40)', disabled: false },
+      { value: 'o4-mini', label: 'O4 Mini (Efficient - $1.10/$4.40)', disabled: false },
+      { value: 'o1', label: 'O1 (Premium - $15/$60)', disabled: false },
+      { value: 'gpt-4o', label: 'GPT-4o (Multimodal - $2.50/$10)', disabled: false },
+      { value: 'gpt-4o-mini', label: 'GPT-4o Mini (Budget - $0.15/$0.60)', disabled: false },
     ],
     anthropic: [
       { value: 'claude-opus-4', label: 'Claude Opus 4 (Most Powerful)', disabled: false },

@@ -18,3 +18,4 @@ export {
   checkSchemaCompatibility,
   planSchemaMigration,
 } from './schemaVersion';
+export { addProductSKUs, checkSKUMigrationStatus } from './addProductSKUs';

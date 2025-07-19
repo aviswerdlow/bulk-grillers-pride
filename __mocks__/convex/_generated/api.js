@@ -1,5 +1,6 @@
 // Mock for Convex generated API
-export const api = {
+module.exports = {
+  api: {
   functions: {
     auth: {
       users: {
@@ -30,10 +31,41 @@ export const api = {
     categories: {
       categories: {
         getAllCategories: 'categories.categories.getAllCategories',
+        getCategoryTree: 'categories.categories.getCategoryTree',
+      },
+      categoryLevels: {
+        getCategoryLevels: 'categories.categoryLevels.getCategoryLevels',
       },
     },
     organizations: {
       getUserOrganizations: 'organizations.getUserOrganizations',
+      organizations: {
+        getOrganizationBySlug: 'organizations.organizations.getOrganizationBySlug',
+        getDashboardStats: 'organizations.organizations.getDashboardStats',
+        getOrganizationMembers: 'organizations.organizations.getOrganizationMembers',
+        createOrganization: 'organizations.organizations.createOrganization',
+        updateOrganization: 'organizations.organizations.updateOrganization',
+        removeTeamMember: 'organizations.organizations.removeTeamMember',
+      },
+      apiKeys: {
+        getMaskedApiKeys: 'organizations.apiKeys.getMaskedApiKeys',
+        updateApiKeys: 'organizations.apiKeys.updateApiKeys',
+        removeApiKey: 'organizations.apiKeys.removeApiKey',
+      },
+    },
+    ai: {
+      categorization: {
+        createCategorizationJob: 'ai.categorization.createCategorizationJob',
+        cancelCategorizationJob: 'ai.categorization.cancelCategorizationJob',
+        getCategorizationJob: 'ai.categorization.getCategorizationJob',
+        applyCategorization: 'ai.categorization.applyCategorization',
+        processCategorizationJob: 'ai.categorization.processCategorizationJob',
+        getJobDetails: 'ai.categorization.getJobDetails',
+        exportJobResults: 'ai.categorization.exportJobResults',
+        subscribeToJobUpdates: 'ai.categorization.subscribeToJobUpdates',
+        validateApiKeyConfiguration: 'ai.categorization.validateApiKeyConfiguration',
+        checkModelAvailability: 'ai.categorization.checkModelAvailability',
+      },
     },
     products: {
       products: {
@@ -43,5 +75,6 @@ export const api = {
         delete: 'products.products.delete',
       },
     },
+  },
   },
 };

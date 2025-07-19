@@ -7,7 +7,7 @@ import {
   internalQuery,
   internalAction,
 } from '../../_generated/server';
-import { internal } from '../../_generated/api';
+import { api, internal } from '../../_generated/api';
 import { Doc, Id } from '../../_generated/dataModel';
 import {
   processBatchWithLangChain,
@@ -18,6 +18,172 @@ import {
   estimateCost,
   AIProvider,
 } from './langchain';
+
+// API Key validation utilities
+const validateApiKey = (apiKey: string | undefined, provider: AIProvider): { valid: boolean; error?: string } => {
+  if (!apiKey) {
+    return { valid: false, error: `No API key configured for ${provider}. Please add your API key in organization settings.` };
+  }
+
+  // Basic format validation
+  const trimmedKey = apiKey.trim();
+  
+  switch (provider) {
+    case 'openai':
+      // OpenAI keys start with 'sk-' and are typically 51 characters
+      if (!trimmedKey.startsWith('sk-') || trimmedKey.length < 40) {
+        return { valid: false, error: 'Invalid OpenAI API key format. Keys should start with "sk-" and be at least 40 characters.' };
+      }
+      break;
+      
+    case 'anthropic':
+      // Anthropic keys typically start with 'sk-ant-' 
+      if (!trimmedKey.includes('sk-ant-') || trimmedKey.length < 40) {
+        return { valid: false, error: 'Invalid Anthropic API key format. Keys should contain "sk-ant-" and be at least 40 characters.' };
+      }
+      break;
+      
+    case 'gemini':
+      // Gemini/Google AI keys are typically 39 characters
+      if (trimmedKey.length < 35) {
+        return { valid: false, error: 'Invalid Gemini API key format. Keys should be at least 35 characters.' };
+      }
+      break;
+      
+    default:
+      return { valid: false, error: `Unsupported AI provider: ${provider}` };
+  }
+  
+  return { valid: true };
+};
+
+// Model availability checking
+const isModelAvailable = (provider: AIProvider, model: string): { available: boolean; error?: string; suggestion?: string } => {
+  const availableModels: Record<AIProvider, { models: string[]; deprecated?: string[]; suggestions: Record<string, string> }> = {
+    openai: {
+      models: ['gpt-4-turbo-preview', 'gpt-4o', 'gpt-4o-mini', 'gpt-4', 'gpt-3.5-turbo'],
+      deprecated: ['text-davinci-003', 'text-davinci-002'],
+      suggestions: {
+        'o3': 'gpt-4-turbo-preview',
+        'o3-mini': 'gpt-4o-mini',
+        'o4-mini': 'gpt-4o-mini',
+        'o1': 'gpt-4o',
+      }
+    },
+    anthropic: {
+      models: ['claude-opus-4', 'claude-sonnet-4', 'claude-3-opus-20240229', 'claude-3-sonnet-20240229', 'claude-3-haiku-20240307'],
+      deprecated: ['claude-2.1', 'claude-2.0', 'claude-instant-1.2'],
+      suggestions: {
+        'claude-2': 'claude-3-sonnet-20240229',
+        'claude-instant': 'claude-3-haiku-20240307',
+      }
+    },
+    gemini: {
+      models: ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-1.0-pro'],
+      deprecated: ['gemini-pro', 'gemini-pro-vision'],
+      suggestions: {
+        'gemini-pro': 'gemini-1.5-pro',
+        'gemini': 'gemini-1.5-flash',
+      }
+    }
+  };
+
+  const providerModels = availableModels[provider];
+  if (!providerModels) {
+    return { available: false, error: `Unsupported AI provider: ${provider}` };
+  }
+
+  // Check if model is directly available
+  if (providerModels.models.includes(model)) {
+    return { available: true };
+  }
+
+  // Check if model is deprecated
+  if (providerModels.deprecated?.includes(model)) {
+    const suggestion = providerModels.suggestions[model] || providerModels.models[0];
+    return { 
+      available: false, 
+      error: `Model "${model}" is deprecated for ${provider}.`,
+      suggestion: `Please use "${suggestion}" instead.`
+    };
+  }
+
+  // Check if there's a suggestion for this model name
+  if (providerModels.suggestions[model]) {
+    return { 
+      available: false, 
+      error: `Model "${model}" is not recognized for ${provider}.`,
+      suggestion: `Did you mean "${providerModels.suggestions[model]}"?`
+    };
+  }
+
+  // Model not found
+  return { 
+    available: false, 
+    error: `Model "${model}" is not available for ${provider}.`,
+    suggestion: `Available models: ${providerModels.models.join(', ')}`
+  };
+};
+
+// Validate API key configuration for an organization
+export const validateApiKeyConfiguration = query({
+  args: {
+    organizationId: v.id('organizations'),
+    provider: v.optional(v.string()),
+  },
+  handler: async (ctx, { organizationId, provider }) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error('Not authenticated');
+
+    // Verify user has access to this organization
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_clerk_id', (q) => q.eq('clerkId', identity.subject))
+      .unique();
+
+    if (!user) throw new Error('User not found');
+
+    const membership = await ctx.db
+      .query('organizationMemberships')
+      .withIndex('by_organization_user', (q) =>
+        q.eq('organizationId', organizationId).eq('userId', user._id)
+      )
+      .filter((q) => q.eq(q.field('status'), 'active'))
+      .unique();
+
+    if (!membership) throw new Error('Access denied');
+
+    // Get organization settings
+    const organization = await ctx.db.get(organizationId);
+    if (!organization) throw new Error('Organization not found');
+
+    const aiProvider = provider || organization.settings.aiProvider;
+    const apiKey = organization.settings.apiKeys[aiProvider as keyof typeof organization.settings.apiKeys];
+    
+    // Validate the API key
+    const validation = validateApiKey(apiKey, aiProvider as AIProvider);
+    
+    // Don't expose the actual API key, just validation status
+    return {
+      provider: aiProvider,
+      hasApiKey: !!apiKey,
+      isValid: validation.valid,
+      error: validation.error,
+    };
+  },
+});
+
+// Check model availability
+export const checkModelAvailability = query({
+  args: {
+    provider: v.string(),
+    model: v.string(),
+  },
+  handler: async (ctx, { provider, model }) => {
+    const modelCheck = isModelAvailable(provider as AIProvider, model);
+    return modelCheck;
+  },
+});
 
 // Get AI categorization jobs for an organization
 export const getCategorizationJobs = query({
@@ -108,6 +274,216 @@ export const getCategorizationJob = query({
   },
 });
 
+// Get detailed job information including product results
+export const getJobDetails = query({
+  args: { jobId: v.id('aiCategorizationJobs') },
+  handler: async (ctx, { jobId }) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error('Not authenticated');
+
+    // Get the job from database
+    const job = await ctx.db.get(jobId);
+    if (!job) throw new Error('Job not found');
+
+    // Verify user has access to this organization
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_clerk_id', (q) => q.eq('clerkId', identity.subject))
+      .unique();
+
+    if (!user) throw new Error('User not found');
+
+    const membership = await ctx.db
+      .query('organizationMemberships')
+      .withIndex('by_organization_user', (q) =>
+        q.eq('organizationId', job.organizationId).eq('userId', user._id)
+      )
+      .filter((q) => q.eq(q.field('status'), 'active'))
+      .unique();
+
+    if (!membership) throw new Error('Access denied');
+
+    // Get detailed product information for each result
+    const productResults = await Promise.all(
+      job.results.map(async (result) => {
+        const product = await ctx.db.get(result.productId);
+        if (!product) return null;
+
+        // Get assigned categories with details
+        const assignedCategories = await Promise.all(
+          result.suggestions.map(async (suggestion) => {
+            const category = await ctx.db.get(suggestion.categoryId);
+            const assignment = await ctx.db
+              .query('categoryProductAssignments')
+              .withIndex('by_product', (q) => q.eq('productId', result.productId))
+              .filter((q) => 
+                q.eq(q.field('categoryId'), suggestion.categoryId) &&
+                q.eq(q.field('status'), 'active')
+              )
+              .unique();
+
+            return {
+              categoryId: suggestion.categoryId,
+              categoryName: category?.name || 'Unknown Category',
+              categoryPath: category?.path || '',
+              confidence: suggestion.confidence,
+              rationale: suggestion.rationale,
+              isAssigned: !!assignment,
+              assignmentStatus: assignment?.status || 'not_assigned',
+            };
+          })
+        );
+
+        return {
+          productId: product._id,
+          title: product.title,
+          description: product.description,
+          vendor: product.vendor,
+          productType: product.productType,
+          handle: product.handle,
+          status: product.status,
+          imageUrl: product.featuredImage?.url,
+          suggestions: assignedCategories,
+          newCategorySuggestions: result.newCategorySuggestions || [],
+          error: result.error,
+        };
+      })
+    );
+
+    // Get error details with affected products
+    const errorDetails = await Promise.all(
+      job.errors.map(async (error) => {
+        let productInfo = null;
+        if (error.productId) {
+          const product = await ctx.db.get(error.productId);
+          if (product) {
+            productInfo = {
+              productId: product._id,
+              title: product.title,
+              handle: product.handle,
+            };
+          }
+        }
+
+        return {
+          ...error,
+          product: productInfo,
+        };
+      })
+    );
+
+    // Get user who created the job
+    const createdByUser = await ctx.db.get(job.createdBy);
+
+    // Calculate performance metrics
+    const metrics = {
+      totalProducts: job.progress.total,
+      processedProducts: job.progress.processed,
+      successfulProducts: job.progress.successful,
+      failedProducts: job.progress.failed,
+      skippedProducts: job.progress.skipped,
+      successRate: job.progress.processed > 0 
+        ? Math.round((job.progress.successful / job.progress.processed) * 100) 
+        : 0,
+      averageConfidence: productResults
+        .filter(Boolean)
+        .flatMap(p => p?.suggestions || [])
+        .reduce((acc, s, _, arr) => acc + s.confidence / arr.length, 0) || 0,
+      executionTime: job.executionTime || 0,
+      categoriesUsed: new Set(
+        productResults
+          .filter(Boolean)
+          .flatMap(p => p?.suggestions || [])
+          .map(s => s.categoryId)
+      ).size,
+    };
+
+    return {
+      // Job metadata
+      id: job._id,
+      organizationId: job.organizationId,
+      projectId: job.projectId,
+      jobType: job.jobType,
+      status: job.status,
+      aiProvider: job.aiProvider,
+      aiModel: job.aiModel,
+      prompt: job.prompt,
+      batchSize: job.batchSize,
+      
+      // Progress and metrics
+      progress: job.progress,
+      metrics,
+      
+      // Results
+      productResults: productResults.filter(Boolean),
+      errors: errorDetails,
+      
+      // Timing
+      createdAt: job.createdAt,
+      startedAt: job.startedAt,
+      completedAt: job.completedAt,
+      executionTime: job.executionTime,
+      
+      // User info
+      createdBy: {
+        userId: job.createdBy,
+        name: createdByUser?.name || 'Unknown User',
+        email: createdByUser?.email || '',
+      },
+      
+      // Notifications
+      notifications: job.notifications,
+      notificationsSent: job.notificationsSent,
+    };
+  },
+});
+
+// Subscribe to real-time job updates
+export const subscribeToJobUpdates = query({
+  args: { jobId: v.id('aiCategorizationJobs') },
+  handler: async (ctx, { jobId }) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error('Not authenticated');
+
+    // Get the job from database
+    const job = await ctx.db.get(jobId);
+    if (!job) throw new Error('Job not found');
+
+    // Verify user has access to this organization
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_clerk_id', (q) => q.eq('clerkId', identity.subject))
+      .unique();
+
+    if (!user) throw new Error('User not found');
+
+    const membership = await ctx.db
+      .query('organizationMemberships')
+      .withIndex('by_organization_user', (q) =>
+        q.eq('organizationId', job.organizationId).eq('userId', user._id)
+      )
+      .filter((q) => q.eq(q.field('status'), 'active'))
+      .unique();
+
+    if (!membership) throw new Error('Access denied');
+
+    // Return current job state and progress
+    return {
+      id: job._id,
+      status: job.status,
+      progress: job.progress,
+      currentBatch: job.currentBatch,
+      lastProcessedProduct: job.lastProcessedProduct,
+      aiThoughts: job.aiThoughts || [],
+      errors: job.errors,
+      startedAt: job.startedAt,
+      executionTime: job.executionTime,
+      updatedAt: job.updatedAt,
+    };
+  },
+});
+
+
 // Create a new AI categorization job
 export const createCategorizationJob = mutation({
   args: {
@@ -163,6 +539,22 @@ export const createCategorizationJob = mutation({
       throw new Error('AI provider does not match organization settings');
     }
 
+    // Validate API key exists and has proper format
+    const apiKey = aiSettings.apiKeys[args.aiProvider as keyof typeof aiSettings.apiKeys];
+    const keyValidation = validateApiKey(apiKey, args.aiProvider as AIProvider);
+    if (!keyValidation.valid) {
+      throw new Error(keyValidation.error);
+    }
+
+    // Validate model availability
+    const modelCheck = isModelAvailable(args.aiProvider as AIProvider, args.aiModel);
+    if (!modelCheck.available) {
+      const errorMessage = modelCheck.suggestion 
+        ? `${modelCheck.error} ${modelCheck.suggestion}`
+        : modelCheck.error;
+      throw new Error(errorMessage);
+    }
+
     // Get available categories for context
     const categories = await ctx.db
       .query('categories')
@@ -201,6 +593,9 @@ export const createCategorizationJob = mutation({
       },
       results: [],
       errors: [],
+      currentBatch: 0,
+      lastProcessedProduct: undefined,
+      aiThoughts: [],
       notifications: args.notifications,
       notificationsSent: false,
       createdBy: user._id,
@@ -313,14 +708,34 @@ export const processCategorizationJob = internalAction({
       // Get the API key for the selected provider
       const apiKey =
         organization.settings.apiKeys[job.aiProvider as keyof typeof organization.settings.apiKeys];
-      if (!apiKey) {
-        console.error(`❌ [AI-CAT] No API key configured for provider: ${job.aiProvider}`);
-        console.error(`❌ [AI-CAT] Available keys: ${Object.keys(organization.settings.apiKeys).join(', ')}`);
-        throw new Error(`No API key configured for provider: ${job.aiProvider}`);
+      
+      // Re-validate API key (in case it was changed after job creation)
+      const keyValidation = validateApiKey(apiKey, job.aiProvider as AIProvider);
+      if (!keyValidation.valid) {
+        console.error(`❌ [AI-CAT] API key validation failed: ${keyValidation.error}`);
+        const errorDetails = {
+          type: 'API_KEY_ERROR',
+          message: keyValidation.error,
+          productId: undefined,
+          timestamp: Date.now(),
+        };
+        
+        // Update job with error
+        await ctx.runMutation(internal.functions.ai.categorization.updateCategorizationJob, {
+          jobId,
+          updates: {
+            status: 'failed',
+            errors: [errorDetails],
+            completedAt: Date.now(),
+            executionTime: Date.now() - startTime,
+          },
+        });
+        
+        throw new Error(keyValidation.error);
       }
       
-      console.log(`✅ [AI-CAT] API key found for ${job.aiProvider} (length: ${apiKey.length} chars)`);
-      console.log(`🔑 [AI-CAT] Key starts with: ${apiKey.substring(0, 10)}...`);
+      console.log(`✅ [AI-CAT] API key validated for ${job.aiProvider} (length: ${apiKey!.length} chars)`);
+      console.log(`🔑 [AI-CAT] Key starts with: ${apiKey!.substring(0, 10)}...`);
 
       // Get products to categorize
       const products = await ctx.runQuery(internal.functions.ai.categorization.getProductsByIds, {
@@ -346,6 +761,13 @@ export const processCategorizationJob = internalAction({
       for (let i = 0; i < products.length; i += batchSize) {
         const batch = products.slice(i, i + batchSize);
         const batchStart = Date.now();
+        const batchNumber = Math.floor(i / batchSize) + 1;
+
+        // Update current batch in real-time
+        await ctx.runMutation(internal.functions.ai.categorization.updateRealtimeProgress, {
+          jobId,
+          currentBatch: batchNumber,
+        });
 
         try {
           // Check cache for similar products
@@ -387,6 +809,12 @@ export const processCategorizationJob = internalAction({
             console.log(`📝 [AI-CAT] Custom prompt: ${job.prompt || 'Default'}`);
             console.log(`🔢 [AI-CAT] Category context: ${job.categoryContext?.length || 0} categories provided`);
             
+            // Add AI thought about batch processing
+            await ctx.runMutation(internal.functions.ai.categorization.addAIThought, {
+              jobId,
+              thought: `Processing batch ${batchNumber} with ${uncachedProducts.length} products using ${job.aiModel}`,
+            });
+            
             console.log(`🚀 [AI-CAT] Making LangChain API call NOW...`);
             const aiCallStart = Date.now();
             
@@ -408,17 +836,45 @@ export const processCategorizationJob = internalAction({
             console.log(`✅ [AI-CAT] LangChain API call completed in ${aiCallDuration}ms`);
             console.log(`📊 [AI-CAT] Results: ${aiResults.length} items processed`);
 
+            // Add AI thought about results
+            await ctx.runMutation(internal.functions.ai.categorization.addAIThought, {
+              jobId,
+              thought: `Analyzed ${aiResults.length} products in ${aiCallDuration}ms. Found ${aiResults.filter(r => r.status === 'success').length} successful categorizations.`,
+              confidence: aiResults.filter(r => r.status === 'success').length / aiResults.length,
+            });
+
             // Estimate output tokens
             const estimatedOutputTokens = estimateTokenCount(JSON.stringify(aiResults));
             totalOutputTokens += estimatedOutputTokens;
 
-            // Cache successful results
+            // Cache successful results and update real-time progress
             for (const result of aiResults) {
               if (result.status === 'success') {
                 const product = uncachedProducts.find((p) => p._id === result.productId);
                 if (product) {
                   const cacheKey = generateCacheKey(product);
                   categorizationCache.set(cacheKey, result);
+                  
+                  // Update last processed product
+                  await ctx.runMutation(internal.functions.ai.categorization.updateRealtimeProgress, {
+                    jobId,
+                    lastProcessedProduct: {
+                      productId: product._id,
+                      title: product.title,
+                      timestamp: Date.now(),
+                    },
+                  });
+                  
+                  // Add AI thought about individual product categorization
+                  if (result.suggestions && result.suggestions.length > 0) {
+                    const topSuggestion = result.suggestions[0];
+                    await ctx.runMutation(internal.functions.ai.categorization.addAIThought, {
+                      jobId,
+                      thought: `Categorized "${product.title}" with ${result.suggestions.length} suggestions. Top match: confidence ${topSuggestion.confidence.toFixed(2)}`,
+                      productId: product._id,
+                      confidence: topSuggestion.confidence,
+                    });
+                  }
                 }
               }
             }
@@ -462,19 +918,68 @@ export const processCategorizationJob = internalAction({
         } catch (error) {
           console.error(`[AI-CAT] Error processing batch ${i / batchSize + 1}:`, error);
 
+          // Check if this is an API key error
+          let errorMessage = error instanceof Error ? error.message : 'Unknown error';
+          let errorType = 'PROCESSING_ERROR';
+          
+          if (error instanceof Error) {
+            // Check for common API key error patterns
+            if (error.message.includes('401') || 
+                error.message.includes('Unauthorized') || 
+                error.message.includes('Invalid API Key') ||
+                error.message.includes('Incorrect API key provided') ||
+                error.message.includes('authentication') ||
+                error.message.includes('API key')) {
+              errorType = 'API_KEY_ERROR';
+              errorMessage = `API key error: ${error.message}. Please check your API key in organization settings.`;
+            } else if (error.message.includes('404') || 
+                       error.message.includes('model not found') ||
+                       error.message.includes('does not exist')) {
+              errorType = 'MODEL_ERROR';
+              errorMessage = `Model error: ${error.message}. The specified model may not be available.`;
+            } else if (error.message.includes('429') || 
+                       error.message.includes('rate limit') ||
+                       error.message.includes('quota')) {
+              errorType = 'RATE_LIMIT_ERROR';
+              errorMessage = `Rate limit error: ${error.message}. Please try again later or upgrade your API plan.`;
+            }
+          }
+
           // Mark batch as failed
           const failedResults = batch.map((product) => ({
             productId: product._id,
             suggestions: [],
             newCategorySuggestions: [],
             status: 'error' as const,
-            error: error instanceof Error ? error.message : 'Unknown error',
+            error: errorMessage,
           }));
 
           totalProcessed += batch.length;
           totalFailed += batch.length;
 
           allResults.push(...failedResults);
+
+          // Add error to job errors
+          const errorDetails = {
+            type: errorType,
+            message: errorMessage,
+            productId: undefined,
+            timestamp: Date.now(),
+          };
+
+          await ctx.runMutation(internal.functions.ai.categorization.updateCategorizationJob, {
+            jobId,
+            updates: {
+              errors: [errorDetails],
+            },
+          });
+          
+          // Add AI thought about the error
+          await ctx.runMutation(internal.functions.ai.categorization.addAIThought, {
+            jobId,
+            thought: `Error in batch ${batchNumber}: ${errorType} - ${errorMessage}`,
+            confidence: 0,
+          });
 
           // Update progress with failures
           await ctx.runMutation(internal.functions.ai.categorization.updateJobProgressInternal, {
@@ -530,6 +1035,56 @@ export const processCategorizationJob = internalAction({
 
 // Initialize cache instance
 const categorizationCache = new ProductCategorizationCache(3600000); // 1 hour TTL
+
+// Internal mutation to update categorization job with errors
+export const updateCategorizationJob = internalMutation({
+  args: {
+    jobId: v.id('aiCategorizationJobs'),
+    updates: v.object({
+      status: v.optional(v.union(
+        v.literal('pending'),
+        v.literal('running'),
+        v.literal('completed'),
+        v.literal('failed'),
+        v.literal('cancelled')
+      )),
+      errors: v.optional(v.array(v.object({
+        type: v.string(),
+        message: v.string(),
+        productId: v.optional(v.id('products')),
+        timestamp: v.number(),
+      }))),
+      completedAt: v.optional(v.number()),
+      executionTime: v.optional(v.number()),
+    }),
+  },
+  handler: async (ctx, { jobId, updates }) => {
+    const job = await ctx.db.get(jobId);
+    if (!job) throw new Error('Job not found');
+
+    const updateData: any = {
+      updatedAt: Date.now(),
+    };
+
+    if (updates.status) {
+      updateData.status = updates.status;
+    }
+
+    if (updates.errors) {
+      updateData.errors = [...job.errors, ...updates.errors];
+    }
+
+    if (updates.completedAt !== undefined) {
+      updateData.completedAt = updates.completedAt;
+    }
+
+    if (updates.executionTime !== undefined) {
+      updateData.executionTime = updates.executionTime;
+    }
+
+    await ctx.db.patch(jobId, updateData);
+  },
+});
 
 // Internal query to get organization with decrypted API keys
 export const getOrganizationWithKeys = internalQuery({
@@ -645,6 +1200,66 @@ export const completeJobInternal = internalMutation({
       status: args.status,
       completedAt: args.completedAt,
       executionTime: args.executionTime,
+      updatedAt: Date.now(),
+    });
+  },
+});
+
+// Internal mutation to update real-time progress
+export const updateRealtimeProgress = internalMutation({
+  args: {
+    jobId: v.id('aiCategorizationJobs'),
+    currentBatch: v.optional(v.number()),
+    lastProcessedProduct: v.optional(
+      v.object({
+        productId: v.id('products'),
+        title: v.string(),
+        timestamp: v.number(),
+      })
+    ),
+  },
+  handler: async (ctx, args) => {
+    const updates: any = {
+      updatedAt: Date.now(),
+    };
+
+    if (args.currentBatch !== undefined) {
+      updates.currentBatch = args.currentBatch;
+    }
+
+    if (args.lastProcessedProduct) {
+      updates.lastProcessedProduct = args.lastProcessedProduct;
+    }
+
+    await ctx.db.patch(args.jobId, updates);
+  },
+});
+
+// Internal mutation to add AI thoughts
+export const addAIThought = internalMutation({
+  args: {
+    jobId: v.id('aiCategorizationJobs'),
+    thought: v.string(),
+    productId: v.optional(v.id('products')),
+    confidence: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const job = await ctx.db.get(args.jobId);
+    if (!job) throw new Error('Job not found');
+
+    const newThought = {
+      timestamp: Date.now(),
+      thought: args.thought,
+      productId: args.productId,
+      confidence: args.confidence,
+    };
+
+    const aiThoughts = job.aiThoughts || [];
+    // Keep only the last 50 thoughts to avoid unbounded growth
+    const updatedThoughts = [...aiThoughts, newThought].slice(-50);
+
+    await ctx.db.patch(args.jobId, {
+      aiThoughts: updatedThoughts,
       updatedAt: Date.now(),
     });
   },
@@ -820,6 +1435,167 @@ export const cancelCategorizationJob = mutation({
   },
 });
 
+// Get detailed job information including results and enriched data
+export const getJobDetails = query({
+  args: {
+    jobId: v.id('aiCategorizationJobs'),
+  },
+  handler: async (ctx, args) => {
+    const { jobId } = args;
+
+    // Check authentication
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error('Not authenticated');
+
+    // Get the job
+    const job = await ctx.db.get(jobId);
+    if (!job) {
+      throw new Error('Job not found');
+    }
+
+    // Get user and verify access
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_clerk_id', (q) => q.eq('clerkId', identity.subject))
+      .unique();
+    
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    // Check if user has access to this job's organization
+    const orgMembership = await ctx.db
+      .query('organizationMemberships')
+      .withIndex('by_organization_user', (q) =>
+        q.eq('organizationId', job.organizationId).eq('userId', user._id)
+      )
+      .filter((q) => q.eq(q.field('status'), 'active'))
+      .unique();
+
+    if (!orgMembership) {
+      throw new Error('You do not have permission to view this job');
+    }
+
+    // Get organization details
+    const organization = await ctx.db.get(job.organizationId);
+    
+    // Get project details
+    const project = await ctx.db.get(job.projectId);
+    
+    // Get user who created the job
+    const createdByUser = await ctx.db.get(job.createdBy);
+
+    // Enrich job with related data
+    const enrichedJob = {
+      ...job,
+      organization: organization ? {
+        _id: organization._id,
+        name: organization.name,
+        slug: organization.slug,
+      } : null,
+      project: project ? {
+        _id: project._id,
+        name: project.name,
+        description: project.description,
+      } : null,
+      createdBy: createdByUser ? {
+        _id: createdByUser._id,
+        firstName: createdByUser.firstName,
+        lastName: createdByUser.lastName,
+        email: createdByUser.email,
+      } : null,
+    };
+
+    // Get all products referenced in results
+    const productIds = job.results.map(r => r.productId);
+    const products = await Promise.all(
+      productIds.map(id => ctx.db.get(id))
+    );
+    const productMap = new Map(
+      products.filter(p => p !== null).map(p => [p!._id, p!])
+    );
+
+    // Get all categories referenced in suggestions
+    const categoryIds = new Set<Id<'categories'>>();
+    job.results.forEach(result => {
+      result.suggestions.forEach(suggestion => {
+        categoryIds.add(suggestion.categoryId);
+      });
+    });
+    
+    const categories = await Promise.all(
+      Array.from(categoryIds).map(id => ctx.db.get(id))
+    );
+    const categoryMap = new Map(
+      categories.filter(c => c !== null).map(c => [c!._id, c!])
+    );
+
+    // Get current category assignments for all products
+    const currentAssignments = await ctx.db
+      .query('categoryProductAssignments')
+      .withIndex('by_organization_project', (q) => 
+        q.eq('organizationId', job.organizationId).eq('projectId', job.projectId)
+      )
+      .filter((q) => q.eq(q.field('status'), 'active'))
+      .collect();
+
+    // Group assignments by product
+    const assignmentsByProduct = new Map<Id<'products'>, typeof currentAssignments>();
+    currentAssignments.forEach(assignment => {
+      const productAssignments = assignmentsByProduct.get(assignment.productId) || [];
+      productAssignments.push(assignment);
+      assignmentsByProduct.set(assignment.productId, productAssignments);
+    });
+
+    // Enrich results with product and category details
+    const enrichedResults = job.results.map(result => {
+      const product = productMap.get(result.productId);
+      const productAssignments = assignmentsByProduct.get(result.productId) || [];
+      
+      return {
+        ...result,
+        product: product || null,
+        currentCategories: productAssignments.map(assignment => ({
+          categoryId: assignment.categoryId,
+          category: categoryMap.get(assignment.categoryId) || null,
+          assignedBy: assignment.assignedBy,
+          assignedAt: assignment.createdAt,
+          confidence: assignment.confidence,
+        })),
+        suggestions: result.suggestions.map(suggestion => ({
+          ...suggestion,
+          category: categoryMap.get(suggestion.categoryId) || null,
+        })),
+      };
+    });
+
+    // Calculate statistics
+    const stats = {
+      totalProducts: job.progress.total,
+      processedProducts: job.progress.processed,
+      successfulProducts: job.progress.successful,
+      failedProducts: job.progress.failed,
+      skippedProducts: job.progress.skipped,
+      averageConfidence: enrichedResults.reduce((sum, result) => {
+        const avgResultConfidence = result.suggestions.reduce(
+          (s, sug) => s + sug.confidence, 0
+        ) / (result.suggestions.length || 1);
+        return sum + avgResultConfidence;
+      }, 0) / (enrichedResults.length || 1),
+      categoriesUsed: categoryIds.size,
+      estimatedTokensUsed: 0, // TODO: Track actual token usage
+      estimatedCost: 0, // TODO: Calculate based on provider and model
+    };
+
+    return {
+      job: enrichedJob,
+      results: enrichedResults,
+      stats,
+      categories: Array.from(categoryMap.values()),
+    };
+  },
+});
+
 // Apply AI categorization suggestions
 export const applyCategorization = mutation({
   args: {
@@ -872,5 +1648,137 @@ export const applyCategorization = mutation({
     });
 
     return args.productId;
+  },
+});
+
+// Export job results as CSV
+export const exportJobResults = action({
+  args: {
+    jobId: v.id('aiCategorizationJobs'),
+    format: v.union(v.literal('summary'), v.literal('detailed')),
+  },
+  handler: async (ctx, args) => {
+    const { jobId, format } = args;
+
+    // Get job details using the query we just created
+    const jobDetails = await ctx.runQuery(api.functions.ai.categorization.getJobDetails, { jobId });
+
+    if (!jobDetails) {
+      throw new Error('Job not found or access denied');
+    }
+
+    // Prepare CSV headers based on format
+    let csvContent = '';
+    
+    if (format === 'summary') {
+      // Summary format: Product, Suggested Categories, Confidence
+      csvContent = 'Product Handle,Product Title,Vendor,Product Type,Suggested Categories,Average Confidence,Status\n';
+      
+      jobDetails.productResults.forEach(result => {
+        const categories = result.suggestions
+          .map(s => s.categoryName)
+          .join('; ');
+        const avgConfidence = result.suggestions.length > 0
+          ? (result.suggestions.reduce((sum, s) => sum + s.confidence, 0) / result.suggestions.length).toFixed(2)
+          : '0';
+        
+        const row = [
+          result.handle || '',
+          result.title || '',
+          result.vendor || '',
+          result.productType || '',
+          categories,
+          avgConfidence,
+          result.status,
+        ].map(field => `"${String(field).replace(/"/g, '""')}"`).join(',');
+        
+        csvContent += row + '\n';
+      });
+    } else {
+      // Detailed format: Include AI reasoning and individual category confidence
+      csvContent = 'Product Handle,Product Title,Product Description,Category,Confidence,AI Reasoning,Is Assigned,Status\n';
+      
+      jobDetails.productResults.forEach(result => {
+        if (result.suggestions.length === 0) {
+          // No suggestions for this product
+          const row = [
+            result.handle || '',
+            result.title || '',
+            result.description || '',
+            'No suggestions',
+            '0',
+            result.error || 'No categories matched',
+            'N/A',
+            result.status,
+          ].map(field => `"${String(field).replace(/"/g, '""')}"`).join(',');
+          
+          csvContent += row + '\n';
+        } else {
+          // One row per suggestion
+          result.suggestions.forEach(suggestion => {
+            const row = [
+              result.handle || '',
+              result.title || '',
+              result.description || '',
+              suggestion.categoryName,
+              suggestion.confidence.toFixed(2),
+              suggestion.rationale,
+              suggestion.isAssigned ? 'Yes' : 'No',
+              result.status,
+            ].map(field => `"${String(field).replace(/"/g, '""')}"`).join(',');
+            
+            csvContent += row + '\n';
+          });
+        }
+      });
+    }
+
+    // Add errors section if there are any
+    if (jobDetails.errors.length > 0) {
+      csvContent += '\n\n';
+      csvContent += '"Errors"\n';
+      csvContent += '"Type","Message","Product","Timestamp"\n';
+      
+      jobDetails.errors.forEach(error => {
+        const row = [
+          error.type,
+          error.message,
+          error.product ? `${error.product.title} (${error.product.handle})` : 'N/A',
+          new Date(error.timestamp).toISOString(),
+        ].map(field => `"${String(field).replace(/"/g, '""')}"`).join(',');
+        
+        csvContent += row + '\n';
+      });
+    }
+
+    // Add metadata at the end
+    csvContent += '\n\n';
+    csvContent += `"Job Summary"\n`;
+    csvContent += `"Job ID","${jobDetails.id}"\n`;
+    csvContent += `"Job Type","${jobDetails.jobType}"\n`;
+    csvContent += `"Status","${jobDetails.status}"\n`;
+    csvContent += `"AI Provider","${jobDetails.aiProvider}"\n`;
+    csvContent += `"Model","${jobDetails.aiModel}"\n`;
+    csvContent += `"Total Products","${jobDetails.metrics.totalProducts}"\n`;
+    csvContent += `"Processed","${jobDetails.metrics.processedProducts}"\n`;
+    csvContent += `"Successful","${jobDetails.metrics.successfulProducts}"\n`;
+    csvContent += `"Failed","${jobDetails.metrics.failedProducts}"\n`;
+    csvContent += `"Success Rate","${jobDetails.metrics.successRate}%"\n`;
+    csvContent += `"Average Confidence","${jobDetails.metrics.averageConfidence.toFixed(2)}"\n`;
+    csvContent += `"Categories Used","${jobDetails.metrics.categoriesUsed}"\n`;
+    csvContent += `"Execution Time","${(jobDetails.metrics.executionTime / 1000).toFixed(2)} seconds"\n`;
+    csvContent += `"Created By","${jobDetails.createdBy.name} (${jobDetails.createdBy.email})"\n`;
+    csvContent += `"Created At","${new Date(jobDetails.createdAt).toISOString()}"\n`;
+    csvContent += `"Export Date","${new Date().toISOString()}"\n`;
+
+    // Convert to base64 for easy transfer
+    const base64Content = Buffer.from(csvContent, 'utf-8').toString('base64');
+    
+    return {
+      fileName: `ai-categorization-${jobDetails.id}-${format}-${Date.now()}.csv`,
+      mimeType: 'text/csv',
+      base64Content,
+      size: csvContent.length,
+    };
   },
 });

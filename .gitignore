@@ -189,4 +189,5 @@ Temporary Items
 docs-agent/
 migration-agent/
 quality-agent/
-SuperClaude/
+SuperClaude/.jest-cache/
+tsconfig.tsbuildinfo

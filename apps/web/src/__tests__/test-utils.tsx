@@ -97,9 +97,67 @@ export const mockUseOrganizationList = {
 // Clerk is now mocked via jest moduleNameMapper in jest.config.js
 
 // Create mock functions that can be imported and used in tests
-export const mockUseQuery = jest.fn();
-export const mockUseMutation = jest.fn();
-export const mockUseAction = jest.fn();
+export const mockUseQuery = jest.fn((query, args) => {
+  // Provide sensible defaults for common queries
+  const queryName = query?._functionName || query?.name || '';
+  
+  if (queryName.includes('getOrganizationBySlug')) {
+    return {
+      _id: 'org_123',
+      name: 'Test Organization',
+      slug: args?.slug || 'test-org',
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    };
+  }
+  
+  if (queryName.includes('getCurrentUser')) {
+    return {
+      _id: 'user_123',
+      name: 'Test User',
+      email: 'test@example.com',
+      role: 'admin',
+    };
+  }
+  
+  if (queryName.includes('getDashboardStats')) {
+    return {
+      totalProjects: 5,
+      totalProducts: 100,
+      totalCategories: 20,
+      teamMembers: 3,
+    };
+  }
+  
+  if (queryName.includes('getRecentActivity')) {
+    return [];
+  }
+  
+  if (queryName.includes('getProducts')) {
+    return {
+      page: [],
+      continueCursor: null,
+      isDone: true,
+    };
+  }
+  
+  if (queryName.includes('getCategories')) {
+    return [];
+  }
+  
+  if (queryName.includes('getProjects')) {
+    return [];
+  }
+  
+  if (queryName.includes('getImportJobs')) {
+    return [];
+  }
+  
+  return undefined;
+});
+
+export const mockUseMutation = jest.fn(() => jest.fn(() => Promise.resolve()));
+export const mockUseAction = jest.fn(() => jest.fn(() => Promise.resolve()));
 
 // Mock Convex hooks
 jest.mock('convex/react', () => ({

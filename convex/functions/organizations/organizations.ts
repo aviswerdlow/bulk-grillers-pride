@@ -230,16 +230,17 @@ export const updateOrganization = mutation({
 
     // Update slug if provided
     if (args.slug !== undefined) {
+      const newSlug = args.slug;
       // Validate slug format
-      if (!isValidSlug(args.slug)) {
-        const error = getSlugValidationError(args.slug);
+      if (!isValidSlug(newSlug)) {
+        const error = getSlugValidationError(newSlug);
         throw new Error(error || 'Invalid organization slug');
       }
 
       // Check if slug is unique (excluding current org)
       const existingOrg = await ctx.db
         .query('organizations')
-        .withIndex('by_slug', (q) => q.eq('slug', args.slug))
+        .withIndex('by_slug', (q) => q.eq('slug', newSlug))
         .filter((q) => q.neq(q.field('_id'), args.organizationId))
         .unique();
 
@@ -247,7 +248,7 @@ export const updateOrganization = mutation({
         throw new Error('Organization slug already exists');
       }
 
-      updates.slug = args.slug;
+      updates.slug = newSlug;
     }
 
     await ctx.db.patch(args.organizationId, updates);

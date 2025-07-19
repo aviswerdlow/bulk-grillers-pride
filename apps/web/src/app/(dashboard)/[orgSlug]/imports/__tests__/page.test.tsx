@@ -25,6 +25,37 @@ jest.mock('@/components/imports/create-import-job-dialog', () => ({
     ) : null,
 }));
 
+// Mock loading component
+jest.mock('@/components/loading', () => ({
+  Loading: ({ size, text }: { size?: string; text?: string }) => 
+    <div data-testid="loading" data-size={size}>{text || 'Loading...'}</div>,
+  PageLoading: ({ text }: { text?: string }) => 
+    <div data-testid="page-loading">{text || 'Loading...'}</div>,
+}));
+
+// Mock Lucide icons
+jest.mock('lucide-react', () => ({
+  Upload: () => <div>Upload Icon</div>,
+  Download: () => <div>Download Icon</div>,
+  FileText: () => <div>FileText Icon</div>,
+  CheckCircle: () => <div>CheckCircle Icon</div>,
+  XCircle: () => <div>XCircle Icon</div>,
+  Clock: () => <div>Clock Icon</div>,
+  Loader2: () => <div>Loader2 Icon</div>,
+  AlertTriangle: () => <div>AlertTriangle Icon</div>,
+}));
+
+// Mock UI components
+jest.mock('@/components/ui/badge', () => ({
+  Badge: ({ children, className }: any) => 
+    <span className={className}>{children}</span>,
+}));
+
+jest.mock('@/components/ui/progress', () => ({
+  Progress: ({ value }: any) => 
+    <div data-testid="progress" data-value={value}>Progress: {value}%</div>,
+}));
+
 describe('ImportsPage', () => {
   const mockOrganization = {
     _id: 'org_123' as any,
@@ -114,7 +145,10 @@ describe('ImportsPage', () => {
     
     // Check stats cards
     expect(screen.getByText('Total Imports')).toBeInTheDocument();
-    expect(screen.getByText('1')).toBeInTheDocument(); // Total imports count
+    
+    // Get the total imports count specifically from the card
+    const totalCard = screen.getByText('Total Imports').closest('[data-slot="card"]');
+    expect(totalCard).toHaveTextContent('1');
     
     // Check import job in table
     expect(screen.getByText('products.csv')).toBeInTheDocument();
@@ -169,13 +203,28 @@ describe('ImportsPage', () => {
     expect(screen.getByText('75%')).toBeInTheDocument(); // 150/200 * 100
   });
 
-  it('opens create import dialog when clicking import button', () => {
-    mockUseQuery
-      .mockReturnValueOnce(mockOrganization)
-      .mockReturnValueOnce([mockProject])
-      .mockReturnValueOnce([]);
+  it('opens create import dialog when clicking import button', async () => {
+    // Mock all useQuery calls to return the expected values
+    mockUseQuery.mockImplementation((query) => {
+      // Check what query is being called based on the function name
+      if (query?.toString().includes('getOrganizationBySlug')) {
+        return mockOrganization;
+      }
+      if (query?.toString().includes('getOrganizationProjects')) {
+        return [mockProject];
+      }
+      if (query?.toString().includes('getImportJobs')) {
+        return [];
+      }
+      return undefined;
+    });
     
     render(<ImportsPage />);
+    
+    // Wait for the page to load and find the import button
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: 'Data Import' })).toBeInTheDocument();
+    });
     
     const importButton = screen.getAllByRole('button', { name: /Import Data/i })[0];
     fireEvent.click(importButton);

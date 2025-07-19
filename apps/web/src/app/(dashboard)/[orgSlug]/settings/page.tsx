@@ -12,7 +12,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { 
-  Settings, 
   Key, 
   Users, 
   CreditCard, 
@@ -21,11 +20,10 @@ import {
   Shield,
   Eye,
   EyeOff,
-  Copy,
   Plus,
   Trash2,
   AlertCircle,
-  CheckCircle,
+  Bot,
 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -40,6 +38,21 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 export default function OrganizationSettingsPage() {
   const params = useParams();
@@ -241,8 +254,12 @@ function GeneralSettings({
 
 // API Keys Settings Component
 function ApiKeysSettings({ organizationId }: { organizationId: Id<'organizations'> }) {
-  const [showKey, setShowKey] = useState<Record<string, boolean>>({});
   const [deletingKey, setDeletingKey] = useState<string | null>(null);
+  const [isAddingKey, setIsAddingKey] = useState(false);
+  const [selectedProvider, setSelectedProvider] = useState<'openai' | 'anthropic' | 'gemini'>('openai');
+  const [newApiKey, setNewApiKey] = useState('');
+  const [isSavingKey, setIsSavingKey] = useState(false);
+  const [showNewApiKey, setShowNewApiKey] = useState(false);
   
   // Query for masked API keys
   const maskedApiKeys = useQuery(api.functions.organizations.apiKeys.getMaskedApiKeys, {
@@ -252,22 +269,22 @@ function ApiKeysSettings({ organizationId }: { organizationId: Id<'organizations
   // Mutation for removing API keys
   const removeApiKey = useMutation(api.functions.organizations.apiKeys.removeApiKey);
   
+  // Mutation for updating API keys
+  const updateApiKeys = useMutation(api.functions.organizations.apiKeys.updateApiKeys);
+  
   // Transform the masked API keys into the format we need for display
-  const apiKeys = maskedApiKeys
-    ? Object.entries(maskedApiKeys).map(([provider, maskedKey]) => ({
-        id: provider,
-        name: `${provider.charAt(0).toUpperCase() + provider.slice(1)} API Key`,
-        provider,
-        lastUsed: 'Recently', // We don't track last used in the current implementation
-        status: 'active' as const,
-        maskedKey,
-      }))
+  const apiKeys = maskedApiKeys?.apiKeys
+    ? Object.entries(maskedApiKeys.apiKeys)
+        .filter(([_, maskedKey]) => maskedKey !== null)
+        .map(([provider, maskedKey]) => ({
+          id: provider,
+          name: `${provider.charAt(0).toUpperCase() + provider.slice(1)} API Key`,
+          provider,
+          lastUsed: 'Recently', // We don't track last used in the current implementation
+          status: 'active' as const,
+          maskedKey: maskedKey as string,
+        }))
     : [];
-
-  const handleCopyKey = (key: string) => {
-    navigator.clipboard.writeText(key);
-    toast.success("API key copied to clipboard");
-  };
 
   const handleDeleteKey = async (provider: string) => {
     try {
@@ -282,6 +299,29 @@ function ApiKeysSettings({ organizationId }: { organizationId: Id<'organizations
     }
   };
 
+  const handleSaveKey = async () => {
+    if (!newApiKey.trim()) {
+      toast.error("Please enter an API key");
+      return;
+    }
+
+    try {
+      setIsSavingKey(true);
+      await updateApiKeys({
+        organizationId,
+        provider: selectedProvider,
+        apiKey: newApiKey,
+      });
+      toast.success(`${selectedProvider} API key saved successfully`);
+      setNewApiKey('');
+      setIsAddingKey(false);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to save API key");
+    } finally {
+      setIsSavingKey(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <Card>
@@ -293,7 +333,7 @@ function ApiKeysSettings({ organizationId }: { organizationId: Id<'organizations
                 Manage API keys for AI categorization providers
               </CardDescription>
             </div>
-            <Button size="sm">
+            <Button size="sm" onClick={() => setIsAddingKey(true)}>
               <Plus className="h-4 w-4 mr-2" />
               Add API Key
             </Button>
@@ -316,26 +356,8 @@ function ApiKeysSettings({ organizationId }: { organizationId: Id<'organizations
                   </div>
                   <div className="flex items-center space-x-2 mt-2">
                     <code className="text-xs bg-gray-100 px-2 py-1 rounded">
-                      {showKey[apiKey.id] ? 'sk-actual-key-would-be-here' : apiKey.maskedKey}
+                      {apiKey.maskedKey}
                     </code>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setShowKey({ ...showKey, [apiKey.id]: !showKey[apiKey.id] })}
-                    >
-                      {showKey[apiKey.id] ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleCopyKey('sk-actual-key-would-be-here')}
-                    >
-                      <Copy className="h-4 w-4" />
-                    </Button>
                   </div>
                 </div>
                 <Button 
@@ -356,7 +378,7 @@ function ApiKeysSettings({ organizationId }: { organizationId: Id<'organizations
                 <p className="text-gray-600 mb-4">
                   Add API keys to enable AI categorization features
                 </p>
-                <Button>
+                <Button onClick={() => setIsAddingKey(true)}>
                   <Plus className="h-4 w-4 mr-2" />
                   Add Your First API Key
                 </Button>
@@ -402,6 +424,105 @@ function ApiKeysSettings({ organizationId }: { organizationId: Id<'organizations
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Add API Key Dialog */}
+      <Dialog open={isAddingKey} onOpenChange={(open) => {
+        if (!open) {
+          setNewApiKey('');
+          setSelectedProvider('openai');
+          setShowNewApiKey(false);
+        }
+        setIsAddingKey(open);
+      }}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Add API Key</DialogTitle>
+            <DialogDescription>
+              Add an API key to enable AI categorization features for your products.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            {/* Provider Selection */}
+            <div className="space-y-2">
+              <Label htmlFor="provider">AI Provider</Label>
+              <Select value={selectedProvider} onValueChange={(value: 'openai' | 'anthropic' | 'gemini') => setSelectedProvider(value)}>
+                <SelectTrigger id="provider">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="openai">
+                    <div className="flex items-center gap-2">
+                      <Bot className="h-4 w-4" />
+                      <span>OpenAI</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="anthropic">
+                    <div className="flex items-center gap-2">
+                      <Bot className="h-4 w-4" />
+                      <span>Anthropic</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="gemini" disabled>
+                    <div className="flex items-center gap-2">
+                      <Bot className="h-4 w-4" />
+                      <span>Google Gemini (Coming Soon)</span>
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* API Key Input */}
+            <div className="space-y-2">
+              <Label htmlFor="api-key">API Key</Label>
+              <div className="relative">
+                <Input
+                  id="api-key"
+                  type={showNewApiKey ? "text" : "password"}
+                  value={newApiKey}
+                  onChange={(e) => setNewApiKey(e.target.value)}
+                  placeholder={`Enter your ${selectedProvider} API key`}
+                  className="pr-10"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-0 top-0 h-full px-3"
+                  onClick={() => setShowNewApiKey(!showNewApiKey)}
+                >
+                  {showNewApiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </Button>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                {selectedProvider === 'openai' && 'You can find your API key at platform.openai.com/api-keys'}
+                {selectedProvider === 'anthropic' && 'You can find your API key at console.anthropic.com/account/keys'}
+                {selectedProvider === 'gemini' && 'Gemini integration coming soon'}
+              </p>
+            </div>
+
+            {/* Security Notice */}
+            <div className="rounded-lg bg-blue-50 p-3">
+              <div className="flex items-start space-x-2">
+                <Shield className="h-4 w-4 text-blue-500 mt-0.5" />
+                <p className="text-sm text-blue-900">
+                  Your API key will be encrypted and stored securely. We never log or expose your keys.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsAddingKey(false)} disabled={isSavingKey}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveKey} disabled={isSavingKey || !newApiKey.trim()}>
+              {isSavingKey ? "Saving..." : "Save API Key"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -7,5 +7,5 @@
       "langsmith"
     ]
   },
-  "functions": "convex/functions"
+  "functions": "functions"
 }

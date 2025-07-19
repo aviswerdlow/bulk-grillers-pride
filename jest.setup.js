@@ -31,14 +31,6 @@ jest.mock('next/navigation', () => ({
   },
 }));
 
-// Mock convex/react
-jest.mock('convex/react', () => ({
-  ConvexProvider: ({ children }) => children,
-  useQuery: jest.fn(),
-  useMutation: jest.fn(),
-  useAction: jest.fn(),
-}));
-
 // Mock convex/react-clerk
 jest.mock('convex/react-clerk', () => ({
   ConvexProviderWithClerk: ({ children }) => children,
@@ -47,9 +39,6 @@ jest.mock('convex/react-clerk', () => ({
 // Mock environment variables
 process.env.NEXT_PUBLIC_CONVEX_URL = 'https://test.convex.cloud';
 process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY = 'test-clerk-key';
-
-// Mock Convex generated API
-jest.mock('convex/_generated/api', () => require('./__mocks__/convex/_generated/api.js'));
 
 // Suppress console errors during tests unless explicitly needed
 const originalError = console.error;
@@ -79,3 +68,5 @@ global.IntersectionObserver = jest.fn().mockImplementation(() => ({
   unobserve: jest.fn(),
   disconnect: jest.fn(),
 }));
+
+// UI component mocks are loaded per test file as needed
