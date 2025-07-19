@@ -1,5 +1,13 @@
 import { faker } from '@faker-js/faker';
 
+type Id<T extends string> = string & {
+    __tableName: T;
+};
+type Doc<T extends string> = {
+    _id: Id<T>;
+    _creationTime: number;
+} & Record<string, any>;
+
 interface FactoryOptions<T> {
     /**
      * Override specific fields in the generated data
@@ -50,14 +58,6 @@ declare abstract class BaseFactory<T> {
      */
     protected randomEnum<E>(enumValues: E[]): E;
 }
-
-type Id<T extends string> = string & {
-    __tableName: T;
-};
-type Doc<T extends string> = {
-    _id: Id<T>;
-    _creationTime: number;
-} & Record<string, any>;
 
 type User = Doc<'users'>;
 declare class UserFactory extends BaseFactory<User> {
@@ -248,5 +248,25 @@ declare function createTestScenario(options?: {
     seed?: number;
 }): TestScenario;
 declare function resetAllFactories(): void;
+declare function createTestUser(overrides?: Partial<ReturnType<UserFactory['create']>>): {
+    _id: Id<"users">;
+    _creationTime: number;
+} & Record<string, any>;
+declare function createTestOrganization(overrides?: Partial<ReturnType<OrganizationFactory['create']>>): {
+    _id: Id<"organizations">;
+    _creationTime: number;
+} & Record<string, any>;
+declare function createTestProduct(overrides?: Partial<ReturnType<ProductFactory['create']>>): {
+    _id: Id<"products">;
+    _creationTime: number;
+} & Record<string, any>;
+declare function createTestCategory(overrides?: Partial<ReturnType<CategoryFactory['create']>>): {
+    _id: Id<"categories">;
+    _creationTime: number;
+} & Record<string, any>;
+declare function createTestAiJob(overrides?: Partial<ReturnType<AiCategorizationJobFactory['create']>>): {
+    _id: Id<"aiCategorizationJobs">;
+    _creationTime: number;
+} & Record<string, any>;
 
-export { AiCategorizationJobFactory, BaseFactory, CategoryFactory, type Doc, type FactoryOptions, type Id, OrganizationFactory, ProductFactory, type TestScenario, UserFactory, aiCategorizationJobFactory, categoryFactory, createIdGenerator, createMockId, createMockIdFromString, createMockIds, createTestScenario, organizationFactory, productFactory, resetAllFactories, userFactory };
+export { AiCategorizationJobFactory, BaseFactory, CategoryFactory, type Doc, type FactoryOptions, type Id, OrganizationFactory, ProductFactory, type TestScenario, UserFactory, aiCategorizationJobFactory, categoryFactory, createIdGenerator, createMockId, createMockIdFromString, createMockIds, createTestAiJob, createTestCategory, createTestOrganization, createTestProduct, createTestScenario, createTestUser, organizationFactory, productFactory, resetAllFactories, userFactory };

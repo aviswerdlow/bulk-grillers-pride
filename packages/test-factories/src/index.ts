@@ -134,3 +134,24 @@ export function resetAllFactories(): void {
   Object.assign(categoryFactory, new CategoryFactory());
   Object.assign(aiCategorizationJobFactory, new AiCategorizationJobFactory());
 }
+
+// Helper functions for E2E tests - provide simple interfaces
+export function createTestUser(overrides?: Partial<ReturnType<UserFactory['create']>>) {
+  return userFactory.create({ overrides });
+}
+
+export function createTestOrganization(overrides?: Partial<ReturnType<OrganizationFactory['create']>>) {
+  return organizationFactory.create({ overrides });
+}
+
+export function createTestProduct(overrides?: Partial<ReturnType<ProductFactory['create']>>) {
+  return productFactory.create({ overrides });
+}
+
+export function createTestCategory(overrides?: Partial<ReturnType<CategoryFactory['create']>>) {
+  return categoryFactory.create({ overrides });
+}
+
+export function createTestAiJob(overrides?: Partial<ReturnType<AiCategorizationJobFactory['create']>>) {
+  return aiCategorizationJobFactory.create({ overrides });
+}

@@ -11,71 +11,87 @@ import {
   createMockId,
 } from '@bulk-grillers-pride/test-factories';
 
-// AI Categorization schemas
+// AI Categorization schemas - matching actual Convex schema
 const aiJobSchema = z.object({
   _id: z.string(),
   _creationTime: z.number(),
   organizationId: z.string(),
   projectId: z.string(),
+  
+  // Job Configuration
+  jobType: z.enum(['bulk_categorization', 'single_product', 'validation']),
+  batchSize: z.number(),
+  aiProvider: z.string(), // Note: actual schema uses aiProvider, not provider
+  aiModel: z.string(), // Note: actual schema uses aiModel, not model
+  prompt: z.string(),
+  
+  // Target Products
+  productIds: z.array(z.string()),
+  categoryContext: z.any(), // JSON of available categories
+  
+  // Job Status
   status: z.enum(['pending', 'running', 'completed', 'failed', 'cancelled']),
   progress: z.object({
-    current: z.number().min(0),
-    total: z.number().min(0),
-    percentage: z.number().min(0).max(100),
+    total: z.number(),
+    processed: z.number(),
+    successful: z.number(),
+    failed: z.number(),
+    skipped: z.number(),
   }),
-  provider: z.enum(['openai', 'anthropic', 'gemini']),
-  model: z.string(),
-  temperature: z.number().min(0).max(1),
-  productIds: z.array(z.string()),
-  filters: z.object({
-    status: z.string().optional(),
-    hasCategories: z.boolean().optional(),
-    productType: z.string().optional(),
-  }).optional(),
-  results: z.array(z.object({
-    productId: z.string(),
-    suggestedCategoryIds: z.array(z.string()),
-    confidence: z.number().min(0).max(1),
-    rationale: z.string(),
-    appliedAt: z.number().optional(),
-  })),
-  errors: z.array(z.object({
-    message: z.string(),
-    productId: z.string().optional(),
-    timestamp: z.number(),
-    type: z.enum(['api_error', 'rate_limit', 'validation_error', 'network_error', 
-                   'configuration_error', 'permission_error']),
-  })),
-  metadata: z.any(),
-  cost: z.object({
-    inputTokens: z.number().min(0),
-    outputTokens: z.number().min(0),
-    totalCost: z.number().min(0),
+  
+  // Results
+  results: z.array(
+    z.object({
+      productId: z.string(),
+      suggestions: z.array(
+        z.object({
+          categoryId: z.string(),
+          confidence: z.number(),
+          rationale: z.string(),
+        })
+      ),
+      newCategorySuggestions: z.array(
+        z.object({
+          name: z.string(),
+          parentId: z.string().optional(),
+          rationale: z.string(),
+        })
+      ).optional(),
+      applied: z.boolean().optional(),
+      appliedAt: z.number().optional(),
+      appliedBy: z.string().optional(),
+    })
+  ),
+  
+  // Error Handling
+  errors: z.array(
+    z.object({
+      type: z.string(),
+      message: z.string(),
+      productId: z.string().optional(),
+      timestamp: z.number(),
+    })
+  ),
+  
+  // Notifications
+  notifications: z.object({
+    email: z.boolean(),
+    dashboard: z.boolean(),
+    recipients: z.array(z.string()),
   }),
-  startedAt: z.number().optional(),
-  completedAt: z.number().optional(),
-  createdBy: z.string(),
+  
+  // Timestamps
   createdAt: z.number(),
   updatedAt: z.number(),
+  createdBy: z.string(),
+  
+  // Cost Tracking
+  metadata: z.any(), // Contains cost info among other things
 });
 
-const createJobResponseSchema = z.object({
-  jobId: z.string(),
-  status: z.string(),
-  message: z.string(),
-});
+const createJobResponseSchema = z.string(); // The mutation returns just the job ID
 
-const categorizationResultSchema = z.object({
-  productId: z.string(),
-  suggestedCategories: z.array(z.object({
-    categoryId: z.string(),
-    categoryName: z.string(),
-    confidence: z.number().min(0).max(1),
-    rationale: z.string(),
-  })),
-  applied: z.boolean(),
-  error: z.string().optional(),
-});
+// Removed categorizationResultSchema as it doesn't match actual implementation
 
 // Define contract tests
 const aiCategorizationContracts: ContractTestConfig[] = [
@@ -94,11 +110,12 @@ const aiCategorizationContracts: ContractTestConfig[] = [
         productType: z.string().optional(),
         search: z.string().optional(),
       }).optional(),
-      provider: z.enum(['openai', 'anthropic', 'gemini']).default('openai'),
-      model: z.string().optional(),
-      temperature: z.number().min(0).max(1).default(0.3),
-      autoApply: z.boolean().default(false),
-      confidenceThreshold: z.number().min(0).max(1).default(0.8),
+      aiProvider: z.enum(['openai', 'anthropic', 'gemini']).default('openai'),
+      aiModel: z.string().optional(),
+      jobType: z.enum(['bulk_categorization', 'single_product', 'validation']).default('bulk_categorization'),
+      batchSize: z.number().min(1).max(100).default(50),
+      // Note: These fields don't exist in the actual implementation
+      // but may be used by the UI
     }),
     outputSchema: createJobResponseSchema,
     validInputs: [
@@ -111,16 +128,16 @@ const aiCategorizationContracts: ContractTestConfig[] = [
         organizationId: createMockId('organizations'),
         projectId: createMockId('projects'),
         filters: { status: 'active', hasCategories: false },
-        provider: 'anthropic',
-        model: 'claude-3-opus',
+        aiProvider: 'anthropic',
+        aiModel: 'claude-3-opus',
+        jobType: 'bulk_categorization',
       },
       {
         organizationId: createMockId('organizations'),
         projectId: createMockId('projects'),
         productIds: Array.from({ length: 50 }, () => createMockId('products')),
-        temperature: 0.5,
-        autoApply: true,
-        confidenceThreshold: 0.9,
+        jobType: 'single_product',
+        batchSize: 25,
       },
     ],
     invalidInputs: [
@@ -138,7 +155,7 @@ const aiCategorizationContracts: ContractTestConfig[] = [
       {
         organizationId: createMockId('organizations'),
         projectId: createMockId('projects'),
-        temperature: 1.5, // Out of range
+        batchSize: 101, // Out of range
       },
     ],
     auth: {
@@ -169,11 +186,11 @@ const aiCategorizationContracts: ContractTestConfig[] = [
     },
   },
   
-  // List Categorization Jobs
+  // Get Categorization Jobs
   {
-    functionRef: api.functions.ai.categorization.listCategorizationJobs,
-    name: 'ai.categorization.listCategorizationJobs',
-    description: 'List AI categorization jobs with filtering',
+    functionRef: api.functions.ai.categorization.getCategorizationJobs,
+    name: 'ai.categorization.getCategorizationJobs',
+    description: 'Get AI categorization jobs with filtering',
     inputSchema: z.object({
       organizationId: z.string(),
       projectId: z.string().optional(),
@@ -223,7 +240,7 @@ const aiCategorizationContracts: ContractTestConfig[] = [
     outputSchema: z.object({
       success: z.boolean(),
       message: z.string(),
-      cancelledAt: z.number(),
+      jobId: z.string(),
     }),
     validInputs: [
       {
@@ -255,11 +272,7 @@ const aiCategorizationContracts: ContractTestConfig[] = [
       categoryIds: z.array(z.string()).min(1),
       confidence: z.number().min(0).max(1),
     }),
-    outputSchema: z.object({
-      success: z.boolean(),
-      applied: z.number(),
-      message: z.string(),
-    }),
+    outputSchema: z.string(), // Returns the productId
     validInputs: [
       {
         jobId: createMockId('aiCategorizationJobs'),
@@ -294,35 +307,50 @@ const aiCategorizationContracts: ContractTestConfig[] = [
     },
   },
   
-  // Get Job Results
+  // Get Job Details
   {
-    functionRef: api.functions.ai.categorization.getJobResults,
-    name: 'ai.categorization.getJobResults',
-    description: 'Get detailed results of a categorization job',
+    functionRef: api.functions.ai.categorization.getJobDetails,
+    name: 'ai.categorization.getJobDetails',
+    description: 'Get detailed information about a categorization job',
     inputSchema: z.object({
       jobId: z.string(),
-      includeApplied: z.boolean().default(true),
-      includeErrors: z.boolean().default(true),
     }),
     outputSchema: z.object({
-      job: aiJobSchema,
-      results: z.array(categorizationResultSchema),
-      summary: z.object({
-        total: z.number(),
-        categorized: z.number(),
-        applied: z.number(),
-        failed: z.number(),
+      job: aiJobSchema.nullable(),
+      productResults: z.array(z.object({
+        product: z.object({
+          _id: z.string(),
+          title: z.string(),
+          sku: z.string().nullable(),
+          currentCategories: z.array(z.string()),
+        }),
+        categories: z.array(z.object({
+          _id: z.string(),
+          name: z.string(),
+          path: z.string(),
+        })),
+        confidence: z.number(),
+        rationale: z.string(),
+        applied: z.boolean(),
+        appliedAt: z.number().optional(),
+      })).optional(),
+      metrics: z.object({
+        successRate: z.number(),
         averageConfidence: z.number(),
-      }),
-    }),
+        totalProcessingTime: z.number(),
+        tokensUsed: z.number(),
+        estimatedCost: z.number(),
+      }).optional(),
+      errors: z.array(z.object({
+        productId: z.string(),
+        productTitle: z.string(),
+        error: z.string(),
+        timestamp: z.number(),
+      })).optional(),
+    }).nullable(),
     validInputs: [
       {
         jobId: createMockId('aiCategorizationJobs'),
-      },
-      {
-        jobId: createMockId('aiCategorizationJobs'),
-        includeApplied: false,
-        includeErrors: true,
       },
     ],
     invalidInputs: [
@@ -334,23 +362,28 @@ const aiCategorizationContracts: ContractTestConfig[] = [
     },
   },
   
-  // Retry Failed Products
+  // Export Job Results
   {
-    functionRef: api.functions.ai.categorization.retryFailedProducts,
-    name: 'ai.categorization.retryFailedProducts',
-    description: 'Retry categorization for failed products',
+    functionRef: api.functions.ai.categorization.exportJobResults,
+    name: 'ai.categorization.exportJobResults',
+    description: 'Export categorization job results as CSV',
     inputSchema: z.object({
       jobId: z.string(),
-      productIds: z.array(z.string()).optional(),
+      format: z.enum(['summary', 'detailed']).default('summary'),
     }),
-    outputSchema: createJobResponseSchema,
+    outputSchema: z.object({
+      success: z.boolean(),
+      csv: z.string(),
+      filename: z.string(),
+      rowCount: z.number(),
+    }),
     validInputs: [
       {
         jobId: createMockId('aiCategorizationJobs'),
       },
       {
         jobId: createMockId('aiCategorizationJobs'),
-        productIds: [createMockId('products'), createMockId('products')],
+        format: 'detailed',
       },
     ],
     invalidInputs: [
@@ -358,7 +391,7 @@ const aiCategorizationContracts: ContractTestConfig[] = [
     ],
     auth: {
       required: true,
-      roles: ['editor', 'admin', 'owner'],
+      roles: ['viewer', 'editor', 'admin', 'owner'],
     },
   },
 ];
@@ -398,29 +431,8 @@ describe('AI Categorization API Contracts', () => {
     });
     
     it('should validate job creation response', () => {
-      const mockResponse = {
-        jobId: createMockId('aiCategorizationJobs'),
-        status: 'pending',
-        message: 'Categorization job created successfully',
-      };
+      const mockResponse = createMockId('aiCategorizationJobs');
       expectResponseShape(mockResponse, createJobResponseSchema);
-    });
-    
-    it('should validate categorization result shape', () => {
-      const mockResult = {
-        productId: createMockId('products'),
-        suggestedCategories: [
-          {
-            categoryId: createMockId('categories'),
-            categoryName: 'Meat & Poultry',
-            confidence: 0.85,
-            rationale: 'Product title contains beef keywords',
-          },
-        ],
-        applied: true,
-        error: undefined,
-      };
-      expectResponseShape(mockResult, categorizationResultSchema);
     });
   });
   
@@ -436,7 +448,7 @@ describe('AI Categorization API Contracts', () => {
         const input = {
           organizationId: createMockId('organizations'),
           projectId: createMockId('projects'),
-          provider: provider as any,
+          aiProvider: provider as any,
         };
         
         const result = createContract!.inputSchema.safeParse(input);
@@ -444,30 +456,30 @@ describe('AI Categorization API Contracts', () => {
       });
     });
     
-    it('should validate temperature range', () => {
+    it('should validate batch size range', () => {
       const createContract = aiCategorizationContracts.find(c => 
         c.name === 'ai.categorization.createCategorizationJob'
       );
       expect(createContract).toBeDefined();
       
-      const validTemps = [0, 0.3, 0.5, 0.7, 1];
-      validTemps.forEach(temp => {
+      const validSizes = [1, 10, 25, 50, 100];
+      validSizes.forEach(size => {
         const input = {
           organizationId: createMockId('organizations'),
           projectId: createMockId('projects'),
-          temperature: temp,
+          batchSize: size,
         };
         
         const result = createContract!.inputSchema.safeParse(input);
         expect(result.success).toBe(true);
       });
       
-      const invalidTemps = [-0.1, 1.1, 2];
-      invalidTemps.forEach(temp => {
+      const invalidSizes = [0, 101, 200];
+      invalidSizes.forEach(size => {
         const input = {
           organizationId: createMockId('organizations'),
           projectId: createMockId('projects'),
-          temperature: temp,
+          batchSize: size,
         };
         
         const result = createContract!.inputSchema.safeParse(input);

@@ -793,6 +793,108 @@ export default defineSchema({
     .index('by_created_at', ['organizationId', 'createdAt']),
 
   // ================================
+  // PRODUCT DELETION & TRASH MANAGEMENT
+  // ================================
+  productTrash: defineTable({
+    organizationId: v.id('organizations'),
+    projectId: v.id('projects'),
+    
+    // Original product data
+    productId: v.id('products'),
+    productData: v.any(), // Full snapshot at deletion time
+    
+    // Deletion metadata
+    deletedAt: v.number(),
+    deletedBy: v.id('users'),
+    deletionReason: v.optional(v.string()),
+    deletionType: v.union(
+      v.literal('manual'),
+      v.literal('bulk'),
+      v.literal('cascade'),
+      v.literal('cleanup')
+    ),
+    
+    // Recovery period
+    expiresAt: v.number(), // deletedAt + 30 days
+    permanentlyDeletedAt: v.optional(v.number()),
+    
+    // Bulk operation tracking
+    bulkOperationId: v.optional(v.string()),
+    
+    // Related data tracking
+    relatedData: v.object({
+      variantIds: v.array(v.id('productVariants')),
+      categoryAssignmentIds: v.array(v.id('categoryProductAssignments')),
+      aiJobIds: v.array(v.id('aiCategorizationJobs')),
+      imageStorageIds: v.array(v.string()),
+    }),
+    
+    // Recovery status
+    recoveryStatus: v.union(
+      v.literal('recoverable'),
+      v.literal('recovering'),
+      v.literal('recovered'),
+      v.literal('expired'),
+      v.literal('permanently_deleted')
+    ),
+    recoveredAt: v.optional(v.number()),
+    recoveredBy: v.optional(v.id('users')),
+  })
+    .index('by_organization', ['organizationId'])
+    .index('by_expiration', ['expiresAt', 'recoveryStatus'])
+    .index('by_product', ['productId'])
+    .index('by_bulk_operation', ['bulkOperationId']),
+
+  // Enhanced deletion audit logs
+  deletionAuditLogs: defineTable({
+    organizationId: v.id('organizations'),
+    projectId: v.id('projects'),
+    
+    // Operation details
+    operationType: v.union(
+      v.literal('soft_delete'),
+      v.literal('bulk_delete'),
+      v.literal('restore'),
+      v.literal('permanent_delete'),
+      v.literal('auto_cleanup')
+    ),
+    
+    // Affected entities
+    affectedProducts: v.array(v.object({
+      productId: v.id('products'),
+      title: v.string(),
+      sku: v.optional(v.string()),
+      categories: v.array(v.string()),
+    })),
+    
+    // Operation metadata
+    totalCount: v.number(),
+    breakdown: v.object({
+      uncategorized: v.number(),
+      categorized: v.number(),
+      byCategory: v.array(v.object({
+        categoryId: v.id('categories'),
+        categoryName: v.string(),
+        count: v.number(),
+      })),
+    }),
+    
+    // User and timestamp
+    performedBy: v.id('users'),
+    performedAt: v.number(),
+    userEmail: v.string(),
+    userName: v.string(),
+    
+    // Additional context
+    ipAddress: v.optional(v.string()),
+    userAgent: v.optional(v.string()),
+    confirmationMethod: v.optional(v.string()), // e.g., "typed DELETE 45"
+  })
+    .index('by_organization', ['organizationId'])
+    .index('by_user', ['performedBy'])
+    .index('by_timestamp', ['performedAt']),
+
+  // ================================
   // MIGRATION TRACKING
   // ================================
   migrationHistory: defineTable({

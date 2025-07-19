@@ -35,7 +35,9 @@ import {
   Trash2,
   Grid,
   List,
+  Settings,
 } from 'lucide-react';
+import Link from 'next/link';
 import { SkuCopyButton } from '@/components/ui/sku-copy-button';
 import {
   DropdownMenu,
@@ -45,6 +47,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { CreateProductDialog } from '@/components/products/create-product-dialog';
 import { EditProductDialog } from '@/components/products/edit-product-dialog';
+import { DeleteProductDialog } from '@/components/products/delete-product-dialog';
 import { ProductCard } from '@/components/products/product-card';
 import { ProductCardSkeleton } from '@/components/products/product-card-skeleton';
 import { Loading } from '@/components/loading';
@@ -61,6 +64,8 @@ export default function ProductsPage() {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [editingProduct, setEditingProduct] = useState<any>(null);
+  const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   // Get organization
   const organization = useQuery(api.functions.organizations.organizations.getOrganizationBySlug, {
@@ -141,6 +146,15 @@ export default function ProductsPage() {
     }
   };
 
+  const handleDeleteProduct = async (productIds: string[], permanentDelete: boolean) => {
+    // TODO: Implement actual delete mutation when backend is ready
+    console.log('Deleting product:', productIds, 'Permanent:', permanentDelete);
+    
+    // Close dialog and clear state
+    setShowDeleteDialog(false);
+    setProductToDelete(null);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -151,10 +165,18 @@ export default function ProductsPage() {
             Manage your product catalog for {currentProject?.name || 'your project'}
           </p>
         </div>
-        <Button onClick={() => setShowCreateDialog(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Product
-        </Button>
+        <div className="flex items-center gap-2">
+          <Link href={`/${orgSlug}/products/manage`}>
+            <Button variant="outline">
+              <Settings className="h-4 w-4 mr-2" />
+              Manage Products
+            </Button>
+          </Link>
+          <Button onClick={() => setShowCreateDialog(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Product
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -288,7 +310,10 @@ export default function ProductsPage() {
                   product={product}
                   onEdit={() => setEditingProduct(product)}
                   onView={() => console.log('View product:', product._id)}
-                  onArchive={() => console.log('Archive product:', product._id)}
+                  onArchive={() => {
+                    setProductToDelete(product);
+                    setShowDeleteDialog(true);
+                  }}
                 />
               ))}
             </div>
@@ -376,12 +401,12 @@ export default function ProductsPage() {
                           <DropdownMenuItem
                             className="text-destructive"
                             onClick={() => {
-                              // TODO: Implement delete functionality
-                              console.log('Delete product:', product._id);
+                              setProductToDelete(product);
+                              setShowDeleteDialog(true);
                             }}
                           >
                             <Trash2 className="h-4 w-4 mr-2" />
-                            Archive
+                            Delete
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -409,6 +434,15 @@ export default function ProductsPage() {
           open={!!editingProduct}
           onOpenChange={(open) => !open && setEditingProduct(null)}
           product={editingProduct}
+        />
+      )}
+
+      {showDeleteDialog && productToDelete && (
+        <DeleteProductDialog
+          open={showDeleteDialog}
+          onOpenChange={setShowDeleteDialog}
+          products={productToDelete}
+          onDelete={handleDeleteProduct}
         />
       )}
     </div>

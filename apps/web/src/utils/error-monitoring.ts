@@ -45,7 +45,7 @@ export class Logger {
     return `[${timestamp}] [${level.toUpperCase()}] [${this.context}] ${message}`;
   }
 
-  private log(level: keyof LogLevel, message: string, data?: any) {
+  private log(level: LogLevel[keyof LogLevel], message: string, data?: any) {
     const formattedMessage = this.formatMessage(level, message);
 
     switch (level) {

@@ -342,7 +342,7 @@ export const getJobDetails = query({
           productType: product.productType,
           handle: product.handle,
           status: product.status,
-          imageUrl: product.featuredImage?.url,
+          imageUrl: product.images?.[0]?.url,
           suggestions: assignedCategories,
           newCategorySuggestions: result.newCategorySuggestions || [],
           error: result.error,
@@ -427,7 +427,7 @@ export const getJobDetails = query({
       // User info
       createdBy: {
         userId: job.createdBy,
-        name: createdByUser?.name || 'Unknown User',
+        name: createdByUser ? `${createdByUser.firstName} ${createdByUser.lastName}` : 'Unknown User',
         email: createdByUser?.email || '',
       },
       
@@ -1431,167 +1431,6 @@ export const cancelCategorizationJob = mutation({
       success: true,
       message: `Categorization job ${job.status === 'running' ? 'stopped' : 'cancelled'} successfully`,
       jobId,
-    };
-  },
-});
-
-// Get detailed job information including results and enriched data
-export const getJobDetails = query({
-  args: {
-    jobId: v.id('aiCategorizationJobs'),
-  },
-  handler: async (ctx, args) => {
-    const { jobId } = args;
-
-    // Check authentication
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error('Not authenticated');
-
-    // Get the job
-    const job = await ctx.db.get(jobId);
-    if (!job) {
-      throw new Error('Job not found');
-    }
-
-    // Get user and verify access
-    const user = await ctx.db
-      .query('users')
-      .withIndex('by_clerk_id', (q) => q.eq('clerkId', identity.subject))
-      .unique();
-    
-    if (!user) {
-      throw new Error('User not found');
-    }
-
-    // Check if user has access to this job's organization
-    const orgMembership = await ctx.db
-      .query('organizationMemberships')
-      .withIndex('by_organization_user', (q) =>
-        q.eq('organizationId', job.organizationId).eq('userId', user._id)
-      )
-      .filter((q) => q.eq(q.field('status'), 'active'))
-      .unique();
-
-    if (!orgMembership) {
-      throw new Error('You do not have permission to view this job');
-    }
-
-    // Get organization details
-    const organization = await ctx.db.get(job.organizationId);
-    
-    // Get project details
-    const project = await ctx.db.get(job.projectId);
-    
-    // Get user who created the job
-    const createdByUser = await ctx.db.get(job.createdBy);
-
-    // Enrich job with related data
-    const enrichedJob = {
-      ...job,
-      organization: organization ? {
-        _id: organization._id,
-        name: organization.name,
-        slug: organization.slug,
-      } : null,
-      project: project ? {
-        _id: project._id,
-        name: project.name,
-        description: project.description,
-      } : null,
-      createdBy: createdByUser ? {
-        _id: createdByUser._id,
-        firstName: createdByUser.firstName,
-        lastName: createdByUser.lastName,
-        email: createdByUser.email,
-      } : null,
-    };
-
-    // Get all products referenced in results
-    const productIds = job.results.map(r => r.productId);
-    const products = await Promise.all(
-      productIds.map(id => ctx.db.get(id))
-    );
-    const productMap = new Map(
-      products.filter(p => p !== null).map(p => [p!._id, p!])
-    );
-
-    // Get all categories referenced in suggestions
-    const categoryIds = new Set<Id<'categories'>>();
-    job.results.forEach(result => {
-      result.suggestions.forEach(suggestion => {
-        categoryIds.add(suggestion.categoryId);
-      });
-    });
-    
-    const categories = await Promise.all(
-      Array.from(categoryIds).map(id => ctx.db.get(id))
-    );
-    const categoryMap = new Map(
-      categories.filter(c => c !== null).map(c => [c!._id, c!])
-    );
-
-    // Get current category assignments for all products
-    const currentAssignments = await ctx.db
-      .query('categoryProductAssignments')
-      .withIndex('by_organization_project', (q) => 
-        q.eq('organizationId', job.organizationId).eq('projectId', job.projectId)
-      )
-      .filter((q) => q.eq(q.field('status'), 'active'))
-      .collect();
-
-    // Group assignments by product
-    const assignmentsByProduct = new Map<Id<'products'>, typeof currentAssignments>();
-    currentAssignments.forEach(assignment => {
-      const productAssignments = assignmentsByProduct.get(assignment.productId) || [];
-      productAssignments.push(assignment);
-      assignmentsByProduct.set(assignment.productId, productAssignments);
-    });
-
-    // Enrich results with product and category details
-    const enrichedResults = job.results.map(result => {
-      const product = productMap.get(result.productId);
-      const productAssignments = assignmentsByProduct.get(result.productId) || [];
-      
-      return {
-        ...result,
-        product: product || null,
-        currentCategories: productAssignments.map(assignment => ({
-          categoryId: assignment.categoryId,
-          category: categoryMap.get(assignment.categoryId) || null,
-          assignedBy: assignment.assignedBy,
-          assignedAt: assignment.createdAt,
-          confidence: assignment.confidence,
-        })),
-        suggestions: result.suggestions.map(suggestion => ({
-          ...suggestion,
-          category: categoryMap.get(suggestion.categoryId) || null,
-        })),
-      };
-    });
-
-    // Calculate statistics
-    const stats = {
-      totalProducts: job.progress.total,
-      processedProducts: job.progress.processed,
-      successfulProducts: job.progress.successful,
-      failedProducts: job.progress.failed,
-      skippedProducts: job.progress.skipped,
-      averageConfidence: enrichedResults.reduce((sum, result) => {
-        const avgResultConfidence = result.suggestions.reduce(
-          (s, sug) => s + sug.confidence, 0
-        ) / (result.suggestions.length || 1);
-        return sum + avgResultConfidence;
-      }, 0) / (enrichedResults.length || 1),
-      categoriesUsed: categoryIds.size,
-      estimatedTokensUsed: 0, // TODO: Track actual token usage
-      estimatedCost: 0, // TODO: Calculate based on provider and model
-    };
-
-    return {
-      job: enrichedJob,
-      results: enrichedResults,
-      stats,
-      categories: Array.from(categoryMap.values()),
     };
   },
 });

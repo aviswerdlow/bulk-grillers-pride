@@ -106,7 +106,7 @@ export function CategorySelector({
   );
 
   const getLevelName = (level: number) => {
-    const levelDef = levelDefinitions?.find((l) => l.level === level);
+    const levelDef = levelDefinitions?.find((l: any) => l.level === level);
     return levelDef?.friendlyName || `Level ${level}`;
   };
 
@@ -254,7 +254,7 @@ export function CategorySelector({
           </DialogHeader>
 
           <div className="space-y-4">
-            {levelDefinitions.map((levelDef) => {
+            {levelDefinitions.map((levelDef: any) => {
               const levelCategories = allCategories.filter((c) => c.level === levelDef.level);
               const selectedInLevel = selectedCategories.filter(
                 (id) => allCategories.find((c) => c._id === id)?.level === levelDef.level

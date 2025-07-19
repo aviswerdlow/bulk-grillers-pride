@@ -350,20 +350,18 @@ export default function ProjectSettingsPage() {
           </TabsContent>
 
           {/* Save Button */}
-          {(watch('general') || watch('commerce')) && (
-            <div className="flex justify-end mt-6">
-              <Button type="submit" disabled={isSubmitting || !isDirty}>
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  'Save Changes'
-                )}
-              </Button>
-            </div>
-          )}
+          <div className="flex justify-end mt-6">
+            <Button type="submit" disabled={isSubmitting || !isDirty}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                'Save Changes'
+              )}
+            </Button>
+          </div>
         </form>
 
         <TabsContent value="danger" className="space-y-6">

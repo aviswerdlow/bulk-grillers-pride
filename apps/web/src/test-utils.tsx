@@ -15,17 +15,17 @@ const mockClient = {
 };
 
 // Create a test wrapper with all providers
-export function TestProviders({ children }) {
+export function TestProviders({ children }: { children: React.ReactNode }) {
   return (
     <ClerkProvider>
-      <ConvexProvider client={mockClient}>
+      <ConvexProvider client={mockClient as any}>
         {children}
       </ConvexProvider>
     </ClerkProvider>
   );
 }
 
-export function renderWithProviders(ui, options) {
+export function renderWithProviders(ui: React.ReactElement, options?: any) {
   return render(ui, { wrapper: TestProviders, ...options });
 }
 

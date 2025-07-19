@@ -16,6 +16,8 @@ import {
   Bot,
   Upload,
   Layers,
+  Trash2,
+  TrendingUp,
 } from 'lucide-react';
 import { OrganizationGuard } from '@/components/auth/organization-guard';
 import { Tooltip } from '@/components/ui/tooltip';
@@ -128,10 +130,31 @@ export default function OrganizationLayout({ children }: { children: React.React
               </Link>
             </Tooltip>
 
+            <Tooltip content="Analytics">
+              <Link href={`/${orgSlug}/analytics`} className="w-full flex justify-center group">
+                <div className="p-3 rounded-xl hover:bg-gray-800 transition-colors">
+                  <TrendingUp
+                    className="h-6 w-6 text-gray-300 group-hover:text-white"
+                    strokeWidth={1.5}
+                  />
+                </div>
+              </Link>
+            </Tooltip>
+
             <Tooltip content="Team">
               <Link href={`/${orgSlug}/team`} className="w-full flex justify-center group">
                 <div className="p-3 rounded-xl hover:bg-gray-800 transition-colors">
                   <Users
+                    className="h-6 w-6 text-gray-300 group-hover:text-white"
+                    strokeWidth={1.5}
+                  />
+                </div>
+              </Link>
+            </Tooltip>
+            <Tooltip content="Trash">
+              <Link href={`/${orgSlug}/trash`} className="w-full flex justify-center group">
+                <div className="p-3 rounded-xl hover:bg-gray-800 transition-colors">
+                  <Trash2
                     className="h-6 w-6 text-gray-300 group-hover:text-white"
                     strokeWidth={1.5}
                   />

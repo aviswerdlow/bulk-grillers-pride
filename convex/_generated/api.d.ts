@@ -13,7 +13,9 @@ import type {
   FilterApi,
   FunctionReference,
 } from "convex/server";
+import type * as __tests___helpers_deletion from "../__tests__/helpers/deletion.js";
 import type * as __tests___test_helpers from "../__tests__/test-helpers.js";
+import type * as crons from "../crons.js";
 import type * as functions_ai_categorization from "../functions/ai/categorization.js";
 import type * as functions_ai_feedback from "../functions/ai/feedback.js";
 import type * as functions_ai_index from "../functions/ai/index.js";
@@ -47,10 +49,12 @@ import type * as functions_migrations_schemaVersion from "../functions/migration
 import type * as functions_migrations_validateCategoryImport from "../functions/migrations/validateCategoryImport.js";
 import type * as functions_organizations_apiKeys from "../functions/organizations/apiKeys.js";
 import type * as functions_organizations_organizations from "../functions/organizations/organizations.js";
+import type * as functions_products_deletion from "../functions/products/deletion.js";
 import type * as functions_products_products from "../functions/products/products.js";
 import type * as functions_projects_projects from "../functions/projects/projects.js";
 import type * as lib_auth from "../lib/auth.js";
 import type * as lib_slugValidation from "../lib/slugValidation.js";
+import type * as types_deletion from "../types/deletion.js";
 
 /**
  * A utility for referencing Convex functions in your app's API.
@@ -61,7 +65,9 @@ import type * as lib_slugValidation from "../lib/slugValidation.js";
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  "__tests__/helpers/deletion": typeof __tests___helpers_deletion;
   "__tests__/test-helpers": typeof __tests___test_helpers;
+  crons: typeof crons;
   "functions/ai/categorization": typeof functions_ai_categorization;
   "functions/ai/feedback": typeof functions_ai_feedback;
   "functions/ai/index": typeof functions_ai_index;
@@ -95,10 +101,12 @@ declare const fullApi: ApiFromModules<{
   "functions/migrations/validateCategoryImport": typeof functions_migrations_validateCategoryImport;
   "functions/organizations/apiKeys": typeof functions_organizations_apiKeys;
   "functions/organizations/organizations": typeof functions_organizations_organizations;
+  "functions/products/deletion": typeof functions_products_deletion;
   "functions/products/products": typeof functions_products_products;
   "functions/projects/projects": typeof functions_projects_projects;
   "lib/auth": typeof lib_auth;
   "lib/slugValidation": typeof lib_slugValidation;
+  "types/deletion": typeof types_deletion;
 }>;
 export declare const api: FilterApi<
   typeof fullApi,

@@ -35,7 +35,7 @@ export function OrganizationGuard({ children, orgSlug }: OrganizationGuardProps)
 
     // Check if user has access to this organization
     const hasAccess = userWithOrgs.organizations?.some(
-      (org) => org._id === organization._id
+      (org: any) => org._id === organization._id
     );
 
     if (!hasAccess) {

@@ -1,0 +1,122 @@
+name: Auto-label and Project Assignment
+
+on:
+  issues:
+    types: [opened, edited, labeled, unlabeled]
+  pull_request:
+    types: [opened, edited, labeled, unlabeled]
+
+permissions:
+  issues: write
+  pull-requests: write
+  repository-projects: write
+
+jobs:
+  auto-label:
+    name: Auto-label based on content
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check issue title for task ID
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { issue, repository } = context.payload;
+            if (!issue) return;
+            
+            const title = issue.title;
+            const body = issue.body || '';
+            
+            // Extract task ID from title (T123 format)
+            const taskMatch = title.match(/T(\d+)/);
+            if (!taskMatch) return;
+            
+            const labels = [];
+            
+            // Check for agent assignment in body
+            const agentMatch = body.match(/Suggested Agent[:\s]+(\w+-agent)/i);
+            if (agentMatch) {
+              labels.push(`agent-${agentMatch[1].replace('-agent', '')}`);
+            }
+            
+            // Check for priority in title or body
+            const priorityMatch = (title + ' ' + body).match(/P([0-3])/);
+            if (priorityMatch) {
+              labels.push(`priority-P${priorityMatch[1]}`);
+            }
+            
+            // Check for skills mentioned
+            const skillKeywords = {
+              'react': 'skill-react',
+              'typescript': 'skill-typescript',
+              'convex': 'skill-convex',
+              'next.js': 'skill-nextjs',
+              'nextjs': 'skill-nextjs',
+              'tailwind': 'skill-tailwind',
+              'jest': 'skill-jest',
+              'testing': 'skill-testing',
+              'playwright': 'skill-playwright',
+              'api': 'skill-api',
+              'database': 'skill-database',
+              'ci/cd': 'skill-ci-cd',
+              'documentation': 'skill-documentation'
+            };
+            
+            const lowerContent = (title + ' ' + body).toLowerCase();
+            for (const [keyword, label] of Object.entries(skillKeywords)) {
+              if (lowerContent.includes(keyword)) {
+                labels.push(label);
+              }
+            }
+            
+            if (labels.length > 0) {
+              await github.rest.issues.addLabels({
+                owner: repository.owner.login,
+                repo: repository.name,
+                issue_number: issue.number,
+                labels: labels
+              });
+            }
+
+  auto-assign-project:
+    name: Add to project board
+    runs-on: ubuntu-latest
+    if: github.event.issue && contains(github.event.issue.labels.*.name, 'status-')
+    steps:
+      - uses: actions/add-to-project@v0.5.0
+        with:
+          project-url: https://github.com/users/${{ github.repository_owner }}/projects/${{ vars.MIGRATION_PROJECT_NUMBER }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+  update-status-column:
+    name: Move to correct project column
+    runs-on: ubuntu-latest
+    if: github.event.issue
+    steps:
+      - name: Move based on status label
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { issue } = context.payload;
+            if (!issue) return;
+            
+            // Get status label
+            const statusLabel = issue.labels.find(l => l.name.startsWith('status-'));
+            if (!statusLabel) return;
+            
+            const status = statusLabel.name.replace('status-', '');
+            
+            // Map status to column
+            const columnMap = {
+              'ready': 'Ready',
+              'assigned': 'Assigned',
+              'in-progress': 'In Progress',
+              'blocked': 'Blocked',
+              'review': 'Review',
+              'done': 'Done'
+            };
+            
+            const columnName = columnMap[status];
+            if (!columnName) return;
+            
+            // This would require more complex GraphQL API calls to move cards
+            // For now, we rely on the project automation rules

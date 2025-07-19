@@ -45,6 +45,7 @@ import { MoreVertical, Shield, UserX, Search, Loader2, UserPlus, Clock, Mail } f
 import { toast } from 'sonner';
 import { InviteUserDialog } from './invite-user-dialog';
 import { UserRole, roleConfig } from '@/types/models';
+import { Id } from '@/../../../convex/_generated/dataModel';
 
 interface TeamMembersListProps {
   organizationId: string;
@@ -69,7 +70,7 @@ export function TeamMembersList({ organizationId, currentUserRole }: TeamMembers
 
   const filteredMembers =
     members?.filter(
-      (member) =>
+      (member: any) =>
         member.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
         member.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         member.lastName?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -120,7 +121,7 @@ export function TeamMembersList({ organizationId, currentUserRole }: TeamMembers
   };
 
   const isUserActive = (userId: string) => {
-    return activeSessions?.some((session) => session.userId === userId);
+    return activeSessions?.some((session: any) => session.userId === userId);
   };
 
   if (!members) {
@@ -183,7 +184,7 @@ export function TeamMembersList({ organizationId, currentUserRole }: TeamMembers
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredMembers.map((member) => (
+                {filteredMembers.map((member: any) => (
                   <TableRow key={member._id}>
                     <TableCell>
                       <div className="flex items-center gap-3">
@@ -307,7 +308,7 @@ export function TeamMembersList({ organizationId, currentUserRole }: TeamMembers
         <InviteUserDialog
           open={showInviteDialog}
           onOpenChange={setShowInviteDialog}
-          organizationId={organizationId}
+          organizationId={organizationId as Id<'organizations'>}
         />
       )}
 

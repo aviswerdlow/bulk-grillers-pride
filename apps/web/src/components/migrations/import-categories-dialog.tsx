@@ -147,7 +147,7 @@ export function ImportCategoriesDialog({
                 <div className="mt-3">
                   <div className="text-xs font-medium text-muted-foreground mb-2">Your Level Definitions:</div>
                   <div className="space-y-1">
-                    {categoryLevels.map((levelDef) => (
+                    {categoryLevels.map((levelDef: any) => (
                       <div key={levelDef._id} className="text-xs flex items-center gap-2">
                         <span className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono">
                           {levelDef.level + 1}
@@ -195,7 +195,7 @@ export function ImportCategoriesDialog({
               <CardContent>
                 <div className="space-y-2">
                   {previewData.map((cat, index) => {
-                    const levelDef = categoryLevels?.find(l => l.level === (cat.level - 1));
+                    const levelDef = categoryLevels?.find((l: any) => l.level === (cat.level - 1));
                     const levelName = levelDef?.friendlyName || `Level ${cat.level}`;
                     
                     return (

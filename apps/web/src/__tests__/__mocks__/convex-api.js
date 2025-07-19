@@ -1,91 +1,99 @@
+// Create mock functions with descriptive names for better debugging
+const createMockFunction = (name) => {
+  const mockFn = jest.fn();
+  mockFn._functionName = name;
+  mockFn._isMock = true;
+  return mockFn;
+};
+
 export const api = {
   functions: {
     auth: {
       users: {
-        current: 'mock-current',
-        currentWithOrganizations: 'mock-currentWithOrganizations',
-        getOrganizationUsers: 'mock-getOrganizationUsers',
-        create: 'mock-create',
-        update: 'mock-update',
-        updateOnboardingStatus: 'mock-updateOnboardingStatus',
+        current: createMockFunction('auth.users.current'),
+        currentWithOrganizations: createMockFunction('auth.users.currentWithOrganizations'),
+        getOrganizationUsers: createMockFunction('auth.users.getOrganizationUsers'),
+        create: createMockFunction('auth.users.create'),
+        update: createMockFunction('auth.users.update'),
+        updateOnboardingStatus: createMockFunction('auth.users.updateOnboardingStatus'),
       },
       sessions: {
-        updateProfile: 'mock-updateProfile',
-        switchOrganization: 'mock-switchOrganization',
-        getActiveSessions: 'mock-getActiveSessions',
+        updateProfile: createMockFunction('auth.sessions.updateProfile'),
+        switchOrganization: createMockFunction('auth.sessions.switchOrganization'),
+        getActiveSessions: createMockFunction('auth.sessions.getActiveSessions'),
       },
       permissions: {
-        updateUserRole: 'mock-updateUserRole',
-        removeUserFromOrganization: 'mock-removeUserFromOrganization',
+        updateUserRole: createMockFunction('auth.permissions.updateUserRole'),
+        removeUserFromOrganization: createMockFunction('auth.permissions.removeUserFromOrganization'),
       },
       invitations: {
-        getOrganizationInvitations: 'mock-getOrganizationInvitations',
-        createInvitation: 'mock-createInvitation',
-        resendInvitation: 'mock-resendInvitation',
-        revokeInvitation: 'mock-revokeInvitation',
+        getOrganizationInvitations: createMockFunction('auth.invitations.getOrganizationInvitations'),
+        createInvitation: createMockFunction('auth.invitations.createInvitation'),
+        resendInvitation: createMockFunction('auth.invitations.resendInvitation'),
+        revokeInvitation: createMockFunction('auth.invitations.revokeInvitation'),
       },
     },
     organizations: {
       organizations: {
-        getOrganizationBySlug: 'mock-getOrganizationBySlug',
-        create: 'mock-createOrganization',
-        update: 'mock-updateOrganization',
-        getMyOrganizations: 'mock-getMyOrganizations',
+        getOrganizationBySlug: createMockFunction('organizations.organizations.getOrganizationBySlug'),
+        create: createMockFunction('organizations.organizations.create'),
+        update: createMockFunction('organizations.organizations.update'),
+        getMyOrganizations: createMockFunction('organizations.organizations.getMyOrganizations'),
       },
       apiKeys: {
-        getMaskedApiKeys: 'mock-getMaskedApiKeys',
-        removeApiKey: 'mock-removeApiKey',
+        getMaskedApiKeys: createMockFunction('organizations.apiKeys.getMaskedApiKeys'),
+        removeApiKey: createMockFunction('organizations.apiKeys.removeApiKey'),
       },
     },
     projects: {
       projects: {
-        getOrganizationProjects: 'mock-getOrganizationProjects',
-        create: 'mock-createProject',
-        update: 'mock-updateProject',
-        delete: 'mock-deleteProject',
+        getOrganizationProjects: createMockFunction('projects.projects.getOrganizationProjects'),
+        create: createMockFunction('projects.projects.create'),
+        update: createMockFunction('projects.projects.update'),
+        delete: createMockFunction('projects.projects.delete'),
       },
     },
     dashboard: {
-      getDashboardStats: 'mock-getDashboardStats',
-      getRecentActivity: 'mock-getRecentActivity',
+      getDashboardStats: createMockFunction('dashboard.getDashboardStats'),
+      getRecentActivity: createMockFunction('dashboard.getRecentActivity'),
     },
     categories: {
       categories: {
-        getCategoryTree: 'mock-getCategoryTree',
-        create: 'mock-createCategory',
-        update: 'mock-updateCategory',
-        delete: 'mock-deleteCategory',
-        getOrganizationCategories: 'mock-getOrganizationCategories',
+        getCategoryTree: createMockFunction('categories.categories.getCategoryTree'),
+        create: createMockFunction('categories.categories.create'),
+        update: createMockFunction('categories.categories.update'),
+        delete: createMockFunction('categories.categories.delete'),
+        getOrganizationCategories: createMockFunction('categories.categories.getOrganizationCategories'),
       },
       categoryLevels: {
-        getCategoryLevels: 'mock-getCategoryLevels',
+        getCategoryLevels: createMockFunction('categories.categoryLevels.getCategoryLevels'),
       },
     },
     products: {
       products: {
-        getOrganizationProducts: 'mock-getOrganizationProducts',
-        getById: 'mock-getById',
-        create: 'mock-createProduct',
-        update: 'mock-updateProduct',
-        delete: 'mock-deleteProduct',
-        bulkUpdate: 'mock-bulkUpdate',
+        getOrganizationProducts: createMockFunction('products.products.getOrganizationProducts'),
+        getById: createMockFunction('products.products.getById'),
+        create: createMockFunction('products.products.create'),
+        update: createMockFunction('products.products.update'),
+        delete: createMockFunction('products.products.delete'),
+        bulkUpdate: createMockFunction('products.products.bulkUpdate'),
       },
     },
     imports: {
       imports: {
-        getOrganizationImports: 'mock-getOrganizationImports',
-        create: 'mock-createImport',
-        processFile: 'mock-processFile',
+        getOrganizationImports: createMockFunction('imports.imports.getOrganizationImports'),
+        create: createMockFunction('imports.imports.create'),
+        processFile: createMockFunction('imports.imports.processFile'),
       },
     },
     ai: {
       categorization: {
-        createCategorizationJob: 'mock-createCategorizationJob',
-        listCategorizationJobs: 'mock-listCategorizationJobs',
-        getCategorizationJob: 'mock-getCategorizationJob',
-        updateCategorizationJobStatus: 'mock-updateCategorizationJobStatus',
-        processCategorizationBatch: 'mock-processCategorizationBatch',
-        cancelCategorizationJob: 'mock-cancelCategorizationJob',
+        createCategorizationJob: createMockFunction('ai.categorization.createCategorizationJob'),
+        listCategorizationJobs: createMockFunction('ai.categorization.listCategorizationJobs'),
+        getCategorizationJob: createMockFunction('ai.categorization.getCategorizationJob'),
+        updateCategorizationJobStatus: createMockFunction('ai.categorization.updateCategorizationJobStatus'),
+        processCategorizationBatch: createMockFunction('ai.categorization.processCategorizationBatch'),
+        cancelCategorizationJob: createMockFunction('ai.categorization.cancelCategorizationJob'),
       },
     },
   },

@@ -120,12 +120,25 @@ export const mockUseQuery = jest.fn((query, args) => {
     };
   }
   
+  if (queryName.includes('currentWithOrganizations')) {
+    return {
+      _id: 'user_123',
+      name: 'Test User',
+      email: 'test@example.com',
+      organizations: [],
+    };
+  }
+  
   if (queryName.includes('getDashboardStats')) {
     return {
-      totalProjects: 5,
-      totalProducts: 100,
-      totalCategories: 20,
-      teamMembers: 3,
+      productsCount: 42,
+      categorizedProducts: 38,
+      uncategorizedProducts: 4,
+      projectsCount: 1,
+      teamMembersCount: 3,
+      categoryPaths: {},
+      recentActivity: [],
+      recentImports: [],
     };
   }
   
@@ -145,7 +158,7 @@ export const mockUseQuery = jest.fn((query, args) => {
     return [];
   }
   
-  if (queryName.includes('getProjects')) {
+  if (queryName.includes('getProjects') || queryName.includes('getOrganizationProjects')) {
     return [];
   }
   
@@ -156,15 +169,20 @@ export const mockUseQuery = jest.fn((query, args) => {
   return undefined;
 });
 
-export const mockUseMutation = jest.fn(() => jest.fn(() => Promise.resolve()));
-export const mockUseAction = jest.fn(() => jest.fn(() => Promise.resolve()));
+export const mockUseMutation = jest.fn(() => jest.fn().mockResolvedValue(undefined));
+export const mockUseAction = jest.fn(() => jest.fn().mockResolvedValue(undefined));
+
+// Store references globally so they can be accessed in the mock
+(global as any).__mockUseQuery = mockUseQuery;
+(global as any).__mockUseMutation = mockUseMutation;
+(global as any).__mockUseAction = mockUseAction;
 
 // Mock Convex hooks
 jest.mock('convex/react', () => ({
   ConvexProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  useQuery: (...args: any[]) => mockUseQuery(...args),
-  useMutation: (...args: any[]) => mockUseMutation(...args),
-  useAction: (...args: any[]) => mockUseAction(...args),
+  useQuery: (...args: any[]) => (global as any).__mockUseQuery(...args),
+  useMutation: (...args: any[]) => (global as any).__mockUseMutation(...args),
+  useAction: (...args: any[]) => (global as any).__mockUseAction(...args),
 }));
 
 // Mock Convex-Clerk integration
@@ -204,6 +222,12 @@ export const resetAllMocks = () => {
   mockUseQuery.mockReset();
   mockUseMutation.mockReset();
   mockUseAction.mockReset();
+  // Reset default mock implementations
+  mockUseMutation.mockImplementation(() => jest.fn().mockResolvedValue(undefined));
+  mockUseAction.mockImplementation(() => jest.fn().mockResolvedValue(undefined));
+  // Update global references
+  (global as any).__mockUseMutation = mockUseMutation;
+  (global as any).__mockUseAction = mockUseAction;
 };
 
 // Helper to set auth state

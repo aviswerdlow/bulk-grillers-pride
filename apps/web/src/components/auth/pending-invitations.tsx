@@ -72,7 +72,7 @@ export function PendingInvitations() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {invitations.map((invitation) => (
+        {invitations.map((invitation: any) => (
           <div
             key={invitation._id}
             className="flex items-center justify-between p-4 bg-white rounded-lg border"

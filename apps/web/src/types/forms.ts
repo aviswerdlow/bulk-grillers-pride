@@ -3,7 +3,7 @@
  * These types are used for form validation, submission, and field management
  */
 
-import { FieldError, UseFormReturn } from 'react-hook-form';
+import { FieldError, UseFormReturn, FieldValues } from 'react-hook-form';
 import { z } from 'zod';
 
 /**
@@ -126,7 +126,7 @@ export interface ValidatedFormState<T = any> {
 /**
  * Common form props for form components
  */
-export interface BaseFormProps<T = any> {
+export interface BaseFormProps<T extends FieldValues = FieldValues> {
   form: UseFormReturn<T>;
   onSubmit: FormSubmitHandler<T>;
   onCancel?: () => void;
@@ -191,7 +191,7 @@ export interface ValidationRule {
 /**
  * Form context for nested forms
  */
-export interface FormContext<T = any> {
+export interface FormContext<T extends FieldValues = FieldValues> {
   form: UseFormReturn<T>;
   isSubmitting: boolean;
   errors: Record<string, FieldError>;

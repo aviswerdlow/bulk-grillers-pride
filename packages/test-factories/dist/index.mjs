@@ -569,7 +569,7 @@ var CategoryFactory = class extends BaseFactory {
       path: this.generatePath(name, level),
       sortOrder: this.faker.number.int({ min: 0, max: 100 }),
       // Display Properties
-      color: this.faker.helpers.maybe(() => this.faker.internet.color(), { probability: 0.4 }),
+      color: this.faker.helpers.maybe(() => this.faker.color.rgb(), { probability: 0.4 }),
       icon: this.faker.helpers.maybe(() => this.generateIcon(), { probability: 0.5 }),
       image: this.faker.helpers.maybe(() => ({
         url: this.faker.image.url(),
@@ -1068,6 +1068,21 @@ function resetAllFactories() {
   Object.assign(categoryFactory, new CategoryFactory());
   Object.assign(aiCategorizationJobFactory, new AiCategorizationJobFactory());
 }
+function createTestUser(overrides) {
+  return userFactory.create({ overrides });
+}
+function createTestOrganization(overrides) {
+  return organizationFactory.create({ overrides });
+}
+function createTestProduct(overrides) {
+  return productFactory.create({ overrides });
+}
+function createTestCategory(overrides) {
+  return categoryFactory.create({ overrides });
+}
+function createTestAiJob(overrides) {
+  return aiCategorizationJobFactory.create({ overrides });
+}
 export {
   AiCategorizationJobFactory,
   BaseFactory,
@@ -1081,7 +1096,12 @@ export {
   createMockId,
   createMockIdFromString,
   createMockIds,
+  createTestAiJob,
+  createTestCategory,
+  createTestOrganization,
+  createTestProduct,
   createTestScenario,
+  createTestUser,
   organizationFactory,
   productFactory,
   resetAllFactories,
