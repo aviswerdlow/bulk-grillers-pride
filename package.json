@@ -20,6 +20,13 @@
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:debug": "playwright test --debug",
     "test:e2e:report": "playwright show-report",
+    "test:a11y": "jest --testPathPattern='accessibility' && playwright test accessibility",
+    "test:a11y:unit": "jest --testPathPattern='accessibility'",
+    "test:a11y:e2e": "playwright test accessibility",
+    "test:a11y:axe": "playwright test --project=chromium --grep 'should not have accessibility violations'",
+    "coverage:record": "node scripts/track-coverage.js record",
+    "coverage:report": "node scripts/track-coverage.js report",
+    "coverage:check": "node scripts/track-coverage.js check",
     "type-check": "tsc --noEmit",
     "clean": "turbo run clean && rm -rf coverage",
     "dev:web": "cd apps/web && npm run dev",
@@ -30,7 +37,16 @@
     "convex:deploy": "cd convex && npx convex deploy",
     "validate:clerk": "node scripts/validate-clerk-jwt.js",
     "prepare": "husky",
-    "turbo:prune": "turbo daemon stop && rm -rf .turbo node_modules/.cache/turbo"
+    "turbo:prune": "turbo daemon stop && rm -rf .turbo node_modules/.cache/turbo",
+    "cache:analyze": "node scripts/turbo-cache-analytics.js",
+    "cache:clear": "rm -rf .turbo/cache",
+    "cache:warmup": "turbo run build lint type-check test:ci --force",
+    "turbo:login": "turbo login",
+    "turbo:link": "turbo link",
+    "turbo:daemon:status": "node scripts/turbo-daemon-monitor.js status",
+    "turbo:daemon:restart": "node scripts/turbo-daemon-monitor.js restart",
+    "turbo:daemon:monitor": "node scripts/turbo-daemon-monitor.js monitor",
+    "check-tasks": "node scripts/check-tasks"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.10.2",
@@ -43,16 +59,19 @@
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
     "@types/jest": "^30.0.0",
+    "@types/jest-axe": "^3.5.9",
     "@types/node": "^20.8.0",
     "@typescript-eslint/eslint-plugin": "^8.37.0",
     "@typescript-eslint/parser": "^8.37.0",
     "eslint": "^8.51.0",
     "eslint-config-prettier": "^10.1.5",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^5.2.0",
     "husky": "^9.1.7",
     "identity-obj-proxy": "^3.0.0",
     "jest": "^30.0.4",
+    "jest-axe": "^10.0.0",
     "jest-environment-jsdom": "^30.0.4",
     "jest-watch-typeahead": "^3.0.1",
     "lint-staged": "^16.1.2",
@@ -62,15 +81,6 @@
     "ts-jest": "^29.4.0",
     "turbo": "^2.5.5",
     "typescript": "^5.2.2"
-  },
-  "lint-staged": {
-    "**/*.{js,jsx,ts,tsx}": [
-      "eslint --fix",
-      "prettier --write"
-    ],
-    "**/*.{json,css,scss,yml,yaml}": [
-      "prettier --write"
-    ]
   },
   "engines": {
     "node": ">=18.0.0",
@@ -87,7 +97,8 @@
   "author": "Bulk Grillers Pride",
   "license": "MIT",
   "dependencies": {
-    "convex": "^1.24.8"
+    "convex": "^1.24.8",
+    "recharts": "^3.1.0"
   },
   "packageManager": "npm@11.4.2"
 }
