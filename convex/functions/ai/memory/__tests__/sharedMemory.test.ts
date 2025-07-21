@@ -2,20 +2,20 @@
  * Tests for CrewAI Shared Memory System
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { convexTest } from 'convex-test';
+import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
+import { createConvexTest } from '../../../../__tests__/convex-test-standard';
 import { MemoryManager, MemoryCache } from '../memoryManager';
 import { Id } from '../../../../_generated/dataModel';
-import schema from '../../../../schema';
 import { api, internal } from '../../../../_generated/api';
 
 // Mock test context
-const test = convexTest(schema);
+let test: any;
 
 describe('SharedMemory', () => {
   let organizationId: Id<'organizations'>;
 
   beforeEach(async () => {
+    test = createConvexTest();
     // Create test organization
     organizationId = await test.mutation(async (ctx) => {
       return await ctx.db.insert('organizations', {

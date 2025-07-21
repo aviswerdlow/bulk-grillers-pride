@@ -1,30 +1,32 @@
 // Mock for @radix-ui/react-dialog
+const React = require('react');
+
 const Dialog = ({ children, open }) => open ? children : null;
 const DialogTrigger = ({ children, asChild }) => children;
-const DialogContent = ({ children, className }) => (
-  <div className={className} data-testid="dialog-content">
-    {children}
-  </div>
+const DialogContent = ({ children, className }) => React.createElement(
+  'div',
+  { className, 'data-testid': 'dialog-content' },
+  children
 );
-const DialogHeader = ({ children, className }) => (
-  <div className={className} data-testid="dialog-header">
-    {children}
-  </div>
+const DialogHeader = ({ children, className }) => React.createElement(
+  'div',
+  { className, 'data-testid': 'dialog-header' },
+  children
 );
-const DialogTitle = ({ children, className }) => (
-  <h2 className={className} data-testid="dialog-title">
-    {children}
-  </h2>
+const DialogTitle = ({ children, className }) => React.createElement(
+  'h2',
+  { className, 'data-testid': 'dialog-title' },
+  children
 );
-const DialogDescription = ({ children, className }) => (
-  <p className={className} data-testid="dialog-description">
-    {children}
-  </p>
+const DialogDescription = ({ children, className }) => React.createElement(
+  'p',
+  { className, 'data-testid': 'dialog-description' },
+  children
 );
-const DialogFooter = ({ children, className }) => (
-  <div className={className} data-testid="dialog-footer">
-    {children}
-  </div>
+const DialogFooter = ({ children, className }) => React.createElement(
+  'div',
+  { className, 'data-testid': 'dialog-footer' },
+  children
 );
 const DialogClose = ({ children }) => children;
 

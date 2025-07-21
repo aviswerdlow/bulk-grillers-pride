@@ -2,9 +2,9 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { usePattern } from './usePattern';
-import { PatternDefs } from './SeverityPatterns';
-import type { SeverityLevel } from './SeverityPatterns';
+import { usePatternV2 } from './usePatternV2';
+import { PatternDefsV2 } from './SeverityPatternsV2';
+import type { SeverityLevel } from './SeverityPatternsV2';
 import { 
   InfoIcon, 
   AlertTriangleIcon, 
@@ -54,7 +54,7 @@ export function SeverityIndicatorEnhanced({
   showIcon = true,
   ariaLabel,
 }: SeverityIndicatorEnhancedProps) {
-  const { patternUrl, colors, textureDescription, highContrast } = usePattern(severity);
+  const { patternUrl, colors, textureDescription, highContrast } = usePatternV2(severity);
   const Icon = severityIcons[severity];
 
   const baseClasses = cn(
@@ -75,7 +75,7 @@ export function SeverityIndicatorEnhanced({
   // Dynamic styles based on pattern config
   const dynamicStyles: React.CSSProperties = {
     borderColor: colors.primary,
-    color: variant === 'filled' ? (highContrast ? '#000000' : colors.primary) : colors.primary,
+    color: variant === 'filled' ? colors.text : colors.primary,
     backgroundColor: variant === 'filled' ? colors.secondary : 'transparent',
   };
 
@@ -100,7 +100,7 @@ export function SeverityIndicatorEnhanced({
 
   return (
     <>
-      <PatternDefs highContrast={highContrast} />
+      <PatternDefsV2 highContrast={highContrast} />
       <div
         className={cn(baseClasses, variantClasses[variant], focusRingColor, className)}
         style={dynamicStyles}

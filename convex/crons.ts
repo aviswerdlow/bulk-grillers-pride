@@ -33,4 +33,19 @@ crons.daily(
   { daysToKeep: 30 }
 );
 
+// Schedule hourly consistency validation for cascade deletion system
+crons.hourly(
+  'cascadeDeletionConsistencyCheck',
+  { minuteUTC: 0 },
+  internal.migrations.consistencyValidator.runConsistencyValidation,
+  { fix: true } // Automatically fix safe issues
+);
+
+// Schedule daily comprehensive consistency report at 2 AM UTC
+crons.daily(
+  'cascadeDeletionConsistencyReport',
+  { hourUTC: 2, minuteUTC: 0 },
+  internal.migrations.consistencyValidator.generateConsistencyReport
+);
+
 export default crons;

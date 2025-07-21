@@ -756,6 +756,7 @@ export const restoreProducts = mutation({
 
     const restored = [];
     const restoredProducts = [];
+    const skuConflicts = [];
 
     for (const trashId of args.trashIds) {
       const trashEntry = await ctx.db.get(trashId);
@@ -766,12 +767,73 @@ export const restoreProducts = mutation({
       const product = await ctx.db.get(trashEntry.productId);
       if (!product) continue;
 
-      // Restore product
-      await ctx.db.patch(trashEntry.productId, {
-        status: 'active' as const,
-        archivedAt: undefined,
-        archivedBy: undefined,
-      });
+      // Check for SKU conflicts before restoration
+      const existingProductWithSku = await ctx.db
+        .query('products')
+        .withIndex('by_organization', (q: any) => q.eq('organizationId', product.organizationId))
+        .filter((q: any) => 
+          q.and(
+            q.eq(q.field('sku'), product.sku),
+            q.neq(q.field('_id'), product._id),
+            q.eq(q.field('status'), 'active')
+          )
+        )
+        .first();
+
+      if (existingProductWithSku) {
+        // SKU conflict detected - generate a new SKU with suffix
+        const baseSku = product.sku;
+        let newSku = `${baseSku}-RESTORED`;
+        let suffix = 1;
+        
+        // Find a unique SKU
+        while (true) {
+          const skuCheck = await ctx.db
+            .query('products')
+            .withIndex('by_organization', (q: any) => q.eq('organizationId', product.organizationId))
+            .filter((q: any) => q.eq(q.field('sku'), newSku))
+            .first();
+          
+          if (!skuCheck) break;
+          
+          suffix++;
+          newSku = `${baseSku}-RESTORED-${suffix}`;
+        }
+
+        // Log the SKU conflict resolution
+        console.warn(`SKU conflict detected for product ${product._id}. Original SKU: ${baseSku}, New SKU: ${newSku}`);
+        
+        // Update product with new SKU
+        await ctx.db.patch(trashEntry.productId, {
+          status: 'active' as const,
+          sku: newSku,
+          archivedAt: undefined,
+          archivedBy: undefined,
+        });
+
+        // Add note about SKU change in audit log metadata
+        (product as any)._skuChanged = {
+          originalSku: baseSku,
+          newSku: newSku,
+          reason: 'SKU conflict during restoration',
+        };
+        
+        // Track SKU conflict for response
+        skuConflicts.push({
+          productId: product._id,
+          productTitle: product.title,
+          originalSku: baseSku,
+          newSku: newSku,
+          conflictingProductId: existingProductWithSku._id,
+        });
+      } else {
+        // No SKU conflict - restore normally
+        await ctx.db.patch(trashEntry.productId, {
+          status: 'active' as const,
+          archivedAt: undefined,
+          archivedBy: undefined,
+        });
+      }
 
       // Restore related data
       await restoreRelatedData(ctx, trashEntry, user);
@@ -787,12 +849,27 @@ export const restoreProducts = mutation({
       restoredProducts.push(product);
     }
 
-    // Audit log
+    // Audit log with SKU change information
     if (restoredProducts.length > 0) {
-      await createDeletionAuditLog(ctx, 'restore', restoredProducts, user);
+      // Collect SKU change information
+      const skuChanges = restoredProducts
+        .filter((p: any) => p._skuChanged)
+        .map((p: any) => `${p._skuChanged.originalSku} → ${p._skuChanged.newSku}`)
+        .join(', ');
+      
+      const confirmationMethod = skuChanges 
+        ? `Restored with SKU changes: ${skuChanges}`
+        : undefined;
+      
+      await createDeletionAuditLog(ctx, 'restore', restoredProducts, user, confirmationMethod);
     }
 
-    return { success: true, restoredCount: restored.length, restoredIds: restored };
+    return { 
+      success: true, 
+      restoredCount: restored.length, 
+      restoredIds: restored,
+      skuConflicts: skuConflicts.length > 0 ? skuConflicts : undefined,
+    };
   },
 });
 

@@ -2,19 +2,19 @@
  * Tests for CrewAI Memory Cache Integration
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { convexTest } from 'convex-test';
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import { createConvexTest } from '../../../../__tests__/convex-test-standard';
 import { Id } from '../../../../_generated/dataModel';
-import schema from '../../../../schema';
 import { internal } from '../../../../_generated/api';
 
 // Mock test context
-const test = convexTest(schema);
+let test: any;
 
 describe('CacheIntegration', () => {
   let organizationId: Id<'organizations'>;
 
   beforeEach(async () => {
+    test = createConvexTest();
     // Create test organization
     organizationId = await test.mutation(async (ctx) => {
       return await ctx.db.insert('organizations', {

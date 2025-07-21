@@ -32,6 +32,7 @@ import {
 } from "./crews/types";
 import { z } from "zod";
 import { ConvexError } from "convex/values";
+import { MetricsCollector, withMetricsCollection } from "./monitoring/metricsCollector";
 
 type ProcessingOptions = {
   maxRetries?: number;
