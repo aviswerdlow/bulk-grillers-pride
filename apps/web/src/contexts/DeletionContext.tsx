@@ -156,7 +156,11 @@ export function DeletionProvider({ children }: { children: React.ReactNode }) {
   
   // Wrap send to track history
   const sendWithHistory = useCallback((event: DeletionWizardEvent) => {
-    addToHistory(event, state.value as string, context);
+    // Don't track certain events in history
+    const skipHistoryEvents = ['SAVE_DRAFT', 'LOAD_DRAFT', 'ERROR'];
+    if (!skipHistoryEvents.includes(event.type)) {
+      addToHistory(event, state.value as string, context);
+    }
     send(event);
   }, [send, addToHistory, state.value, context]);
   

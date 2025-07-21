@@ -3,17 +3,19 @@ import React from 'react';
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
   size?: 'default' | 'sm' | 'lg' | 'icon';
+  loading?: boolean;
 }
 
 // Mock Button component
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ children, className, variant = 'default', size = 'default', disabled, onClick, ...props }, ref) => (
+  ({ children, className, variant = 'default', size = 'default', disabled, loading, onClick, ...props }, ref) => (
     <button
       ref={ref}
       className={className}
       data-variant={variant}
       data-size={size}
-      disabled={disabled}
+      data-loading={loading}
+      disabled={disabled || loading}
       onClick={onClick}
       {...props}
     >
@@ -107,7 +109,7 @@ export const Select = ({ children, value, onValueChange, disabled }: SelectProps
     <div data-testid="select" data-value={value} data-disabled={disabled}>
       {React.Children.map(children, (child) => {
         if (React.isValidElement(child)) {
-          const childElement = child as React.ReactElement<any>;
+          const childElement = child as React.ReactElement<SelectTriggerProps | SelectContentProps>;
           if (childElement.type === SelectTrigger) {
             return React.cloneElement(childElement, {
               onClick: () => !disabled && setIsOpen(!isOpen),
@@ -149,7 +151,7 @@ export const SelectContent = ({ children, onItemSelect }: SelectContentProps) =>
   <div role="listbox">
     {React.Children.map(children, (child) => {
       if (React.isValidElement(child)) {
-        const childElement = child as React.ReactElement<any>;
+        const childElement = child as React.ReactElement<SelectItemProps>;
         if (childElement.type === SelectItem) {
           return React.cloneElement(childElement, { onItemSelect });
         }
@@ -200,7 +202,7 @@ interface DialogTriggerProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 
 export const DialogTrigger = ({ children, asChild, ...props }: DialogTriggerProps) => {
   if (asChild && React.isValidElement(children)) {
-    const childElement = children as React.ReactElement<any>;
+    const childElement = children as React.ReactElement<React.ButtonHTMLAttributes<HTMLButtonElement>>;
     return React.cloneElement(childElement, props);
   }
   return <button {...props}>{children}</button>;
@@ -295,7 +297,7 @@ export const DropdownMenu = ({ children }: DropdownMenuProps) => {
     <div data-testid="dropdown-menu">
       {React.Children.map(children, (child) => {
         if (React.isValidElement(child)) {
-          const childElement = child as React.ReactElement<any>;
+          const childElement = child as React.ReactElement<DropdownMenuTriggerProps | DropdownMenuContentProps>;
           if (childElement.type === DropdownMenuTrigger) {
             return React.cloneElement(childElement, {
               onClick: () => setIsOpen(!isOpen),
@@ -321,7 +323,7 @@ interface DropdownMenuTriggerProps extends React.ButtonHTMLAttributes<HTMLButton
 
 export const DropdownMenuTrigger = ({ children, asChild, onClick, ...props }: DropdownMenuTriggerProps) => {
   if (asChild && React.isValidElement(children)) {
-    const childElement = children as React.ReactElement<any>;
+    const childElement = children as React.ReactElement<React.ButtonHTMLAttributes<HTMLButtonElement>>;
     return React.cloneElement(childElement, {
       ...props,
       onClick: (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -369,7 +371,7 @@ export const Tabs = ({ children, defaultValue, value, onValueChange, ...props }:
     <div data-testid="tabs" data-value={activeTab} {...props}>
       {React.Children.map(children, (child) => {
         if (React.isValidElement(child)) {
-          const childElement = child as React.ReactElement<any>;
+          const childElement = child as React.ReactElement<TabsListProps | TabsContentProps>;
           if (childElement.type === TabsList || childElement.type === TabsContent) {
             return React.cloneElement(childElement, {
               activeTab,
@@ -395,7 +397,7 @@ export const TabsList = ({ children, activeTab, onTabChange, ...props }: TabsLis
   <div data-testid="tabs-list" {...props}>
     {React.Children.map(children, (child) => {
       if (React.isValidElement(child)) {
-        const childElement = child as React.ReactElement<any>;
+        const childElement = child as React.ReactElement<TabsTriggerProps>;
         if (childElement.type === TabsTrigger) {
           return React.cloneElement(childElement, { activeTab, onTabChange });
         }

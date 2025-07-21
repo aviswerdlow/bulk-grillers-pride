@@ -62,4 +62,5 @@ const handler = {
   },
 };
 
-export default new Proxy({}, handler);
+const radixUIProxy = new Proxy({}, handler);
+export default radixUIProxy;

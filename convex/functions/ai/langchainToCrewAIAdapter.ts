@@ -81,7 +81,8 @@ export class LangChainToCrewAIAdapter {
           apiKey,
           model,
           options,
-          collector
+          collector,
+          jobId
         );
       });
     } else {
@@ -93,7 +94,9 @@ export class LangChainToCrewAIAdapter {
         provider,
         apiKey,
         model,
-        options
+        options,
+        undefined,
+        undefined
       );
     }
   }
@@ -107,7 +110,8 @@ export class LangChainToCrewAIAdapter {
     apiKey: string,
     model: string,
     options?: ProcessingOptions,
-    collector?: MetricsCollector
+    collector?: MetricsCollector,
+    jobId?: Id<'aiCategorizationJobs'>
   ): Promise<BatchCategorizationResult> {
     const startTime = Date.now();
     
@@ -139,11 +143,14 @@ export class LangChainToCrewAIAdapter {
       // Collect performance metrics if collector is available
       if (collector && crewResponse.metrics) {
         await collector.collectPerformanceMetrics({
-          responseTime: Date.now() - startTime,
+          totalTasks: products.length,
+          completedTasks: crewResponse.products.filter(p => !p.error).length,
+          failedTasks: crewResponse.products.filter(p => p.error).length,
+          averageTaskDuration: (Date.now() - startTime) / products.length,
+          tokensUsed: crewResponse.metrics.tokensUsed,
+          estimatedCost: crewResponse.metrics.estimatedCost,
           throughput: products.length / ((Date.now() - startTime) / 60000),
-          accuracy: crewResponse.products.filter(p => !p.error).length / crewResponse.products.length,
-          errorRate: crewResponse.products.filter(p => p.error).length / crewResponse.products.length,
-          cacheHitRate: cachedResults.length / products.length,
+          memoryPeakUsage: crewResponse.metrics.memoryPeakUsage,
         });
       }
       

@@ -19,6 +19,8 @@ import { ReactElement } from 'react';
 export interface KeyboardNavigationOptions {
   startElement?: HTMLElement;
   expectedOrder?: string[];
+  expectedElements?: Array<{ selector: string; label: string }>;
+  initialFocus?: string;
   skipHidden?: boolean;
   includeDisabled?: boolean;
 }
@@ -37,6 +39,7 @@ export interface FocusTrapOptions {
 
 export interface ColorContrastOptions {
   standard?: 'AA' | 'AAA';
+  minContrastRatio?: number;
   includeBackgrounds?: boolean;
   excludeElements?: string[];
 }
@@ -52,10 +55,30 @@ export class A11yTestUtils {
     const { container } = render(component);
     const user = userEvent.setup();
     
+    // Handle initial focus
+    if (options.initialFocus) {
+      const initialElement = container.querySelector(options.initialFocus) as HTMLElement;
+      if (initialElement) {
+        initialElement.focus();
+      }
+    }
+    
     // Get all focusable elements
     const focusableElements = this.getFocusableElements(container, options);
     
-    if (options.expectedOrder) {
+    if (options.expectedElements) {
+      // Test specific elements in order
+      for (const expectedElement of options.expectedElements) {
+        await user.tab();
+        const activeElement = document.activeElement;
+        
+        expect(activeElement).toBeDefined();
+        
+        // Check if active element matches the selector
+        const matches = activeElement?.matches(expectedElement.selector);
+        expect(matches).toBe(true);
+      }
+    } else if (options.expectedOrder) {
       // Test specific order
       for (let i = 0; i < options.expectedOrder.length; i++) {
         await user.tab();
@@ -221,7 +244,7 @@ export class A11yTestUtils {
     options: ColorContrastOptions = {}
   ): Promise<void> {
     const { container } = render(component);
-    const { standard = 'AA', excludeElements = [] } = options;
+    const { standard = 'AA', minContrastRatio, excludeElements = [] } = options;
     
     // Manual contrast checks for all text elements
     const textElements = container.querySelectorAll('*:not(script):not(style)');
@@ -247,7 +270,9 @@ export class A11yTestUtils {
           const isLargeText = fontSize >= 18 || (fontSize >= 14 && parseInt(fontWeight) >= 700);
           
           let requiredContrast: number;
-          if (standard === 'AAA') {
+          if (minContrastRatio) {
+            requiredContrast = minContrastRatio;
+          } else if (standard === 'AAA') {
             requiredContrast = isLargeText ? 4.5 : 7;
           } else {
             requiredContrast = isLargeText ? 3 : 4.5;

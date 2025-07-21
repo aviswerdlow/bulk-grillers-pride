@@ -105,11 +105,11 @@ describe('CategorySelector', () => {
   };
 
   beforeEach(() => {
-    mockUseQuery.mockImplementation((query: any) => {
-      if (query.toString().includes('getCategoryTree')) {
+    mockUseQuery.mockImplementation((query: any, args: any) => {
+      if (query && (query.toString().includes('getCategoryTree') || query._functionName?.includes('getCategoryTree'))) {
         return mockCategories;
       }
-      if (query.toString().includes('getCategoryLevels')) {
+      if (query && (query.toString().includes('getCategoryLevels') || query._functionName?.includes('getCategoryLevels'))) {
         return mockLevelDefinitions;
       }
       return undefined;
@@ -561,11 +561,11 @@ describe('CategorySelector', () => {
         },
       ];
 
-      mockUseQuery.mockImplementation((query: any) => {
-        if (query.toString().includes('getCategoryTree')) {
+      mockUseQuery.mockImplementation((query: any, args: any) => {
+        if (query && (query.toString().includes('getCategoryTree') || query._functionName?.includes('getCategoryTree'))) {
           return mockCategories;
         }
-        if (query.toString().includes('getCategoryLevels')) {
+        if (query && (query.toString().includes('getCategoryLevels') || query._functionName?.includes('getCategoryLevels'))) {
           return modifiedLevels;
         }
         return undefined;
@@ -615,11 +615,11 @@ describe('CategorySelector', () => {
 
   describe('edge cases', () => {
     it('handles empty category tree', () => {
-      mockUseQuery.mockImplementation((query: any) => {
-        if (query.toString().includes('getCategoryTree')) {
+      mockUseQuery.mockImplementation((query: any, args: any) => {
+        if (query && (query.toString().includes('getCategoryTree') || query._functionName?.includes('getCategoryTree'))) {
           return [];
         }
-        if (query.toString().includes('getCategoryLevels')) {
+        if (query && (query.toString().includes('getCategoryLevels') || query._functionName?.includes('getCategoryLevels'))) {
           return mockLevelDefinitions;
         }
         return undefined;
@@ -631,11 +631,11 @@ describe('CategorySelector', () => {
     });
 
     it('handles missing level definitions', () => {
-      mockUseQuery.mockImplementation((query: any) => {
-        if (query.toString().includes('getCategoryTree')) {
+      mockUseQuery.mockImplementation((query: any, args: any) => {
+        if (query && (query.toString().includes('getCategoryTree') || query._functionName?.includes('getCategoryTree'))) {
           return mockCategories;
         }
-        if (query.toString().includes('getCategoryLevels')) {
+        if (query && (query.toString().includes('getCategoryLevels') || query._functionName?.includes('getCategoryLevels'))) {
           return [];
         }
         return undefined;
@@ -648,11 +648,11 @@ describe('CategorySelector', () => {
     });
 
     it('handles categories with missing level definitions gracefully', async () => {
-      mockUseQuery.mockImplementation((query: any) => {
-        if (query.toString().includes('getCategoryTree')) {
+      mockUseQuery.mockImplementation((query: any, args: any) => {
+        if (query && (query.toString().includes('getCategoryTree') || query._functionName?.includes('getCategoryTree'))) {
           return mockCategories;
         }
-        if (query.toString().includes('getCategoryLevels')) {
+        if (query && (query.toString().includes('getCategoryLevels') || query._functionName?.includes('getCategoryLevels'))) {
           return [mockLevelDefinitions[0]]; // Only level 1 defined
         }
         return undefined;

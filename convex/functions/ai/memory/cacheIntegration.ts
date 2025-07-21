@@ -36,6 +36,61 @@ export interface CacheEntry {
 }
 
 /**
+ * Helper function to write to cache
+ */
+async function writeToCacheHelper(
+  ctx: any,
+  args: {
+    key: string;
+    value: any;
+    dataType: string;
+    ttlMs?: number;
+    organizationId?: Id<'organizations'>;
+  }
+) {
+  const { key, value, dataType, ttlMs, organizationId } = args;
+  
+  const now = Date.now();
+  const ttl = ttlMs || CACHE_TTL.MEMORY;
+  const expiresAt = now + ttl;
+  
+  // Check if entry exists
+  const existing = await ctx.db
+    .query('cache')
+    .withIndex('by_key', q => q.eq('key', key))
+    .first();
+  
+  // Calculate size (approximate)
+  const valueStr = JSON.stringify(value);
+  const size = new TextEncoder().encode(valueStr).length;
+  
+  if (existing) {
+    // Update existing entry
+    await ctx.db.patch(existing._id, {
+      value,
+      expiresAt,
+      hits: existing.hits + 1,
+      lastAccessedAt: now,
+      size,
+    });
+    return existing._id;
+  } else {
+    // Create new entry
+    return await ctx.db.insert('cache', {
+      key,
+      value,
+      expiresAt,
+      createdAt: now,
+      hits: 0,
+      lastAccessedAt: now,
+      organizationId,
+      dataType,
+      size,
+    });
+  }
+}
+
+/**
  * Write to cache with automatic TTL and metadata
  */
 export const writeToCache = internalMutation({
@@ -47,48 +102,44 @@ export const writeToCache = internalMutation({
     organizationId: v.optional(v.id('organizations')),
   },
   handler: async (ctx, args) => {
-    const { key, value, dataType, ttlMs, organizationId } = args;
-    
-    const now = Date.now();
-    const ttl = ttlMs || CACHE_TTL.MEMORY;
-    const expiresAt = now + ttl;
-    
-    // Check if entry exists
-    const existing = await ctx.db
-      .query('cache')
-      .withIndex('by_key', q => q.eq('key', key))
-      .first();
-    
-    // Calculate size (approximate)
-    const valueStr = JSON.stringify(value);
-    const size = new TextEncoder().encode(valueStr).length;
-    
-    if (existing) {
-      // Update existing entry
-      await ctx.db.patch(existing._id, {
-        value,
-        expiresAt,
-        hits: existing.hits + 1,
-        lastAccessedAt: now,
-        size,
-      });
-      return existing._id;
-    } else {
-      // Create new entry
-      return await ctx.db.insert('cache', {
-        key,
-        value,
-        expiresAt,
-        createdAt: now,
-        hits: 0,
-        lastAccessedAt: now,
-        organizationId,
-        dataType,
-        size,
-      });
-    }
+    return await writeToCacheHelper(ctx, args);
   },
 });
+
+/**
+ * Helper function to read from cache
+ */
+async function readFromCacheHelper(
+  ctx: any,
+  args: {
+    key: string;
+  }
+) {
+  const { key } = args;
+  
+  const entry = await ctx.db
+    .query('cache')
+    .withIndex('by_key', q => q.eq('key', key))
+    .first();
+  
+  if (!entry) {
+    return null;
+  }
+  
+  // Check if expired
+  const now = Date.now();
+  if (entry.expiresAt < now) {
+    // Entry is expired
+    return null;
+  }
+  
+  return {
+    value: entry.value,
+    createdAt: entry.createdAt,
+    expiresAt: entry.expiresAt,
+    hits: entry.hits,
+  };
+}
 
 /**
  * Read from cache with automatic expiry check
@@ -99,38 +150,7 @@ export const readFromCache = internalQuery({
     updateHits: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    const { key, updateHits = true } = args;
-    
-    const entry = await ctx.db
-      .query('cache')
-      .withIndex('by_key', q => q.eq('key', key))
-      .first();
-    
-    if (!entry) {
-      return null;
-    }
-    
-    // Check if expired
-    const now = Date.now();
-    if (entry.expiresAt < now) {
-      // Entry is expired
-      return null;
-    }
-    
-    // Update access statistics if requested
-    if (updateHits) {
-      await ctx.db.patch(entry._id, {
-        hits: entry.hits + 1,
-        lastAccessedAt: now,
-      });
-    }
-    
-    return {
-      value: entry.value,
-      createdAt: entry.createdAt,
-      expiresAt: entry.expiresAt,
-      hits: entry.hits,
-    };
+    return await readFromCacheHelper(ctx, { key: args.key });
   },
 });
 
@@ -149,7 +169,7 @@ export const cacheMemoryLookup = internalMutation({
     
     const cacheKey = `${CACHE_PREFIX.MEMORY}.${organizationId}.${memoryKey}`;
     
-    return await writeToCache(ctx, {
+    return await writeToCacheHelper(ctx, {
       key: cacheKey,
       value: memoryData,
       dataType: 'memory',
@@ -172,9 +192,8 @@ export const getCachedMemory = internalQuery({
     
     const cacheKey = `${CACHE_PREFIX.MEMORY}.${organizationId}.${memoryKey}`;
     
-    return await readFromCache(ctx, {
+    return await readFromCacheHelper(ctx, {
       key: cacheKey,
-      updateHits: true,
     });
   },
 });
@@ -194,7 +213,7 @@ export const cacheAnalysisResult = internalMutation({
     
     const cacheKey = `${CACHE_PREFIX.ANALYSIS}.${organizationId}.${agentId}.${productId}`;
     
-    return await writeToCache(ctx, {
+    return await writeToCacheHelper(ctx, {
       key: cacheKey,
       value: analysis,
       dataType: 'analysis',
@@ -218,9 +237,8 @@ export const getCachedAnalysis = internalQuery({
     
     const cacheKey = `${CACHE_PREFIX.ANALYSIS}.${organizationId}.${agentId}.${productId}`;
     
-    return await readFromCache(ctx, {
+    return await readFromCacheHelper(ctx, {
       key: cacheKey,
-      updateHits: true,
     });
   },
 });
@@ -240,7 +258,7 @@ export const cacheCategoryMatch = internalMutation({
     
     const cacheKey = `${CACHE_PREFIX.CATEGORY}.${organizationId}.${agentId}.${productId}`;
     
-    return await writeToCache(ctx, {
+    return await writeToCacheHelper(ctx, {
       key: cacheKey,
       value: categoryMatch,
       dataType: 'category',
@@ -265,7 +283,7 @@ export const cacheValidationResult = internalMutation({
     
     const cacheKey = `${CACHE_PREFIX.VALIDATION}.${organizationId}.${agentId}.${productId}`;
     
-    return await writeToCache(ctx, {
+    return await writeToCacheHelper(ctx, {
       key: cacheKey,
       value: validation,
       dataType: 'validation',
@@ -291,7 +309,7 @@ export const cacheMemoryStats = internalMutation({
       ? `${CACHE_PREFIX.STATS}.${organizationId}.${crewId}`
       : `${CACHE_PREFIX.STATS}.${organizationId}`;
     
-    return await writeToCache(ctx, {
+    return await writeToCacheHelper(ctx, {
       key: cacheKey,
       value: stats,
       dataType: 'stats',
@@ -344,17 +362,30 @@ export const getCacheStats = internalQuery({
   handler: async (ctx, args) => {
     const { organizationId, dataType } = args;
     
-    let query = ctx.db.query('cache');
-    
-    if (organizationId) {
-      query = query.withIndex('by_organization', q => q.eq('organizationId', organizationId));
+    // Build the appropriate query based on the filters
+    let entries;
+    if (organizationId && dataType) {
+      // Need to choose one index - let's use organization and filter by type
+      entries = await ctx.db
+        .query('cache')
+        .withIndex('by_organization', q => q.eq('organizationId', organizationId))
+        .filter(q => q.eq(q.field('dataType'), dataType))
+        .collect();
+    } else if (organizationId) {
+      entries = await ctx.db
+        .query('cache')
+        .withIndex('by_organization', q => q.eq('organizationId', organizationId))
+        .collect();
+    } else if (dataType) {
+      entries = await ctx.db
+        .query('cache')
+        .withIndex('by_type', q => q.eq('dataType', dataType))
+        .collect();
+    } else {
+      entries = await ctx.db
+        .query('cache')
+        .collect();
     }
-    
-    if (dataType) {
-      query = query.withIndex('by_type', q => q.eq('dataType', dataType));
-    }
-    
-    const entries = await query.collect();
     
     const now = Date.now();
     let totalSize = 0;

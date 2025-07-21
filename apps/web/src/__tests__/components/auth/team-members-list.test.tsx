@@ -21,7 +21,7 @@ jest.mock('sonner', () => ({
 
 // Mock the InviteUserDialog component
 jest.mock('@/components/auth/invite-user-dialog', () => ({
-  InviteUserDialog: ({ open, onOpenChange }: any) =>
+  InviteUserDialog: ({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) =>
     open ? (
       <div data-testid="invite-dialog">
         <button onClick={() => onOpenChange(false)}>Close Dialog</button>
@@ -78,7 +78,7 @@ describe('TeamMembersList', () => {
     mockRemoveUser = jest.fn().mockResolvedValue(undefined);
 
     // Setup default query responses
-    mockUseQuery.mockImplementation((query: any, args?: any) => {
+    mockUseQuery.mockImplementation((query: unknown, args?: unknown) => {
       if (args === 'skip') {
         return undefined;
       }
@@ -93,8 +93,8 @@ describe('TeamMembersList', () => {
       return undefined;
     });
 
-    mockUseMutation.mockImplementation((mutation: any) => {
-      const mutationName = mutation?._functionName || mutation?.name || mutation?.toString() || '';
+    mockUseMutation.mockImplementation((mutation: unknown) => {
+      const mutationName = (mutation as any)?._functionName || (mutation as any)?.name || (mutation as any)?.toString() || '';
       let mutationFn: jest.Mock;
       
       if (mutationName.includes('updateUserRole')) {
@@ -186,8 +186,8 @@ describe('TeamMembersList', () => {
     });
 
     it('shows "Unnamed User" for users without names', () => {
-      mockUseQuery.mockImplementation((query: any) => {
-        const queryName = query?._functionName || query?.name || query?.toString() || '';
+      mockUseQuery.mockImplementation((query: unknown, args: unknown) => {
+        const queryName = (query as any)?._functionName || (query as any)?.name || (query as any)?.toString() || '';
         
         if (queryName.includes('getOrganizationUsers')) {
           return [
@@ -239,8 +239,8 @@ describe('TeamMembersList', () => {
     });
 
     it('shows empty state when no members', () => {
-      mockUseQuery.mockImplementation((query: any) => {
-        const queryName = query?._functionName || query?.name || query?.toString() || '';
+      mockUseQuery.mockImplementation((query: unknown, args: unknown) => {
+        const queryName = (query as any)?._functionName || (query as any)?.name || (query as any)?.toString() || '';
         
         if (queryName.includes('getOrganizationUsers')) {
           return [];
@@ -296,7 +296,7 @@ describe('TeamMembersList', () => {
     });
 
     it('does not fetch active sessions for regular members', () => {
-      mockUseQuery.mockImplementation((query: any, args?: any) => {
+      mockUseQuery.mockImplementation((query: unknown, args?: unknown) => {
         if (args === 'skip') {
           return undefined;
         }

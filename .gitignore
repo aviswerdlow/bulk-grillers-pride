@@ -212,3 +212,8 @@ bin/
 benchmark-results.json
 benchmark-report.html
 regression-report.json
+
+# Security scan reports
+security-reports/
+dependency-check-report/
+reports/

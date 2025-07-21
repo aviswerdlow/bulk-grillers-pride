@@ -14,8 +14,14 @@ import {
 import userEvent from '@testing-library/user-event';
 import { api } from '@/../../../convex/_generated/api';
 import { Id } from '@/../../../convex/_generated/dataModel';
+import { useQuery, useMutation } from 'convex/react';
 
 import { ProductCard } from '../../components/products/product-card';
+import { CreateProductDialog } from '../../components/products/create-product-dialog';
+import { ConvexProvider, ConvexReactClient } from 'convex/react';
+
+// Create mock Convex client
+const mockClient = new ConvexReactClient('https://test.convex.cloud');
 
 // Mock components that would use SKU
 jest.mock('../../components/products/product-card', () => ({

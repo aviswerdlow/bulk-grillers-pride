@@ -26,12 +26,6 @@ describe('UserProfile', () => {
     _id: 'user_123',
     name: 'John Doe',
     email: 'test@example.com',
-    firstName: 'John',
-    lastName: 'Doe',
-    imageUrl: 'https://example.com/avatar.jpg',
-    organizations: [{ _id: 'org_123' }, { _id: 'org_456' }],
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
     role: 'admin',
   };
 
@@ -68,7 +62,7 @@ describe('UserProfile', () => {
   });
 
   it('shows loading state when data is not loaded', () => {
-    mockUseUser.user = null;
+    mockUseUser.user = null as any;
 
     render(<UserProfile />);
 
@@ -86,20 +80,20 @@ describe('UserProfile', () => {
 
     // Only first name
     mockUseQuery.mockReturnValue({
-      ...mockCurrentUser,
+      _id: 'user_123',
       name: 'Alice',
-      firstName: 'Alice',
-      lastName: null,
+      email: 'test@example.com',
+      role: 'admin',
     });
     rerender(<UserProfile />);
     expect(screen.getByText('AL')).toBeInTheDocument();
 
     // No name, fallback to email
     mockUseQuery.mockReturnValue({
-      ...mockCurrentUser,
+      _id: 'user_123',
       name: 'test@example.com',
-      firstName: null,
-      lastName: null,
+      email: 'test@example.com',
+      role: 'admin',
     });
     rerender(<UserProfile />);
     expect(screen.getByText('TE')).toBeInTheDocument(); // test@example.com
@@ -107,10 +101,10 @@ describe('UserProfile', () => {
 
   it('shows "Not set" when name is empty', () => {
     mockUseQuery.mockReturnValue({
-      ...mockCurrentUser,
+      _id: 'user_123',
       name: '',
-      firstName: null,
-      lastName: null,
+      email: 'test@example.com',
+      role: 'admin',
     });
 
     render(<UserProfile />);
@@ -120,7 +114,10 @@ describe('UserProfile', () => {
 
   it('handles single organization correctly', () => {
     mockUseQuery.mockReturnValue({
-      ...mockCurrentUser,
+      _id: 'user_123',
+      name: 'John Doe',
+      email: 'test@example.com',
+      role: 'admin',
       organizations: [{ _id: 'org_123' }],
     });
 
@@ -131,7 +128,10 @@ describe('UserProfile', () => {
 
   it('handles no organizations correctly', () => {
     mockUseQuery.mockReturnValue({
-      ...mockCurrentUser,
+      _id: 'user_123',
+      name: 'John Doe',
+      email: 'test@example.com',
+      role: 'admin',
       organizations: [],
     });
 
@@ -282,10 +282,10 @@ describe('UserProfile', () => {
   describe('edge cases', () => {
     it('handles empty names in form', () => {
       mockUseQuery.mockReturnValue({
-        ...mockCurrentUser,
+        _id: 'user_123',
         name: '',
-        firstName: '',
-        lastName: '',
+        email: 'test@example.com',
+        role: 'admin',
       });
 
       render(<UserProfile />);
@@ -302,10 +302,10 @@ describe('UserProfile', () => {
 
     it('trims whitespace from names', () => {
       mockUseQuery.mockReturnValue({
-        ...mockCurrentUser,
+        _id: 'user_123',
         name: 'John Doe',
-        firstName: ' John ',
-        lastName: ' Doe ',
+        email: 'test@example.com',
+        role: 'admin',
       });
 
       render(<UserProfile />);

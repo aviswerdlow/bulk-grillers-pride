@@ -311,6 +311,12 @@ export const deletionWizardMachine = createMachine({
         },
       }),
     },
+    // Handle ERROR event globally
+    ERROR: {
+      actions: assign({
+        error: (_, event) => event.error,
+      }),
+    },
   },
 });
 

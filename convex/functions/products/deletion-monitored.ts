@@ -8,7 +8,7 @@
 import { v } from 'convex/values';
 import { query } from '../../_generated/server';
 import { withPerformanceTracking } from '../monitoring/performance';
-import { authenticateAndAuthorize } from '../auth/organizationAuth';
+import { authenticateAndAuthorize } from '../../lib/auth';
 
 // Import the original implementations
 import {

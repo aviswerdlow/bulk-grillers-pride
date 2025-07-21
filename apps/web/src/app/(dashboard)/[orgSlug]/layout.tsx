@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useUser, UserButton } from '@clerk/nextjs';
 import { useQuery } from 'convex/react';
@@ -18,9 +19,13 @@ import {
   Layers,
   Trash2,
   TrendingUp,
+  Menu,
 } from 'lucide-react';
 import { OrganizationGuard } from '@/components/auth/organization-guard';
 import { Tooltip } from '@/components/ui/tooltip';
+import { Sheet, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { SwipeableSheetContent } from '@/components/ui/sheet-swipeable';
+import { MobileNav } from '@/components/navigation/mobile-nav';
 import Image from 'next/image';
 import { useEnsureUser } from '@/hooks/use-ensure-user';
 import { AccessibilityProvider } from '@/contexts/accessibility';
@@ -29,9 +34,23 @@ export default function OrganizationLayout({ children }: { children: React.React
   const params = useParams();
   const { user } = useUser();
   const orgSlug = params.orgSlug as string;
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Ensure user record exists in Convex
   useEnsureUser();
+
+  // Prevent body scroll when mobile menu is open
+  React.useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [mobileMenuOpen]);
 
   const organization = useQuery(api.functions.organizations.organizations.getOrganizationBySlug, {
     slug: orgSlug,
@@ -55,7 +74,41 @@ export default function OrganizationLayout({ children }: { children: React.React
       <AccessibilityProvider>
         <div className="min-h-screen bg-semantic-secondary">
           {/* Floating Dark Sidebar */}
-        <nav className="fixed left-4 top-4 bottom-4 w-20 bg-semantic-primary rounded-2xl shadow-2xl z-50 flex flex-col">
+        {/* Mobile Menu Button */}
+        <button
+          onClick={() => setMobileMenuOpen(true)}
+          className="fixed left-4 top-4 z-50 p-3 bg-semantic-primary rounded-xl shadow-lg md:hidden hover:bg-semantic-primary/90 focus:outline-none focus:ring-2 focus:ring-semantic-info focus:ring-offset-2 transition-colors"
+          aria-label="Open navigation menu"
+          aria-expanded={mobileMenuOpen}
+          aria-controls="mobile-navigation"
+        >
+          <Menu className="h-6 w-6 text-white" strokeWidth={1.5} />
+        </button>
+
+        {/* Mobile Navigation Sheet */}
+        <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+          <SwipeableSheetContent 
+            side="left" 
+            className="w-80 p-0 bg-semantic-light"
+            onSwipeClose={() => setMobileMenuOpen(false)}
+            id="mobile-navigation"
+          >
+            <SheetHeader className="px-6 py-4 border-b border-semantic-secondary">
+              <div className="flex items-center gap-3">
+                <Image src="/images/logo.png" alt="Logo" width={40} height={40} />
+                <SheetTitle className="text-lg font-semibold">
+                  {organization?.name || 'Menu'}
+                </SheetTitle>
+              </div>
+            </SheetHeader>
+            <div className="px-4">
+              <MobileNav orgSlug={orgSlug} onClose={() => setMobileMenuOpen(false)} />
+            </div>
+          </SwipeableSheetContent>
+        </Sheet>
+
+        {/* Desktop Floating Dark Sidebar */}
+        <nav className="fixed left-4 top-4 bottom-4 w-20 bg-semantic-primary rounded-2xl shadow-2xl z-50 flex-col hidden md:flex">
           {/* Logo */}
           <div className="pt-6 pb-6 px-4 border-b border-semantic-dark relative">
             <Link href="/" className="flex justify-center">
@@ -188,8 +241,8 @@ export default function OrganizationLayout({ children }: { children: React.React
           </div>
         </nav>
 
-        {/* Main Content - with left margin to account for floating sidebar */}
-        <main className="ml-28 p-6">
+        {/* Main Content - with left margin to account for floating sidebar on desktop */}
+        <main className="ml-0 md:ml-28 p-4 md:p-6 pt-20 md:pt-6">
           {/* Header with Welcome message and User */}
           <div className="flex items-center justify-end mb-6">
             <div className="flex items-center space-x-3">

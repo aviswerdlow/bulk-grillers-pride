@@ -36,11 +36,11 @@ describe('CategorySelector - Simple Tests', () => {
 
   it('renders category selector when data is loaded', () => {
     // Mock basic data
-    mockUseQuery.mockImplementation((query: any) => {
-      if (query === 'getCategoryTree') {
+    mockUseQuery.mockImplementation((query: unknown, args: unknown) => {
+      if (query === 'getCategoryTree' || (query && (query.toString().includes('getCategoryTree') || query._functionName?.includes('getCategoryTree')))) {
         return [];
       }
-      if (query === 'getCategoryLevels') {
+      if (query === 'getCategoryLevels' || (query && (query.toString().includes('getCategoryLevels') || query._functionName?.includes('getCategoryLevels')))) {
         return [];
       }
       return undefined;

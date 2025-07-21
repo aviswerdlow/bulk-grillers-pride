@@ -1803,4 +1803,168 @@ export default defineSchema({
   })
     .index('by_user_time', ['userId', 'timestamp'])
     .index('by_action', ['action']),
+
+  // ================================
+  // RATE LIMITING INFRASTRUCTURE
+  // ================================
+  
+  // Rate limit tracking per user/organization
+  rateLimits: defineTable({
+    // Identification
+    organizationId: v.id('organizations'),
+    userId: v.optional(v.id('users')), // Optional for API key-based requests
+    identifier: v.string(), // Could be userId, API key, IP address, etc.
+    
+    // Rate limit configuration
+    resource: v.string(), // e.g., 'ai.categorization', 'import.products', 'api.products'
+    
+    // Window tracking
+    windowStart: v.number(), // Unix timestamp for current window start
+    windowDuration: v.number(), // Duration in seconds (e.g., 60 for 1 minute)
+    
+    // Request tracking
+    requestCount: v.number(), // Requests in current window
+    limit: v.number(), // Max requests allowed in window
+    
+    // Token/resource tracking (for AI endpoints)
+    tokensUsed: v.optional(v.number()), // For AI endpoints
+    tokenLimit: v.optional(v.number()), // Max tokens per window
+    
+    // Burst allowance
+    burstLimit: v.optional(v.number()), // Short-term burst allowance
+    burstRemaining: v.optional(v.number()), // Remaining burst capacity
+    
+    // Status
+    isBlocked: v.boolean(), // Currently rate limited
+    blockedUntil: v.optional(v.number()), // When the block expires
+    
+    // Metadata
+    lastRequest: v.number(), // Timestamp of last request
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index('by_identifier_resource', ['identifier', 'resource'])
+    .index('by_organization_resource', ['organizationId', 'resource'])
+    .index('by_window_start', ['windowStart'])
+    .index('by_blocked', ['isBlocked', 'blockedUntil']),
+
+  // Rate limit configuration per resource/plan
+  rateLimitConfigurations: defineTable({
+    // Resource configuration
+    resource: v.string(), // e.g., 'ai.categorization', 'import.products'
+    plan: v.string(), // e.g., 'free', 'starter', 'professional', 'enterprise'
+    
+    // Limits
+    requestsPerMinute: v.optional(v.number()),
+    requestsPerHour: v.optional(v.number()),
+    requestsPerDay: v.optional(v.number()),
+    
+    // AI-specific limits
+    tokensPerMinute: v.optional(v.number()),
+    tokensPerHour: v.optional(v.number()),
+    tokensPerDay: v.optional(v.number()),
+    
+    // Burst configuration
+    burstMultiplier: v.number(), // e.g., 2x for short bursts
+    burstDuration: v.number(), // Seconds burst is allowed
+    
+    // Cost-based limits
+    costPerRequest: v.optional(v.number()), // USD cents
+    maxCostPerDay: v.optional(v.number()), // USD
+    
+    // Response configuration
+    retryAfter: v.number(), // Seconds to wait before retry
+    errorMessage: v.string(), // Custom error message
+    
+    // Flags
+    isEnabled: v.boolean(),
+    allowOverride: v.boolean(), // Can be overridden per organization
+    
+    // Metadata
+    createdAt: v.number(),
+    updatedAt: v.number(),
+    updatedBy: v.id('users'),
+  })
+    .index('by_resource_plan', ['resource', 'plan'])
+    .index('by_enabled', ['isEnabled']),
+
+  // Rate limit violations for monitoring
+  rateLimitViolations: defineTable({
+    organizationId: v.id('organizations'),
+    userId: v.optional(v.id('users')),
+    identifier: v.string(),
+    
+    // Violation details
+    resource: v.string(),
+    timestamp: v.number(),
+    requestCount: v.number(),
+    limit: v.number(),
+    
+    // Request context
+    endpoint: v.string(),
+    method: v.string(),
+    userAgent: v.optional(v.string()),
+    ipAddress: v.optional(v.string()),
+    
+    // Response
+    statusCode: v.number(), // 429
+    retryAfter: v.number(), // Seconds
+    
+    // Severity
+    severity: v.union(
+      v.literal('low'), // Under 2x limit
+      v.literal('medium'), // 2-5x limit
+      v.literal('high'), // 5-10x limit
+      v.literal('critical') // >10x limit or repeated violations
+    ),
+    
+    // Pattern detection
+    violationCount24h: v.number(), // Violations in last 24 hours
+    isRepeatOffender: v.boolean(),
+  })
+    .index('by_organization_time', ['organizationId', 'timestamp'])
+    .index('by_identifier_time', ['identifier', 'timestamp'])
+    .index('by_resource', ['resource', 'timestamp'])
+    .index('by_severity', ['severity', 'timestamp']),
+
+  // API key management with rate limits
+  apiKeys: defineTable({
+    organizationId: v.id('organizations'),
+    
+    // Key details
+    name: v.string(),
+    keyHash: v.string(), // Hashed API key
+    keyPrefix: v.string(), // First 8 chars for identification
+    
+    // Permissions
+    scopes: v.array(v.string()), // e.g., ['read:products', 'write:products']
+    allowedResources: v.array(v.string()), // Specific resources this key can access
+    
+    // Rate limit overrides
+    rateLimitOverrides: v.optional(v.object({
+      requestsPerMinute: v.optional(v.number()),
+      requestsPerHour: v.optional(v.number()),
+      requestsPerDay: v.optional(v.number()),
+      tokensPerDay: v.optional(v.number()),
+    })),
+    
+    // Usage tracking
+    lastUsedAt: v.optional(v.number()),
+    usageCount: v.number(),
+    
+    // Status
+    status: v.union(v.literal('active'), v.literal('revoked'), v.literal('expired')),
+    expiresAt: v.optional(v.number()),
+    
+    // Audit
+    createdBy: v.id('users'),
+    createdAt: v.number(),
+    revokedBy: v.optional(v.id('users')),
+    revokedAt: v.optional(v.number()),
+    revokeReason: v.optional(v.string()),
+  })
+    .index('by_organization', ['organizationId', 'status'])
+    .index('by_key_prefix', ['keyPrefix'])
+    .index('by_status', ['status'])
+    .index('by_expires', ['expiresAt', 'status']),
 });

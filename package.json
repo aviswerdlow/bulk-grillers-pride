@@ -54,7 +54,10 @@
     "benchmark:report": "node scripts/generate-benchmark-report.js",
     "benchmark:check-regression": "node scripts/check-benchmark-regression.js",
     "ci:optimize": "node scripts/optimize-ci.js",
-    "ci:analyze": "node scripts/optimize-ci.js"
+    "ci:analyze": "node scripts/optimize-ci.js",
+    "security:check": "npm audit --audit-level=moderate && npx license-checker --production --summary",
+    "security:audit": "npm audit",
+    "security:fix": "npm audit fix"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.10.2",

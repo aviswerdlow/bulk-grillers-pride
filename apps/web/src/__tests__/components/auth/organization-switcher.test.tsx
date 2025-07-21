@@ -83,16 +83,27 @@ describe('OrganizationSwitcher', () => {
     });
 
     // Mock Convex queries
-    mockUseQuery.mockImplementation((query: any, args: any) => {
-      const queryName = query?._functionName || query?.name || query?.toString() || '';
+    mockUseQuery.mockImplementation((query: unknown, args: unknown) => {
+      const queryName = (query as any)?._functionName || (query as any)?.name || (query as any)?.toString() || '';
       
       // Mock currentWithOrganizations query
       if (queryName.includes('currentWithOrganizations')) {
-        return mockUserWithOrgs;
+        return {
+          _id: 'user_123',
+          name: 'Test User',
+          email: 'test@example.com',
+          organizations: mockOrganizations.map(org => ({ _id: org._id }))
+        };
       }
       // Mock getOrganizationBySlug query
       if (queryName.includes('getOrganizationBySlug')) {
-        return mockCurrentOrg;
+        return {
+          _id: mockCurrentOrg._id,
+          name: mockCurrentOrg.name,
+          slug: mockCurrentOrg.slug,
+          createdAt: mockCurrentOrg.createdAt,
+          updatedAt: mockCurrentOrg.updatedAt
+        };
       }
       return undefined;
     });
@@ -312,14 +323,25 @@ describe('OrganizationSwitcher', () => {
 
   describe('organization name initials', () => {
     it('generates correct initials for single word', () => {
-      mockUseQuery.mockImplementation((query: any, args: any) => {
-        const queryName = query?._functionName || query?.name || query?.toString() || '';
+      mockUseQuery.mockImplementation((query: unknown) => {
+        const queryName = (query as any)?._functionName || (query as any)?.name || (query as any)?.toString() || '';
         
         if (queryName.includes('currentWithOrganizations')) {
-          return mockUserWithOrgs;
+          return {
+            _id: 'user_123',
+            name: 'Test User',
+            email: 'test@example.com',
+            organizations: mockOrganizations.map(org => ({ _id: org._id }))
+          };
         }
         if (queryName.includes('getOrganizationBySlug')) {
-          return { ...mockCurrentOrg, name: 'Apple' };
+          return {
+            _id: mockCurrentOrg._id,
+            name: 'Apple',
+            slug: mockCurrentOrg.slug,
+            createdAt: mockCurrentOrg.createdAt,
+            updatedAt: mockCurrentOrg.updatedAt
+          };
         }
         return undefined;
       });
@@ -330,11 +352,16 @@ describe('OrganizationSwitcher', () => {
     });
 
     it('generates correct initials for multiple words', () => {
-      mockUseQuery.mockImplementation((query: any, args: any) => {
-        const queryName = query?._functionName || query?.name || query?.toString() || '';
+      mockUseQuery.mockImplementation((query: unknown) => {
+        const queryName = (query as any)?._functionName || (query as any)?.name || (query as any)?.toString() || '';
         
         if (queryName.includes('currentWithOrganizations')) {
-          return mockUserWithOrgs;
+          return {
+            _id: 'user_123',
+            name: 'Test User',
+            email: 'test@example.com',
+            organizations: mockOrganizations.map(org => ({ _id: org._id }))
+          };
         }
         if (queryName.includes('getOrganizationBySlug')) {
           return { ...mockCurrentOrg, name: 'Big Long Company Name' };

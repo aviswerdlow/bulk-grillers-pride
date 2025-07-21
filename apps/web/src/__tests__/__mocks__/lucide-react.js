@@ -12,7 +12,8 @@ const handler = {
   },
 };
 
-export default new Proxy({}, handler);
+const lucideReactProxy = new Proxy({}, handler);
+export default lucideReactProxy;
 
 // Also export as named exports
 export const ChevronRight = handler.get({}, 'ChevronRight');

@@ -717,8 +717,8 @@ export const processCategorizationJob = internalAction({
         console.error(`❌ [AI-CAT] API key validation failed: ${keyValidation.error}`);
         const errorDetails = {
           type: 'API_KEY_ERROR',
-          message: keyValidation.error,
-          productId: undefined,
+          message: keyValidation.error || 'Invalid API key',
+          productId: undefined as Id<'products'> | undefined,
           timestamp: Date.now(),
         };
         
@@ -818,13 +818,10 @@ export const processCategorizationJob = internalAction({
             });
             
             // Determine which system to use based on A/B test configuration
-            const systemDecision = await ctx.runQuery(
-              internal.functions.ai.monitoring.abTestingController.determineSystem,
-              {
-                organizationId: job.organizationId,
-                userId: job.createdBy,
-              }
-            );
+            const systemDecision = await determineSystem(ctx, {
+              organizationId: job.organizationId,
+              userId: job.createdBy,
+            });
             
             console.log(`🚀 [AI-CAT] Making ${systemDecision.system === 'crewai' ? 'CrewAI (via adapter)' : 'LangChain'} API call NOW... (${systemDecision.reason})`);
             const aiCallStart = Date.now();
@@ -836,7 +833,7 @@ export const processCategorizationJob = internalAction({
                   job.categoryContext as CategoryContext[],
                   job.prompt,
                   job.aiProvider as AIProvider,
-                  apiKey,
+                  apiKey!,
                   job.aiModel,
                   {
                     maxRetries: 3,
@@ -849,7 +846,7 @@ export const processCategorizationJob = internalAction({
                   job.categoryContext as CategoryContext[],
                   job.prompt,
                   job.aiProvider as AIProvider,
-                  apiKey,
+                  apiKey!,
                   job.aiModel,
                   {
                     maxRetries: 3,
@@ -890,16 +887,14 @@ export const processCategorizationJob = internalAction({
               estimatedOutputTokens
             );
             
-            await ctx.runMutation(
-              internal.functions.ai.monitoring.abTestingController.recordABTestMetrics,
-              {
-                organizationId: job.organizationId,
-                system: systemDecision.system,
-                responseTime: aiCallDuration,
-                accuracy,
-                errorRate,
-                tokenUsage: estimatedTokens + estimatedOutputTokens,
-                cost: costEstimate.totalCost,
+            await recordABTestMetrics(ctx, {
+              organizationId: job.organizationId,
+              system: systemDecision.system,
+              responseTime: aiCallDuration,
+              accuracy,
+              errorRate,
+              tokenUsage: estimatedTokens + estimatedOutputTokens,
+              cost: costEstimate.totalCost,
                 batchSize: uncachedProducts.length,
                 categoryCount: job.categoryContext?.length || 0,
                 cacheHitRate: (cachedResults.length / batch.length) * 100,
@@ -930,12 +925,14 @@ export const processCategorizationJob = internalAction({
                   // Add AI thought about individual product categorization
                   if (result.suggestions && result.suggestions.length > 0) {
                     const topSuggestion = result.suggestions[0];
-                    await ctx.runMutation(internal.functions.ai.categorization.addAIThought, {
-                      jobId,
-                      thought: `Categorized "${product.title}" with ${result.suggestions.length} suggestions. Top match: confidence ${topSuggestion.confidence.toFixed(2)}`,
-                      productId: product._id,
-                      confidence: topSuggestion.confidence,
-                    });
+                    if (topSuggestion) {
+                      await ctx.runMutation(internal.functions.ai.categorization.addAIThought, {
+                        jobId,
+                        thought: `Categorized "${product.title}" with ${result.suggestions.length} suggestions. Top match: confidence ${topSuggestion.confidence.toFixed(2)}`,
+                        productId: product._id,
+                        confidence: topSuggestion.confidence,
+                      });
+                    }
                   }
                 }
               }
@@ -1575,12 +1572,12 @@ export const exportJobResults = action({
       // Summary format: Product, Suggested Categories, Confidence
       csvContent = 'Product Handle,Product Title,Vendor,Product Type,Suggested Categories,Average Confidence,Status\n';
       
-      jobDetails.productResults.forEach(result => {
+      jobDetails.productResults.forEach((result: any) => {
         const categories = result.suggestions
-          .map(s => s.categoryName)
+          .map((s: any) => s.categoryName)
           .join('; ');
         const avgConfidence = result.suggestions.length > 0
-          ? (result.suggestions.reduce((sum, s) => sum + s.confidence, 0) / result.suggestions.length).toFixed(2)
+          ? (result.suggestions.reduce((sum: number, s: any) => sum + s.confidence, 0) / result.suggestions.length).toFixed(2)
           : '0';
         
         const row = [
@@ -1599,7 +1596,7 @@ export const exportJobResults = action({
       // Detailed format: Include AI reasoning and individual category confidence
       csvContent = 'Product Handle,Product Title,Product Description,Category,Confidence,AI Reasoning,Is Assigned,Status\n';
       
-      jobDetails.productResults.forEach(result => {
+      jobDetails.productResults.forEach((result: any) => {
         if (result.suggestions.length === 0) {
           // No suggestions for this product
           const row = [
@@ -1616,7 +1613,7 @@ export const exportJobResults = action({
           csvContent += row + '\n';
         } else {
           // One row per suggestion
-          result.suggestions.forEach(suggestion => {
+          result.suggestions.forEach((suggestion: any) => {
             const row = [
               result.handle || '',
               result.title || '',
@@ -1640,7 +1637,7 @@ export const exportJobResults = action({
       csvContent += '"Errors"\n';
       csvContent += '"Type","Message","Product","Timestamp"\n';
       
-      jobDetails.errors.forEach(error => {
+      jobDetails.errors.forEach((error: any) => {
         const row = [
           error.type,
           error.message,

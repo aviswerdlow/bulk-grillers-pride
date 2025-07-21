@@ -1,0 +1,102 @@
+# GitHub Actions Workflows
+
+This directory contains all GitHub Actions workflows for the Bulk Grillers Pride project.
+
+## Security Workflow (`security.yml`)
+
+The security workflow implements automated security scanning with multiple layers of protection:
+
+### Components
+
+1. **NPM Audit**
+   - Runs dependency vulnerability scanning
+   - Configurable severity threshold (moderate/high/critical)
+   - Generates detailed reports and PR comments
+   - Fails builds based on threshold settings
+
+2. **CodeQL Analysis**
+   - Static code analysis for JavaScript/TypeScript
+   - Detects security vulnerabilities and code quality issues
+   - Integrates with GitHub Security tab
+
+3. **Dependency Review**
+   - Reviews dependency changes in PRs
+   - Checks for known vulnerabilities
+   - Validates license compliance
+
+4. **License Compliance**
+   - Ensures all dependencies use approved licenses
+   - Allowed licenses: MIT, ISC, BSD, Apache-2.0, CC0, CC-BY, Unlicense
+   - Generates license summary reports
+
+5. **Secret Scanning**
+   - Uses Gitleaks to detect exposed secrets
+   - Scans full git history
+   - Prevents accidental credential commits
+
+6. **OWASP Dependency Check**
+   - Advanced vulnerability detection
+   - Checks for retired packages
+   - Generates HTML and JSON reports
+
+### Security Levels
+
+Configure the `SECURITY_LEVEL` environment variable:
+- `moderate`: Fails on moderate+ vulnerabilities (default)
+- `high`: Fails on high+ vulnerabilities
+- `critical`: Fails only on critical vulnerabilities
+
+### Reports
+
+Security scan results are uploaded as artifacts:
+- `npm-audit-report`: NPM audit results
+- `license-report`: License compliance summary
+- `owasp-dependency-check-report`: OWASP scan results
+
+### Automated Issue Creation
+
+When scheduled scans fail, the workflow automatically creates a GitHub issue with:
+- Failure summary
+- Link to workflow run
+- Required actions
+- Assignment to @aviswerdlow
+- Quality agent label for tracking
+
+### Running Locally
+
+```bash
+# NPM audit
+npm audit --audit-level=moderate
+
+# License check
+npx license-checker --production --summary
+
+# Run all security checks
+npm run security:check
+```
+
+## CI Workflow (`ci.yml`)
+
+Main continuous integration pipeline with:
+- Linting
+- Type checking
+- Unit tests (sharded)
+- E2E tests
+- Build verification
+- Bundle size checks
+
+## Other Workflows
+
+- `accessibility.yml`: Accessibility testing
+- `coverage-report.yml`: Test coverage reporting
+- `performance-benchmark.yml`: Performance benchmarking
+- `cache-warmup.yml`: Turbo cache optimization
+- `deploy.yml`: Production deployment
+
+## Best Practices
+
+1. **Security First**: All PRs must pass security checks
+2. **Cache Optimization**: Use Turbo remote caching for speed
+3. **Fail Fast**: Cancel in-progress runs on new pushes
+4. **Artifact Retention**: Keep security reports for 30 days
+5. **Scheduled Scans**: Daily security audits for proactive detection

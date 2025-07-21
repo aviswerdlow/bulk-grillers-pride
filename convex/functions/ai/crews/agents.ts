@@ -12,9 +12,27 @@ import {
   processBatchWithLangChain,
   AIProvider,
   ProductCategorizationResult,
+  initializeLLM,
+  estimateTokenCount,
+  estimateCost,
 } from "../langchain";
 import { ActionCtx } from "../../../_generated/server";
 import { Doc, Id } from "../../../_generated/dataModel";
+import { z } from "zod";
+import { StructuredOutputParser } from "@langchain/core/output_parsers";
+import { ChatPromptTemplate } from "@langchain/core/prompts";
+import { multiProviderManager, SelectionCriteria } from "../providers";
+
+// Zod schema for product analysis output
+const ProductAnalysisSchema = z.object({
+  features: z.array(z.string()).describe("Key features that define this product"),
+  characteristics: z.record(z.any()).describe("Unique characteristics that distinguish it"),
+  keyAttributes: z.array(z.string()).describe("Attributes relevant for categorization"),
+  categoryIndicators: z.array(z.string()).describe("Category indicators found in name/description"),
+  confidence: z.number().min(0).max(1).describe("Confidence in the analysis"),
+  productType: z.string().optional().describe("Inferred product type"),
+  similarityFeatures: z.array(z.string()).optional().describe("Features for similarity matching"),
+});
 
 export class ProductAnalyzerAgent implements Agent {
   id = "product_analyzer_001";
@@ -47,46 +65,348 @@ export class ProductAnalyzerAgent implements Agent {
     characteristics: Record<string, any>;
     keyAttributes: string[];
     confidence: number;
+    categoryIndicators?: string[];
+    productType?: string;
+    similarityFeatures?: string[];
   }> {
-    const prompt = `
-      Analyze the following product and extract key features for categorization:
-      
-      Product Name: ${product.name}
-      Description: ${product.description || 'N/A'}
-      SKU: ${product.sku || 'N/A'}
-      ${product.customFields ? `Custom Fields: ${JSON.stringify(product.customFields)}` : ''}
-      
-      Extract:
-      1. Key features that define this product
-      2. Unique characteristics that distinguish it
-      3. Attributes relevant for categorization
-      4. Any category indicators in the name/description
-      
-      Provide a structured analysis focusing on categorization-relevant information.
-    `;
+    try {
+      // Use multi-provider system for better reliability and cost optimization
+      const messages = [
+        {
+          role: 'system' as const,
+          content: `You are an expert product analyst specializing in feature extraction for categorization.
+Your task is to analyze products and extract key features that will help in accurate categorization.
 
-    // Use existing LangChain infrastructure for now
-    // In future, this would use CrewAI's native agent execution
-    const mockAnalysis = {
-      features: [
-        product.name.toLowerCase().includes('grill') ? 'grilling equipment' : 'general product',
-        product.description?.toLowerCase().includes('electric') ? 'electric powered' : 'manual',
-        'consumer product',
-      ],
-      characteristics: {
-        productType: 'physical',
-        category_indicators: extractCategoryIndicators(product),
-        brand: product.name.split(' ')[0],
-      },
-      keyAttributes: [
-        'product_type',
-        'power_source',
-        'primary_use',
-      ],
-      confidence: 0.85,
+Focus on:
+1. Identifying defining characteristics and attributes
+2. Extracting category indicators from text
+3. Determining product type and classification
+4. Finding features useful for similarity matching
+
+Provide detailed, specific features rather than generic ones.`
+        },
+        {
+          role: 'user' as const,
+          content: `Analyze this product for categorization:
+
+Product Name: ${product.name}
+Description: ${product.description || 'No description provided'}
+SKU: ${product.sku || 'N/A'}
+Type: ${product.productType || 'N/A'}
+Vendor: ${product.vendor || 'N/A'}
+Tags: ${product.tags.length > 0 ? product.tags.join(', ') : 'No tags'}
+Custom Fields: ${product.customFields ? JSON.stringify(product.customFields, null, 2) : 'None'}
+
+Extract comprehensive features for categorization purposes and return the result as a JSON object with the following structure:
+{
+  "features": ["array of key features"],
+  "characteristics": { "object with unique characteristics" },
+  "keyAttributes": ["array of categorization attributes"],
+  "categoryIndicators": ["array of category indicators found"],
+  "confidence": 0.0 to 1.0,
+  "productType": "inferred product type",
+  "similarityFeatures": ["features for similarity matching"]
+}`
+        }
+      ];
+
+      // Define selection criteria for this agent
+      const criteria: SelectionCriteria = {
+        requiredCapabilities: ['text-generation', 'structured-output'],
+        maxLatencyMs: this.llmConfig.timeout || 20000,
+        preferredTier: 'balanced' as any,
+        preferCached: true
+      };
+
+      // Use multi-provider manager
+      const response = await multiProviderManager.complete(
+        {
+          messages,
+          model: this.llmConfig.model,
+          temperature: this.llmConfig.temperature,
+          maxTokens: this.llmConfig.maxTokens,
+          structuredOutput: ProductAnalysisSchema
+        },
+        criteria
+      );
+
+      // Parse the response
+      let result: any;
+      if (response.structuredData) {
+        result = response.structuredData;
+      } else {
+        try {
+          result = JSON.parse(response.content);
+        } catch {
+          // If parsing fails, use the LLM response to extract key information
+          result = {
+            features: this.extractFeaturesFromText(response.content),
+            characteristics: {},
+            keyAttributes: [],
+            categoryIndicators: [],
+            confidence: 0.7,
+            productType: 'unknown',
+            similarityFeatures: []
+          };
+        }
+      }
+
+      // Transform result to match expected interface
+      return {
+        features: result.features || [],
+        characteristics: {
+          productType: result.productType || 'unknown',
+          categoryIndicators: result.categoryIndicators || [],
+          inferredAttributes: result.characteristics || {},
+        },
+        keyAttributes: result.keyAttributes || [],
+        confidence: result.confidence || 0.7,
+        categoryIndicators: result.categoryIndicators,
+        productType: result.productType,
+        similarityFeatures: result.similarityFeatures,
+      };
+
+    } catch (error) {
+      console.error('ProductAnalyzerAgent multi-provider error:', error);
+      // Fallback to enhanced mock analysis on error
+      return this.mockAnalysis(product);
+    }
+  }
+
+  // Helper method to extract features from unstructured text
+  private extractFeaturesFromText(text: string): string[] {
+    const features: string[] = [];
+    const lines = text.split('\n');
+    
+    lines.forEach(line => {
+      if (line.includes('feature') || line.includes('characteristic') || line.includes('-')) {
+        const cleaned = line.replace(/^[\s\-\*]+/, '').trim();
+        if (cleaned.length > 3 && cleaned.length < 100) {
+          features.push(cleaned);
+        }
+      }
+    });
+
+    return features.slice(0, 10); // Limit to 10 features
+  }
+
+  // Enhanced mock analysis as fallback
+  private mockAnalysis(product: Doc<'products'>): any {
+    const text = `${product.name} ${product.description || ''} ${product.productType || ''}`.toLowerCase();
+    
+    // Extract features based on keywords
+    const features: string[] = [];
+    const categoryIndicators: string[] = [];
+    
+    // Product type detection
+    const productTypes = {
+      'grill': ['grilling equipment', 'outdoor cooking'],
+      'smoker': ['smoking equipment', 'bbq equipment'],
+      'electric': ['electric powered', 'plug-in device'],
+      'gas': ['gas powered', 'propane compatible'],
+      'charcoal': ['charcoal burning', 'traditional grilling'],
+      'portable': ['portable design', 'travel-friendly'],
+      'commercial': ['commercial grade', 'heavy duty'],
+      'residential': ['home use', 'consumer grade'],
     };
 
-    return mockAnalysis;
+    Object.entries(productTypes).forEach(([keyword, relatedFeatures]) => {
+      if (text.includes(keyword)) {
+        features.push(...relatedFeatures);
+        categoryIndicators.push(keyword);
+      }
+    });
+
+    // Extract brand and model
+    const nameParts = product.name.split(' ');
+    const brand = nameParts[0];
+    const model = nameParts.slice(1, 3).join(' ');
+
+    // Build characteristics
+    const characteristics = {
+      productType: this.inferProductType(text),
+      brand: brand,
+      model: model,
+      priceRange: this.inferPriceRange(product),
+      size: this.inferSize(text),
+      powerSource: this.inferPowerSource(text),
+    };
+
+    // Key attributes for categorization
+    const keyAttributes = [
+      'product_type',
+      'power_source',
+      'size_category',
+      'usage_type',
+      'price_range',
+    ].filter(attr => characteristics[attr.replace('_', '')]);
+
+    // Similarity features for matching
+    const similarityFeatures = [
+      ...new Set([
+        ...features,
+        ...categoryIndicators,
+        characteristics.productType,
+        characteristics.powerSource,
+      ].filter(Boolean))
+    ];
+
+    return {
+      features: features.length > 0 ? features : ['general product', 'consumer item'],
+      characteristics,
+      keyAttributes,
+      confidence: 0.75,
+      categoryIndicators,
+      productType: characteristics.productType,
+      similarityFeatures,
+    };
+  }
+
+  private inferProductType(text: string): string {
+    if (text.includes('grill')) return 'grilling equipment';
+    if (text.includes('smoker')) return 'smoking equipment';
+    if (text.includes('accessory') || text.includes('accessories')) return 'accessory';
+    if (text.includes('cover')) return 'protective gear';
+    if (text.includes('tool') || text.includes('utensil')) return 'cooking tools';
+    return 'general product';
+  }
+
+  private inferPriceRange(product: Doc<'products'>): string {
+    // This would normally use price data if available
+    const name = product.name.toLowerCase();
+    if (name.includes('pro') || name.includes('commercial')) return 'premium';
+    if (name.includes('basic') || name.includes('entry')) return 'budget';
+    return 'mid-range';
+  }
+
+  private inferSize(text: string): string {
+    if (text.includes('large') || text.includes('xl')) return 'large';
+    if (text.includes('small') || text.includes('compact')) return 'small';
+    if (text.includes('portable') || text.includes('travel')) return 'portable';
+    return 'standard';
+  }
+
+  private inferPowerSource(text: string): string {
+    if (text.includes('electric')) return 'electric';
+    if (text.includes('gas') || text.includes('propane')) return 'gas';
+    if (text.includes('charcoal')) return 'charcoal';
+    if (text.includes('wood') || text.includes('pellet')) return 'wood';
+    return 'manual';
+  }
+
+  // Similarity check tool for finding similar products
+  async checkSimilarity(
+    product1: Doc<'products'>,
+    product2: Doc<'products'>,
+    analysis1?: any,
+    analysis2?: any
+  ): Promise<{
+    similarityScore: number;
+    matchingFeatures: string[];
+    explanation: string;
+  }> {
+    // If analyses are not provided, perform them
+    const a1 = analysis1 || await this.analyze(null as any, product1, '' as any);
+    const a2 = analysis2 || await this.analyze(null as any, product2, '' as any);
+
+    // Calculate feature overlap
+    const features1 = new Set([
+      ...a1.features,
+      ...(a1.similarityFeatures || []),
+      ...(a1.categoryIndicators || []),
+    ]);
+    const features2 = new Set([
+      ...a2.features,
+      ...(a2.similarityFeatures || []),
+      ...(a2.categoryIndicators || []),
+    ]);
+
+    const matchingFeatures = [...features1].filter(f => features2.has(f));
+    const totalFeatures = new Set([...features1, ...features2]).size;
+    const featureOverlap = matchingFeatures.length / totalFeatures;
+
+    // Calculate attribute similarity
+    const attributeScore = this.calculateAttributeSimilarity(a1.characteristics, a2.characteristics);
+
+    // Calculate name similarity
+    const nameScore = this.calculateStringSimilarity(product1.name, product2.name);
+
+    // Weighted similarity score
+    const similarityScore = 
+      featureOverlap * 0.5 +       // 50% weight on feature overlap
+      attributeScore * 0.3 +       // 30% weight on attributes
+      nameScore * 0.2;             // 20% weight on name similarity
+
+    // Generate explanation
+    const explanation = this.generateSimilarityExplanation(
+      matchingFeatures,
+      similarityScore,
+      product1.name,
+      product2.name
+    );
+
+    return {
+      similarityScore: Math.min(1, similarityScore),
+      matchingFeatures,
+      explanation,
+    };
+  }
+
+  private calculateAttributeSimilarity(chars1: any, chars2: any): number {
+    const attributes = ['productType', 'powerSource', 'size', 'priceRange'];
+    let matches = 0;
+    
+    attributes.forEach(attr => {
+      if (chars1[attr] && chars2[attr] && chars1[attr] === chars2[attr]) {
+        matches++;
+      }
+    });
+
+    return matches / attributes.length;
+  }
+
+  private calculateStringSimilarity(str1: string, str2: string): number {
+    const words1 = new Set(str1.toLowerCase().split(/\s+/));
+    const words2 = new Set(str2.toLowerCase().split(/\s+/));
+    
+    const intersection = [...words1].filter(w => words2.has(w)).length;
+    const union = new Set([...words1, ...words2]).size;
+    
+    return union > 0 ? intersection / union : 0;
+  }
+
+  private generateSimilarityExplanation(
+    matchingFeatures: string[],
+    score: number,
+    name1: string,
+    name2: string
+  ): string {
+    if (score > 0.8) {
+      return `Very high similarity between "${name1}" and "${name2}". Matching features: ${matchingFeatures.join(', ')}.`;
+    } else if (score > 0.6) {
+      return `Good similarity between products. Common features: ${matchingFeatures.slice(0, 3).join(', ')}.`;
+    } else if (score > 0.4) {
+      return `Moderate similarity. Some shared features: ${matchingFeatures.slice(0, 2).join(', ')}.`;
+    } else {
+      return `Low similarity between products. Few common features.`;
+    }
+  }
+
+  // Feature extraction tool (standalone version for tool usage)
+  async extractFeatures(
+    product: Doc<'products'>
+  ): Promise<{
+    features: string[];
+    categoryIndicators: string[];
+    productType: string;
+  }> {
+    const analysis = await this.analyze(null as any, product, '' as any);
+    
+    return {
+      features: analysis.features,
+      categoryIndicators: analysis.categoryIndicators || [],
+      productType: analysis.productType || 'unknown',
+    };
   }
 }
 
