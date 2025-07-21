@@ -36,7 +36,7 @@ describe('CategorySelector - Simple Tests', () => {
 
   it('renders category selector when data is loaded', () => {
     // Mock basic data
-    mockUseQuery.mockImplementation((query: unknown, args: unknown) => {
+    mockUseQuery.mockImplementation((query: any, args: any) => {
       if (query === 'getCategoryTree' || (query && (query.toString().includes('getCategoryTree') || query._functionName?.includes('getCategoryTree')))) {
         return [];
       }

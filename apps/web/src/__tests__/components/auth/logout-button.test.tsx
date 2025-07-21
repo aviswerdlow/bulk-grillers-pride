@@ -23,7 +23,7 @@ describe('LogoutButton', () => {
       redirectToSignUp: jest.fn(),
       openSignIn: jest.fn(),
       openSignUp: jest.fn(),
-    } as ReturnType<typeof useClerk>);
+    } as unknown as ReturnType<typeof useClerk>);
   });
 
   afterEach(() => {

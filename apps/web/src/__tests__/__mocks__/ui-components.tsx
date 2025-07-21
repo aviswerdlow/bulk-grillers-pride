@@ -335,7 +335,9 @@ export const DropdownMenuTrigger = ({ children, asChild, onClick, ...props }: Dr
   return <button onClick={onClick} {...props}>{children}</button>;
 };
 
-export const DropdownMenuContent = ({ children, ...props }: CardProps) => (
+type DropdownMenuContentProps = React.HTMLAttributes<HTMLDivElement>
+
+export const DropdownMenuContent = ({ children, ...props }: DropdownMenuContentProps) => (
   <div data-testid="dropdown-menu-content" {...props}>
     {children}
   </div>

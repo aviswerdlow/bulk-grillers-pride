@@ -93,7 +93,7 @@ describe('TeamMembersList', () => {
       return undefined;
     });
 
-    mockUseMutation.mockImplementation((mutation: unknown) => {
+    mockUseMutation.mockImplementation((mutation: any) => {
       const mutationName = (mutation as any)?._functionName || (mutation as any)?.name || (mutation as any)?.toString() || '';
       let mutationFn: jest.Mock;
       
@@ -186,7 +186,7 @@ describe('TeamMembersList', () => {
     });
 
     it('shows "Unnamed User" for users without names', () => {
-      mockUseQuery.mockImplementation((query: unknown, args: unknown) => {
+      mockUseQuery.mockImplementation((query: any, args: any) => {
         const queryName = (query as any)?._functionName || (query as any)?.name || (query as any)?.toString() || '';
         
         if (queryName.includes('getOrganizationUsers')) {
