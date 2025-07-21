@@ -1684,4 +1684,123 @@ export default defineSchema({
     timestamp: v.number(),
   })
     .index('by_alert', ['alertId', 'timestamp']),
+
+  // ================================
+  // A/B TESTING INFRASTRUCTURE
+  // ================================
+  
+  // A/B Test Configuration
+  abTestConfigurations: defineTable({
+    testName: v.string(),
+    enabled: v.boolean(),
+    
+    // Traffic configuration
+    trafficPercentage: v.object({
+      crewAI: v.number(), // 0-100
+      langchain: v.number(), // 0-100
+    }),
+    
+    // Progressive rollout schedule
+    rolloutSchedule: v.array(v.object({
+      date: v.number(), // timestamp
+      crewAIPercentage: v.number(),
+      langchainPercentage: v.number(),
+      applied: v.boolean(),
+    })),
+    
+    // Component-level flags
+    componentFlags: v.object({
+      productAnalyzer: v.boolean(),
+      categoryMatcher: v.boolean(),
+      qualityValidator: v.boolean(),
+      memorySystem: v.boolean(),
+      caching: v.boolean(),
+      monitoring: v.boolean(),
+    }),
+    
+    // User targeting
+    userTargeting: v.object({
+      enabled: v.boolean(),
+      targetedOrganizations: v.array(v.id('organizations')),
+      excludedOrganizations: v.array(v.id('organizations')),
+      betaUsers: v.array(v.id('users')),
+    }),
+    
+    // Performance thresholds for auto-rollback
+    performanceThresholds: v.object({
+      maxResponseTime: v.number(), // milliseconds
+      minAccuracy: v.number(), // percentage
+      maxErrorRate: v.number(), // percentage
+      maxCostIncrease: v.number(), // percentage
+    }),
+    
+    // Metadata
+    createdAt: v.number(),
+    updatedAt: v.number(),
+    updatedBy: v.id('users'),
+    lastRollbackAt: v.optional(v.number()),
+    rollbackReason: v.optional(v.string()),
+  })
+    .index('by_testName', ['testName'])
+    .index('by_enabled', ['enabled']),
+
+  // A/B Test Metrics
+  abTestMetrics: defineTable({
+    organizationId: v.id('organizations'),
+    system: v.union(v.literal('crewai'), v.literal('langchain')),
+    
+    // Performance metrics
+    responseTime: v.number(),
+    accuracy: v.number(),
+    errorRate: v.number(),
+    tokenUsage: v.number(),
+    cost: v.number(),
+    
+    // Operational metrics
+    batchSize: v.number(),
+    categoryCount: v.number(),
+    cacheHitRate: v.number(),
+    
+    // Context
+    timestamp: v.number(),
+    productIds: v.array(v.id('products')),
+    jobId: v.id('aiCategorizationJobs'),
+  })
+    .index('by_organization_time', ['organizationId', 'timestamp'])
+    .index('by_system_time', ['system', 'timestamp'])
+    .index('by_job', ['jobId']),
+
+  // A/B Test Alerts
+  abTestAlerts: defineTable({
+    timestamp: v.number(),
+    system: v.union(v.literal('crewai'), v.literal('langchain')),
+    organizationId: v.id('organizations'),
+    violations: v.array(v.string()),
+    metrics: v.object({
+      responseTime: v.number(),
+      accuracy: v.number(),
+      errorRate: v.number(),
+      tokenUsage: v.number(),
+      cost: v.number(),
+      batchSize: v.number(),
+      categoryCount: v.number(),
+      cacheHitRate: v.number(),
+    }),
+    severity: v.union(v.literal('warning'), v.literal('critical')),
+  })
+    .index('by_organization_time', ['organizationId', 'timestamp'])
+    .index('by_severity', ['severity'])
+    .index('by_system', ['system']),
+
+  // A/B Test Audit Log
+  abTestAuditLog: defineTable({
+    action: v.string(),
+    userId: v.union(v.id('users'), v.literal('system')),
+    timestamp: v.number(),
+    changes: v.optional(v.any()),
+    previousConfig: v.optional(v.any()),
+    reason: v.optional(v.string()),
+  })
+    .index('by_user_time', ['userId', 'timestamp'])
+    .index('by_action', ['action']),
 });

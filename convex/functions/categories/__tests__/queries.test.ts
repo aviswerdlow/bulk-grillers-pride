@@ -13,14 +13,8 @@ import {
   createMockProject,
   createMockCategory,
 } from '../../../__tests__/test-helpers';
-// Import the query objects to access their handlers
-import { getProjectCategories as getProjectCategoriesQuery, getCategoryTree as getCategoryTreeQuery, getCategory as getCategoryQuery } from '../queries';
 import { Id } from '../../../_generated/dataModel';
-
-// Extract the handlers for use in tests
-const getProjectCategories = getProjectCategoriesQuery.handler;
-const getCategoryTree = getCategoryTreeQuery.handler;
-const getCategory = getCategoryQuery.handler;
+import { convexTest } from '../../../__tests__/test-helpers';
 
 describe('Category Queries', () => {
   let test: ConvexTestContext;
@@ -130,7 +124,7 @@ describe('Category Queries', () => {
         const ctx = createQueryContext(test);
 
         // Act
-        const result = await getProjectCategories(ctx, {
+        const result = await getProjectCategories.handler(ctx, {
           organizationId: org._id,
           projectId: project._id,
         });
@@ -147,7 +141,7 @@ describe('Category Queries', () => {
         const ctx = createQueryContext(test);
 
         // Act
-        const result = await getProjectCategories(ctx, {
+        const result = await getProjectCategories.handler(ctx, {
           organizationId: org._id,
           projectId: project._id,
           parentId: 'cat_electronics' as Id<'categories'>,
@@ -164,7 +158,7 @@ describe('Category Queries', () => {
         const ctx = createQueryContext(test);
 
         // Act
-        const result = await getProjectCategories(ctx, {
+        const result = await getProjectCategories.handler(ctx, {
           organizationId: org._id,
           projectId: project._id,
           level: 1,
@@ -180,7 +174,7 @@ describe('Category Queries', () => {
         const ctx = createQueryContext(test);
 
         // Act
-        const result = await getProjectCategories(ctx, {
+        const result = await getProjectCategories.handler(ctx, {
           organizationId: org._id,
           projectId: project._id,
           parentId: 'cat_electronics' as Id<'categories'>,
@@ -197,7 +191,7 @@ describe('Category Queries', () => {
         const ctx = createQueryContext(test);
 
         // Act
-        const result = await getProjectCategories(ctx, {
+        const result = await getProjectCategories.handler(ctx, {
           organizationId: org._id,
           projectId: project._id,
           parentId: 'cat_nonexistent' as Id<'categories'>,
@@ -215,7 +209,7 @@ describe('Category Queries', () => {
         const ctx = createQueryContext(test);
 
         // Act & Assert
-        await expect(getProjectCategories(ctx, {
+        await expect(getProjectCategories.handler(ctx, {
           organizationId: org._id,
           projectId: project._id,
         })).rejects.toThrow('Unauthorized');
@@ -230,7 +224,7 @@ describe('Category Queries', () => {
         const ctx = createQueryContext(test);
 
         // Act & Assert
-        await expect(getProjectCategories(ctx, {
+        await expect(getProjectCategories.handler(ctx, {
           organizationId: org._id,
           projectId: project._id,
         })).rejects.toThrow();
@@ -249,7 +243,7 @@ describe('Category Queries', () => {
         const ctx = createQueryContext(test);
 
         // Act
-        const result = await getProjectCategories(ctx, {
+        const result = await getProjectCategories.handler(ctx, {
           organizationId: org._id,
           projectId: emptyProject._id,
         });
@@ -292,7 +286,7 @@ describe('Category Queries', () => {
         const ctx = createQueryContext(test);
 
         // Act
-        const result = await getProjectCategories(ctx, {
+        const result = await getProjectCategories.handler(ctx, {
           organizationId: org._id,
           projectId: project._id,
         });
@@ -409,7 +403,7 @@ describe('Category Queries', () => {
         const ctx = createQueryContext(test);
 
         // Act
-        const result = await getCategoryTree(ctx, {
+        const result = await getCategoryTree.handler(ctx, {
           organizationId: org._id,
           projectId: project._id,
         });
@@ -441,7 +435,7 @@ describe('Category Queries', () => {
         const ctx = createQueryContext(test);
 
         // Act
-        const result = await getCategoryTree(ctx, {
+        const result = await getCategoryTree.handler(ctx, {
           organizationId: org._id,
           projectId: project._id,
         });
@@ -467,7 +461,7 @@ describe('Category Queries', () => {
         const ctx = createQueryContext(test);
 
         // Act
-        const result = await getCategoryTree(ctx, {
+        const result = await getCategoryTree.handler(ctx, {
           organizationId: org._id,
           projectId: project._id,
         });
@@ -486,7 +480,7 @@ describe('Category Queries', () => {
         const ctx = createQueryContext(test);
 
         // Act & Assert
-        await expect(getCategoryTree(ctx, {
+        await expect(getCategoryTree.handler(ctx, {
           organizationId: org._id,
           projectId: project._id,
         })).rejects.toThrow('Unauthorized');
@@ -505,7 +499,7 @@ describe('Category Queries', () => {
         const ctx = createQueryContext(test);
 
         // Act
-        const result = await getCategoryTree(ctx, {
+        const result = await getCategoryTree.handler(ctx, {
           organizationId: org._id,
           projectId: emptyProject._id,
         });
@@ -532,7 +526,7 @@ describe('Category Queries', () => {
         const ctx = createQueryContext(test);
 
         // Act
-        const result = await getCategoryTree(ctx, {
+        const result = await getCategoryTree.handler(ctx, {
           organizationId: org._id,
           projectId: project._id,
         });
@@ -568,7 +562,7 @@ describe('Category Queries', () => {
         const ctx = createQueryContext(test);
 
         // Act
-        const result = await getCategory(ctx, {
+        const result = await getCategory.handler(ctx, {
           categoryId: category._id,
         });
 
@@ -590,7 +584,7 @@ describe('Category Queries', () => {
         const ctx = createQueryContext(test);
 
         // Act & Assert
-        await expect(getCategory(ctx, {
+        await expect(getCategory.handler(ctx, {
           categoryId: category._id,
         })).rejects.toThrow('Unauthorized');
       });
@@ -613,7 +607,7 @@ describe('Category Queries', () => {
         const ctx = createQueryContext(test);
 
         // Act & Assert
-        await expect(getCategory(ctx, {
+        await expect(getCategory.handler(ctx, {
           categoryId: otherCategory._id,
         })).rejects.toThrow();
       });
@@ -625,7 +619,7 @@ describe('Category Queries', () => {
         const ctx = createQueryContext(test);
 
         // Act & Assert
-        await expect(getCategory(ctx, {
+        await expect(getCategory.handler(ctx, {
           categoryId: 'cat_nonexistent' as Id<'categories'>,
         })).rejects.toThrow('Category not found');
       });

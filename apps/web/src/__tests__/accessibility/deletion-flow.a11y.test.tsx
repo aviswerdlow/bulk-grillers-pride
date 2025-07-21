@@ -17,12 +17,15 @@ import { A11yTestUtils } from '../utils/A11yTestUtils';
 import { DeleteProductDialog } from '@/components/products/delete-product-dialog';
 import { ConvexClientProvider } from '@/components/convex-client-provider';
 import { mockConvex } from '../__mocks__/convex';
+import type { Id } from '@convex/_generated/dataModel';
 
 // Mock components and hooks
 jest.mock('@clerk/nextjs', () => ({
   useUser: () => ({ user: { id: 'test-user' } }),
   useOrganization: () => ({ organization: { id: 'test-org' } })
 }));
+
+import { useMutation } from 'convex/react';
 
 jest.mock('convex/react', () => ({
   ...jest.requireActual('convex/react'),
@@ -33,8 +36,13 @@ jest.mock('convex/react', () => ({
 
 describe('Deletion Flow Accessibility', () => {
   const mockProduct = {
-    _id: 'product1',
+    _id: 'product1' as Id<'products'>,
     title: 'Test Product',
+    handle: 'test-product',
+    status: 'active',
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+    categories: [] as Id<'categories'>[],
     sku: 'TEST-123',
     description: 'Test product description'
   };
@@ -121,7 +129,7 @@ describe('Deletion Flow Accessibility', () => {
               <DeleteProductDialog
                 open={true}
                 onOpenChange={mockOnOpenChange}
-                product={mockProduct}
+                products={mockProduct}
                 onDelete={mockOnDelete}
               />
             </ConvexClientProvider>
@@ -244,7 +252,7 @@ describe('Deletion Flow Accessibility', () => {
               <DeleteProductDialog
                 open={true}
                 onOpenChange={mockOnOpenChange}
-                product={mockProduct}
+                products={mockProduct}
                 onDelete={mockOnDelete}
               />
             </ConvexClientProvider>
@@ -268,7 +276,6 @@ describe('Deletion Flow Accessibility', () => {
             onOpenChange={mockOnOpenChange}
             products={mockProduct}
             onDelete={mockOnDelete}
-            multiStep={true}
           />
         </ConvexClientProvider>
       );
@@ -375,7 +382,11 @@ describe('Deletion Flow Accessibility', () => {
       
       // Check that heading levels don't skip
       for (let i = 1; i < levels.length; i++) {
-        expect(levels[i] - levels[i-1]).toBeLessThanOrEqual(1);
+        const current = levels[i];
+        const previous = levels[i-1];
+        if (current !== undefined && previous !== undefined) {
+          expect(current - previous).toBeLessThanOrEqual(1);
+        }
       }
     });
   });
@@ -391,7 +402,6 @@ describe('Deletion Flow Accessibility', () => {
             onOpenChange={mockOnOpenChange}
             products={mockProduct}
             onDelete={mockOnDelete}
-            confirmationMethod="hold"
           />
         </ConvexClientProvider>
       );
@@ -428,7 +438,6 @@ describe('Deletion Flow Accessibility', () => {
             onOpenChange={mockOnOpenChange}
             products={mockProduct}
             onDelete={mockOnDelete}
-            confirmationMethod="type"
           />
         </ConvexClientProvider>
       );
@@ -453,7 +462,12 @@ describe('Deletion Flow Accessibility', () => {
   describe('Error Recovery', () => {
     it('should announce errors to screen readers', async () => {
       const mockError = new Error('Network error');
-      const mockDeleteMutation = jest.fn().mockRejectedValue(mockError);
+      const mockDeleteMutation = Object.assign(
+        jest.fn().mockRejectedValue(mockError),
+        {
+          withOptimisticUpdate: jest.fn()
+        }
+      );
       
       jest.mocked(useMutation).mockReturnValue(mockDeleteMutation);
       
@@ -482,7 +496,12 @@ describe('Deletion Flow Accessibility', () => {
 
     it('should maintain focus on error', async () => {
       const mockError = new Error('Network error');
-      const mockDeleteMutation = jest.fn().mockRejectedValue(mockError);
+      const mockDeleteMutation = Object.assign(
+        jest.fn().mockRejectedValue(mockError),
+        {
+          withOptimisticUpdate: jest.fn()
+        }
+      );
       
       jest.mocked(useMutation).mockReturnValue(mockDeleteMutation);
       
@@ -507,6 +526,3 @@ describe('Deletion Flow Accessibility', () => {
     });
   });
 });
-
-// Import for proper typing
-import { useMutation } from 'convex/react';

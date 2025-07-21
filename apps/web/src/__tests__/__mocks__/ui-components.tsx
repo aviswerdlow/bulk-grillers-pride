@@ -106,22 +106,25 @@ export const Select = ({ children, value, onValueChange, disabled }: SelectProps
   return (
     <div data-testid="select" data-value={value} data-disabled={disabled}>
       {React.Children.map(children, (child) => {
-        if (child?.type === SelectTrigger) {
-          return React.cloneElement(child, {
-            onClick: () => !disabled && setIsOpen(!isOpen),
-            'aria-expanded': isOpen,
-            'aria-disabled': disabled,
-            role: 'combobox',
-            value,
-          });
-        }
-        if (child?.type === SelectContent && isOpen) {
-          return React.cloneElement(child, {
-            onItemSelect: (itemValue: string) => {
-              onValueChange?.(itemValue);
-              setIsOpen(false);
-            },
-          });
+        if (React.isValidElement(child)) {
+          const childElement = child as React.ReactElement<any>;
+          if (childElement.type === SelectTrigger) {
+            return React.cloneElement(childElement, {
+              onClick: () => !disabled && setIsOpen(!isOpen),
+              'aria-expanded': isOpen,
+              'aria-disabled': disabled,
+              role: 'combobox',
+              value,
+            });
+          }
+          if (childElement.type === SelectContent && isOpen) {
+            return React.cloneElement(childElement, {
+              onItemSelect: (itemValue: string) => {
+                onValueChange?.(itemValue);
+                setIsOpen(false);
+              },
+            });
+          }
         }
         return child;
       })}
@@ -145,8 +148,11 @@ interface SelectContentProps {
 export const SelectContent = ({ children, onItemSelect }: SelectContentProps) => (
   <div role="listbox">
     {React.Children.map(children, (child) => {
-      if (child?.type === SelectItem) {
-        return React.cloneElement(child, { onItemSelect });
+      if (React.isValidElement(child)) {
+        const childElement = child as React.ReactElement<any>;
+        if (childElement.type === SelectItem) {
+          return React.cloneElement(childElement, { onItemSelect });
+        }
       }
       return child;
     })}
@@ -193,8 +199,9 @@ interface DialogTriggerProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 }
 
 export const DialogTrigger = ({ children, asChild, ...props }: DialogTriggerProps) => {
-  if (asChild) {
-    return React.cloneElement(children, props);
+  if (asChild && React.isValidElement(children)) {
+    const childElement = children as React.ReactElement<any>;
+    return React.cloneElement(childElement, props);
   }
   return <button {...props}>{children}</button>;
 };
@@ -287,17 +294,20 @@ export const DropdownMenu = ({ children }: DropdownMenuProps) => {
   return (
     <div data-testid="dropdown-menu">
       {React.Children.map(children, (child) => {
-        if (child?.type === DropdownMenuTrigger) {
-          return React.cloneElement(child, {
-            onClick: () => setIsOpen(!isOpen),
-            'aria-expanded': isOpen,
-          });
-        }
-        if (child?.type === DropdownMenuContent && isOpen) {
-          return child;
-        }
-        if (child?.type === DropdownMenuContent && !isOpen) {
-          return null;
+        if (React.isValidElement(child)) {
+          const childElement = child as React.ReactElement<any>;
+          if (childElement.type === DropdownMenuTrigger) {
+            return React.cloneElement(childElement, {
+              onClick: () => setIsOpen(!isOpen),
+              'aria-expanded': isOpen,
+            });
+          }
+          if (childElement.type === DropdownMenuContent && isOpen) {
+            return child;
+          }
+          if (childElement.type === DropdownMenuContent && !isOpen) {
+            return null;
+          }
         }
         return child;
       })}
@@ -311,11 +321,12 @@ interface DropdownMenuTriggerProps extends React.ButtonHTMLAttributes<HTMLButton
 
 export const DropdownMenuTrigger = ({ children, asChild, onClick, ...props }: DropdownMenuTriggerProps) => {
   if (asChild && React.isValidElement(children)) {
-    return React.cloneElement(children, {
+    const childElement = children as React.ReactElement<any>;
+    return React.cloneElement(childElement, {
       ...props,
       onClick: (e: React.MouseEvent<HTMLButtonElement>) => {
         onClick?.(e);
-        children.props.onClick?.(e);
+        childElement.props.onClick?.(e);
       },
     });
   }
@@ -357,14 +368,17 @@ export const Tabs = ({ children, defaultValue, value, onValueChange, ...props }:
   return (
     <div data-testid="tabs" data-value={activeTab} {...props}>
       {React.Children.map(children, (child) => {
-        if (child?.type === TabsList || child?.type === TabsContent) {
-          return React.cloneElement(child, {
-            activeTab,
-            onTabChange: (newValue: string) => {
-              setActiveTab(newValue);
-              onValueChange?.(newValue);
-            },
-          });
+        if (React.isValidElement(child)) {
+          const childElement = child as React.ReactElement<any>;
+          if (childElement.type === TabsList || childElement.type === TabsContent) {
+            return React.cloneElement(childElement, {
+              activeTab,
+              onTabChange: (newValue: string) => {
+                setActiveTab(newValue);
+                onValueChange?.(newValue);
+              },
+            });
+          }
         }
         return child;
       })}
@@ -380,8 +394,11 @@ interface TabsListProps extends React.HTMLAttributes<HTMLDivElement> {
 export const TabsList = ({ children, activeTab, onTabChange, ...props }: TabsListProps) => (
   <div data-testid="tabs-list" {...props}>
     {React.Children.map(children, (child) => {
-      if (child?.type === TabsTrigger) {
-        return React.cloneElement(child, { activeTab, onTabChange });
+      if (React.isValidElement(child)) {
+        const childElement = child as React.ReactElement<any>;
+        if (childElement.type === TabsTrigger) {
+          return React.cloneElement(childElement, { activeTab, onTabChange });
+        }
       }
       return child;
     })}

@@ -6,6 +6,7 @@ import { api } from "../../../../../convex/_generated/api";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { toast } from "sonner";
+import { createLogger } from '@/utils/error-monitoring';
 
 import {
   Dialog,
@@ -34,6 +35,8 @@ const editCategorySchema = z.object({
 });
 
 type EditCategoryForm = z.infer<typeof editCategorySchema>;
+
+const logger = createLogger('EditCategoryDialog');
 
 interface EditCategoryDialogProps {
   open: boolean;
@@ -126,7 +129,7 @@ export function EditCategoryDialog({
       toast.success("Category updated successfully");
       onOpenChange(false);
     } catch (error) {
-      console.error("Failed to update category:", error);
+      logger.error("Failed to update category:", error);
       toast.error("Failed to update category. Please try again.");
     } finally {
       setIsSubmitting(false);

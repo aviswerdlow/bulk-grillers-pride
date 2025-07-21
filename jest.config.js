@@ -17,16 +17,31 @@ module.exports = {
             },
           },
         ],
+        '^.+\\.(js|jsx)$': [
+          'ts-jest',
+          {
+            tsconfig: {
+              jsx: 'react',
+              allowJs: true,
+            },
+          },
+        ],
       },
       moduleNameMapper: {
         '^@/(.*)$': '<rootDir>/apps/web/src/$1',
         '^~/(.*)$': '<rootDir>/apps/web/$1',
         '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
+        // Specific mocks first (order matters!)
+        '^@convex/_generated/api$': '<rootDir>/__mocks__/convex/_generated/api.js',
+        '^@convex/_generated/dataModel$': '<rootDir>/__mocks__/convex/_generated/dataModel.js',
         '^.*/convex/_generated/api$': '<rootDir>/__mocks__/convex/_generated/api.js',
         '^convex/_generated/api$': '<rootDir>/__mocks__/convex/_generated/api.js',
         '^.*/convex/_generated/dataModel$': '<rootDir>/__mocks__/convex/_generated/dataModel.js',
         '^convex/_generated/dataModel$': '<rootDir>/__mocks__/convex/_generated/dataModel.js',
         '^convex/react$': '<rootDir>/__mocks__/convex/react.js',
+        '^lucide-react$': '<rootDir>/apps/web/src/__tests__/__mocks__/lucide-react.js',
+        // Generic @convex mapping last
+        '^@convex/(.*)$': '<rootDir>/convex/$1',
       },
       moduleDirectories: ['node_modules', '<rootDir>'],
       testPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/apps/web/.next/'],

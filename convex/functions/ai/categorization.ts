@@ -19,16 +19,7 @@ import {
   AIProvider,
 } from './langchain';
 import { langchainToCrewAIAdapter } from './langchainToCrewAIAdapter';
-
-// Feature flag for CrewAI migration
-const ENABLE_CREWAI_MIGRATION = process.env.ENABLE_CREWAI_MIGRATION === 'true' || false;
-
-// Log feature flag status on module load
-if (ENABLE_CREWAI_MIGRATION) {
-  console.log('🚀 [MIGRATION] CrewAI migration enabled via ENABLE_CREWAI_MIGRATION flag');
-} else {
-  console.log('📋 [MIGRATION] Using LangChain (CrewAI migration disabled)');
-}
+import { determineSystem, recordABTestMetrics } from './monitoring/abTestingController';
 
 // API Key validation utilities
 const validateApiKey = (apiKey: string | undefined, provider: AIProvider): { valid: boolean; error?: string } => {
@@ -826,10 +817,19 @@ export const processCategorizationJob = internalAction({
               thought: `Processing batch ${batchNumber} with ${uncachedProducts.length} products using ${job.aiModel}`,
             });
             
-            console.log(`🚀 [AI-CAT] Making ${ENABLE_CREWAI_MIGRATION ? 'CrewAI (via adapter)' : 'LangChain'} API call NOW...`);
+            // Determine which system to use based on A/B test configuration
+            const systemDecision = await ctx.runQuery(
+              internal.functions.ai.monitoring.abTestingController.determineSystem,
+              {
+                organizationId: job.organizationId,
+                userId: job.createdBy,
+              }
+            );
+            
+            console.log(`🚀 [AI-CAT] Making ${systemDecision.system === 'crewai' ? 'CrewAI (via adapter)' : 'LangChain'} API call NOW... (${systemDecision.reason})`);
             const aiCallStart = Date.now();
             
-            const aiResults = ENABLE_CREWAI_MIGRATION 
+            const aiResults = systemDecision.system === 'crewai' 
               ? await langchainToCrewAIAdapter.processBatchWithLangChain(
                   ctx,
                   uncachedProducts,
@@ -872,6 +872,42 @@ export const processCategorizationJob = internalAction({
             // Estimate output tokens
             const estimatedOutputTokens = estimateTokenCount(JSON.stringify(aiResults));
             totalOutputTokens += estimatedOutputTokens;
+            
+            // Record A/B test metrics
+            const successCount = aiResults.filter(r => r.status === 'success').length;
+            const errorCount = aiResults.filter(r => r.status === 'error').length;
+            const accuracy = aiResults.length > 0 ? (successCount / aiResults.length) * 100 : 0;
+            const errorRate = aiResults.length > 0 ? (errorCount / aiResults.length) * 100 : 0;
+            
+            // Estimate cost for this batch
+            const estimatedTokens = uncachedProducts.reduce((sum, p) => 
+              sum + estimateTokenCount(JSON.stringify(p)), 0
+            );
+            const costEstimate = estimateCost(
+              job.aiProvider as AIProvider,
+              job.aiModel,
+              estimatedTokens,
+              estimatedOutputTokens
+            );
+            
+            await ctx.runMutation(
+              internal.functions.ai.monitoring.abTestingController.recordABTestMetrics,
+              {
+                organizationId: job.organizationId,
+                system: systemDecision.system,
+                responseTime: aiCallDuration,
+                accuracy,
+                errorRate,
+                tokenUsage: estimatedTokens + estimatedOutputTokens,
+                cost: costEstimate.totalCost,
+                batchSize: uncachedProducts.length,
+                categoryCount: job.categoryContext?.length || 0,
+                cacheHitRate: (cachedResults.length / batch.length) * 100,
+                timestamp: Date.now(),
+                productIds: uncachedProducts.map(p => p._id),
+                jobId: job._id,
+              }
+            );
 
             // Cache successful results and update real-time progress
             for (const result of aiResults) {

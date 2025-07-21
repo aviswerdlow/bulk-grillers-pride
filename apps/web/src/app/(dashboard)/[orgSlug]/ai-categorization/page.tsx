@@ -5,6 +5,7 @@ import { api } from "@convex/_generated/api";
 import { useParams } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { createLogger } from '@/utils/error-monitoring';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -40,6 +41,8 @@ interface CategorizationJob {
     timestamp: number;
   }>;
 }
+
+const logger = createLogger('AiCategorizationPage');
 
 export default function AiCategorizationPage() {
   const params = useParams();
@@ -120,7 +123,7 @@ export default function AiCategorizationPage() {
       await cancelJob({ jobId });
       toast.success('Categorization job cancelled');
     } catch (error) {
-      console.error('Failed to cancel job:', error);
+      logger.error('Failed to cancel job:', error);
       toast.error('Failed to cancel job. ' + (error instanceof Error ? error.message : 'Please try again.'));
     }
   };
@@ -134,25 +137,25 @@ export default function AiCategorizationPage() {
   const handleViewProgress = (jobId: string) => {
     // TODO: Implement progress tracking panel
     toast.info('Real-time progress tracking coming soon!');
-    console.log('View progress for job:', jobId);
+    logger.debug('View progress for job:', jobId);
   };
 
   const handleDownloadResults = async (jobId: string) => {
     // TODO: Implement CSV export
     toast.info('Export functionality coming soon!');
-    console.log('Download results for job:', jobId);
+    logger.debug('Download results for job:', jobId);
   };
 
   const handleRerunFailed = async (jobId: string) => {
     // TODO: Implement re-run failed items
     toast.info('Re-run failed items coming soon!');
-    console.log('Re-run failed items for job:', jobId);
+    logger.debug('Re-run failed items for job:', jobId);
   };
 
   const handleDeleteJob = async (jobId: string) => {
     // TODO: Implement job deletion
     toast.info('Job deletion coming soon!');
-    console.log('Delete job:', jobId);
+    logger.debug('Delete job:', jobId);
   };
 
   const getStatusIcon = (status: string) => {

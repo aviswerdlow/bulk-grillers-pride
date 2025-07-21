@@ -9,6 +9,69 @@ import {
   RecoveryAnalysis,
 } from '../../types/cascadeCalculation';
 
+// Core calculation logic extracted for reuse
+export async function calculateCascadeDeletionCore(
+  ctx: QueryCtx,
+  entityType: 'product' | 'category' | 'project',
+  entityId: Id<any>,
+  options?: {
+    includePerformanceMetrics?: boolean;
+    includeRecoveryAnalysis?: boolean;
+    maxDepth?: number;
+    simulateOnly?: boolean;
+  }
+): Promise<CascadeCalculationResult> {
+  // Initialize calculation context
+  const calculationContext: CalculationContext = {
+    visitedEntities: new Set<string>(),
+    operationCount: 0,
+    databaseReads: 0,
+    databaseWrites: 0,
+    warnings: [],
+    startTime: Date.now(),
+  };
+  
+  // Verify entity exists and user has access
+  const entity = await getEntity(ctx, entityType, entityId);
+  if (!entity) {
+    throw new Error(`Entity not found: ${entityType}:${entityId}`);
+  }
+  
+  // Build cascade tree
+  const cascadeTree = await buildCascadeTree(
+    ctx,
+    entityType,
+    entityId,
+    calculationContext,
+    options?.maxDepth || 10
+  );
+  
+  // Calculate impact summary
+  const impactSummary = calculateImpactSummary(cascadeTree, calculationContext);
+  
+  // Performance analysis
+  const performance = options?.includePerformanceMetrics
+    ? await analyzePerformance(ctx, cascadeTree, calculationContext)
+    : getDefaultPerformanceMetrics(calculationContext);
+  
+  // Recovery analysis
+  const recovery = options?.includeRecoveryAnalysis
+    ? await analyzeRecovery(ctx, cascadeTree)
+    : getDefaultRecoveryAnalysis();
+  
+  return {
+    primaryEntity: {
+      type: entityType,
+      id: entityId,
+      name: getEntityName(entity, entityType),
+    },
+    impactSummary,
+    cascadeTree,
+    performance,
+    recovery,
+  };
+}
+
 export const calculateCascadeDeletion = query({
   args: {
     entityType: v.union(v.literal('product'), v.literal('category'), v.literal('project')),
@@ -21,55 +84,7 @@ export const calculateCascadeDeletion = query({
     })),
   },
   handler: async (ctx, args): Promise<CascadeCalculationResult> => {
-    // Initialize calculation context
-    const calculationContext: CalculationContext = {
-      visitedEntities: new Set<string>(),
-      operationCount: 0,
-      databaseReads: 0,
-      databaseWrites: 0,
-      warnings: [],
-      startTime: Date.now(),
-    };
-    
-    // Verify entity exists and user has access
-    const entity = await getEntity(ctx, args.entityType, args.entityId);
-    if (!entity) {
-      throw new Error(`Entity not found: ${args.entityType}:${args.entityId}`);
-    }
-    
-    // Build cascade tree
-    const cascadeTree = await buildCascadeTree(
-      ctx,
-      args.entityType,
-      args.entityId,
-      calculationContext,
-      args.options?.maxDepth || 10
-    );
-    
-    // Calculate impact summary
-    const impactSummary = calculateImpactSummary(cascadeTree, calculationContext);
-    
-    // Performance analysis
-    const performance = args.options?.includePerformanceMetrics
-      ? await analyzePerformance(ctx, cascadeTree, calculationContext)
-      : getDefaultPerformanceMetrics(calculationContext);
-    
-    // Recovery analysis
-    const recovery = args.options?.includeRecoveryAnalysis
-      ? await analyzeRecovery(ctx, cascadeTree)
-      : getDefaultRecoveryAnalysis();
-    
-    return {
-      primaryEntity: {
-        type: args.entityType,
-        id: args.entityId,
-        name: getEntityName(entity, args.entityType),
-      },
-      impactSummary,
-      cascadeTree,
-      performance,
-      recovery,
-    };
+    return calculateCascadeDeletionCore(ctx, args.entityType, args.entityId, args.options);
   },
 });
 
@@ -234,9 +249,10 @@ async function buildProductCascadeNode(
   }
   
   // Check for AI categorization jobs
+  // Note: aiCategorizationJobs table uses productIds array, not single productId
   const aiJobs = await ctx.db
     .query('aiCategorizationJobs')
-    .filter(q => q.eq(q.field('productId'), productId))
+    .filter(q => q.eq(q.field('productIds'), [productId]))
     .take(10);
   
   context.databaseReads++;

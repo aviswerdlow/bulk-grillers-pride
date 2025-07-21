@@ -5,9 +5,7 @@ import { authenticateAndAuthorize, requireRole } from '../../lib/auth';
 import { withTransaction, CascadeTransaction } from '../../migrations/CascadeTransaction';
 import { CASCADE_DELETION_FLAGS, MIGRATION_CONFIG } from '../../migrations/001_cascade_deletion_schema';
 import { withLock } from '../../lib/distributedLock';
-import { previewDeletion, validateDeletion } from '../deletion/cascadeDeletionPreview';
-import { trackDeletionProgress, createProgressNotification } from '../deletion/cascadeDeletionProgress';
-import { getCachedCalculation, setCachedCalculation } from '../deletion/cascadeCalculationCache';
+import { validateDeletion } from '../deletion/cascadeDeletionPreview';
 
 /**
  * Generate a unique ID for bulk operations
@@ -519,7 +517,184 @@ export const deleteProduct = mutation({
 });
 
 /**
- * Bulk delete products mutation
+ * Internal mutation for progress tracking
+ */
+export const internalTrackProgress = internalMutation({
+  args: {
+    transactionId: v.string(),
+    progress: v.object({
+      phase: v.string(),
+      currentOperation: v.string(),
+      completedOperations: v.number(),
+      totalOperations: v.number(),
+      estimatedTimeRemaining: v.number(),
+      currentEntityType: v.optional(v.string()),
+      currentEntityName: v.optional(v.string()),
+      performanceMetrics: v.optional(v.object({
+        averageOperationTime: v.number(),
+        operationsPerSecond: v.number(),
+        memoryUsage: v.optional(v.number()),
+      })),
+    }),
+  },
+  handler: async (ctx, args) => {
+    // Update cascade transaction progress
+    const transaction = await ctx.db
+      .query('cascadeTransactions')
+      .withIndex('by_transaction_id', q => q.eq('transactionId', args.transactionId))
+      .first();
+    
+    if (transaction) {
+      await ctx.db.patch(transaction._id, {
+        updatedAt: Date.now(),
+      });
+    }
+  },
+});
+
+/**
+ * Enhanced bulk delete with cascade calculation
+ */
+export const bulkDeleteProductsWithPreview = mutation({
+  args: {
+    productIds: v.array(v.id('products')),
+    confirmationText: v.string(), // e.g., "DELETE 45"
+    reason: v.optional(v.string()),
+    skipPreview: v.optional(v.boolean()), // Skip cascade calculation for performance
+  },
+  handler: async (ctx, args) => {
+    // Validate confirmation
+    const expectedText = `DELETE ${args.productIds.length}`;
+    if (args.confirmationText !== expectedText) {
+      throw new Error('Invalid confirmation text');
+    }
+
+    // Get first product to check organization
+    const firstProduct = await ctx.db.get(args.productIds[0]);
+    if (!firstProduct) throw new Error('Product not found');
+
+    // Permission check
+    const { user } = await requireRole(ctx, firstProduct.organizationId, ['owner', 'admin']);
+
+    // Validate deletion if not skipping preview
+    if (!args.skipPreview) {
+      const validation = await validateDeletion(ctx, { productIds: args.productIds });
+      if (!validation.canDelete) {
+        throw new Error(`Cannot delete: ${validation.blockingReasons.join(', ')}`);
+      }
+    }
+
+    // Create cascade transaction
+    const transactionId = generateTransactionId();
+    const bulkOperationId = generateBulkOperationId();
+    
+    // Initialize cascade transaction record
+    await ctx.db.insert('cascadeTransactions', {
+      transactionId,
+      organizationId: firstProduct.organizationId,
+      operationType: 'bulk_delete',
+      status: 'in_progress',
+      primaryEntityId: args.productIds[0], // First product as primary
+      affectedEntities: {
+        products: args.productIds,
+        variants: [],
+        assignments: [],
+        images: [],
+      },
+      operations: [],
+      startedAt: Date.now(),
+      executedBy: user._id,
+    });
+
+    const results = [];
+    const successfulProducts = [];
+
+    // Execute bulk deletion with distributed lock
+    return await withLock(
+      ctx,
+      'bulk_operation',
+      bulkOperationId,
+      'bulk_delete',
+      async () => {
+        let completedCount = 0;
+        
+        // Process each product
+        for (const productId of args.productIds) {
+          const product = await ctx.db.get(productId);
+          if (!product) {
+            results.push({ success: false, productId, error: 'Product not found' });
+            completedCount++;
+            continue;
+          }
+
+          try {
+            // Process deletion
+            const result = await processSingleDeletion(ctx, productId, user, {
+              bulkOperationId,
+              reason: args.reason,
+              deletionType: 'bulk',
+              transactionId,
+            });
+
+            if (result.success) {
+              successfulProducts.push(product);
+              results.push(result);
+            } else {
+              results.push(result);
+            }
+          } catch (error: any) {
+            results.push({ success: false, productId, error: error.message });
+          }
+
+          completedCount++;
+        }
+
+        // Create deletion audit log
+        if (successfulProducts.length > 0) {
+          await createDeletionAuditLog(
+            ctx,
+            successfulProducts,
+            user,
+            'bulk_delete',
+            args.confirmationText
+          );
+        }
+
+        // Update cascade transaction as completed
+        const cascadeTransaction = await ctx.db
+          .query('cascadeTransactions')
+          .withIndex('by_transaction_id', q => q.eq('transactionId', transactionId))
+          .first();
+
+        if (cascadeTransaction) {
+          await ctx.db.patch(cascadeTransaction._id, {
+            status: 'completed',
+            completedAt: Date.now(),
+            metrics: {
+              totalDuration: Date.now() - cascadeTransaction.startedAt,
+              operationCount: args.productIds.length,
+            },
+          });
+        }
+
+        return {
+          success: true,
+          bulkOperationId,
+          transactionId,
+          results,
+          summary: {
+            total: args.productIds.length,
+            successful: results.filter((r) => r.success).length,
+            failed: results.filter((r) => !r.success).length,
+          },
+        };
+      }
+    );
+  },
+});
+
+/**
+ * Bulk delete products mutation (legacy - kept for backwards compatibility)
  */
 export const bulkDeleteProducts = mutation({
   args: {

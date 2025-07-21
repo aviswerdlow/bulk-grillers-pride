@@ -27,7 +27,7 @@
     "coverage:record": "node scripts/track-coverage.js record",
     "coverage:report": "node scripts/track-coverage.js report",
     "coverage:check": "node scripts/track-coverage.js check",
-    "type-check": "tsc --noEmit",
+    "type-check": "turbo run type-check",
     "clean": "turbo run clean && rm -rf coverage",
     "dev:web": "cd apps/web && npm run dev",
     "dev:convex": "cd convex && npx convex dev",

@@ -52,6 +52,8 @@ jobs:
         run: |
           if [ ! -d "node_modules" ]; then
             npm ci --legacy-peer-deps
+          else
+            echo "Using cached node_modules"
           fi
 
       - name: Cache Turbo
@@ -97,12 +99,14 @@ jobs:
         run: |
           if [ ! -d "node_modules" ]; then
             npm ci --legacy-peer-deps
+          else
+            echo "Using cached node_modules"
           fi
 
       - name: Run linting
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            npm run lint -- --affected
+            npm run lint -- --filter='[HEAD^1]'
           else
             npm run lint
           fi
@@ -142,12 +146,14 @@ jobs:
         run: |
           if [ ! -d "node_modules" ]; then
             npm ci --legacy-peer-deps
+          else
+            echo "Using cached node_modules"
           fi
 
       - name: Run type checking
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            npm run type-check -- --affected
+            npm run type-check -- --filter='[HEAD^1]'
           else
             npm run type-check
           fi
@@ -191,6 +197,8 @@ jobs:
         run: |
           if [ ! -d "node_modules" ]; then
             npm ci --legacy-peer-deps
+          else
+            echo "Using cached node_modules"
           fi
 
       - name: Run tests for ${{ matrix.project }} (shard ${{ matrix.shard }}/2)
@@ -272,12 +280,14 @@ jobs:
         run: |
           if [ ! -d "node_modules" ]; then
             npm ci --legacy-peer-deps
+          else
+            echo "Using cached node_modules"
           fi
 
       - name: Build application
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            npm run build -- --affected
+            npm run build -- --filter='[HEAD^1]'
           else
             npm run build
           fi
@@ -401,6 +411,8 @@ jobs:
         run: |
           if [ ! -d "node_modules" ]; then
             npm ci --legacy-peer-deps
+          else
+            echo "Using cached node_modules"
           fi
 
       - name: Install Playwright Browsers

@@ -4,12 +4,15 @@ import { ConvexReactClient } from 'convex/react';
 import { ClerkProvider, useAuth } from '@clerk/nextjs';
 import { ConvexProviderWithClerk } from 'convex/react-clerk';
 import { useMemo } from 'react';
+import { createLogger } from '@/utils/error-monitoring';
+
+const logger = createLogger('ConvexClientProvider');
 
 export function ConvexClientProvider({ children }: { children: React.ReactNode }) {
   // Initialize Convex client inside component to ensure env vars are available
   const convex = useMemo(() => {
     const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
-    console.log('[ConvexClientProvider] Convex URL:', convexUrl);
+    logger.debug('Convex URL:', convexUrl);
 
     if (!convexUrl) {
       throw new Error(
@@ -18,7 +21,7 @@ export function ConvexClientProvider({ children }: { children: React.ReactNode }
       );
     }
     const client = new ConvexReactClient(convexUrl);
-    console.log('[ConvexClientProvider] Convex client created');
+    logger.debug('Convex client created');
     return client;
   }, []);
 

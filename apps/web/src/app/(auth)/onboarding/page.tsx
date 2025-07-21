@@ -12,6 +12,9 @@ import { Label } from '@/components/ui/label';
 import { ShoppingCart, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { sanitizeSlug, isValidSlug, getSlugValidationError } from '@/utils/slugValidation';
+import { createLogger } from '@/utils/error-monitoring';
+
+const logger = createLogger('OnboardingPage');
 
 export default function OnboardingPage() {
   const { user } = useUser();
@@ -27,11 +30,11 @@ export default function OnboardingPage() {
   // Check if user already has organizations - moved to top level
   const userWithOrgs = useQuery(api.functions.auth.users.currentWithOrganizations);
 
-  console.log('[OnboardingPage] userWithOrgs query result:', userWithOrgs);
+  logger.debug('userWithOrgs query result:', userWithOrgs);
 
   // If user has organizations, redirect to their first organization's dashboard
   useEffect(() => {
-    console.log('[OnboardingPage] Checking redirect:', {
+    logger.debug('Checking redirect:', {
       hasUserWithOrgs: !!userWithOrgs,
       hasOrganizations: userWithOrgs?.organizations?.length || 0,
     });
@@ -39,7 +42,7 @@ export default function OnboardingPage() {
     if (userWithOrgs && userWithOrgs.organizations && userWithOrgs.organizations.length > 0) {
       const firstOrg = userWithOrgs.organizations[0];
       if (firstOrg) {
-        console.log('[OnboardingPage] Redirecting to:', `/${firstOrg.slug}/dashboard`);
+        logger.info('Redirecting to:', `/${firstOrg.slug}/dashboard`);
         router.push(`/${firstOrg.slug}/dashboard`);
       }
     }

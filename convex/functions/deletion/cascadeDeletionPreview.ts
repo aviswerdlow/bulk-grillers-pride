@@ -1,7 +1,7 @@
-import { query } from '../../_generated/server';
+import { query, QueryCtx } from '../../_generated/server';
 import { v } from 'convex/values';
 import { Id } from '../../_generated/dataModel';
-import { calculateCascadeDeletion } from './cascadeCalculationEngine';
+import { calculateCascadeDeletionCore } from './cascadeCalculationEngine';
 import { 
   CascadeCalculationResult, 
   DeletionPreviewSummary 
@@ -19,13 +19,9 @@ export const previewDeletion = query({
     // Calculate cascade impact for each product
     const calculations = await Promise.all(
       args.productIds.map(id => 
-        calculateCascadeDeletion(ctx, {
-          entityType: 'product',
-          entityId: id,
-          options: {
-            includePerformanceMetrics: true,
-            includeRecoveryAnalysis: true,
-          },
+        calculateCascadeDeletionCore(ctx, 'product', id, {
+          includePerformanceMetrics: true,
+          includeRecoveryAnalysis: true,
         })
       )
     );
@@ -78,13 +74,9 @@ export const getDeletionPreview = query({
     productId: v.id('products'),
   },
   handler: async (ctx, args): Promise<CascadeCalculationResult> => {
-    return await calculateCascadeDeletion(ctx, {
-      entityType: 'product',
-      entityId: args.productId,
-      options: {
-        includePerformanceMetrics: true,
-        includeRecoveryAnalysis: true,
-      },
+    return await calculateCascadeDeletionCore(ctx, 'product', args.productId, {
+      includePerformanceMetrics: true,
+      includeRecoveryAnalysis: true,
     });
   },
 });
@@ -99,10 +91,45 @@ export const validateDeletion = query({
     warnings: string[];
     requiresConfirmation: boolean;
   }> => {
-    const preview = await previewDeletion(ctx, {
-      productIds: args.productIds,
-      includeDetails: false,
-    });
+    // Calculate cascade impact for each product
+    const calculations = await Promise.all(
+      args.productIds.map(id => 
+        calculateCascadeDeletionCore(ctx, 'product', id, {
+          includePerformanceMetrics: true,
+          includeRecoveryAnalysis: true,
+        })
+      )
+    );
+    
+    // Aggregate results
+    const totalImpact = calculations.reduce((sum, calc) => 
+      sum + calc.impactSummary.totalEntitiesAffected, 0
+    );
+    
+    // Find highest risk level
+    const riskLevels = ['low', 'medium', 'high', 'critical'] as const;
+    const highestRisk = calculations.reduce((highest, calc) => {
+      const currentIndex = riskLevels.indexOf(calc.impactSummary.riskLevel);
+      const highestIndex = riskLevels.indexOf(highest);
+      return currentIndex > highestIndex ? calc.impactSummary.riskLevel : highest;
+    }, 'low' as 'low' | 'medium' | 'high' | 'critical');
+    
+    // Collect all warnings
+    const allWarnings = calculations.flatMap(calc => calc.impactSummary.warnings);
+    const uniqueWarnings = Array.from(new Set(allWarnings));
+    
+    // Calculate total estimated duration
+    const estimatedDuration = Math.max(...calculations.map(c => c.impactSummary.estimatedDuration));
+    
+    const preview = {
+      summary: {
+        totalProductsToDelete: args.productIds.length,
+        totalEntitiesAffected: totalImpact,
+        highestRiskLevel: highestRisk,
+        estimatedDuration,
+        warnings: uniqueWarnings,
+      }
+    };
     
     const blockingReasons: string[] = [];
     const warnings = [...preview.summary.warnings];

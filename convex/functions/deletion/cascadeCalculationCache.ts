@@ -42,11 +42,8 @@ export const getCachedCalculation = internalQuery({
       return null;
     }
     
-    // Update access statistics
-    await ctx.db.patch(cached._id, {
-      hits: (cached.hits || 0) + 1,
-      lastAccessedAt: Date.now(),
-    });
+    // Note: In query context, we cannot update the cache statistics
+    // This would need to be done via a separate mutation if needed
     
     return cached.value;
   },
