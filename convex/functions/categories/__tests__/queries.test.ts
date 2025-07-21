@@ -13,8 +13,14 @@ import {
   createMockProject,
   createMockCategory,
 } from '../../../__tests__/test-helpers';
-import { getProjectCategories, getCategoryTree, getCategory } from '../queries';
+// Import the query objects to access their handlers
+import { getProjectCategories as getProjectCategoriesQuery, getCategoryTree as getCategoryTreeQuery, getCategory as getCategoryQuery } from '../queries';
 import { Id } from '../../../_generated/dataModel';
+
+// Extract the handlers for use in tests
+const getProjectCategories = getProjectCategoriesQuery.handler;
+const getCategoryTree = getCategoryTreeQuery.handler;
+const getCategory = getCategoryQuery.handler;
 
 describe('Category Queries', () => {
   let test: ConvexTestContext;

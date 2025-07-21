@@ -15,7 +15,12 @@ import {
   createMockCategory,
   createMockProduct,
 } from '../../../__tests__/test-helpers';
-import { assignProductToCategory, removeProductFromCategory } from '../products';
+// Import the mutation objects to access their handlers
+import { assignProductToCategory as assignProductToCategoryMutation, removeProductFromCategory as removeProductFromCategoryMutation } from '../products';
+
+// Extract the handlers for use in tests
+const assignProductToCategory = assignProductToCategoryMutation.handler;
+const removeProductFromCategory = removeProductFromCategoryMutation.handler;
 import { Id } from '../../../_generated/dataModel';
 
 describe('Category Product Assignments', () => {

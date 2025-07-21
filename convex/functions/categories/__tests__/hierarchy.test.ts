@@ -14,7 +14,11 @@ import {
   createMockProject,
   createMockCategory,
 } from '../../../__tests__/test-helpers';
-import { moveCategory } from '../hierarchy';
+// Import the mutation object to access its handler
+import { moveCategory as moveCategoryMutation } from '../hierarchy';
+
+// Extract the handler for use in tests
+const moveCategory = moveCategoryMutation.handler;
 import { Id } from '../../../_generated/dataModel';
 
 describe('Category Hierarchy Operations', () => {

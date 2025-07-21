@@ -4,6 +4,7 @@ import { Doc, Id } from '../../_generated/dataModel';
 import { authenticateAndAuthorize, requireRole } from '../../lib/auth';
 import { withTransaction, CascadeTransaction } from '../../migrations/CascadeTransaction';
 import { CASCADE_DELETION_FLAGS, MIGRATION_CONFIG } from '../../migrations/001_cascade_deletion_schema';
+import { withLock } from '../../lib/distributedLock';
 
 /**
  * Generate a unique ID for bulk operations
@@ -125,11 +126,19 @@ async function handleCascadeDeletion(
       };
 
       if (transaction) {
-        const trashId = await transaction.execute(
-          async () => ctx.db.insert('categoryAssignmentsTrash', trashData),
+        // Store the trash ID for rollback
+        let trashId: string | null = null;
+        
+        await transaction.execute(
           async () => {
-            // Rollback would delete the trash entry, but we need the ID which we don't have
-            // This is a limitation - in practice we'd need to store the ID
+            trashId = await ctx.db.insert('categoryAssignmentsTrash', trashData);
+            return trashId;
+          },
+          async () => {
+            // Rollback: Delete the trash entry if it was created
+            if (trashId) {
+              await ctx.db.delete(trashId as any);
+            }
           },
           'Preserve category assignment',
           'categoryAssignmentsTrash',
@@ -144,11 +153,26 @@ async function handleCascadeDeletion(
   // Remove category assignments
   for (const assignment of categoryAssignments) {
     if (transaction) {
+      // Store assignment data for rollback
+      const assignmentData = {
+        organizationId: assignment.organizationId,
+        projectId: assignment.projectId,
+        categoryId: assignment.categoryId,
+        productId: assignment.productId,
+        assignedBy: assignment.assignedBy,
+        confidence: assignment.confidence,
+        rationale: assignment.rationale,
+        status: assignment.status,
+        assignedByUser: assignment.assignedByUser,
+        createdAt: assignment.createdAt,
+        updatedAt: assignment.updatedAt,
+      };
+      
       await transaction.execute(
         async () => ctx.db.delete(assignment._id),
         async () => {
-          // Rollback would need to restore the assignment with all its data
-          // This would require storing the full assignment data
+          // Rollback: Restore the assignment with original data
+          await ctx.db.insert('categoryProductAssignments', assignmentData);
         },
         'Delete category assignment',
         'categoryProductAssignments',
@@ -185,10 +209,18 @@ async function handleCascadeDeletion(
       };
 
       if (transaction) {
+        let queueEntryId: string | null = null;
+        
         await transaction.execute(
-          async () => ctx.db.insert('imageCleanupQueue', queueData),
           async () => {
-            // Rollback would delete the queue entry
+            queueEntryId = await ctx.db.insert('imageCleanupQueue', queueData);
+            return queueEntryId;
+          },
+          async () => {
+            // Rollback: Delete the queue entry
+            if (queueEntryId) {
+              await ctx.db.delete(queueEntryId as any);
+            }
           },
           'Queue image for cleanup',
           'imageCleanupQueue',
@@ -384,9 +416,16 @@ export const deleteProduct = mutation({
 
     const { user } = await requireRole(ctx, product.organizationId, ['owner', 'admin']);
 
-    // Use transactional deletion if feature flag is enabled
-    if (CASCADE_DELETION_FLAGS.USE_TRANSACTIONAL_DELETION) {
-      const result = await withTransaction(
+    // Execute deletion with distributed lock to prevent concurrent operations
+    return await withLock(
+      ctx,
+      'product',
+      args.productId,
+      'delete',
+      async () => {
+        // Use transactional deletion if feature flag is enabled
+        if (CASCADE_DELETION_FLAGS.USE_TRANSACTIONAL_DELETION) {
+          const result = await withTransaction(
         ctx,
         product.organizationId,
         user._id,
@@ -394,11 +433,18 @@ export const deleteProduct = mutation({
         args.productId,
         async (transaction) => {
           // Create trash entry within transaction
-          const trashEntry = await transaction.execute(
-            async () => createTrashEntry(ctx, product, user, args.reason, undefined, 'manual', transaction.getTransactionId()),
+          let trashEntryId: string | null = null;
+          
+          await transaction.execute(
             async () => {
-              // Rollback: mark trash entry as failed
-              // In real implementation, we'd delete the trash entry
+              trashEntryId = await createTrashEntry(ctx, product, user, args.reason, undefined, 'manual', transaction.getTransactionId());
+              return trashEntryId;
+            },
+            async () => {
+              // Rollback: Delete the trash entry
+              if (trashEntryId) {
+                await ctx.db.delete(trashEntryId as any);
+              }
             },
             'Create trash entry',
             'productTrash',
@@ -452,6 +498,13 @@ export const deleteProduct = mutation({
 
       return { success: true, trashId: trashEntry };
     }
+      },
+      {
+        lockType: 'exclusive',
+        timeoutMs: 30000, // 30 seconds for deletion operation
+        metadata: { reason: args.reason },
+      }
+    );
   },
 });
 
@@ -483,7 +536,14 @@ export const bulkDeleteProducts = mutation({
     const results = [];
     const successfulProducts = [];
 
-    if (CASCADE_DELETION_FLAGS.USE_TRANSACTIONAL_DELETION) {
+    // Execute bulk deletion with distributed lock on the operation
+    return await withLock(
+      ctx,
+      'bulk_operation',
+      bulkOperationId,
+      'bulk_delete',
+      async () => {
+        if (CASCADE_DELETION_FLAGS.USE_TRANSACTIONAL_DELETION) {
       // Process each product deletion in a transaction
       for (const productId of args.productIds) {
         const product = await ctx.db.get(productId);
@@ -554,13 +614,24 @@ export const bulkDeleteProducts = mutation({
     const successCount = results.filter((r) => r.success).length;
     const failedCount = results.filter((r) => !r.success).length;
 
-    return {
-      success: true,
-      deletedCount: successCount,
-      failedCount,
-      bulkOperationId,
-      results,
-    };
+        return {
+          success: true,
+          deletedCount: successCount,
+          failedCount,
+          bulkOperationId,
+          results,
+        };
+      },
+      {
+        lockType: 'exclusive',
+        timeoutMs: 60000, // 60 seconds for bulk operation
+        metadata: { 
+          productCount: args.productIds.length,
+          reason: args.reason,
+          confirmationText: args.confirmationText,
+        },
+      }
+    );
   },
 });
 
@@ -588,31 +659,83 @@ async function restoreRelatedData(ctx: any, trashEntry: Doc<'productTrash'>, use
       .collect();
 
     for (const preserved of preservedAssignments) {
-      // Check if category still exists
+      // Comprehensive validation for category assignment restoration
+      
+      // 1. Check if category still exists
       const category = await ctx.db.get(preserved.categoryId);
-      if (category && category.status === 'active') {
-        // Recreate the assignment
-        await ctx.db.insert('categoryProductAssignments', {
-          organizationId: preserved.organizationId,
-          projectId: preserved.projectId,
-          categoryId: preserved.categoryId,
-          productId: preserved.productId,
-          assignedBy: preserved.assignedBy,
-          confidence: preserved.confidence,
-          rationale: preserved.rationale,
-          status: preserved.status,
-          assignedByUser: preserved.assignedByUser,
-          createdAt: Date.now(),
-          updatedAt: Date.now(),
-        });
-
-        // Mark as recovered
+      if (!category) {
+        console.warn(`Cannot restore assignment: Category ${preserved.categoryId} no longer exists`);
+        continue;
+      }
+      
+      // 2. Check if category is active
+      if (category.status !== 'active') {
+        console.warn(`Cannot restore assignment: Category ${preserved.categoryId} is ${category.status}`);
+        continue;
+      }
+      
+      // 3. Check for existing assignment (prevent duplicates)
+      const existingAssignment = await ctx.db
+        .query('categoryProductAssignments')
+        .withIndex('by_product', (q: any) => q.eq('productId', preserved.productId))
+        .filter((q: any) => 
+          q.and(
+            q.eq(q.field('categoryId'), preserved.categoryId),
+            q.eq(q.field('status'), 'active')
+          )
+        )
+        .first();
+      
+      if (existingAssignment) {
+        console.warn(`Assignment already exists for product ${preserved.productId} in category ${preserved.categoryId}`);
+        // Mark the preserved entry as no longer recoverable since it's already restored
         await ctx.db.patch(preserved._id, {
           recoverable: false,
           recoveredAt: Date.now(),
           recoveredBy: user._id,
         });
+        continue;
       }
+      
+      // 4. Validate category accepts products (check if it's a leaf category)
+      const childCategories = await ctx.db
+        .query('categories')
+        .withIndex('by_parent', (q: any) => q.eq('parentId', preserved.categoryId))
+        .filter((q: any) => q.eq(q.field('status'), 'active'))
+        .first();
+      
+      if (childCategories) {
+        console.warn(`Cannot restore assignment: Category ${preserved.categoryId} is not a leaf category`);
+        continue;
+      }
+      
+      // 5. Validate project consistency
+      if (category.projectId !== preserved.projectId) {
+        console.warn(`Cannot restore assignment: Category project mismatch`);
+        continue;
+      }
+      
+      // All validations passed - recreate the assignment
+      await ctx.db.insert('categoryProductAssignments', {
+        organizationId: preserved.organizationId,
+        projectId: preserved.projectId,
+        categoryId: preserved.categoryId,
+        productId: preserved.productId,
+        assignedBy: preserved.assignedBy,
+        confidence: preserved.confidence,
+        rationale: preserved.rationale || 'Restored from deletion',
+        status: preserved.status === 'rejected' ? 'pending' : preserved.status, // Don't restore rejected status
+        assignedByUser: preserved.assignedByUser,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+
+      // Mark as recovered
+      await ctx.db.patch(preserved._id, {
+        recoverable: false,
+        recoveredAt: Date.now(),
+        recoveredBy: user._id,
+      });
     }
   }
   // Note: Legacy behavior - assignments were deleted and can't be restored

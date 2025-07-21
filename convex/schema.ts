@@ -1366,6 +1366,48 @@ export default defineSchema({
     .index('by_retain_until', ['retainUntil'])
     .index('by_priority_status', ['priority', 'status'])
     .index('by_product', ['originalProductId']),
+  
+  // Distributed locks for preventing concurrent operations
+  distributedLocks: defineTable({
+    // Lock identification
+    resourceType: v.string(), // e.g., 'product', 'category', 'bulk_operation'
+    resourceId: v.string(), // e.g., product ID, operation ID
+    organizationId: v.id('organizations'),
+    
+    // Lock metadata
+    lockId: v.string(), // Unique lock identifier
+    lockType: v.union(
+      v.literal('exclusive'), // Only one operation allowed
+      v.literal('shared') // Multiple read operations allowed
+    ),
+    operation: v.string(), // e.g., 'delete', 'update', 'restore'
+    
+    // Lock ownership
+    ownerId: v.string(), // Transaction ID or user ID
+    ownerType: v.union(v.literal('transaction'), v.literal('user'), v.literal('system')),
+    
+    // Timing
+    acquiredAt: v.number(),
+    expiresAt: v.number(), // Auto-release after timeout
+    renewedAt: v.optional(v.number()),
+    renewCount: v.number(),
+    maxRenewals: v.number(), // Prevent infinite locks
+    
+    // Status
+    status: v.union(
+      v.literal('active'),
+      v.literal('expired'),
+      v.literal('released')
+    ),
+    
+    // Additional context
+    metadata: v.optional(v.any()), // Additional lock-specific data
+    reason: v.optional(v.string()), // Why the lock was acquired
+  })
+    .index('by_resource', ['resourceType', 'resourceId', 'status'])
+    .index('by_organization', ['organizationId', 'status'])
+    .index('by_owner', ['ownerId', 'status'])
+    .index('by_expiry', ['expiresAt', 'status']),
 
   // ================================
   // CREWAI INTEGRATION

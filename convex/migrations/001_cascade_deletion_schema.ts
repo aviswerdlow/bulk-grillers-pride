@@ -194,19 +194,19 @@ export const newTables = {
  */
 export const CASCADE_DELETION_FLAGS = {
   // Enable transactional deletion
-  USE_TRANSACTIONAL_DELETION: false,
+  USE_TRANSACTIONAL_DELETION: true,
   
   // Enable category assignment preservation
-  PRESERVE_CATEGORY_ASSIGNMENTS: false,
+  PRESERVE_CATEGORY_ASSIGNMENTS: true,
   
   // Enable image cleanup queue
-  USE_IMAGE_CLEANUP_QUEUE: false,
+  USE_IMAGE_CLEANUP_QUEUE: true,
   
   // Enable transaction logging
   LOG_CASCADE_TRANSACTIONS: true,
   
   // Enable rollback capability
-  ENABLE_TRANSACTION_ROLLBACK: false,
+  ENABLE_TRANSACTION_ROLLBACK: true,
   
   // Performance optimization flags
   BATCH_OPERATIONS: true,
