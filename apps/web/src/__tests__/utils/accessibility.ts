@@ -119,7 +119,7 @@ export async function testFocusTrap(container: HTMLElement) {
   expect(focusableElements.length).toBeGreaterThan(0);
   
   // Focus first element
-  focusableElements[0].focus();
+  focusableElements[0]?.focus();
   expect(focusableElements[0]).toHaveFocus();
   
   // Tab through all elements

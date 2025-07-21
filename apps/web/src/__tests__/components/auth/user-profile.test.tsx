@@ -24,12 +24,15 @@ describe('UserProfile', () => {
 
   const mockCurrentUser = {
     _id: 'user_123',
+    name: 'John Doe',
     email: 'test@example.com',
     firstName: 'John',
     lastName: 'Doe',
     imageUrl: 'https://example.com/avatar.jpg',
-    organizationIds: ['org_123', 'org_456'],
-    createdAt: new Date('2024-01-01').toISOString(),
+    organizations: [{ _id: 'org_123' }, { _id: 'org_456' }],
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+    role: 'admin',
   };
 
   beforeEach(() => {
@@ -84,6 +87,7 @@ describe('UserProfile', () => {
     // Only first name
     mockUseQuery.mockReturnValue({
       ...mockCurrentUser,
+      name: 'Alice',
       firstName: 'Alice',
       lastName: null,
     });
@@ -93,6 +97,7 @@ describe('UserProfile', () => {
     // No name, fallback to email
     mockUseQuery.mockReturnValue({
       ...mockCurrentUser,
+      name: 'test@example.com',
       firstName: null,
       lastName: null,
     });
@@ -103,6 +108,7 @@ describe('UserProfile', () => {
   it('shows "Not set" when name is empty', () => {
     mockUseQuery.mockReturnValue({
       ...mockCurrentUser,
+      name: '',
       firstName: null,
       lastName: null,
     });
@@ -115,7 +121,7 @@ describe('UserProfile', () => {
   it('handles single organization correctly', () => {
     mockUseQuery.mockReturnValue({
       ...mockCurrentUser,
-      organizationIds: ['org_123'],
+      organizations: [{ _id: 'org_123' }],
     });
 
     render(<UserProfile />);
@@ -126,7 +132,7 @@ describe('UserProfile', () => {
   it('handles no organizations correctly', () => {
     mockUseQuery.mockReturnValue({
       ...mockCurrentUser,
-      organizationIds: [],
+      organizations: [],
     });
 
     render(<UserProfile />);
@@ -277,6 +283,7 @@ describe('UserProfile', () => {
     it('handles empty names in form', () => {
       mockUseQuery.mockReturnValue({
         ...mockCurrentUser,
+        name: '',
         firstName: '',
         lastName: '',
       });
@@ -296,6 +303,7 @@ describe('UserProfile', () => {
     it('trims whitespace from names', () => {
       mockUseQuery.mockReturnValue({
         ...mockCurrentUser,
+        name: 'John Doe',
         firstName: ' John ',
         lastName: ' Doe ',
       });

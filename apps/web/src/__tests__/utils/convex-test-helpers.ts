@@ -2,7 +2,8 @@
  * Convex test helpers for mocking hooks and mutations
  */
 
-import type { ReactMutation, FunctionReference } from 'convex/react';
+import type { ReactMutation } from 'convex/react';
+import type { FunctionReference } from 'convex/server';
 
 // Create a mock mutation that satisfies the ReactMutation interface
 export function createMockMutation<T extends FunctionReference<'mutation'>>(
@@ -28,11 +29,11 @@ export function createMockQueryWithStates<T>(states: { loading?: boolean; data?:
   return jest.fn(() => {
     const state = states[Math.min(callCount++, states.length - 1)];
     
-    if (state.error) {
+    if (state?.error) {
       throw state.error;
     }
     
-    return state.loading ? undefined : state.data;
+    return state?.loading ? undefined : state?.data;
   });
 }
 

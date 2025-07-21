@@ -222,7 +222,7 @@ function createMockSubscriptions(): MockSubscriptions {
       for (const [key, subs] of subscriptions) {
         const [query, argsStr] = key.split(':', 2);
         active.push({
-          query,
+          query: query || '',
           args: JSON.parse(argsStr || '{}'),
           listeners: subs.size,
         });
@@ -286,7 +286,7 @@ export function createConvexTest(): ConvexTestContext {
             lt: (field: string, value: any) => builder.lt(field, value),
             lte: (field: string, value: any) => builder.lte(field, value),
           };
-          filterFn(filterAPI);
+          filterFn(filterAPI as any);
         }
         return builder;
       }),
@@ -303,7 +303,7 @@ export function createConvexTest(): ConvexTestContext {
                 const fieldMatch = filterFn.toString().match(/q\.field\(['"](\w+)['"]\)/);
                 if (fieldMatch) {
                   const fieldName = fieldMatch[1];
-                  filters.push((doc: any) => doc[fieldName] === value);
+                  filters.push((doc: any) => doc[fieldName as string] === value);
                 }
               } else if (typeof fieldAccessor === 'string') {
                 filters.push((doc: any) => doc[fieldAccessor] === value);
@@ -312,7 +312,7 @@ export function createConvexTest(): ConvexTestContext {
             },
             field: (fieldName: string) => fieldName,
           };
-          filterFn(filterAPI);
+          filterFn(filterAPI as any);
         } else {
           // Regular filter function
           filters.push(filterFn as (doc: T) => boolean);

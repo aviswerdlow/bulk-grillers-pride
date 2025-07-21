@@ -34,6 +34,6 @@ describe('Accessibility Setup Verification', () => {
     const results = await axe(container);
     // This test should detect violations
     expect(results.violations.length).toBeGreaterThan(0);
-    expect(results.violations[0].id).toBe('image-alt');
+    expect(results.violations[0]?.id).toBe('image-alt');
   });
 });

@@ -1,5 +1,5 @@
 import { Id } from '../../_generated/dataModel';
-import { ConvexTestingHelper } from '../test-helpers';
+import { convexTest } from '../test-helpers';
 
 /**
  * Test helpers for product deletion feature
@@ -80,15 +80,15 @@ export const generateMockDeletionAuditLog = (overrides?: Partial<any>) => ({
 });
 
 // Test data setup helpers
-export async function setupTestProduct(t: ConvexTestingHelper, overrides?: Partial<any>) {
+export async function setupTestProduct(t: any, overrides?: Partial<any>) {
   const product = generateMockProduct(overrides);
-  const productId = await t.run(async (ctx) => {
+  const productId = await t.run(async (ctx: any) => {
     return await ctx.db.insert('products', product);
   });
   return { productId, product: { ...product, _id: productId } };
 }
 
-export async function setupTestProductWithVariants(t: ConvexTestingHelper, variantCount = 3) {
+export async function setupTestProductWithVariants(t: any, variantCount = 3) {
   const { productId, product } = await setupTestProduct(t);
   
   const variantIds = await Promise.all(
@@ -120,7 +120,7 @@ export async function setupTestProductWithVariants(t: ConvexTestingHelper, varia
 }
 
 export async function setupTestTrashEntry(
-  t: ConvexTestingHelper, 
+  t: any, 
   productId: Id<'products'>,
   overrides?: Partial<any>
 ) {
@@ -161,7 +161,7 @@ export function assertAuditLogValid(auditLog: any, expectedOperation: string, ex
 }
 
 // Scenario helpers
-export async function createExpiredTrashEntry(t: ConvexTestingHelper, daysAgo = 31) {
+export async function createExpiredTrashEntry(t: any, daysAgo = 31) {
   const { productId } = await setupTestProduct(t);
   const expiresAt = Date.now() - (daysAgo * 24 * 60 * 60 * 1000);
   const deletedAt = expiresAt - (30 * 24 * 60 * 60 * 1000); // 30 days before expiry
@@ -173,7 +173,7 @@ export async function createExpiredTrashEntry(t: ConvexTestingHelper, daysAgo = 
   });
 }
 
-export async function createBulkDeletionScenario(t: ConvexTestingHelper, productCount = 5) {
+export async function createBulkDeletionScenario(t: any, productCount = 5) {
   const products = await Promise.all(
     Array.from({ length: productCount }, () => setupTestProduct(t))
   );
@@ -239,7 +239,7 @@ export function isExpiringSoon(trashEntry: any): boolean {
 }
 
 // Test cleanup helper
-export async function cleanupTestData(t: ConvexTestingHelper, ids: {
+export async function cleanupTestData(t: any, ids: {
   productIds?: Id<'products'>[];
   trashIds?: Id<'productTrash'>[];
   auditLogIds?: Id<'deletionAuditLogs'>[];

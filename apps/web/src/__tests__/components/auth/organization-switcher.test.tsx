@@ -83,16 +83,18 @@ describe('OrganizationSwitcher', () => {
     });
 
     // Mock Convex queries
-    mockUseQuery.mockImplementation((fn: any) => {
+    mockUseQuery.mockImplementation((query: any, args: any) => {
+      const queryName = query?._functionName || query?.name || query?.toString() || '';
+      
       // Mock currentWithOrganizations query
-      if (fn.toString().includes('currentWithOrganizations')) {
+      if (queryName.includes('currentWithOrganizations')) {
         return mockUserWithOrgs;
       }
       // Mock getOrganizationBySlug query
-      if (fn.toString().includes('getOrganizationBySlug')) {
+      if (queryName.includes('getOrganizationBySlug')) {
         return mockCurrentOrg;
       }
-      return null;
+      return undefined;
     });
 
     // Mock switchOrganization mutation
@@ -108,7 +110,7 @@ describe('OrganizationSwitcher', () => {
     });
 
     it('shows loading state when data is not loaded', () => {
-      mockUseQuery.mockReturnValue(null);
+      mockUseQuery.mockReturnValue(undefined);
 
       render(<OrganizationSwitcher />);
 
@@ -310,14 +312,16 @@ describe('OrganizationSwitcher', () => {
 
   describe('organization name initials', () => {
     it('generates correct initials for single word', () => {
-      mockUseQuery.mockImplementation((fn: any) => {
-        if (fn.toString().includes('currentWithOrganizations')) {
+      mockUseQuery.mockImplementation((query: any, args: any) => {
+        const queryName = query?._functionName || query?.name || query?.toString() || '';
+        
+        if (queryName.includes('currentWithOrganizations')) {
           return mockUserWithOrgs;
         }
-        if (fn.toString().includes('getOrganizationBySlug')) {
+        if (queryName.includes('getOrganizationBySlug')) {
           return { ...mockCurrentOrg, name: 'Apple' };
         }
-        return null;
+        return undefined;
       });
 
       render(<OrganizationSwitcher />);
@@ -326,14 +330,16 @@ describe('OrganizationSwitcher', () => {
     });
 
     it('generates correct initials for multiple words', () => {
-      mockUseQuery.mockImplementation((fn: any) => {
-        if (fn.toString().includes('currentWithOrganizations')) {
+      mockUseQuery.mockImplementation((query: any, args: any) => {
+        const queryName = query?._functionName || query?.name || query?.toString() || '';
+        
+        if (queryName.includes('currentWithOrganizations')) {
           return mockUserWithOrgs;
         }
-        if (fn.toString().includes('getOrganizationBySlug')) {
+        if (queryName.includes('getOrganizationBySlug')) {
           return { ...mockCurrentOrg, name: 'Big Long Company Name' };
         }
-        return null;
+        return undefined;
       });
 
       render(<OrganizationSwitcher />);

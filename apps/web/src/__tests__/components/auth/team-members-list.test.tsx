@@ -78,27 +78,37 @@ describe('TeamMembersList', () => {
     mockRemoveUser = jest.fn().mockResolvedValue(undefined);
 
     // Setup default query responses
-    mockUseQuery.mockImplementation((query, args) => {
+    mockUseQuery.mockImplementation((query: any, args?: any) => {
       if (args === 'skip') {
         return undefined;
       }
-      if (query.toString().includes('getOrganizationUsers')) {
+      const queryName = query?._functionName || query?.name || query?.toString() || '';
+      
+      if (queryName.includes('getOrganizationUsers')) {
         return mockMembers;
       }
-      if (query.toString().includes('getActiveSessions')) {
+      if (queryName.includes('getActiveSessions')) {
         return mockActiveSessions;
       }
-      return null;
+      return undefined;
     });
 
-    mockUseMutation.mockImplementation((mutation) => {
-      if (mutation.toString().includes('updateUserRole')) {
-        return mockUpdateUserRole;
+    mockUseMutation.mockImplementation((mutation: any) => {
+      const mutationName = mutation?._functionName || mutation?.name || mutation?.toString() || '';
+      let mutationFn: jest.Mock;
+      
+      if (mutationName.includes('updateUserRole')) {
+        mutationFn = mockUpdateUserRole;
+      } else if (mutationName.includes('removeUserFromOrganization')) {
+        mutationFn = mockRemoveUser;
+      } else {
+        mutationFn = jest.fn();
       }
-      if (mutation.toString().includes('removeUserFromOrganization')) {
-        return mockRemoveUser;
-      }
-      return jest.fn();
+      
+      // Return an object that looks like a ReactMutation
+      return Object.assign(mutationFn, {
+        withOptimisticUpdate: jest.fn().mockReturnValue(mutationFn)
+      });
     });
   });
 
@@ -176,8 +186,10 @@ describe('TeamMembersList', () => {
     });
 
     it('shows "Unnamed User" for users without names', () => {
-      mockUseQuery.mockImplementation((query) => {
-        if (query.toString().includes('getOrganizationUsers')) {
+      mockUseQuery.mockImplementation((query: any) => {
+        const queryName = query?._functionName || query?.name || query?.toString() || '';
+        
+        if (queryName.includes('getOrganizationUsers')) {
           return [
             {
               ...mockMembers[0],
@@ -186,7 +198,7 @@ describe('TeamMembersList', () => {
             },
           ];
         }
-        return null;
+        return undefined;
       });
 
       render(<TeamMembersList organizationId="org_123" currentUserRole="owner" />);
@@ -227,11 +239,13 @@ describe('TeamMembersList', () => {
     });
 
     it('shows empty state when no members', () => {
-      mockUseQuery.mockImplementation((query) => {
-        if (query.toString().includes('getOrganizationUsers')) {
+      mockUseQuery.mockImplementation((query: any) => {
+        const queryName = query?._functionName || query?.name || query?.toString() || '';
+        
+        if (queryName.includes('getOrganizationUsers')) {
           return [];
         }
-        return null;
+        return undefined;
       });
 
       render(<TeamMembersList organizationId="org_123" currentUserRole="owner" />);
@@ -282,7 +296,7 @@ describe('TeamMembersList', () => {
     });
 
     it('does not fetch active sessions for regular members', () => {
-      mockUseQuery.mockImplementation((query, args) => {
+      mockUseQuery.mockImplementation((query: any, args?: any) => {
         if (args === 'skip') {
           return undefined;
         }

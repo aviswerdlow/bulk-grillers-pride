@@ -83,6 +83,7 @@ describe('CategorySelector Component', () => {
     onChange: jest.fn(),
     organizationId: 'org_123',
     projectId: 'project_123',
+    selectedCategories: [],
   };
 
   beforeEach(() => {

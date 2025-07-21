@@ -112,8 +112,6 @@ describe('UI Components Accessibility', () => {
 
       await A11yTestUtils.testFocusTrap({
         container: screen.getByRole('dialog'),
-        firstElement: screen.getByText('First Button'),
-        lastElement: screen.getByText('Last Button'),
       });
     });
 
@@ -146,7 +144,7 @@ describe('UI Components Accessibility', () => {
     });
 
     it('has sufficient color contrast in dialog', async () => {
-      const { container } = render(
+      await A11yTestUtils.testColorContrast(
         <Dialog defaultOpen>
           <DialogContent>
             <DialogTitle>Contrast Test Dialog</DialogTitle>
@@ -157,11 +155,7 @@ describe('UI Components Accessibility', () => {
             <Button variant="outline">Outline Button</Button>
             <Button variant="destructive">Delete</Button>
           </DialogContent>
-        </Dialog>
-      );
-
-      await A11yTestUtils.testColorContrast(
-        container as ReactElement,
+        </Dialog>,
         { minContrastRatio: 4.5 }
       );
     });
@@ -247,7 +241,7 @@ describe('UI Components Accessibility', () => {
     });
 
     it('provides sufficient contrast for alert variants', async () => {
-      const { container } = render(
+      await A11yTestUtils.testColorContrast(
         <div>
           <Alert variant="default">
             <AlertTitle>Default Alert</AlertTitle>
@@ -257,11 +251,7 @@ describe('UI Components Accessibility', () => {
             <AlertTitle>Error Alert</AlertTitle>
             <AlertDescription>Error alert text</AlertDescription>
           </Alert>
-        </div>
-      );
-
-      await A11yTestUtils.testColorContrast(
-        container as ReactElement,
+        </div>,
         { minContrastRatio: 4.5 }
       );
     });
@@ -446,7 +436,7 @@ describe('UI Components Accessibility', () => {
     });
 
     it('supports keyboard navigation in interactive tables', async () => {
-      render(
+      await A11yTestUtils.testKeyboardNavigation(
         <Table>
           <TableHeader>
             <TableRow>
@@ -469,11 +459,7 @@ describe('UI Components Accessibility', () => {
               </TableCell>
             </TableRow>
           </TableBody>
-        </Table>
-      );
-
-      await A11yTestUtils.testKeyboardNavigation(
-        screen.getByRole('table'),
+        </Table>,
         {
           expectedElements: [
             { selector: 'input[aria-label="Select all"]', label: 'Select all checkbox' },
@@ -526,7 +512,7 @@ describe('UI Components Accessibility', () => {
     });
 
     it('maintains sufficient contrast in table cells', async () => {
-      const { container } = render(
+      await A11yTestUtils.testColorContrast(
         <Table>
           <TableHeader>
             <TableRow>
@@ -544,11 +530,7 @@ describe('UI Components Accessibility', () => {
               <TableCell>Selected cell</TableCell>
             </TableRow>
           </TableBody>
-        </Table>
-      );
-
-      await A11yTestUtils.testColorContrast(
-        container as ReactElement,
+        </Table>,
         { minContrastRatio: 4.5 }
       );
     });

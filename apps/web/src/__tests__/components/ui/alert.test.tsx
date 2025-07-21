@@ -130,7 +130,7 @@ describe('Alert Components', () => {
         <AlertTitle
           id="alert-title"
           data-testid="title-test"
-          aria-level="3"
+          aria-level={3}
         >
           Props Title
         </AlertTitle>
