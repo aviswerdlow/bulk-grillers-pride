@@ -56,6 +56,9 @@ jobs:
             echo "Using cached node_modules"
           fi
 
+      - name: Run prepare step
+        run: npm run prepare || true
+
       - name: Cache Turbo
         uses: actions/cache@v4
         with:
@@ -103,6 +106,9 @@ jobs:
             echo "Using cached node_modules"
           fi
 
+      - name: Run prepare step
+        run: npm run prepare || true
+
       - name: Run linting
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
@@ -149,6 +155,9 @@ jobs:
           else
             echo "Using cached node_modules"
           fi
+
+      - name: Run prepare step
+        run: npm run prepare || true
 
       - name: Run type checking
         run: |
@@ -200,6 +209,9 @@ jobs:
           else
             echo "Using cached node_modules"
           fi
+
+      - name: Run prepare step
+        run: npm run prepare || true
 
       - name: Run tests for ${{ matrix.project }} (shard ${{ matrix.shard }}/2)
         run: |
@@ -283,6 +295,9 @@ jobs:
           else
             echo "Using cached node_modules"
           fi
+
+      - name: Run prepare step
+        run: npm run prepare || true
 
       - name: Build application
         run: |
@@ -414,6 +429,9 @@ jobs:
           else
             echo "Using cached node_modules"
           fi
+
+      - name: Run prepare step
+        run: npm run prepare || true
 
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
