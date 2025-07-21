@@ -1,6 +1,6 @@
-import plugin from 'tailwindcss/plugin';
+const plugin = require('tailwindcss/plugin');
 
-export default plugin(function({ addBase, addUtilities }) {
+module.exports = plugin(function({ addBase, addUtilities, theme }) {
   // Add CSS custom properties to root
   addBase({
     ':root': {

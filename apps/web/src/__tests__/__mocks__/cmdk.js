@@ -1,4 +1,4 @@
-import React from 'react';
+const React = require('react');
 
 // Create a generic component factory
 const createComponent = (displayName, element = 'div') => {
@@ -51,5 +51,7 @@ Command.Separator = Separator;
 Command.Loading = Loading;
 
 // Export as both default and named export
-export { Command };
-export default Command;
+module.exports = {
+  Command,
+  default: Command,
+};

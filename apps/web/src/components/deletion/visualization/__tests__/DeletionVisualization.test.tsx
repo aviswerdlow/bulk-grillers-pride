@@ -12,6 +12,75 @@ jest.mock('@/contexts/accessibility', () => ({
   AccessibilityProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
+// Mock UI components
+jest.mock('@/components/ui/card', () => ({
+  Card: ({ children }: any) => <div data-testid="card">{children}</div>,
+  CardHeader: ({ children }: any) => <div data-testid="card-header">{children}</div>,
+  CardContent: ({ children }: any) => <div data-testid="card-content">{children}</div>,
+  CardTitle: ({ children }: any) => <h3>{children}</h3>,
+}));
+
+jest.mock('@/components/ui/alert', () => ({
+  Alert: ({ children }: any) => <div data-testid="alert">{children}</div>,
+  AlertDescription: ({ children }: any) => <div>{children}</div>,
+}));
+
+jest.mock('@/components/ui/badge', () => ({
+  Badge: ({ children }: any) => <span data-testid="badge">{children}</span>,
+}));
+
+jest.mock('@/components/ui/tabs', () => {
+  const React = require('react');
+  return {
+    Tabs: ({ children, value, onValueChange }: any) => {
+      const childrenWithProps = React.Children.map(children, (child: any) => {
+        if (React.isValidElement(child)) {
+          return React.cloneElement(child, { currentValue: value, onValueChange });
+        }
+        return child;
+      });
+      return <div data-testid="tabs">{childrenWithProps}</div>;
+    },
+    TabsList: ({ children, currentValue, onValueChange }: any) => {
+      const childrenWithProps = React.Children.map(children, (child: any) => {
+        if (React.isValidElement(child)) {
+          return React.cloneElement(child, { currentValue, onValueChange });
+        }
+        return child;
+      });
+      return <div data-testid="tabs-list">{childrenWithProps}</div>;
+    },
+    TabsTrigger: ({ children, value, currentValue, onValueChange }: any) => (
+      <button 
+        role="tab" 
+        aria-label={`${children} View`}
+        onClick={() => onValueChange?.(value)}
+      >
+        {children}
+      </button>
+    ),
+    TabsContent: ({ children, value, currentValue }: any) => {
+      if (value === currentValue) {
+        return <div>{children}</div>;
+      }
+      return null;
+    },
+  };
+});
+
+// Mock lucide-react icons
+jest.mock('lucide-react', () => ({
+  AlertTriangle: () => <span>AlertTriangle</span>,
+  Info: () => <span>Info</span>,
+  Package: () => <span>Package</span>,
+  AlertCircle: () => <span>AlertCircle</span>,
+  Clock: () => <span>Clock</span>,
+  Layers: () => <span>Layers</span>,
+  TreePine: () => <span>TreePine</span>,
+  Network: () => <span>Network</span>,
+  List: () => <span>List</span>,
+}));
+
 // Mock the individual view components
 jest.mock('../DeletionTreeView', () => ({
   DeletionTreeView: ({ items, selectedItems, onItemToggle }: any) => (
@@ -88,7 +157,7 @@ const mockSummary: DeletionImpactSummary = {
 
 describe('DeletionVisualization', () => {
   it('renders with default tree view', () => {
-    renderWithProvider(
+    render(
       <DeletionVisualization items={mockItems} summary={mockSummary} />
     );
     
@@ -100,7 +169,7 @@ describe('DeletionVisualization', () => {
 
   it('switches between views', async () => {
     const user = userEvent.setup();
-    renderWithProvider(
+    render(
       <DeletionVisualization items={mockItems} summary={mockSummary} />
     );
     
@@ -117,7 +186,7 @@ describe('DeletionVisualization', () => {
 
   it('handles item selection', async () => {
     const onSelectionChange = jest.fn();
-    renderWithProvider(
+    render(
       <DeletionVisualization 
         items={mockItems} 
         summary={mockSummary}
@@ -134,7 +203,7 @@ describe('DeletionVisualization', () => {
   });
 
   it('displays impact summary', () => {
-    renderWithProvider(
+    render(
       <DeletionVisualization items={mockItems} summary={mockSummary} />
     );
     
@@ -144,7 +213,7 @@ describe('DeletionVisualization', () => {
   });
 
   it('shows loading state', () => {
-    renderWithProvider(
+    render(
       <DeletionVisualization 
         items={[]} 
         summary={mockSummary}
@@ -156,7 +225,7 @@ describe('DeletionVisualization', () => {
   });
 
   it('shows error state', () => {
-    renderWithProvider(
+    render(
       <DeletionVisualization 
         items={[]} 
         summary={mockSummary}
@@ -168,7 +237,7 @@ describe('DeletionVisualization', () => {
   });
 
   it('respects default view prop', () => {
-    renderWithProvider(
+    render(
       <DeletionVisualization 
         items={mockItems} 
         summary={mockSummary}

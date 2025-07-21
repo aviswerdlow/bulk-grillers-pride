@@ -14,7 +14,6 @@ import {
   Layers
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { getPatternColors } from '@/components/accessibility/patterns/SeverityPatterns';
 
 interface ImpactSummaryProps {
   summary: DeletionImpactSummary;

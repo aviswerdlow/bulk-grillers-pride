@@ -1,4 +1,6 @@
-import React from 'react';
+const React = require('react');
 
 // Mock @radix-ui/react-label
-export const Root = ({ children, ...props }) => React.createElement('label', { ...props }, children);
+module.exports = {
+  Root: ({ children, ...props }) => React.createElement('label', { ...props }, children),
+};

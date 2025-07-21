@@ -1,16 +1,26 @@
 import { v } from 'convex/values';
-import { mutation, internalMutation, query } from '../../_generated/server';
+import { mutation, internalMutation, query, internal } from '../../_generated/server';
 import { Doc, Id } from '../../_generated/dataModel';
 import { authenticateAndAuthorize, requireRole } from '../../lib/auth';
 import { withTransaction, CascadeTransaction } from '../../migrations/CascadeTransaction';
 import { CASCADE_DELETION_FLAGS, MIGRATION_CONFIG } from '../../migrations/001_cascade_deletion_schema';
 import { withLock } from '../../lib/distributedLock';
+import { previewDeletion, validateDeletion } from '../deletion/cascadeDeletionPreview';
+import { trackDeletionProgress, createProgressNotification } from '../deletion/cascadeDeletionProgress';
+import { getCachedCalculation, setCachedCalculation } from '../deletion/cascadeCalculationCache';
 
 /**
  * Generate a unique ID for bulk operations
  */
 function generateBulkOperationId(): string {
   return `bulk_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+}
+
+/**
+ * Generate a unique transaction ID
+ */
+function generateTransactionId(): string {
+  return `txn_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 }
 
 /**
