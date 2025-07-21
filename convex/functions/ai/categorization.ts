@@ -18,6 +18,17 @@ import {
   estimateCost,
   AIProvider,
 } from './langchain';
+import { langchainToCrewAIAdapter } from './langchainToCrewAIAdapter';
+
+// Feature flag for CrewAI migration
+const ENABLE_CREWAI_MIGRATION = process.env.ENABLE_CREWAI_MIGRATION === 'true' || false;
+
+// Log feature flag status on module load
+if (ENABLE_CREWAI_MIGRATION) {
+  console.log('🚀 [MIGRATION] CrewAI migration enabled via ENABLE_CREWAI_MIGRATION flag');
+} else {
+  console.log('📋 [MIGRATION] Using LangChain (CrewAI migration disabled)');
+}
 
 // API Key validation utilities
 const validateApiKey = (apiKey: string | undefined, provider: AIProvider): { valid: boolean; error?: string } => {
@@ -815,22 +826,37 @@ export const processCategorizationJob = internalAction({
               thought: `Processing batch ${batchNumber} with ${uncachedProducts.length} products using ${job.aiModel}`,
             });
             
-            console.log(`🚀 [AI-CAT] Making LangChain API call NOW...`);
+            console.log(`🚀 [AI-CAT] Making ${ENABLE_CREWAI_MIGRATION ? 'CrewAI (via adapter)' : 'LangChain'} API call NOW...`);
             const aiCallStart = Date.now();
             
-            const aiResults = await processBatchWithLangChain(
-              uncachedProducts,
-              job.categoryContext as CategoryContext[],
-              job.prompt,
-              job.aiProvider as AIProvider,
-              apiKey,
-              job.aiModel,
-              {
-                maxRetries: 3,
-                temperature: 0.3,
-                streaming: false,
-              }
-            );
+            const aiResults = ENABLE_CREWAI_MIGRATION 
+              ? await langchainToCrewAIAdapter.processBatchWithLangChain(
+                  ctx,
+                  uncachedProducts,
+                  job.categoryContext as CategoryContext[],
+                  job.prompt,
+                  job.aiProvider as AIProvider,
+                  apiKey,
+                  job.aiModel,
+                  {
+                    maxRetries: 3,
+                    temperature: 0.3,
+                    batchSize: batchSize,
+                  }
+                )
+              : await processBatchWithLangChain(
+                  uncachedProducts,
+                  job.categoryContext as CategoryContext[],
+                  job.prompt,
+                  job.aiProvider as AIProvider,
+                  apiKey,
+                  job.aiModel,
+                  {
+                    maxRetries: 3,
+                    temperature: 0.3,
+                    streaming: false,
+                  }
+                );
             
             const aiCallDuration = Date.now() - aiCallStart;
             console.log(`✅ [AI-CAT] LangChain API call completed in ${aiCallDuration}ms`);

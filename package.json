@@ -52,7 +52,9 @@
     "benchmark:standard": "node scripts/run-benchmark.js --type standard",
     "benchmark:full": "node scripts/run-benchmark.js --type full",
     "benchmark:report": "node scripts/generate-benchmark-report.js",
-    "benchmark:check-regression": "node scripts/check-benchmark-regression.js"
+    "benchmark:check-regression": "node scripts/check-benchmark-regression.js",
+    "ci:optimize": "node scripts/optimize-ci.js",
+    "ci:analyze": "node scripts/optimize-ci.js"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.10.2",

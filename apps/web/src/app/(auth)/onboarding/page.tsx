@@ -125,8 +125,8 @@ export default function OnboardingPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-slate-50 to-white">
         <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600" />
-          <p className="text-gray-600">Loading...</p>
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
+          <p className="text-muted-foreground">Loading...</p>
         </div>
       </div>
     );
@@ -137,11 +137,11 @@ export default function OnboardingPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center space-x-2 mb-4">
-            <ShoppingCart className="h-8 w-8 text-blue-600" />
-            <span className="text-2xl font-bold text-gray-900">Bulk</span>
+            <ShoppingCart className="h-8 w-8 text-primary" />
+            <span className="text-2xl font-bold text-foreground">Bulk</span>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">Welcome to Bulk!</h1>
-          <p className="text-gray-600 mt-2">Let&apos;s create your organization to get started</p>
+          <h1 className="text-2xl font-bold text-foreground">Welcome to Bulk!</h1>
+          <p className="text-muted-foreground mt-2">Let&apos;s create your organization to get started</p>
         </div>
 
         <Card className="shadow-lg border-0">
@@ -176,12 +176,12 @@ export default function OnboardingPage() {
                   onChange={(e) => handleSlugChange(e.target.value)}
                   required
                   disabled={isCreating}
-                  className={slugError ? 'border-red-500' : ''}
+                  className={slugError ? 'border-destructive' : ''}
                 />
                 {slugError ? (
-                  <p className="text-xs text-red-500 mt-1">{slugError}</p>
+                  <p className="text-xs text-destructive mt-1">{slugError}</p>
                 ) : (
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-muted-foreground mt-1">
                     This will be your organization&apos;s URL: /{organizationSlug}
                   </p>
                 )}
@@ -205,7 +205,7 @@ export default function OnboardingPage() {
           </CardContent>
         </Card>
 
-        <div className="text-center mt-6 text-sm text-gray-500">
+        <div className="text-center mt-6 text-sm text-muted-foreground">
           You can create additional organizations later in your dashboard.
         </div>
       </div>

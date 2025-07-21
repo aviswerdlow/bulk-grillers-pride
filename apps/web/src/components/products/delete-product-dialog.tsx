@@ -177,11 +177,11 @@ export function DeleteProductDialog({
   const getSeverityColor = (severity: 'low' | 'medium' | 'high') => {
     switch (severity) {
       case 'low':
-        return 'text-blue-500';
+        return 'text-primary';
       case 'medium':
-        return 'text-yellow-500';
+        return 'text-warning';
       case 'high':
-        return 'text-red-500';
+        return 'text-destructive';
     }
   };
 
@@ -274,7 +274,7 @@ export function DeleteProductDialog({
                   <RadioGroupItem value="soft" id="soft-delete" />
                   <div className="flex-1 space-y-1">
                     <Label htmlFor="soft-delete" className="flex items-center gap-2 cursor-pointer">
-                      <Package className="h-4 w-4 text-blue-500" />
+                      <Package className="h-4 w-4 text-primary" />
                       Move to Trash (Recommended)
                     </Label>
                     <p className="text-sm text-muted-foreground">

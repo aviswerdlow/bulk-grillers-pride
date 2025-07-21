@@ -75,17 +75,17 @@ export function JobDetailsModal({
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "completed":
-        return <CheckCircle className="h-5 w-5 text-green-600" />;
+        return <CheckCircle className="h-5 w-5 text-success" />;
       case "running":
-        return <Zap className="h-5 w-5 text-blue-600 animate-pulse" />;
+        return <Zap className="h-5 w-5 text-primary animate-pulse" />;
       case "failed":
-        return <XCircle className="h-5 w-5 text-red-600" />;
+        return <XCircle className="h-5 w-5 text-destructive" />;
       case "pending":
-        return <Clock className="h-5 w-5 text-yellow-600" />;
+        return <Clock className="h-5 w-5 text-warning" />;
       case "cancelled":
-        return <AlertCircle className="h-5 w-5 text-gray-600" />;
+        return <AlertCircle className="h-5 w-5 text-muted-foreground" />;
       default:
-        return <Clock className="h-5 w-5 text-gray-600" />;
+        return <Clock className="h-5 w-5 text-muted-foreground" />;
     }
   };
 
@@ -240,7 +240,7 @@ export function JobDetailsModal({
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         <div className="space-y-1">
                           <p className="text-sm text-muted-foreground">Success Rate</p>
-                          <p className="text-2xl font-bold text-green-600">
+                          <p className="text-2xl font-bold text-success">
                             {jobDetails.metrics.successRate}%
                           </p>
                         </div>
@@ -293,17 +293,17 @@ export function JobDetailsModal({
                         </div>
                         <div className="grid grid-cols-3 gap-4 text-center">
                           <div className="space-y-1">
-                            <CheckCircle className="h-8 w-8 text-green-600 mx-auto" />
+                            <CheckCircle className="h-8 w-8 text-success mx-auto" />
                             <p className="text-2xl font-bold">{jobDetails.metrics.successfulProducts}</p>
                             <p className="text-xs text-muted-foreground">Successful</p>
                           </div>
                           <div className="space-y-1">
-                            <XCircle className="h-8 w-8 text-red-600 mx-auto" />
+                            <XCircle className="h-8 w-8 text-destructive mx-auto" />
                             <p className="text-2xl font-bold">{jobDetails.metrics.failedProducts}</p>
                             <p className="text-xs text-muted-foreground">Failed</p>
                           </div>
                           <div className="space-y-1">
-                            <AlertCircle className="h-8 w-8 text-yellow-600 mx-auto" />
+                            <AlertCircle className="h-8 w-8 text-warning mx-auto" />
                             <p className="text-2xl font-bold">{jobDetails.metrics.skippedProducts}</p>
                             <p className="text-xs text-muted-foreground">Skipped</p>
                           </div>
@@ -365,7 +365,7 @@ export function JobDetailsModal({
                     <div className="space-y-4">
                       <h3 className="text-lg font-medium">Error Details</h3>
                       {jobDetails.errors.map((error: any, idx: number) => (
-                        <Card key={idx} className="border-red-200">
+                        <Card key={idx} className="border-destructive/20">
                           <CardContent className="pt-6">
                             <div className="space-y-2">
                               <div className="flex items-start justify-between">

@@ -51,7 +51,7 @@ jobs:
       - name: Install dependencies if cache miss
         run: |
           if [ ! -d "node_modules" ]; then
-            npm ci
+            npm ci --legacy-peer-deps
           fi
 
       - name: Cache Turbo
@@ -96,11 +96,16 @@ jobs:
       - name: Install dependencies if cache miss
         run: |
           if [ ! -d "node_modules" ]; then
-            npm ci
+            npm ci --legacy-peer-deps
           fi
 
       - name: Run linting
-        run: npm run lint
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            npm run lint -- --affected
+          else
+            npm run lint
+          fi
 
   type-check:
     name: Type Check
@@ -136,11 +141,16 @@ jobs:
       - name: Install dependencies if cache miss
         run: |
           if [ ! -d "node_modules" ]; then
-            npm ci
+            npm ci --legacy-peer-deps
           fi
 
       - name: Run type checking
-        run: npm run type-check
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            npm run type-check -- --affected
+          else
+            npm run type-check
+          fi
 
   test:
     name: Test
@@ -180,7 +190,7 @@ jobs:
       - name: Install dependencies if cache miss
         run: |
           if [ ! -d "node_modules" ]; then
-            npm ci
+            npm ci --legacy-peer-deps
           fi
 
       - name: Run tests for ${{ matrix.project }} (shard ${{ matrix.shard }}/2)
@@ -261,11 +271,16 @@ jobs:
       - name: Install dependencies if cache miss
         run: |
           if [ ! -d "node_modules" ]; then
-            npm ci
+            npm ci --legacy-peer-deps
           fi
 
       - name: Build application
-        run: npm run build
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            npm run build -- --affected
+          else
+            npm run build
+          fi
         env:
           NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
           NEXT_PUBLIC_CONVEX_URL: ${{ secrets.NEXT_PUBLIC_CONVEX_URL }}
@@ -385,7 +400,7 @@ jobs:
       - name: Install dependencies if cache miss
         run: |
           if [ ! -d "node_modules" ]; then
-            npm ci
+            npm ci --legacy-peer-deps
           fi
 
       - name: Install Playwright Browsers

@@ -156,8 +156,8 @@ export default function ProjectSettingsPage() {
     return (
       <div className="p-8">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900">Project not found</h1>
-          <p className="text-gray-600 mt-2">The project you're looking for doesn't exist.</p>
+          <h1 className="text-2xl font-bold text-foreground">Project not found</h1>
+          <p className="text-muted-foreground mt-2">The project you're looking for doesn't exist.</p>
         </div>
       </div>
     );
@@ -169,7 +169,7 @@ export default function ProjectSettingsPage() {
       <div className="mb-6">
         <Link
           href={`/${orgSlug}/projects`}
-          className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900"
+          className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Projects
@@ -178,8 +178,8 @@ export default function ProjectSettingsPage() {
 
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Project Settings</h1>
-        <p className="text-gray-600 mt-1">Manage settings for {project.name}</p>
+        <h1 className="text-3xl font-bold text-foreground">Project Settings</h1>
+        <p className="text-muted-foreground mt-1">Manage settings for {project.name}</p>
       </div>
 
       <Tabs defaultValue="general" className="space-y-6">
@@ -216,9 +216,9 @@ export default function ProjectSettingsPage() {
                   <Input
                     id="name"
                     {...register('name')}
-                    className={errors.name ? 'border-red-500' : ''}
+                    className={errors.name ? 'border-destructive' : ''}
                   />
-                  {errors.name && <p className="text-sm text-red-500">{errors.name.message}</p>}
+                  {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
                 </div>
 
                 {/* Description */}
@@ -228,10 +228,10 @@ export default function ProjectSettingsPage() {
                     id="description"
                     rows={4}
                     {...register('description')}
-                    className={errors.description ? 'border-red-500' : ''}
+                    className={errors.description ? 'border-destructive' : ''}
                   />
                   {errors.description && (
-                    <p className="text-sm text-red-500">{errors.description.message}</p>
+                    <p className="text-sm text-destructive">{errors.description.message}</p>
                   )}
                 </div>
 
@@ -293,10 +293,10 @@ export default function ProjectSettingsPage() {
                     min="0"
                     max="100"
                     {...register('defaultTaxRate', { valueAsNumber: true })}
-                    className={errors.defaultTaxRate ? 'border-red-500' : ''}
+                    className={errors.defaultTaxRate ? 'border-destructive' : ''}
                   />
                   {errors.defaultTaxRate && (
-                    <p className="text-sm text-red-500">{errors.defaultTaxRate.message}</p>
+                    <p className="text-sm text-destructive">{errors.defaultTaxRate.message}</p>
                   )}
                 </div>
               </CardContent>
@@ -314,33 +314,33 @@ export default function ProjectSettingsPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="font-medium">Auto-validate imports</p>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-muted-foreground">
                         Automatically validate data during import
                       </p>
                     </div>
-                    <span className="text-sm text-gray-600">
+                    <span className="text-sm text-muted-foreground">
                       {project.settings.importSettings.autoValidate ? 'Enabled' : 'Disabled'}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="font-medium">Duplicate handling</p>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-muted-foreground">
                         How to handle duplicate records during import
                       </p>
                     </div>
-                    <span className="text-sm text-gray-600 capitalize">
+                    <span className="text-sm text-muted-foreground capitalize">
                       {project.settings.importSettings.duplicateHandling}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="font-medium">Required fields</p>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-muted-foreground">
                         Fields that must be present in imports
                       </p>
                     </div>
-                    <span className="text-sm text-gray-600">
+                    <span className="text-sm text-muted-foreground">
                       {project.settings.importSettings.requiredFields.join(', ')}
                     </span>
                   </div>
@@ -365,17 +365,17 @@ export default function ProjectSettingsPage() {
         </form>
 
         <TabsContent value="danger" className="space-y-6">
-          <Card className="border-red-200">
+          <Card className="border-destructive/20">
             <CardHeader>
-              <CardTitle className="text-red-600">Danger Zone</CardTitle>
+              <CardTitle className="text-destructive">Danger Zone</CardTitle>
               <CardDescription>Irreversible actions that affect your project</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 border border-red-200 rounded-lg">
+                <div className="flex items-center justify-between p-4 border border-destructive/20 rounded-lg">
                   <div>
                     <p className="font-medium">Delete this project</p>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-muted-foreground">
                       Once you delete a project, there is no going back. All data will be
                       permanently removed.
                     </p>
@@ -397,7 +397,7 @@ export default function ProjectSettingsPage() {
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
                         <AlertDialogAction
                           onClick={handleDeleteProject}
-                          className="bg-red-600 hover:bg-red-700"
+                          className="bg-destructive hover:bg-destructive/90"
                           disabled={isDeletingProject}
                         >
                           {isDeletingProject ? (

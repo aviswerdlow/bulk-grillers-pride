@@ -276,7 +276,7 @@ Please provide categories with confidence scores and rationale for each suggesti
                           id={product._id}
                           checked={selectedProducts.includes(product._id)}
                           onChange={() => toggleProductSelection(product._id)}
-                          className="rounded border-gray-300"
+                          className="rounded border-border"
                         />
                         <label htmlFor={product._id} className="flex-1 cursor-pointer">
                           <div className="flex items-center justify-between">

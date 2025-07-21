@@ -127,11 +127,11 @@ export function ProductResultsTable({ results, onApplyCategory, isLoading }: Pro
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "success":
-        return <CheckCircle className="h-4 w-4 text-green-600" />;
+        return <CheckCircle className="h-4 w-4 text-success" />;
       case "error":
-        return <XCircle className="h-4 w-4 text-red-600" />;
+        return <XCircle className="h-4 w-4 text-destructive" />;
       default:
-        return <AlertCircle className="h-4 w-4 text-yellow-600" />;
+        return <AlertCircle className="h-4 w-4 text-warning" />;
     }
   };
 
@@ -184,11 +184,11 @@ export function ProductResultsTable({ results, onApplyCategory, isLoading }: Pro
         </p>
         <div className="flex items-center gap-4">
           <span className="flex items-center gap-1">
-            <CheckCircle className="h-4 w-4 text-green-600" />
+            <CheckCircle className="h-4 w-4 text-success" />
             {results.filter(r => r.status === "success").length} successful
           </span>
           <span className="flex items-center gap-1">
-            <XCircle className="h-4 w-4 text-red-600" />
+            <XCircle className="h-4 w-4 text-destructive" />
             {results.filter(r => r.status === "error").length} failed
           </span>
         </div>
@@ -256,7 +256,7 @@ export function ProductResultsTable({ results, onApplyCategory, isLoading }: Pro
                       </TableCell>
                       <TableCell>
                         {result.status === "error" ? (
-                          <span className="text-sm text-red-600">Failed to categorize</span>
+                          <span className="text-sm text-destructive">Failed to categorize</span>
                         ) : result.suggestions.length === 0 ? (
                           <span className="text-sm text-muted-foreground">No categories suggested</span>
                         ) : (
@@ -328,7 +328,7 @@ export function ProductResultsTable({ results, onApplyCategory, isLoading }: Pro
                                   {result.suggestions.map((suggestion, idx) => (
                                     <Card key={idx} className={cn(
                                       "border",
-                                      suggestion.isAssigned && "border-green-200 bg-green-50"
+                                      suggestion.isAssigned && "border-success/20 bg-success/5"
                                     )}>
                                       <CardContent className="p-4">
                                         <div className="flex items-start justify-between gap-4">
@@ -340,7 +340,7 @@ export function ProductResultsTable({ results, onApplyCategory, isLoading }: Pro
                                                 {Math.round(suggestion.confidence * 100)}% confidence
                                               </Badge>
                                               {suggestion.isAssigned && (
-                                                <Badge variant="outline" className="border-green-600 text-green-600">
+                                                <Badge variant="outline" className="border-success text-success">
                                                   <CheckCircle className="h-3 w-3 mr-1" />
                                                   Applied
                                                 </Badge>
@@ -351,7 +351,7 @@ export function ProductResultsTable({ results, onApplyCategory, isLoading }: Pro
                                             </p>
                                             <div className="bg-muted/50 rounded-md p-3">
                                               <p className="text-sm flex items-start gap-2">
-                                                <Sparkles className="h-4 w-4 text-yellow-600 mt-0.5 flex-shrink-0" />
+                                                <Sparkles className="h-4 w-4 text-warning mt-0.5 flex-shrink-0" />
                                                 <span className="italic">{suggestion.rationale}</span>
                                               </p>
                                             </div>
@@ -404,12 +404,12 @@ export function ProductResultsTable({ results, onApplyCategory, isLoading }: Pro
 
                             {/* Error details */}
                             {result.status === "error" && result.error && (
-                              <div className="rounded-md bg-red-50 border border-red-200 p-4">
-                                <h4 className="text-sm font-medium text-red-900 mb-1 flex items-center gap-2">
+                              <div className="rounded-md bg-destructive/5 border border-destructive/20 p-4">
+                                <h4 className="text-sm font-medium text-destructive-foreground mb-1 flex items-center gap-2">
                                   <XCircle className="h-4 w-4" />
                                   Error Details
                                 </h4>
-                                <p className="text-sm text-red-800">{result.error}</p>
+                                <p className="text-sm text-destructive-foreground/90">{result.error}</p>
                               </div>
                             )}
                           </div>

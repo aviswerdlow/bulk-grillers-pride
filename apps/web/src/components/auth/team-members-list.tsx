@@ -252,12 +252,12 @@ export function TeamMembersList({ organizationId, currentUserRole }: TeamMembers
                     </TableCell>
                     <TableCell>
                       {isUserActive(member._id) ? (
-                        <Badge variant="outline" className="text-green-600 border-green-600">
-                          <div className="h-2 w-2 bg-green-600 rounded-full mr-1" />
+                        <Badge variant="outline" className="text-success border-success">
+                          <div className="h-2 w-2 bg-success rounded-full mr-1" />
                           Active
                         </Badge>
                       ) : (
-                        <Badge variant="outline" className="text-gray-500">
+                        <Badge variant="outline" className="text-muted-foreground">
                           <Clock className="h-3 w-3 mr-1" />
                           Offline
                         </Badge>

@@ -32,8 +32,8 @@ export function ProductCardMini({ product, className }: ProductCardMiniProps) {
     <Card className={cn('hover:shadow-md transition-shadow cursor-pointer', className)}>
       <CardContent className="p-4">
         <div className="flex items-start space-x-3">
-          <div className="p-2 bg-gray-100 rounded-lg">
-            <Package className="h-5 w-5 text-gray-600" />
+          <div className="p-2 bg-muted rounded-lg">
+            <Package className="h-5 w-5 text-muted-foreground" />
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2">

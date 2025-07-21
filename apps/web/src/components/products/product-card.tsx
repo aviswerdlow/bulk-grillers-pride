@@ -53,19 +53,19 @@ export function ProductCard({ product, onEdit, onView, onArchive, className }: P
 
       <CardHeader className="pb-3">
         {/* Product Image Placeholder */}
-        <div className="relative w-full aspect-square bg-gray-100 rounded-lg overflow-hidden mb-4">
+        <div className="relative w-full aspect-square bg-muted rounded-lg overflow-hidden mb-4">
           {product.image ? (
             <img src={product.image} alt={product.title} className="object-cover w-full h-full" />
           ) : (
             <div className="flex items-center justify-center h-full">
-              <Package className="w-16 h-16 text-gray-300" />
+              <Package className="w-16 h-16 text-muted-foreground/30" />
             </div>
           )}
         </div>
 
         {/* Product Title & Handle */}
         <div className="space-y-1">
-          <h3 className="font-semibold text-lg leading-tight line-clamp-2 group-hover:text-blue-600 transition-colors">
+          <h3 className="font-semibold text-lg leading-tight line-clamp-2 group-hover:text-primary transition-colors">
             {product.title}
           </h3>
           <p className="text-sm text-muted-foreground">{product.handle}</p>

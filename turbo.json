@@ -11,7 +11,7 @@
   "ui": "tui",
   "daemon": true,
   "envMode": "strict",
-  "globalEnv": ["NODE_ENV", "CI", "VERCEL", "VERCEL_ENV"],
+  "globalEnv": ["NODE_ENV", "CI", "VERCEL", "VERCEL_ENV", "GITHUB_SHA", "GITHUB_REF", "GITHUB_ACTOR"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],

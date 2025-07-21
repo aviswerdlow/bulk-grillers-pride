@@ -638,12 +638,19 @@ export class ConcurrentProcessor {
       };
     });
     
+    // Add error summary to metrics
+    const errorSummary = this.errorHandler.getErrorSummary();
+    const enhancedMetrics = {
+      ...this.instance.metrics,
+      errorSummary,
+    };
+    
     return {
       crewId: this.instance.id,
       sessionId: this.instance.sessionId,
       products,
       totalProcessingTime: Date.now() - this.startTime,
-      metrics: this.instance.metrics,
+      metrics: enhancedMetrics,
     };
   }
 

@@ -43,7 +43,7 @@ export function SkuCopyButton({ sku, variant = 'icon', className }: SkuCopyButto
         title="Copy SKU to clipboard"
       >
         {copied ? (
-          <Check className="h-3 w-3 text-green-600" />
+          <Check className="h-3 w-3 text-success" />
         ) : (
           <Copy className="h-3 w-3 text-muted-foreground" />
         )}

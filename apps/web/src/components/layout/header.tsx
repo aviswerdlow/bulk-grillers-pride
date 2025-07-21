@@ -22,21 +22,21 @@ export function Header() {
     <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
         <div className="flex items-center space-x-2">
-          <ShoppingCart className="h-8 w-8 text-blue-600" />
-          <span className="text-2xl font-bold text-gray-900">Bulk</span>
+          <ShoppingCart className="h-8 w-8 text-primary" />
+          <span className="text-2xl font-bold text-foreground">Bulk</span>
           <Badge variant="outline" className="text-xs">
             BETA
           </Badge>
         </div>
 
         <nav className="hidden md:flex items-center space-x-6">
-          <Link href="#features" className="text-gray-600 hover:text-gray-900">
+          <Link href="#features" className="text-muted-foreground hover:text-foreground">
             Features
           </Link>
-          <Link href="#pricing" className="text-gray-600 hover:text-gray-900">
+          <Link href="#pricing" className="text-muted-foreground hover:text-foreground">
             Pricing
           </Link>
-          <Link href="#docs" className="text-gray-600 hover:text-gray-900">
+          <Link href="#docs" className="text-muted-foreground hover:text-foreground">
             Docs
           </Link>
         </nav>
