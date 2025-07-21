@@ -1,12 +1,10 @@
 import React from 'react';
-import { screen, fireEvent, waitFor, within } from '@testing-library/react';
+import { screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { CategorySelector } from '@/components/categories/category-selector';
 import { render } from '../../test-utils';
 import { useQuery } from 'convex/react';
 import { Category } from '@/types/models';
-// Import will be automatically mocked by Jest moduleNameMapper
-import { api } from '@convex/_generated/api';
 
 // Mock the convex hooks
 jest.mock('convex/react', () => ({
@@ -18,30 +16,30 @@ const mockUseQuery = useQuery as jest.MockedFunction<typeof useQuery>;
 // Mock data
 const mockCategories: Category[] = [
   {
-    _id: 'cat1' as any,
+    _id: 'cat1' as Id<'categories'>,
     name: 'Electronics',
     level: 1,
     path: '/electronics',
-    organizationId: 'org1' as any,
-    projectId: 'proj1' as any,
+    organizationId: 'org1' as Id<'organizations'>,
+    projectId: 'proj1' as Id<'projects'>,
     children: [
       {
         _id: 'cat2' as any,
         name: 'Computers',
         level: 2,
         path: '/electronics/computers',
-        parentId: 'cat1' as any,
-        organizationId: 'org1' as any,
-        projectId: 'proj1' as any,
+        parentId: 'cat1' as Id<'categories'>,
+        organizationId: 'org1' as Id<'organizations'>,
+        projectId: 'proj1' as Id<'projects'>,
         children: [
           {
             _id: 'cat3' as any,
             name: 'Laptops',
             level: 3,
             path: '/electronics/computers/laptops',
-            parentId: 'cat2' as any,
-            organizationId: 'org1' as any,
-            projectId: 'proj1' as any,
+            parentId: 'cat2' as Id<'categories'>,
+            organizationId: 'org1' as Id<'organizations'>,
+            projectId: 'proj1' as Id<'projects'>,
           },
         ],
       },
@@ -50,27 +48,27 @@ const mockCategories: Category[] = [
         name: 'Phones',
         level: 2,
         path: '/electronics/phones',
-        parentId: 'cat1' as any,
-        organizationId: 'org1' as any,
-        projectId: 'proj1' as any,
+        parentId: 'cat1' as Id<'categories'>,
+        organizationId: 'org1' as Id<'organizations'>,
+        projectId: 'proj1' as Id<'projects'>,
       },
     ],
   },
   {
-    _id: 'cat5' as any,
+    _id: 'cat5' as Id<'categories'>,
     name: 'Clothing',
     level: 1,
     path: '/clothing',
-    organizationId: 'org1' as any,
-    projectId: 'proj1' as any,
+    organizationId: 'org1' as Id<'organizations'>,
+    projectId: 'proj1' as Id<'projects'>,
   },
 ];
 
 const mockLevelDefinitions = [
   {
     _id: 'level1' as any,
-    organizationId: 'org1' as any,
-    projectId: 'proj1' as any,
+    organizationId: 'org1' as Id<'organizations'>,
+    projectId: 'proj1' as Id<'categoryLevelDefinitions'>,
     level: 1,
     name: 'department',
     pluralName: 'departments',
@@ -78,8 +76,8 @@ const mockLevelDefinitions = [
   },
   {
     _id: 'level2' as any,
-    organizationId: 'org1' as any,
-    projectId: 'proj1' as any,
+    organizationId: 'org1' as Id<'organizations'>,
+    projectId: 'proj1' as Id<'categoryLevelDefinitions'>,
     level: 2,
     name: 'category',
     pluralName: 'categories',
@@ -87,8 +85,8 @@ const mockLevelDefinitions = [
   },
   {
     _id: 'level3' as any,
-    organizationId: 'org1' as any,
-    projectId: 'proj1' as any,
+    organizationId: 'org1' as Id<'organizations'>,
+    projectId: 'proj1' as Id<'categoryLevelDefinitions'>,
     level: 3,
     name: 'subcategory',
     pluralName: 'subcategories',
@@ -98,14 +96,14 @@ const mockLevelDefinitions = [
 
 describe('CategorySelector', () => {
   const defaultProps = {
-    organizationId: 'org1' as any,
-    projectId: 'proj1' as any,
+    organizationId: 'org1' as Id<'organizations'>,
+    projectId: 'proj1' as Id<'projects'>,
     selectedCategories: [],
     onChange: jest.fn(),
   };
 
   beforeEach(() => {
-    mockUseQuery.mockImplementation((query: any, args: any) => {
+    mockUseQuery.mockImplementation((query: any, _args: any) => {
       if (query && (query.toString().includes('getCategoryTree') || query._functionName?.includes('getCategoryTree'))) {
         return mockCategories;
       }
@@ -155,14 +153,14 @@ describe('CategorySelector', () => {
 
     it('displays selected categories count', () => {
       render(
-        <CategorySelector {...defaultProps} selectedCategories={['cat1' as any, 'cat2' as any]} />
+        <CategorySelector {...defaultProps} selectedCategories={['cat1' as any, 'cat2' as Id<'categories'>]} />
       );
 
       expect(screen.getByText('2 categories selected')).toBeInTheDocument();
     });
 
     it('displays single category count correctly', () => {
-      render(<CategorySelector {...defaultProps} selectedCategories={['cat1' as any]} />);
+      render(<CategorySelector {...defaultProps} selectedCategories={['cat1' as Id<'categories'>]} />);
 
       expect(screen.getByText('1 category selected')).toBeInTheDocument();
     });
@@ -171,7 +169,7 @@ describe('CategorySelector', () => {
   describe('selected categories display', () => {
     it('shows selected category badges', () => {
       render(
-        <CategorySelector {...defaultProps} selectedCategories={['cat1' as any, 'cat4' as any]} />
+        <CategorySelector {...defaultProps} selectedCategories={['cat1' as any, 'cat4' as Id<'categories'>]} />
       );
 
       expect(screen.getByText('Department:')).toBeInTheDocument();
@@ -185,7 +183,7 @@ describe('CategorySelector', () => {
       render(
         <CategorySelector
           {...defaultProps}
-          selectedCategories={['cat1' as any, 'cat4' as any]}
+          selectedCategories={['cat1' as any, 'cat4' as Id<'categories'>]}
           onChange={onChange}
         />
       );
@@ -348,7 +346,7 @@ describe('CategorySelector', () => {
         render(
           <CategorySelector
             {...defaultProps}
-            selectedCategories={['cat1' as any]}
+            selectedCategories={['cat1' as Id<'categories'>]}
             onChange={onChange}
           />
         );
@@ -367,7 +365,7 @@ describe('CategorySelector', () => {
       it('shows check marks for selected categories', async () => {
         const user = userEvent.setup();
         render(
-          <CategorySelector {...defaultProps} selectedCategories={['cat1' as any, 'cat4' as any]} />
+          <CategorySelector {...defaultProps} selectedCategories={['cat1' as any, 'cat4' as Id<'categories'>]} />
         );
 
         const trigger = screen.getByRole('combobox');
@@ -385,7 +383,7 @@ describe('CategorySelector', () => {
         render(
           <CategorySelector
             {...defaultProps}
-            selectedCategories={['cat1' as any]}
+            selectedCategories={['cat1' as Id<'categories'>]}
             onChange={onChange}
           />
         );
@@ -410,7 +408,7 @@ describe('CategorySelector', () => {
           <CategorySelector
             {...defaultProps}
             multiple={false}
-            selectedCategories={['cat1' as any]}
+            selectedCategories={['cat1' as Id<'categories'>]}
             onChange={onChange}
           />
         );
@@ -498,7 +496,7 @@ describe('CategorySelector', () => {
     it('shows selected count per level', async () => {
       const user = userEvent.setup();
       render(
-        <CategorySelector {...defaultProps} selectedCategories={['cat1' as any, 'cat4' as any]} />
+        <CategorySelector {...defaultProps} selectedCategories={['cat1' as any, 'cat4' as Id<'categories'>]} />
       );
 
       const trigger = screen.getByRole('combobox');
@@ -552,8 +550,8 @@ describe('CategorySelector', () => {
         ...mockLevelDefinitions,
         {
           _id: 'level4' as any,
-          organizationId: 'org1' as any,
-          projectId: 'proj1' as any,
+          organizationId: 'org1' as Id<'organizations'>,
+          projectId: 'proj1' as Id<'projects'>,
           level: 4,
           name: 'brand',
           pluralName: 'brands',
@@ -561,7 +559,7 @@ describe('CategorySelector', () => {
         },
       ];
 
-      mockUseQuery.mockImplementation((query: any, args: any) => {
+      mockUseQuery.mockImplementation((query: any, _args: any) => {
         if (query && (query.toString().includes('getCategoryTree') || query._functionName?.includes('getCategoryTree'))) {
           return mockCategories;
         }
@@ -603,7 +601,7 @@ describe('CategorySelector', () => {
     });
 
     it('has accessible labels for remove buttons', () => {
-      render(<CategorySelector {...defaultProps} selectedCategories={['cat1' as any]} />);
+      render(<CategorySelector {...defaultProps} selectedCategories={['cat1' as Id<'categories'>]} />);
 
       // The X buttons should be accessible
       const removeButtons = screen
@@ -615,7 +613,7 @@ describe('CategorySelector', () => {
 
   describe('edge cases', () => {
     it('handles empty category tree', () => {
-      mockUseQuery.mockImplementation((query: any, args: any) => {
+      mockUseQuery.mockImplementation((query: any, _args: any) => {
         if (query && (query.toString().includes('getCategoryTree') || query._functionName?.includes('getCategoryTree'))) {
           return [];
         }
@@ -631,7 +629,7 @@ describe('CategorySelector', () => {
     });
 
     it('handles missing level definitions', () => {
-      mockUseQuery.mockImplementation((query: any, args: any) => {
+      mockUseQuery.mockImplementation((query: any, _args: any) => {
         if (query && (query.toString().includes('getCategoryTree') || query._functionName?.includes('getCategoryTree'))) {
           return mockCategories;
         }
@@ -648,7 +646,7 @@ describe('CategorySelector', () => {
     });
 
     it('handles categories with missing level definitions gracefully', async () => {
-      mockUseQuery.mockImplementation((query: any, args: any) => {
+      mockUseQuery.mockImplementation((query: any, _args: any) => {
         if (query && (query.toString().includes('getCategoryTree') || query._functionName?.includes('getCategoryTree'))) {
           return mockCategories;
         }
@@ -670,7 +668,7 @@ describe('CategorySelector', () => {
     });
 
     it('handles selection of non-existent categories gracefully', () => {
-      render(<CategorySelector {...defaultProps} selectedCategories={['nonexistent' as any]} />);
+      render(<CategorySelector {...defaultProps} selectedCategories={['nonexistent' as Id<'categories'>]} />);
 
       // Should not crash and show placeholder
       expect(screen.getByText('1 category selected')).toBeInTheDocument();

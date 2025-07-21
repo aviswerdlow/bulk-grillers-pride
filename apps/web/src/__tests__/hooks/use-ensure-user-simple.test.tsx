@@ -15,7 +15,7 @@ jest.mock('@clerk/nextjs');
 // Create a test version of the hook that doesn't import the api
 const useEnsureUserTest = () => {
   const { isSignedIn, isLoaded } = useAuth();
-  const ensureUser = useMutation('auth.users.ensureUser' as any);
+  const ensureUser = useMutation('auth.users.ensureUser' as unknown);
 
   React.useEffect(() => {
     if (!isLoaded || !isSignedIn) return;

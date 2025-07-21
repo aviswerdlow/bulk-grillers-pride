@@ -70,7 +70,7 @@ export function TeamMembersList({ organizationId, currentUserRole }: TeamMembers
 
   const filteredMembers =
     members?.filter(
-      (member: any) =>
+      (member) =>
         member.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
         member.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         member.lastName?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -121,7 +121,7 @@ export function TeamMembersList({ organizationId, currentUserRole }: TeamMembers
   };
 
   const isUserActive = (userId: string) => {
-    return activeSessions?.some((session: any) => session.userId === userId);
+    return activeSessions?.some((session) => session.userId === userId);
   };
 
   if (!members) {
@@ -184,7 +184,7 @@ export function TeamMembersList({ organizationId, currentUserRole }: TeamMembers
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredMembers.map((member: any) => (
+                {filteredMembers.map((member) => (
                   <TableRow key={member._id}>
                     <TableCell>
                       <div className="flex items-center gap-3">

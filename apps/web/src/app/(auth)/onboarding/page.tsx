@@ -102,9 +102,9 @@ export default function OnboardingPage() {
 
       toast.success('Organization created successfully!');
       router.push(`/${organizationSlug}/dashboard`);
-    } catch (error: any) {
+    } catch (error) {
       // Check if it's a slug conflict error
-      if (error?.message?.includes('slug already exists')) {
+      if (error instanceof Error && error.message?.includes('slug already exists')) {
         setSlugError('This organization URL is already taken. Please choose another.');
         toast.error('Organization URL already taken');
       } else {

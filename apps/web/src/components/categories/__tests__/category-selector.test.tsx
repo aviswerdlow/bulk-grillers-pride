@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor, within } from '@/__tests__/test-utils';
+import { render, screen, within } from '@/__tests__/test-utils';
 import userEvent from '@testing-library/user-event';
 import { CategorySelector } from '../category-selector';
 import { setupTest, cleanupTest } from '@/__tests__/frontend-test-helpers';

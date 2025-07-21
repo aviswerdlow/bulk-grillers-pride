@@ -58,9 +58,10 @@ describe('OnboardingPage', () => {
     mockUseMutation.mockReturnValue(jest.fn().mockResolvedValue({}));
 
     // Mock user with no organizations by default
-    mockUseQuery.mockImplementation((query: any) => {
-      const queryStr = query?.toString() || '';
-      const queryName = query?._functionName || query?.name || '';
+    mockUseQuery.mockImplementation((query: unknown) => {
+      const queryStr = (query as { toString?: () => string })?.toString?.() || '';
+      const queryName = (query as { _functionName?: string; name?: string })?._functionName || 
+                       (query as { _functionName?: string; name?: string })?.name || '';
       
       if (queryStr.includes('currentWithOrganizations') || queryName.includes('currentWithOrganizations')) {
         return {
@@ -242,7 +243,7 @@ describe('OnboardingPage', () => {
     let mutationCallCount = 0;
     
     // Create a promise that we can control
-    let resolveStoreUser: (value: any) => void;
+    let resolveStoreUser: (value: unknown) => void;
     const storeUserPromise = new Promise((resolve) => {
       resolveStoreUser = resolve;
     });
@@ -286,7 +287,7 @@ describe('OnboardingPage', () => {
     let mutationCallCount = 0;
     
     // Create a controlled promise
-    let resolveStoreUser: (value: any) => void;
+    let resolveStoreUser: (value: unknown) => void;
     const storeUserPromise = new Promise((resolve) => {
       resolveStoreUser = resolve;
     });

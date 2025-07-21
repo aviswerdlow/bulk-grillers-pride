@@ -1,8 +1,7 @@
 import React from 'react';
-import { screen, fireEvent, waitFor } from '@testing-library/react';
+import { screen, fireEvent } from '@testing-library/react';
 import { TeamMembersList } from '@/components/auth/team-members-list';
 import { render, resetAllMocks } from '../../test-utils';
-import { toast } from 'sonner';
 import { useQuery, useMutation } from 'convex/react';
 
 // Mock convex/react
@@ -94,7 +93,7 @@ describe('TeamMembersList', () => {
     });
 
     mockUseMutation.mockImplementation((mutation: unknown) => {
-      const mutationName = (mutation as any)?._functionName || (mutation as any)?.name || (mutation as any)?.toString() || '';
+      const mutationName = (mutation as {_functionName?: string; name?: string; toString?: () => string})?._functionName || (mutation as {_functionName?: string; name?: string; toString?: () => string})?.name || (mutation as {_functionName?: string; name?: string; toString?: () => string})?.toString?.() || '';
       let mutationFn: jest.Mock;
       
       if (mutationName.includes('updateUserRole')) {
@@ -186,8 +185,10 @@ describe('TeamMembersList', () => {
     });
 
     it('shows "Unnamed User" for users without names', () => {
-      mockUseQuery.mockImplementation((query: unknown, args: unknown) => {
-        const queryName = (query as any)?._functionName || (query as any)?.name || (query as any)?.toString() || '';
+      mockUseQuery.mockImplementation((query: unknown) => {
+        const queryName = (query as { _functionName?: string; name?: string; toString?: () => string })?._functionName || 
+                         (query as { _functionName?: string; name?: string; toString?: () => string })?.name || 
+                         (query as { _functionName?: string; name?: string; toString?: () => string })?.toString?.() || '';
         
         if (queryName.includes('getOrganizationUsers')) {
           return [
@@ -239,8 +240,10 @@ describe('TeamMembersList', () => {
     });
 
     it('shows empty state when no members', () => {
-      mockUseQuery.mockImplementation((query: unknown, args: unknown) => {
-        const queryName = (query as any)?._functionName || (query as any)?.name || (query as any)?.toString() || '';
+      mockUseQuery.mockImplementation((query: unknown) => {
+        const queryName = (query as { _functionName?: string; name?: string; toString?: () => string })?._functionName || 
+                         (query as { _functionName?: string; name?: string; toString?: () => string })?.name || 
+                         (query as { _functionName?: string; name?: string; toString?: () => string })?.toString?.() || '';
         
         if (queryName.includes('getOrganizationUsers')) {
           return [];
@@ -349,7 +352,7 @@ describe('TeamMembersList', () => {
           userId: 'user_456',
           role: 'member',
         });
-      } catch (error) {
+      } catch {
         // Error is expected
       }
 
@@ -409,7 +412,7 @@ describe('TeamMembersList', () => {
           organizationId: 'org_123',
           userId: 'user_789',
         });
-      } catch (error) {
+      } catch {
         // Error is expected
       }
 

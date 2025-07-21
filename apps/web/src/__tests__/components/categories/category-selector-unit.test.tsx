@@ -1,6 +1,5 @@
-import React from 'react';
-import { CategorySelector } from '@/components/categories/category-selector';
 import { Category } from '@/types/models';
+import { Id } from '@convex/_generated/dataModel';
 
 // Test the utility functions and logic independently
 describe('CategorySelector - Unit Tests', () => {
@@ -9,30 +8,30 @@ describe('CategorySelector - Unit Tests', () => {
     it('should flatten nested category tree', () => {
       const categories: Category[] = [
         {
-          _id: 'cat1' as any,
+          _id: 'cat1' as Id<'categories'>,
           name: 'Electronics',
           level: 1,
           path: '/electronics',
-          organizationId: 'org1' as any,
-          projectId: 'proj1' as any,
+          organizationId: 'org1' as Id<'organizations'>,
+          projectId: 'proj1' as Id<'projects'>,
           children: [
             {
-              _id: 'cat2' as any,
+              _id: 'cat2' as Id<'categories'>,
               name: 'Computers',
               level: 2,
               path: '/electronics/computers',
-              parentId: 'cat1' as any,
-              organizationId: 'org1' as any,
-              projectId: 'proj1' as any,
+              parentId: 'cat1' as Id<'categories'>,
+              organizationId: 'org1' as Id<'categories'>,
+              projectId: 'proj1' as Id<'categories'>,
               children: [
                 {
-                  _id: 'cat3' as any,
+                  _id: 'cat3' as Id<'categories'>,
                   name: 'Laptops',
                   level: 3,
                   path: '/electronics/computers/laptops',
-                  parentId: 'cat2' as any,
-                  organizationId: 'org1' as any,
-                  projectId: 'proj1' as any,
+                  parentId: 'cat2' as Id<'categories'>,
+                  organizationId: 'org1' as Id<'categories'>,
+                  projectId: 'proj1' as Id<'categories'>,
                 },
               ],
             },
@@ -74,12 +73,12 @@ describe('CategorySelector - Unit Tests', () => {
       };
 
       const category: Category = {
-        _id: 'cat1' as any,
+        _id: 'cat1' as Id<'categories'>,
         name: 'Laptops',
         level: 3,
         path: '/electronics/computers/laptops',
-        organizationId: 'org1' as any,
-        projectId: 'proj1' as any,
+        organizationId: 'org1' as Id<'categories'>,
+        projectId: 'proj1' as Id<'categories'>,
       };
 
       expect(getCategoryPath(category)).toBe('electronics > computers > laptops');
@@ -91,12 +90,12 @@ describe('CategorySelector - Unit Tests', () => {
       };
 
       const category: Category = {
-        _id: 'cat1' as any,
+        _id: 'cat1' as Id<'categories'>,
         name: 'Electronics',
         level: 1,
         path: '/electronics',
-        organizationId: 'org1' as any,
-        projectId: 'proj1' as any,
+        organizationId: 'org1' as Id<'categories'>,
+        projectId: 'proj1' as Id<'categories'>,
       };
 
       expect(getCategoryPath(category)).toBe('electronics');
@@ -172,28 +171,28 @@ describe('CategorySelector - Unit Tests', () => {
     it('should filter categories by name', () => {
       const categories: Category[] = [
         {
-          _id: 'cat1' as any,
+          _id: 'cat1' as Id<'categories'>,
           name: 'Electronics',
           level: 1,
           path: '/electronics',
-          organizationId: 'org1' as any,
-          projectId: 'proj1' as any,
+          organizationId: 'org1' as Id<'organizations'>,
+          projectId: 'proj1' as Id<'projects'>,
         },
         {
-          _id: 'cat2' as any,
+          _id: 'cat2' as Id<'categories'>,
           name: 'Clothing',
           level: 1,
           path: '/clothing',
-          organizationId: 'org1' as any,
-          projectId: 'proj1' as any,
+          organizationId: 'org1' as Id<'organizations'>,
+          projectId: 'proj1' as Id<'projects'>,
         },
         {
-          _id: 'cat3' as any,
+          _id: 'cat3' as Id<'categories'>,
           name: 'Phones',
           level: 2,
           path: '/electronics/phones',
-          organizationId: 'org1' as any,
-          projectId: 'proj1' as any,
+          organizationId: 'org1' as Id<'organizations'>,
+          projectId: 'proj1' as Id<'projects'>,
         },
       ];
 
@@ -211,28 +210,28 @@ describe('CategorySelector - Unit Tests', () => {
     it('should filter categories by path', () => {
       const categories: Category[] = [
         {
-          _id: 'cat1' as any,
+          _id: 'cat1' as Id<'categories'>,
           name: 'Laptops',
           level: 3,
           path: '/electronics/computers/laptops',
-          organizationId: 'org1' as any,
-          projectId: 'proj1' as any,
+          organizationId: 'org1' as Id<'organizations'>,
+          projectId: 'proj1' as Id<'projects'>,
         },
         {
-          _id: 'cat2' as any,
+          _id: 'cat2' as Id<'categories'>,
           name: 'Desktops',
           level: 3,
           path: '/electronics/computers/desktops',
-          organizationId: 'org1' as any,
-          projectId: 'proj1' as any,
+          organizationId: 'org1' as Id<'organizations'>,
+          projectId: 'proj1' as Id<'projects'>,
         },
         {
-          _id: 'cat3' as any,
+          _id: 'cat3' as Id<'categories'>,
           name: 'Smartphones',
           level: 2,
           path: '/electronics/phones',
-          organizationId: 'org1' as any,
-          projectId: 'proj1' as any,
+          organizationId: 'org1' as Id<'organizations'>,
+          projectId: 'proj1' as Id<'projects'>,
         },
       ];
 
@@ -254,18 +253,18 @@ describe('CategorySelector - Unit Tests', () => {
     it('should return friendly name when level definition exists', () => {
       const levelDefinitions = [
         {
-          _id: 'level1' as any,
-          organizationId: 'org1' as any,
-          projectId: 'proj1' as any,
+          _id: 'level1' as Id<'categories'>,
+          organizationId: 'org1' as Id<'organizations'>,
+          projectId: 'proj1' as Id<'projects'>,
           level: 1,
           name: 'department',
           pluralName: 'departments',
           friendlyName: 'Department',
         },
         {
-          _id: 'level2' as any,
-          organizationId: 'org1' as any,
-          projectId: 'proj1' as any,
+          _id: 'level2' as Id<'categories'>,
+          organizationId: 'org1' as Id<'organizations'>,
+          projectId: 'proj1' as Id<'projects'>,
           level: 2,
           name: 'category',
           pluralName: 'categories',
@@ -285,9 +284,9 @@ describe('CategorySelector - Unit Tests', () => {
     it('should return fallback name when level definition not found', () => {
       const levelDefinitions = [
         {
-          _id: 'level1' as any,
-          organizationId: 'org1' as any,
-          projectId: 'proj1' as any,
+          _id: 'level1' as Id<'categories'>,
+          organizationId: 'org1' as Id<'organizations'>,
+          projectId: 'proj1' as Id<'projects'>,
           level: 1,
           name: 'department',
           pluralName: 'departments',

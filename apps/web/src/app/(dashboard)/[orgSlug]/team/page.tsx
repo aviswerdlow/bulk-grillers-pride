@@ -9,6 +9,7 @@ import { OrganizationGuard } from '@/components/auth/organization-guard';
 import { PageLoading } from '@/components/loading';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Shield } from 'lucide-react';
+import { UserRole } from '@/types/models';
 
 export default function TeamPage() {
   const params = useParams();
@@ -20,8 +21,9 @@ export default function TeamPage() {
 
   const currentUser = useQuery(api.functions.auth.users.currentWithOrganizations);
 
-  const currentUserRole = currentUser?.organizations?.find((org: any) => org._id === organization?._id)
-    ?.membership.role;
+  const currentUserRole = currentUser?.organizations?.find(
+    (org) => org._id === organization?._id
+  )?.membership.role as UserRole | undefined;
 
   if (!organization || !currentUser) {
     return <PageLoading text="Loading team..." />;

@@ -9,15 +9,12 @@ jest.mock('convex/react', () => ({
   useQuery: jest.fn(),
 }));
 
-// Import the mocked API
-import { api } from '@convex/_generated/api';
-
 const mockUseQuery = useQuery as jest.MockedFunction<typeof useQuery>;
 
 describe('CategorySelector - Simple Tests', () => {
   const defaultProps = {
-    organizationId: 'org1' as any,
-    projectId: 'proj1' as any,
+    organizationId: 'org1',
+    projectId: 'proj1',
     selectedCategories: [],
     onChange: jest.fn(),
   };
@@ -36,7 +33,7 @@ describe('CategorySelector - Simple Tests', () => {
 
   it('renders category selector when data is loaded', () => {
     // Mock basic data
-    mockUseQuery.mockImplementation((query: unknown, args: unknown) => {
+    mockUseQuery.mockImplementation((query: unknown) => {
       if (query === 'getCategoryTree' || (query && (query.toString().includes('getCategoryTree') || query._functionName?.includes('getCategoryTree')))) {
         return [];
       }

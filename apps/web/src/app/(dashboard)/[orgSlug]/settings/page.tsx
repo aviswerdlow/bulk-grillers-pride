@@ -53,6 +53,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { UserRole, Organization } from '@/types/models';
 
 export default function OrganizationSettingsPage() {
   const params = useParams();
@@ -64,8 +65,9 @@ export default function OrganizationSettingsPage() {
 
   const currentUser = useQuery(api.functions.auth.users.currentWithOrganizations);
 
-  const currentUserRole = currentUser?.organizations?.find((org: any) => org._id === organization?._id)
-    ?.membership.role;
+  const currentUserRole = currentUser?.organizations?.find(
+    (org) => org._id === organization?._id
+  )?.membership.role as UserRole | undefined;
 
   // Loading state
   if (organization === undefined || currentUser === undefined) {
@@ -161,8 +163,8 @@ function GeneralSettings({
   organization, 
   currentUserRole 
 }: { 
-  organization: any;
-  currentUserRole?: string;
+  organization: Organization;
+  currentUserRole?: UserRole;
 }) {
   const [name, setName] = useState(organization.name);
   const [slug, setSlug] = useState(organization.slug);
@@ -532,8 +534,8 @@ function TeamSettings({
   organization, 
   currentUserRole 
 }: { 
-  organization: any;
-  currentUserRole?: string;
+  organization: Organization;
+  currentUserRole?: UserRole;
 }) {
   return (
     <div className="space-y-6">
@@ -603,7 +605,7 @@ function TeamSettings({
 }
 
 // Billing Settings Component
-function BillingSettings({ organization }: { organization: any }) {
+function BillingSettings({ organization }: { organization: Organization }) {
   return (
     <div className="space-y-6">
       <Card>

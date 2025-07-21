@@ -58,15 +58,6 @@ describe('OrganizationSwitcher', () => {
     },
   ];
 
-  const mockUserWithOrgs = {
-    user: {
-      id: 'user_123',
-      name: 'Test User',
-      email: 'test@example.com',
-    },
-    organizations: mockOrganizations,
-  };
-
   beforeEach(() => {
     resetAllMocks();
 
@@ -83,8 +74,8 @@ describe('OrganizationSwitcher', () => {
     });
 
     // Mock Convex queries
-    mockUseQuery.mockImplementation((query: unknown, args: unknown) => {
-      const queryName = (query as any)?._functionName || (query as any)?.name || (query as any)?.toString() || '';
+    mockUseQuery.mockImplementation((query: unknown) => {
+      const queryName = (query as {_functionName?: string; name?: string; toString?: () => string})?._functionName || (query as {_functionName?: string; name?: string; toString?: () => string})?.name || (query as {_functionName?: string; name?: string; toString?: () => string})?.toString?.() || '';
       
       // Mock currentWithOrganizations query
       if (queryName.includes('currentWithOrganizations')) {
@@ -324,7 +315,7 @@ describe('OrganizationSwitcher', () => {
   describe('organization name initials', () => {
     it('generates correct initials for single word', () => {
       mockUseQuery.mockImplementation((query: unknown) => {
-        const queryName = (query as any)?._functionName || (query as any)?.name || (query as any)?.toString() || '';
+        const queryName = (query as {_functionName?: string; name?: string; toString?: () => string})?._functionName || (query as {_functionName?: string; name?: string; toString?: () => string})?.name || (query as {_functionName?: string; name?: string; toString?: () => string})?.toString?.() || '';
         
         if (queryName.includes('currentWithOrganizations')) {
           return {
@@ -353,7 +344,7 @@ describe('OrganizationSwitcher', () => {
 
     it('generates correct initials for multiple words', () => {
       mockUseQuery.mockImplementation((query: unknown) => {
-        const queryName = (query as any)?._functionName || (query as any)?.name || (query as any)?.toString() || '';
+        const queryName = (query as {_functionName?: string; name?: string; toString?: () => string})?._functionName || (query as {_functionName?: string; name?: string; toString?: () => string})?.name || (query as {_functionName?: string; name?: string; toString?: () => string})?.toString?.() || '';
         
         if (queryName.includes('currentWithOrganizations')) {
           return {
