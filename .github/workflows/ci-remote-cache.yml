@@ -127,9 +127,9 @@ jobs:
       - name: Run tests for ${{ matrix.project }} (shard ${{ matrix.shard }}/2)
         run: |
           if [ "${{ matrix.project }}" = "web" ]; then
-            npm run test:ci -- --selectProjects=web --testPathPattern="$([ ${{ matrix.shard }} = 1 ] && echo '(components|lib|utils)' || echo '(app|contracts)')" --maxWorkers=100%
+            npm run test:ci -- --selectProjects=web --testPathPatterns="$([ ${{ matrix.shard }} = 1 ] && echo '(components|lib|utils)' || echo '(app|contracts)')" --maxWorkers=100%
           else
-            npm run test:ci -- --selectProjects=convex --testPathPattern="$([ ${{ matrix.shard }} = 1 ] && echo '(ai|auth|categories)' || echo '(dashboard|imports|organizations|products|projects)')" --maxWorkers=100%
+            npm run test:ci -- --selectProjects=convex --testPathPatterns="$([ ${{ matrix.shard }} = 1 ] && echo '(ai|auth|categories)' || echo '(dashboard|imports|organizations|products|projects)')" --maxWorkers=100%
           fi
         env:
           NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
@@ -207,7 +207,7 @@ jobs:
             "- **Total Bundle Size**: " + .summary.totalSize + "\n" +
             "- **First Load JS**: " + .summary.firstLoadJS
           ' >> $GITHUB_STEP_SUMMARY
-          
+
           if [ "$(jq -r '.passed' bundle-size-report.json)" = "false" ]; then
             echo "Bundle size limits exceeded!"
             exit 1
@@ -246,10 +246,10 @@ jobs:
           echo "## 📈 Turbo Remote Cache Report" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Overall Performance" >> $GITHUB_STEP_SUMMARY
-          
+
           # Run all tasks in dry-run to see cache status
           npx turbo run build lint type-check test:ci --dry-run=json > turbo-summary.json
-          
+
           jq -r '
             "- **Total Packages**: " + (.packages | length | tostring) + "\n" +
             "- **Total Tasks**: " + (.tasks | length | tostring) + "\n" +

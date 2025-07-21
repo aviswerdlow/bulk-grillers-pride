@@ -204,9 +204,9 @@ jobs:
       - name: Run tests for ${{ matrix.project }} (shard ${{ matrix.shard }}/2)
         run: |
           if [ "${{ matrix.project }}" = "web" ]; then
-            npm run test:ci -- --selectProjects=web --testPathPattern="$([ ${{ matrix.shard }} = 1 ] && echo '(components|lib|utils)' || echo '(app|contracts)')"
+            npm run test:ci -- --selectProjects=web --testPathPatterns="$([ ${{ matrix.shard }} = 1 ] && echo '(components|lib|utils)' || echo '(app|contracts)')"
           else
-            npm run test:ci -- --selectProjects=convex --testPathPattern="$([ ${{ matrix.shard }} = 1 ] && echo '(ai|auth|categories)' || echo '(dashboard|imports|organizations|products|projects)')"
+            npm run test:ci -- --selectProjects=convex --testPathPatterns="$([ ${{ matrix.shard }} = 1 ] && echo '(ai|auth|categories)' || echo '(dashboard|imports|organizations|products|projects)')"
           fi
         env:
           NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
