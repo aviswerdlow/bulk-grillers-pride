@@ -13,10 +13,10 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@clerk/nextjs": "^6.22.0",
+    "@clerk/nextjs": "^6.25.4",
     "@hookform/resolvers": "^5.1.1",
-    "@langchain/anthropic": "^0.3.22",
-    "@langchain/core": "^0.3.59",
+    "@langchain/anthropic": "^0.3.24",
+    "@langchain/core": "^0.3.66",
     "@langchain/openai": "^0.5.13",
     "@radix-ui/react-alert-dialog": "^1.1.14",
     "@radix-ui/react-avatar": "^1.1.10",
@@ -45,7 +45,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.58.1",
-    "sonner": "^2.0.5",
+    "sonner": "^2.0.6",
     "tailwind-merge": "^3.3.1",
     "zod": "^3.25.67"
   },
@@ -58,7 +58,7 @@
     "eslint": "^9",
     "eslint-config-next": "15.3.3",
     "tailwindcss": "^4",
-    "tw-animate-css": "^1.3.4",
+    "tw-animate-css": "^1.3.5",
     "typescript": "^5"
   }
 }
