@@ -1,7 +1,8 @@
 'use client';
 
 import { useQuery, useMutation } from 'convex/react';
-import { api } from '../../../../../../../convex/_generated/api';
+import { api } from '@convex/_generated/api';
+import { Id } from '@convex/_generated/dataModel';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -81,18 +82,16 @@ export default function TrashPage() {
   // Mock data for trash items - will be replaced with actual query
   const trashItems: TrashItem[] = [
     {
-      _id: 'trash1',
-      _creationTime: Date.now() - 86400000 * 5,
+      _id: 'trash1' as Id<'products'>,
+      createdAt: Date.now() - 86400000 * 5,
       updatedAt: Date.now() - 86400000 * 5,
-      organizationId: organization?._id || '',
-      projectId: 'project1',
       title: 'Deleted Product 1',
       handle: 'deleted-product-1',
       description: 'This product was deleted',
       vendor: 'Test Vendor',
       productType: 'Test Type',
       status: 'archived',
-      imageUrl: '',
+      image: '',
       tags: [],
       categories: [],
       sku: 'DEL-001',
@@ -103,18 +102,16 @@ export default function TrashPage() {
       permanentDeleteAt: Date.now() + 86400000 * 28,
     },
     {
-      _id: 'trash2',
-      _creationTime: Date.now() - 86400000 * 10,
+      _id: 'trash2' as Id<'products'>,
+      createdAt: Date.now() - 86400000 * 10,
       updatedAt: Date.now() - 86400000 * 10,
-      organizationId: organization?._id || '',
-      projectId: 'project1',
       title: 'Deleted Product 2',
       handle: 'deleted-product-2',
       description: 'Another deleted product',
       vendor: 'Another Vendor',
       productType: 'Another Type',
       status: 'archived',
-      imageUrl: '',
+      image: '',
       tags: [],
       categories: [],
       sku: 'DEL-002',

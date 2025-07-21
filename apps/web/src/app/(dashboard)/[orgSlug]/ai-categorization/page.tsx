@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, useMutation } from "convex/react";
-import { api } from "../../../../../../../convex/_generated/api";
+import { api } from "@convex/_generated/api";
 import { useParams } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -158,17 +158,17 @@ export default function AiCategorizationPage() {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "completed":
-        return <CheckCircle className="h-4 w-4 text-green-600" />;
+        return <CheckCircle className="h-4 w-4 text-semantic-success" />;
       case "running":
-        return <Zap className="h-4 w-4 text-blue-600 animate-pulse" />;
+        return <Zap className="h-4 w-4 text-semantic-info animate-pulse" />;
       case "failed":
-        return <XCircle className="h-4 w-4 text-red-600" />;
+        return <XCircle className="h-4 w-4 text-semantic-danger" />;
       case "pending":
-        return <Clock className="h-4 w-4 text-yellow-600" />;
+        return <Clock className="h-4 w-4 text-semantic-warning" />;
       case "cancelled":
-        return <AlertCircle className="h-4 w-4 text-gray-600" />;
+        return <AlertCircle className="h-4 w-4 text-semantic-tertiary" />;
       default:
-        return <Clock className="h-4 w-4 text-gray-600" />;
+        return <Clock className="h-4 w-4 text-semantic-tertiary" />;
     }
   };
 
@@ -255,7 +255,7 @@ export default function AiCategorizationPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Completed</CardTitle>
-            <CheckCircle className="h-4 w-4 text-green-600" />
+            <CheckCircle className="h-4 w-4 text-semantic-success" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
@@ -266,7 +266,7 @@ export default function AiCategorizationPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Running</CardTitle>
-            <Zap className="h-4 w-4 text-blue-600" />
+            <Zap className="h-4 w-4 text-semantic-info" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
@@ -336,7 +336,7 @@ export default function AiCategorizationPage() {
                           {job.status === "failed" && job.errors && job.errors.length > 0 && (
                             <span className="text-xs text-red-600 flex items-center gap-1">
                               <AlertCircle className="h-3 w-3" />
-                              {job.errors[0].type === "API_KEY_ERROR" ? "API Key Error" : "Error"}
+                              {job.errors[0]?.type === "API_KEY_ERROR" ? "API Key Error" : "Error"}
                             </span>
                           )}
                         </div>

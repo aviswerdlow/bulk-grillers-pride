@@ -1,21 +1,21 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { 
+  render, 
+  screen, 
+  fireEvent, 
+  waitFor,
+  setupTest,
+  cleanupTest,
+  mockUseQuery,
+  mockUseMutation,
+  createMockProduct,
+  createMockOrganization,
+  seedMockData
+} from '@/__tests__/frontend-test-helpers';
 import userEvent from '@testing-library/user-event';
-import { ConvexProvider, useQuery, useMutation } from 'convex/react';
-import { ConvexReactClient } from 'convex/browser';
 import { api } from '@/../../../convex/_generated/api';
 import { Id } from '@/../../../convex/_generated/dataModel';
-import { createTestOrganization, createTestProduct } from '@bulk-grillers-pride/test-factories';
 
-// Mock Convex client
-const mockClient = {} as ConvexReactClient;
-
-// Mock hooks
-jest.mock('convex/react', () => ({
-  ConvexProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  useQuery: jest.fn(),
-  useMutation: jest.fn(),
-  useAction: jest.fn(),
-}));
+import { ProductCard } from '../../components/products/product-card';
 
 // Mock components that would use SKU
 jest.mock('../../components/products/product-card', () => ({
@@ -29,10 +29,8 @@ jest.mock('../../components/products/product-card', () => ({
 
 jest.mock('../../components/products/create-product-dialog', () => ({
   CreateProductDialog: ({ onSuccess }: { onSuccess?: () => void }) => {
-    const createProduct = (useMutation as jest.Mock).mockReturnValue((data: any) => {
-      onSuccess?.();
-      return Promise.resolve({ _id: 'new-product-id' });
-    });
+    // Use the global mock mutation
+    const createProduct = (global as any).__mockUseMutation();
     
     return (
       <form onSubmit={(e) => {
@@ -42,7 +40,7 @@ jest.mock('../../components/products/create-product-dialog', () => ({
           title: formData.get('title'),
           sku: formData.get('sku'),
           price: parseFloat(formData.get('price') as string),
-        });
+        }).then(() => onSuccess?.());
       }}>
         <input name="title" placeholder="Product Title" />
         <input name="sku" placeholder="SKU" />
@@ -54,23 +52,31 @@ jest.mock('../../components/products/create-product-dialog', () => ({
 }));
 
 describe('SKU Feature Integration Tests', () => {
-  const mockOrganization = createTestOrganization();
+  const mockOrganization = createMockOrganization();
   const mockProducts = [
-    createTestProduct({ sku: 'MEAT-001', title: 'Premium Beef' }),
-    createTestProduct({ sku: 'MEAT-002', title: 'Organic Chicken' }),
-    createTestProduct({ sku: undefined, title: 'Generic Pork' }),
+    createMockProduct({ sku: 'MEAT-001', title: 'Premium Beef' }),
+    createMockProduct({ sku: 'MEAT-002', title: 'Organic Chicken' }),
+    createMockProduct({ sku: undefined, title: 'Generic Pork' }),
   ];
 
-  beforeEach(() => {
-    jest.clearAllMocks();
+  beforeEach(async () => {
+    setupTest();
+    await seedMockData({
+      organizations: [mockOrganization],
+      products: mockProducts,
+    });
+  });
+
+  afterEach(() => {
+    cleanupTest();
   });
 
   describe('SKU Display in Product List', () => {
     it('displays SKU in product cards when available', () => {
-      (useQuery as jest.Mock).mockReturnValue(mockProducts);
+      mockUseQuery.mockReturnValue(mockProducts);
 
       const ProductList = () => {
-        const products = useQuery(api.functions.products.products.list);
+        const products = mockUseQuery(api.functions.products.products.list);
         return (
           <div>
             {products?.map((product: any) => (
@@ -80,11 +86,7 @@ describe('SKU Feature Integration Tests', () => {
         );
       };
 
-      render(
-        <ConvexProvider client={mockClient}>
-          <ProductList />
-        </ConvexProvider>
-      );
+      render(<ProductList />);
 
       expect(screen.getByText('MEAT-001')).toBeInTheDocument();
       expect(screen.getByText('MEAT-002')).toBeInTheDocument();
@@ -92,7 +94,7 @@ describe('SKU Feature Integration Tests', () => {
     });
 
     it('shows SKU column in products table', () => {
-      (useQuery as jest.Mock).mockReturnValue(mockProducts);
+      mockUseQuery.mockReturnValue(mockProducts);
 
       const ProductsTable = () => {
         const products = useQuery(api.functions.products.products.list);
@@ -237,7 +239,7 @@ describe('SKU Feature Integration Tests', () => {
       };
 
       const { useState } = await import('react');
-      (useQuery as jest.Mock).mockImplementation((query, args) => {
+      mockUseQuery.mockImplementation((query, args) => {
         if (args === 'skip') return undefined;
         if (args?.query === 'MEAT-001') return mockSearchResults;
         return [];

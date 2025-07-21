@@ -29,7 +29,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Product } from '@/types/models';
-import { Id } from '../../../../convex/_generated/dataModel';
+import { Id } from '@convex/_generated/dataModel';
 
 interface DeleteProductDialogProps {
   open: boolean;

@@ -2,6 +2,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { useRouter, useParams } from 'next/navigation';
 import { useQuery } from 'convex/react';
+import { api } from '@convex/_generated/api';
 import OrganizationDashboard from '../page';
 
 // Mock Next.js navigation
@@ -13,6 +14,31 @@ jest.mock('next/navigation', () => ({
 // Mock Convex
 jest.mock('convex/react', () => ({
   useQuery: jest.fn(),
+}));
+
+// Mock the Convex API paths
+jest.mock('@convex/_generated/api', () => ({
+  api: {
+    functions: {
+      organizations: {
+        organizations: {
+          getOrganizationBySlug: jest.fn(),
+        },
+      },
+      projects: {
+        projects: {
+          getOrganizationProjects: jest.fn(),
+        },
+      },
+      dashboard: {
+        getDashboardStats: jest.fn(),
+        getRecentActivity: jest.fn(),
+      },
+    },
+  },
+}));
+jest.mock('@convex/_generated/dataModel', () => ({
+  Doc: {},
 }));
 
 // Mock Next.js Link to verify hrefs
@@ -72,14 +98,14 @@ describe('Dashboard Navigation Links', () => {
   it('should render with correct navigation links when data is loaded', () => {
     // Mock all queries to return data
     (useQuery as jest.Mock).mockImplementation((query: any) => {
-      if (query.toString().includes('getOrganizationBySlug')) {
+      if (query === api.functions.organizations.organizations.getOrganizationBySlug) {
         return {
           _id: 'org123',
           name: 'Test Organization',
           slug: 'test-org',
         };
       }
-      if (query.toString().includes('getOrganizationProjects')) {
+      if (query === api.functions.projects.projects.getOrganizationProjects) {
         return [
           {
             _id: 'proj123',
@@ -91,7 +117,7 @@ describe('Dashboard Navigation Links', () => {
           },
         ];
       }
-      if (query.toString().includes('getDashboardStats')) {
+      if (query === api.functions.dashboard.getDashboardStats) {
         return {
           projectsCount: 1,
           productsCount: 10,
@@ -103,7 +129,7 @@ describe('Dashboard Navigation Links', () => {
           recentImports: [],
         };
       }
-      if (query.toString().includes('getRecentActivity')) {
+      if (query === api.functions.dashboard.getRecentActivity) {
         return [];
       }
       return undefined;
@@ -145,17 +171,17 @@ describe('Dashboard Navigation Links', () => {
   it('should NOT have the old /products/import link', () => {
     // Mock all queries to return data
     (useQuery as jest.Mock).mockImplementation((query: any) => {
-      if (query.toString().includes('getOrganizationBySlug')) {
+      if (query === api.functions.organizations.organizations.getOrganizationBySlug) {
         return {
           _id: 'org123',
           name: 'Test Organization',
           slug: 'test-org',
         };
       }
-      if (query.toString().includes('getOrganizationProjects')) {
+      if (query === api.functions.projects.projects.getOrganizationProjects) {
         return [];
       }
-      if (query.toString().includes('getDashboardStats')) {
+      if (query === api.functions.dashboard.getDashboardStats) {
         return {
           projectsCount: 0,
           productsCount: 0,
@@ -167,7 +193,7 @@ describe('Dashboard Navigation Links', () => {
           recentImports: [],
         };
       }
-      if (query.toString().includes('getRecentActivity')) {
+      if (query === api.functions.dashboard.getRecentActivity) {
         return [];
       }
       return undefined;

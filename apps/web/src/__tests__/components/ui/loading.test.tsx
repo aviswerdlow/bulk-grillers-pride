@@ -50,7 +50,7 @@ describe('Loading Components', () => {
       const text = screen.getByText('Loading data...');
       expect(text).toHaveClass('mt-2');
       expect(text.className).toContain('text-sm');
-      expect(text.className).toContain('text-gray-600');
+      expect(text.className).toContain('text-semantic-tertiary');
     });
 
     it('renders without text when not provided', () => {
@@ -78,7 +78,7 @@ describe('Loading Components', () => {
       render(<Loading />);
       const loader = screen.getByTestId('loader-icon');
       expect(loader).toHaveClass('animate-spin');
-      expect(loader).toHaveClass('text-blue-600');
+      expect(loader).toHaveClass('text-semantic-info');
     });
 
     it('combines size and text props correctly', () => {

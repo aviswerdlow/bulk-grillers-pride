@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from '@jest/globals';
+// Jest doesn't need explicit imports for describe, it, expect, beforeEach
 import {
   initializeLLM,
   createCategorizationChain,
@@ -11,7 +11,6 @@ import {
   AIProvider,
   CategoryContext,
 } from '../langchain';
-import { Doc } from '../../../_generated/dataModel';
 
 // Mock the LangChain imports
 jest.mock('@langchain/openai', () => ({

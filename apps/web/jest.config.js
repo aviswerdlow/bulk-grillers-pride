@@ -18,7 +18,7 @@ module.exports = {
   // Add module directories to help with resolution
   moduleDirectories: ['node_modules', '<rootDir>'],
   // Add resolver to handle convex imports
-  resolver: undefined,
+  resolver: '<rootDir>/jest.resolver.js',
   // Don't ignore convex files for transformation
   transformIgnorePatterns: [
     'node_modules/(?!(convex|@radix-ui|cmdk)/)',
@@ -27,15 +27,26 @@ module.exports = {
   // Transform JS files from convex
   transform: {
     ...webProjectConfig.transform,
-    '^.+\\.js$': ['ts-jest', {
+    '^.+\\.(js|jsx)$': ['ts-jest', {
       tsconfig: {
         jsx: 'react',
         allowJs: true,
+        esModuleInterop: true,
+      },
+    }],
+    // Transform convex generated files specifically
+    '^.+convex/_generated/.+\\.js$': ['ts-jest', {
+      tsconfig: {
+        allowJs: true,
+        esModuleInterop: true,
+        module: 'commonjs',
       },
     }],
   },
   moduleNameMapper: {
-    // Mock all variations of convex imports
+    // Mock all variations of convex imports - order matters!
+    '^@/\\.\\./\\.\\./\\.\\./convex/_generated/api(\\.js)?$': '<rootDir>/apps/web/src/__tests__/__mocks__/convex-api.js',
+    '^@/\\.\\./\\.\\./\\.\\./convex/_generated/dataModel(\\.d?\\.ts)?$': '<rootDir>/apps/web/src/__tests__/__mocks__/convex-dataModel.ts',
     '^(\\.{1,2}/)*\\.\\./convex/_generated/api(\\.js)?$': '<rootDir>/apps/web/src/__tests__/__mocks__/convex-api.js',
     '^(\\.{1,2}/)*\\.\\./convex/_generated/dataModel(\\.d?\\.ts)?$': '<rootDir>/apps/web/src/__tests__/__mocks__/convex-dataModel.ts',
     '\\.\\./\\.\\./\\.\\./\\.\\./\\.\\./convex/_generated/api(\\.js)?$': '<rootDir>/apps/web/src/__tests__/__mocks__/convex-api.js',
@@ -48,6 +59,8 @@ module.exports = {
     '^convex/_generated/api(\\.js)?$': '<rootDir>/apps/web/src/__tests__/__mocks__/convex-api.js',
     '^convex/_generated/api\\.js$': '<rootDir>/apps/web/src/__tests__/__mocks__/convex-api.js',
     '^convex/_generated/dataModel(\\.d?\\.ts)?$': '<rootDir>/apps/web/src/__tests__/__mocks__/convex-dataModel.ts',
+    '^@convex/_generated/api$': '<rootDir>/apps/web/src/__tests__/__mocks__/convex-api.js',
+    '^@convex/_generated/dataModel$': '<rootDir>/apps/web/src/__tests__/__mocks__/convex-dataModel.ts',
     ...webProjectConfig.moduleNameMapper,
     // Mock Radix UI packages
     '^@radix-ui/react-icons$': '<rootDir>/apps/web/src/__tests__/__mocks__/lucide-react.js',

@@ -41,7 +41,6 @@ lock_tier_1:
 
 always_read:
 
-- /AGENTS_BOARD.md
 - /.locks/file-locks.json
 
 ## SuperClaude Workflow
@@ -51,7 +50,19 @@ always_read:
 3. **Implementation**: `/sc:build --feature --convex`
 4. **After Changes**: Run `npx convex dev` to regenerate
 5. **Testing**: `/sc:test --unit --convex`
-6. **Task Completion**: Always run `/check-tasks`
+6. **Task Completion**: Always run `cd .. && npm run check-tasks`
+
+## Task Management (Hybrid Mode)
+
+- **CHECK TASKS**: From this directory, run `cd .. && npm run check-tasks` to see available GitHub Issues
+- **NEW HYBRID MODE**: Tasks assigned to GitHub user (aviswerdlow) with agent labels
+- Claim tasks: `cd .. && source scripts/migration/task_lib.sh && claim_task T123 backend-agent`
+- View my tasks: `cd .. && source scripts/migration/task_lib.sh && get_my_tasks backend-agent`
+- Update status: `cd .. && source scripts/migration/task_lib.sh && update_task_status T123 in-progress`
+- Complete tasks: `cd .. && source scripts/migration/task_lib.sh && update_task_status T123 done`
+- Agent identity preserved through labels (agent-backend-agent)
+- GitHub notifications now work with proper user assignment
+- Always run `cd .. && npm run check-tasks` again after completing work
 
 ## Evidence Standards
 

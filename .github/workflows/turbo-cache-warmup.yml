@@ -1,0 +1,60 @@
+name: Turbo Cache Warmup
+
+on:
+  schedule:
+    # Run daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '18'
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
+
+jobs:
+  warmup-cache:
+    name: Warm Up Turbo Remote Cache
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build all packages
+        run: npx turbo run build --force
+        env:
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+          NEXT_PUBLIC_CONVEX_URL: ${{ secrets.NEXT_PUBLIC_CONVEX_URL }}
+
+      - name: Run all cacheable tasks
+        run: |
+          npx turbo run lint type-check test:ci --force
+        env:
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+          NEXT_PUBLIC_CONVEX_URL: ${{ secrets.NEXT_PUBLIC_CONVEX_URL }}
+
+      - name: Cache statistics
+        run: |
+          echo "## 📊 Turbo Cache Statistics" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          npx turbo run build --dry-run=json | jq -r '
+            "### Cache Summary\n" +
+            "- Total Tasks: " + (.tasks | length | tostring) + "\n" +
+            "- Cached Tasks: " + ([.tasks[] | select(.cache.status == "HIT")] | length | tostring) + "\n" +
+            "- Cache Hit Rate: " + (
+              if (.tasks | length) > 0 then
+                (([.tasks[] | select(.cache.status == "HIT")] | length) / (.tasks | length) * 100 | floor | tostring) + "%"
+              else "0%"
+              end
+            )
+          ' >> $GITHUB_STEP_SUMMARY || echo "Unable to generate cache statistics" >> $GITHUB_STEP_SUMMARY

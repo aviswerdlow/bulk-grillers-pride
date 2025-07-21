@@ -41,21 +41,36 @@ get_my_tasks() {
         return 1
     fi
     
+    # Get the actual GitHub username for hybrid mode
+    local github_user=$(gh api user --jq '.login' 2>/dev/null)
+    
     case "$system" in
         "github")
-            # Get tasks from GitHub
-            echo -e "${BLUE}Fetching tasks from GitHub...${NC}" >&2
-            gh issue list \
-                --assignee "$agent_name" \
-                --state open \
-                --limit 100 \
-                --json number,title,labels,state \
-                --jq '.[] | "\(.number)\t\(.title)\t\(.labels | map(.name) | join(","))"'
+            # Get tasks from GitHub - hybrid approach
+            echo -e "${BLUE}Fetching tasks from GitHub (hybrid mode)...${NC}" >&2
+            if [ -n "$github_user" ]; then
+                # First try to get tasks assigned to the GitHub user with the agent label
+                gh issue list \
+                    --assignee "$github_user" \
+                    --label "agent-$agent_name" \
+                    --state open \
+                    --limit 100 \
+                    --json number,title,labels,state \
+                    --jq '.[] | "\(.number)\t\(.title)\t\(.labels | map(.name) | join(","))"'
+            else
+                # Fallback to agent name if no GitHub user
+                gh issue list \
+                    --label "agent-$agent_name" \
+                    --state open \
+                    --limit 100 \
+                    --json number,title,labels,state \
+                    --jq '.[] | "\(.number)\t\(.title)\t\(.labels | map(.name) | join(","))"'
+            fi
             ;;
         "sync")
             # Get from GitHub but show both sources
             echo -e "${YELLOW}[SYNC MODE] Showing GitHub tasks (source of truth)${NC}" >&2
-            get_my_tasks_github "$agent_name"
+            get_my_tasks "$agent_name"
             ;;
         "board"|*)
             # Get tasks from board
@@ -114,9 +129,16 @@ claim_task() {
     
     echo -e "${BLUE}Claiming task $task_id for $agent_name...${NC}"
     
+    # Get the actual GitHub username
+    local github_user=$(gh api user --jq '.login' 2>/dev/null)
+    if [ -z "$github_user" ]; then
+        echo -e "${YELLOW}Warning: Could not determine GitHub username, using agent name${NC}" >&2
+        github_user="$agent_name"
+    fi
+    
     case "$system" in
         "github")
-            # Update GitHub issue
+            # Update GitHub issue - hybrid approach
             if [[ $task_id == T* ]] && [ -f "$MAPPING_FILE" ]; then
                 issue_num=$(jq -r ".task_mappings.\"$task_id\".github_issue // empty" "$MAPPING_FILE")
             else
@@ -124,17 +146,18 @@ claim_task() {
             fi
             
             if [ -n "$issue_num" ]; then
+                # Assign to actual GitHub user, add agent label
                 gh issue edit "$issue_num" \
-                    --add-assignee "$agent_name" \
+                    --add-assignee "$github_user" \
                     --remove-label "status-ready,status-unassigned" \
-                    --add-label "status-assigned"
-                echo -e "${GREEN}✓ Claimed issue #$issue_num${NC}"
+                    --add-label "status-assigned,agent-$agent_name"
+                echo -e "${GREEN}✓ Claimed issue #$issue_num for user $github_user (agent: $agent_name)${NC}"
             fi
             ;;
         "sync")
             # Update both systems
             claim_task_board "$task_id" "$agent_name"
-            claim_task_github "$task_id" "$agent_name"
+            claim_task_github_hybrid "$task_id" "$agent_name" "$github_user"
             ;;
         "board"|*)
             claim_task_board "$task_id" "$agent_name"
@@ -158,18 +181,35 @@ claim_task_board() {
     fi
 }
 
-# Helper: Claim task in GitHub
+# Helper: Claim task in GitHub (legacy - for backward compatibility)
 claim_task_github() {
     local task_id="$1"
     local agent_name="$2"
     
+    # Get the actual GitHub username
+    local github_user=$(gh api user --jq '.login' 2>/dev/null)
+    if [ -z "$github_user" ]; then
+        github_user="$agent_name"
+    fi
+    
+    claim_task_github_hybrid "$task_id" "$agent_name" "$github_user"
+}
+
+# Helper: Claim task in GitHub with hybrid approach
+claim_task_github_hybrid() {
+    local task_id="$1"
+    local agent_name="$2"
+    local github_user="$3"
+    
     if [[ $task_id == T* ]] && [ -f "$MAPPING_FILE" ]; then
         issue_num=$(jq -r ".task_mappings.\"$task_id\".github_issue // empty" "$MAPPING_FILE")
         if [ -n "$issue_num" ]; then
+            # Assign to actual user, add agent label
             gh issue edit "$issue_num" \
-                --add-assignee "$agent_name" \
+                --add-assignee "$github_user" \
                 --remove-label "status-ready" \
-                --add-label "status-assigned"
+                --add-label "status-assigned,agent-$agent_name"
+            echo -e "${GREEN}✓ Updated issue #$issue_num: assigned to $github_user, labeled as agent-$agent_name${NC}"
         fi
     fi
 }

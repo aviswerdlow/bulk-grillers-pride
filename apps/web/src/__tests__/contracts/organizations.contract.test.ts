@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { api } from '../../../../convex/_generated/api';
+import { api } from '@convex/_generated/api';
 import {
   ContractTestConfig,
   validateContract,

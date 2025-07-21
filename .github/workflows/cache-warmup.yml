@@ -1,0 +1,100 @@
+name: Cache Warmup
+
+on:
+  schedule:
+    # Run daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      force:
+        description: 'Force rebuild without cache'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  NODE_VERSION: '18'
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
+  TURBO_REMOTE_ONLY: true
+
+jobs:
+  warmup:
+    name: Warm Remote Cache
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Warm build cache
+        run: |
+          if [ "${{ github.event.inputs.force }}" = "true" ]; then
+            echo "🔄 Force rebuilding without cache..."
+            npx turbo run build --force
+          else
+            echo "🔥 Warming remote cache..."
+            npx turbo run build
+          fi
+        env:
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+          NEXT_PUBLIC_CONVEX_URL: ${{ secrets.NEXT_PUBLIC_CONVEX_URL }}
+
+      - name: Warm test cache
+        run: npx turbo run test
+        env:
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+          NEXT_PUBLIC_CONVEX_URL: ${{ secrets.NEXT_PUBLIC_CONVEX_URL }}
+
+      - name: Warm lint cache
+        run: npx turbo run lint
+
+      - name: Warm type-check cache
+        run: npx turbo run type-check
+
+      - name: Generate cache report
+        run: |
+          echo "## 📊 Cache Warmup Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Cache Statistics" >> $GITHUB_STEP_SUMMARY
+          npx turbo run build --dry-run --summarize > summary.json
+          
+          # Extract cache hit information
+          if [ -f ".turbo/runs/"*"/summary.json" ]; then
+            SUMMARY_FILE=$(ls .turbo/runs/*/summary.json | head -n 1)
+            jq -r '
+              "- Total tasks: \(.tasks | length)\n" +
+              "- Cache hits: \(.tasks | map(select(.cache.status == "HIT")) | length)\n" +
+              "- Cache misses: \(.tasks | map(select(.cache.status == "MISS")) | length)\n" +
+              "- Remote cache hits: \(.tasks | map(select(.cache.remote == true)) | length)"
+            ' "$SUMMARY_FILE" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "Summary file not found" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Cache warmup completed at $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+
+      - name: Notify on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '🚨 Cache Warmup Failed',
+              body: `The daily cache warmup workflow failed.\n\nWorkflow run: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}\n\nThis may impact CI performance for the team.`,
+              labels: ['ci/cd', 'automated']
+            });
+            console.log(`Created issue #${issue.data.number}`);

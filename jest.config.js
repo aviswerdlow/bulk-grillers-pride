@@ -7,6 +7,7 @@ module.exports = {
       testEnvironment: 'jsdom',
       setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
       preset: 'ts-jest',
+      resolver: '<rootDir>/jest.resolver.js',
       transform: {
         '^.+\\.(ts|tsx)$': [
           'ts-jest',
@@ -29,25 +30,35 @@ module.exports = {
       },
       moduleDirectories: ['node_modules', '<rootDir>'],
       testPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/apps/web/.next/'],
-      transformIgnorePatterns: ['node_modules/(?!(convex)/)'],
+      transformIgnorePatterns: [
+        'node_modules/(?!(convex|@radix-ui|cmdk)/)',
+        '!convex/_generated/',
+      ],
     },
     {
       displayName: 'convex',
       testMatch: ['<rootDir>/convex/**/__tests__/**/*.(test|spec).(ts|js)'],
       testEnvironment: 'node',
       setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+      resolver: '<rootDir>/jest.resolver.js',
       transform: {
         '^.+\\.(ts|js)$': [
           'ts-jest',
           {
             tsconfig: '<rootDir>/convex/tsconfig.json',
+            isolatedModules: true,
+            useESM: false,
           },
         ],
       },
       moduleNameMapper: {
         '^@/(.*)$': '<rootDir>/convex/$1',
       },
+      transformIgnorePatterns: [
+        'node_modules/(?!(convex)/)',
+      ],
       testPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/convex/_generated/'],
+      extensionsToTreatAsEsm: [],
     },
     {
       displayName: 'test-factories',
@@ -78,15 +89,15 @@ module.exports = {
     '!**/.next/**',
     '!**/coverage/**',
   ],
-  // TEMPORARY: Coverage thresholds lowered from 70% to 7% to unblock development
-  // TODO: Gradually increase these thresholds as test coverage improves
-  // Target milestones: 7% → 30% → 50% → 70%
+  // PHASE 1: Coverage thresholds set to 15% (current: 11.85%)
+  // Gradual increase plan: 7% → 15% → 30% → 50% → 70%
+  // Next milestone: 30% after critical business logic tests are added
   coverageThreshold: {
     global: {
-      branches: 7,
-      functions: 7,
-      lines: 7,
-      statements: 7,
+      branches: 15,
+      functions: 15,
+      lines: 15,
+      statements: 15,
     },
   },
   coverageReporters: ['text', 'lcov', 'html'],

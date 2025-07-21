@@ -4,7 +4,7 @@
  * but are not generated types - they are manually maintained for frontend use
  */
 
-import { Id } from '../../../../convex/_generated/dataModel';
+import { Id } from '@convex/_generated/dataModel';
 
 /**
  * Product model for UI components

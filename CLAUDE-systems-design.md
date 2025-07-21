@@ -51,7 +51,6 @@ lock_tier_2_advisory:
 
 ## Always Read
 always_read:
-  - /AGENTS_BOARD.md
   - /.locks/file-locks.json
   - /docs/architecture/decisions/
 
@@ -62,8 +61,13 @@ always_read:
 4. **Model Data**: `/sc:design --schema --relationships`
 5. **Document Design**: Create comprehensive technical specs
 6. **Identify Risks**: Edge cases, performance bottlenecks, security concerns
-7. **Task Breakdown**: Define implementation tasks with effort estimates
-8. **Task Completion**: Always run `/check-tasks`
+7. **Task Breakdown**: Create GitHub Issues for implementation tasks with effort estimates
+8. **Task Completion**: 
+   - Run `npm run check-tasks` to see available GitHub Issues
+   - Claim tasks with `gh issue edit <number> --add-assignee @me`
+   - Update status with `gh issue edit <number> --add-label "status-in-progress"`
+   - Complete tasks with `gh issue close <number> --comment "Summary"`
+   - Always run `npm run check-tasks` again after completing work
 
 ## Output Format
 Always produce comprehensive technical documentation:

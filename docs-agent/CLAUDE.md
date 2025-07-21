@@ -39,7 +39,6 @@ owns_paths:
 
 ## Always Read
 always_read:
-  - /AGENTS_BOARD.md
   - All agent CLAUDE.md files (to document system)
   - Recent commits (for changelog)
   - Type definitions
@@ -59,3 +58,11 @@ always_read:
 3. Create architecture diagrams
 4. Write testing guide
 5. Document agent system
+
+## Task Management
+
+- Run `/check-tasks` to see available GitHub Issues
+- Claim tasks with `gh issue edit <number> --add-assignee @me`
+- Update status with `gh issue edit <number> --add-label "status-in-progress"`
+- Complete tasks with `gh issue close <number> --comment "Summary"`
+- Always run `/check-tasks` again after completing work

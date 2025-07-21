@@ -39,6 +39,7 @@ module.exports = {
         'plugin:react/recommended',
         'plugin:react-hooks/recommended',
         'plugin:@next/next/recommended',
+        'plugin:jsx-a11y/recommended',
       ],
       settings: {
         react: {
@@ -49,6 +50,11 @@ module.exports = {
         'react/react-in-jsx-scope': 'off', // Not needed in Next.js
         'react/prop-types': 'off', // TypeScript handles this
         '@next/next/no-html-link-for-pages': 'off', // We use app directory
+        'jsx-a11y/anchor-is-valid': ['error', {
+          components: ['Link'],
+          specialLink: ['hrefLeft', 'hrefRight'],
+          aspects: ['invalidHref', 'preferButton'],
+        }],
       },
     },
     {

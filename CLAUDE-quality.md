@@ -38,8 +38,13 @@ owns_paths:
 2. **Test Coverage**: `/sc:test --coverage --report`
 3. **E2E Testing**: `/sc:test --e2e --pup --validate`
 4. **Performance**: `/sc:analyze --performance --metrics`
-5. **Report Issues**: Use evidence-based language
-6. **Task Completion**: Always run `/check-tasks`
+5. **Report Issues**: Create GitHub Issues with evidence-based language
+6. **Task Completion**: 
+   - Run `npm run check-tasks` to see available GitHub Issues
+   - Claim tasks with `gh issue edit <number> --add-assignee @me`
+   - Update status with `gh issue edit <number> --add-label "status-in-progress"`
+   - Complete tasks with `gh issue close <number> --comment "Summary"`
+   - Always run `npm run check-tasks` again after completing work
 
 ## Evidence Standards
 

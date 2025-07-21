@@ -46,7 +46,13 @@
     "turbo:daemon:status": "node scripts/turbo-daemon-monitor.js status",
     "turbo:daemon:restart": "node scripts/turbo-daemon-monitor.js restart",
     "turbo:daemon:monitor": "node scripts/turbo-daemon-monitor.js monitor",
-    "check-tasks": "node scripts/check-tasks"
+    "check-tasks": "node scripts/check-tasks",
+    "generate:test": "node scripts/generate-convex-test.js",
+    "benchmark:quick": "node scripts/run-benchmark.js --type quick",
+    "benchmark:standard": "node scripts/run-benchmark.js --type standard",
+    "benchmark:full": "node scripts/run-benchmark.js --type full",
+    "benchmark:report": "node scripts/generate-benchmark-report.js",
+    "benchmark:check-regression": "node scripts/check-benchmark-regression.js"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.10.2",
@@ -97,6 +103,7 @@
   "author": "Bulk Grillers Pride",
   "license": "MIT",
   "dependencies": {
+    "@radix-ui/react-switch": "^1.2.5",
     "convex": "^1.24.8",
     "recharts": "^3.1.0"
   },

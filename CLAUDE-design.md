@@ -39,7 +39,12 @@ owns_paths:
 3. **Prototype**: `/sc:build --prototype --magic`
 4. **Accessibility**: `/sc:scan --accessibility --wcag`
 5. **Documentation**: Document design decisions
-6. **Task Completion**: Always run `/check-tasks`
+6. **Task Completion**: 
+   - Run `npm run check-tasks` to see available GitHub Issues
+   - Claim tasks with `gh issue edit <number> --add-assignee @me`
+   - Update status with `gh issue edit <number> --add-label "status-in-progress"`
+   - Complete tasks with `gh issue close <number> --comment "Summary"`
+   - Always run `npm run check-tasks` again after completing work
 
 ## Evidence Standards
 

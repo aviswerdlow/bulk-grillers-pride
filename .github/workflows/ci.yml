@@ -48,23 +48,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-node-${{ env.NODE_VERSION }}-
 
-      - name: Restore node_modules cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            node_modules
-            apps/*/node_modules
-            packages/*/node_modules
-          key: ${{ needs.setup.outputs.cache-key }}
-
-      - name: Restore Turbo cache
-        uses: actions/cache@v4
-        with:
-          path: .turbo
-          key: turbo-${{ github.sha }}
-          restore-keys: |
-            turbo-
-
       - name: Install dependencies if cache miss
         run: |
           if [ ! -d "node_modules" ]; then

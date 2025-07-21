@@ -2,8 +2,8 @@
 
 import { useParams } from 'next/navigation';
 import { useQuery } from 'convex/react';
-import { api } from '../../../../../../../convex/_generated/api';
-import { Id } from '../../../../../../../convex/_generated/dataModel';
+import { api } from '@convex/_generated/api';
+import { Id } from '@convex/_generated/dataModel';
 import { PageLoading } from '@/components/loading';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -503,10 +503,10 @@ function ApiKeysSettings({ organizationId }: { organizationId: Id<'organizations
             </div>
 
             {/* Security Notice */}
-            <div className="rounded-lg bg-blue-50 p-3">
+            <div className="rounded-lg bg-primary/5 p-3">
               <div className="flex items-start space-x-2">
-                <Shield className="h-4 w-4 text-blue-500 mt-0.5" />
-                <p className="text-sm text-blue-900">
+                <Shield className="h-4 w-4 text-primary mt-0.5" />
+                <p className="text-sm text-primary-foreground">
                   Your API key will be encrypted and stored securely. We never log or expose your keys.
                 </p>
               </div>

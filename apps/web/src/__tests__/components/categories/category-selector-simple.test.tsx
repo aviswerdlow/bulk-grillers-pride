@@ -10,7 +10,7 @@ jest.mock('convex/react', () => ({
 }));
 
 // Import the mocked API
-import { api } from '../../../../../convex/_generated/api';
+import { api } from '@convex/_generated/api';
 
 const mockUseQuery = useQuery as jest.MockedFunction<typeof useQuery>;
 

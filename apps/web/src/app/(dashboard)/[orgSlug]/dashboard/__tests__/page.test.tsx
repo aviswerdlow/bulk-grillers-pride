@@ -1,18 +1,26 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { 
+  render, 
+  screen, 
+  waitFor, 
+  setupTest, 
+  cleanupTest,
+  mockUseQuery,
+  seedMockData,
+  createMockOrganization,
+  createMockProject
+} from '@/__tests__/frontend-test-helpers';
 import { useParams } from 'next/navigation';
 import { useQuery } from 'convex/react';
 import OrganizationDashboard from '../page';
 import { formatDistanceToNow } from 'date-fns';
-
 
 // Mock dependencies
 jest.mock('next/navigation', () => ({
   useParams: jest.fn(),
 }));
 
-jest.mock('convex/react', () => ({
-  useQuery: jest.fn(),
-}));
+// The convex/react mock is already handled by frontend-test-helpers
+// The convex API mocks are handled by jest.config.js mappings
 
 jest.mock('next/link', () => {
   return {
@@ -50,29 +58,29 @@ jest.mock('lucide-react', () => ({
 
 describe('OrganizationDashboard', () => {
   const mockOrgSlug = 'test-org';
-  const mockOrganization = {
+  const mockOrganization = createMockOrganization({
     _id: 'org123',
     name: 'Test Organization',
     slug: mockOrgSlug,
-  };
+  });
 
   const mockProjects = [
-    {
+    createMockProject({
       _id: 'proj1',
       name: 'Project 1',
       description: 'First test project',
       status: 'active',
       slug: 'project-1',
       createdAt: new Date('2024-01-01').getTime(),
-    },
-    {
+    }),
+    createMockProject({
       _id: 'proj2',
       name: 'Project 2',
       description: 'Second test project',
       status: 'inactive',
       slug: 'project-2',
       createdAt: new Date('2024-01-02').getTime(),
-    },
+    }),
   ];
 
   const mockDashboardStats = {
@@ -132,9 +140,15 @@ describe('OrganizationDashboard', () => {
     },
   ];
 
-  beforeEach(() => {
-    jest.clearAllMocks();
+  beforeEach(async () => {
+    setupTest();
     (useParams as jest.Mock).mockReturnValue({ orgSlug: mockOrgSlug });
+
+    // Seed mock data
+    await seedMockData({
+      organizations: [mockOrganization],
+      projects: mockProjects,
+    });
 
     // Set up console spy to capture logs
     jest.spyOn(console, 'error').mockImplementation(() => {});
@@ -143,12 +157,13 @@ describe('OrganizationDashboard', () => {
   });
 
   afterEach(() => {
+    cleanupTest();
     jest.restoreAllMocks();
   });
 
   describe('Loading States', () => {
     it('should show loading state when organization is undefined', () => {
-      (useQuery as jest.Mock).mockReturnValue(undefined);
+      mockUseQuery.mockReturnValue(undefined);
 
       render(<OrganizationDashboard />);
 
@@ -156,8 +171,6 @@ describe('OrganizationDashboard', () => {
     });
 
     it('should handle missing getDashboardStats function gracefully', async () => {
-      const mockUseQuery = useQuery as jest.Mock;
-
       // Mock the queries to simulate missing function
       mockUseQuery.mockImplementation((query, args) => {
         if (query.toString().includes('getOrganizationBySlug')) {
@@ -196,7 +209,6 @@ describe('OrganizationDashboard', () => {
 
   describe('Organization Not Found', () => {
     it('should show not found message when organization is null', () => {
-      const mockUseQuery = useQuery as jest.Mock;
       mockUseQuery.mockImplementation((query) => {
         if (query.toString().includes('getOrganizationBySlug')) {
           return null;
@@ -215,7 +227,6 @@ describe('OrganizationDashboard', () => {
 
   describe('Dashboard Content', () => {
     beforeEach(() => {
-      const mockUseQuery = useQuery as jest.Mock;
       mockUseQuery.mockImplementation((query, args) => {
         if (query.toString().includes('getOrganizationBySlug')) {
           return mockOrganization;

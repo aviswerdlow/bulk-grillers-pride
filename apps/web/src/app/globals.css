@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "../styles/colors.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -118,5 +119,72 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* Accessibility Features */
+@layer utilities {
+  /* Reduced Motion */
+  .reduced-motion * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* High Contrast Mode */
+  .high-contrast {
+    --contrast-ratio: 7;
+  }
+
+  .high-contrast * {
+    filter: contrast(var(--contrast-ratio, 1));
+  }
+
+  .high-contrast img,
+  .high-contrast video,
+  .high-contrast iframe {
+    filter: none;
+  }
+
+  /* Focus Indicator Styles */
+  [data-focus-style="default"] *:focus {
+    @apply outline-2 outline-offset-2 outline-ring;
+  }
+
+  [data-focus-style="high-visibility"] *:focus {
+    @apply outline-4 outline-offset-4 outline-[var(--color-info)] shadow-lg;
+  }
+
+  [data-focus-style="custom"] *:focus {
+    @apply outline-dashed outline-4 outline-offset-4 outline-purple-600;
+  }
+
+  /* Keyboard Navigation Mode */
+  .keyboard-nav *:focus {
+    @apply ring-4 ring-[var(--color-info)] ring-offset-2;
+  }
+
+  /* Screen Reader Only */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+
+  /* Focus Within for Better Visibility */
+  .focus-within\:z-10:focus-within {
+    z-index: 10;
+  }
+
+  /* Skip Link */
+  .skip-link {
+    @apply absolute top-0 left-0 bg-[var(--color-info)] text-white p-2 -translate-y-full focus:translate-y-0 transition-transform;
   }
 }

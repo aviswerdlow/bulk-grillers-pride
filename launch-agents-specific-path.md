@@ -1,6 +1,6 @@
 # Launch Multi-Agent System
 
-## Phase 2: Launch the Multi-Agent System (7 Agents Total)
+## Phase 2: Launch the Multi-Agent System (8 Agents Total)
 
 ### Terminal 1: Frontend Agent
 
@@ -17,7 +17,7 @@ You are using Super Claude with --persona-frontend for UI/UX focus, accessibilit
 Enable --magic MCP for UI component generation and --c7 for React documentation.
 Use evidence-based development practices and UltraCompressed mode (--uc) for large files.
 Always use TypeScript with proper type safety and run tests with --pup for E2E validation.
-Run /check-tasks to see what work is appropriate for you.
+Run npm run check-tasks to see what work is appropriate for you.
 ```
 
 ### Terminal 2: Backend Agent
@@ -35,7 +35,7 @@ You are using Super Claude with --persona-backend for API design, scalability, a
 Enable --c7 for Convex documentation and --seq for complex architectural analysis.
 Use evidence-based development with required language (may|could|potentially|measured).
 Focus on TypeScript type safety, Convex best practices, and always validate schema changes.
-Run /check-tasks to see what work is appropriate for you.
+Run npm run check-tasks to see what work is appropriate for you.
 ```
 
 ### Terminal 3: Infrastructure Agent
@@ -53,7 +53,7 @@ You are using Super Claude with --persona-architect for system design and build 
 Enable --seq for complex build analysis and --c7 for tooling documentation.
 Apply git safety workflows (status→branch→fetch→pull) and use --dry-run for safety.
 Focus on TypeScript configuration, Jest setup, and Turbo monorepo optimization.
-Run /check-tasks to see what work is appropriate for you.
+Run npm run check-tasks to see what work is appropriate for you.
 ```
 
 ### Terminal 4: Quality Agent
@@ -73,7 +73,7 @@ Your skills include: testing frameworks, code coverage analysis, performance pro
 You work across all codebases but don't modify business logic directly - you ensure quality standards.
 Apply OWASP Top 10 security patterns and use /scan --security --owasp for audits.
 Use evidence-based language when reporting issues (e.g., "testing confirms", "metrics show").
-Run /check-tasks to see quality-related work.
+Run npm run check-tasks to see quality-related work.
 ```
 
 ### Terminal 5: Documentation Agent
@@ -93,7 +93,7 @@ Your skills include: API documentation, README files, code comments, architectur
 You can work in any directory but focus on documentation files and comments.
 Use evidence-based language and always cite official sources (e.g., "documentation states", "API reference shows").
 Follow documentation best practices and ensure all examples are tested and accurate.
-Run /check-tasks to see documentation tasks.
+Run npm run check-tasks to see documentation tasks.
 ```
 
 ### Terminal 6: Migration Agent
@@ -114,10 +114,30 @@ You primarily work with convex schema files and migration scripts.
 Always use --dry-run first and create rollback plans for all migrations.
 Document migration steps thoroughly and validate data integrity at each stage.
 Use evidence-based risk assessment (e.g., "testing confirms rollback works").
-Run /check-tasks to see migration-related tasks.
+Run npm run check-tasks to see migration-related tasks.
 ```
 
-### Terminal 7: Orchestrator (Your Main Interface)
+### Terminal 7: AI Agent
+
+```bash
+cd /Users/aviswerdlow/Documents/Coding/bulk-grillers-pride
+claude --dangerously-skip-permissions
+```
+
+Then paste:
+
+```
+You are the ai-agent. Read your CLAUDE-ai.md file located at the root directory to understand your role and capabilities.
+You are using SuperClaude with --persona-analyzer for AI system investigation and optimization.
+Enable --seq for complex AI workflows and --c7 for AI/ML library documentation.
+Your skills include: CrewAI, LangChain, OpenAI, Anthropic, Gemini, prompt engineering, and ML operations.
+Focus on AI system architecture, multi-provider support, token optimization, and cost efficiency.
+Use evidence-based language (e.g., "benchmarks show", "testing indicates", "measured at").
+Apply --ultrathink for critical migration decisions and --uc for large configurations.
+Run npm run check-tasks to see AI/ML-related tasks.
+```
+
+### Terminal 8: Orchestrator (Your Main Interface)
 
 ```bash
 cd /Users/aviswerdlow/Documents/Coding/bulk-grillers-pride
@@ -128,11 +148,11 @@ Then paste:
 
 ```
 You are the orchestrator. Read your ORCHESTRATOR.md file located at the root directory to understand your role.
-You are using Super Claude with --persona-architect for system-wide planning.
-You coordinate work between all agents: frontend-agent, backend-agent, infra-agent, quality-agent, docs-agent, and migration-agent.
-Use /analyze --arch --seq for complex feature decomposition.
+You are using SuperClaude with --persona-architect for system-wide planning.
+You coordinate work between all agents: frontend-agent, backend-agent, infra-agent, quality-agent, docs-agent, migration-agent, and ai-agent.
+Use /sc:analyze --arch --seq for complex feature decomposition.
 Apply evidence-based task assignment based on agent skills and current load.
-Monitor agent progress and ensure they're using appropriate Super Claude personas and MCP servers.
+Monitor agent progress and ensure they're using appropriate SuperClaude personas and MCP servers.
 Enforce evidence-based development standards across all agents.
 Show the current task board and agent status.
 ```
@@ -168,7 +188,16 @@ Show the current task board and agent status.
 - Version upgrade paths
 - Legacy system transitions
 
-### With the Orchestrator (Terminal 7):
+**AI Agent** handles:
+
+- CrewAI multi-agent orchestration
+- LangChain to CrewAI migration
+- Multi-provider AI integration (OpenAI, Anthropic, Gemini)
+- Prompt engineering and optimization
+- Token usage and cost optimization
+- AI system performance monitoring
+
+### With the Orchestrator (Terminal 8):
 
 ```
 "I want to add authentication to the app"
@@ -176,7 +205,7 @@ Show the current task board and agent status.
 Orchestrator will:
 1. Break this into subtasks
 2. Assign to appropriate agents
-3. Update AGENTS_BOARD.md
+3. Coordinate via GitHub Issues
 ```
 
 ### In Each Agent Terminal:
@@ -184,7 +213,7 @@ Orchestrator will:
 Periodically run:
 
 ```
-/check-tasks
+npm run check-tasks
 ```
 
 Agents will:
@@ -193,7 +222,7 @@ Agents will:
 2. Verify skill match using Super Claude patterns
 3. Start working on appropriate tasks with their persona
 4. Use /complete-task when done
-5. **Always run /check-tasks again to continue workflow**
+5. **Always run npm run check-tasks again to continue workflow**
 
 This creates a continuous work loop where agents automatically pick up new tasks as they become available.
 
@@ -212,7 +241,7 @@ Task assigned. Make sure infra-agent is running and checks for tasks.
 **You → Infra Agent Terminal**:
 
 ```
-/check-tasks
+npm run check-tasks
 ```
 
 **Infra Agent**:
@@ -237,8 +266,9 @@ cd /Users/aviswerdlow/Documents/Coding/bulk-grillers-pride && claude --dangerous
 cd /Users/aviswerdlow/Documents/Coding/bulk-grillers-pride && claude --dangerously-skip-permissions
 cd /Users/aviswerdlow/Documents/Coding/bulk-grillers-pride && claude --dangerously-skip-permissions
 cd /Users/aviswerdlow/Documents/Coding/bulk-grillers-pride && claude --dangerously-skip-permissions
+cd /Users/aviswerdlow/Documents/Coding/bulk-grillers-pride && claude --dangerously-skip-permissions
 
-# Then in each terminal, paste the appropriate agent initialization with Super Claude configuration
+# Then in each terminal, paste the appropriate agent initialization with SuperClaude configuration
 # Each agent will automatically enable their specialized personas and MCP servers
 ```
 
@@ -299,7 +329,7 @@ Shows:
 In each agent terminal, run this periodically:
 
 ```
-/check-tasks
+npm run check-tasks
 ```
 
 If work is found:
@@ -308,10 +338,10 @@ If work is found:
 /claim-task T10
 # ... do the work ...
 /complete-task T10 "Cart schema implemented with user and product relations"
-/check-tasks  # Always check for new tasks after completing one
+npm run check-tasks  # Always check for new tasks after completing one
 ```
 
-When completing tasks, agents should always run /check-tasks again to:
+When completing tasks, agents should always run npm run check-tasks again to:
 
 - Pick up any newly unblocked tasks
 - Continue working if more tasks are available
@@ -336,7 +366,7 @@ Breaking down OAuth implementation into specialized tasks:
 5. **docs-agent**: Document OAuth integration guide using --persona-mentor --c7
 6. **infra-agent**: Set up OAuth provider configs with --persona-architect
 
-Each agent works in parallel using Super Claude personas and MCP servers, coordinating through the task board when dependencies exist. All agents run /check-tasks after completing work to maintain momentum.
+Each agent works in parallel using Super Claude personas and MCP servers, coordinating through the task board when dependencies exist. All agents run npm run check-tasks after completing work to maintain momentum.
 
 ## Tips & Tricks
 
@@ -355,7 +385,7 @@ All agents use:
 
 - **Evidence-based language**: may|could|potentially|measured (never "best" or "optimal")
 - **UltraCompressed mode (--uc)**: For efficiency with large codebases
-- **Task completion workflow**: Always run /check-tasks after completing work
+- **Task completion workflow**: Always run npm run check-tasks after completing work
 - **Research-first methodology**: Context7 for external libraries, official sources required
 - **Git safety**: status→branch→fetch→pull workflow
 
@@ -364,25 +394,25 @@ All agents use:
 Arrange your terminals in a grid (use multiple desktops/screens if needed):
 
 ```
-┌──────────────┬──────────────┬──────────────┐
-│  Frontend    │   Backend    │    Infra     │
-│ (apps/web)   │  (convex)    │   (root)     │
-├──────────────┼──────────────┼──────────────┤
-│  Quality     │    Docs      │  Migration   │
-│  (root)      │   (root)     │   (root)     │
-├──────────────┴──────────────┴──────────────┤
-│            Orchestrator (root)              │
-└─────────────────────────────────────────────┘
+┌──────────────┬──────────────┬──────────────┬──────────────┐
+│  Frontend    │   Backend    │    Infra     │      AI      │
+│ (apps/web)   │  (convex)    │   (root)     │   (root)     │
+├──────────────┼──────────────┼──────────────┼──────────────┤
+│  Quality     │    Docs      │  Migration   │    (empty)   │
+│  (root)      │   (root)     │   (root)     │              │
+├──────────────┴──────────────┴──────────────┴──────────────┤
+│                    Orchestrator (root)                     │
+└────────────────────────────────────────────────────────────┘
 ```
 
 ### 2. **Quick Commands Cheat Sheet**
 
 ```bash
 # For all 6 worker agents
-/check-tasks         # What can I work on?
+npm run check-tasks         # What can I work on?
 /claim-task T1       # Start this task
 /complete-task T1    # I'm done with this
-/check-tasks         # Check for more work (always run after completing)
+npm run check-tasks         # Check for more work (always run after completing)
 
 # Super Claude commands agents use
 /analyze --code --c7      # Research with documentation
@@ -399,7 +429,7 @@ Arrange your terminals in a grid (use multiple desktops/screens if needed):
 /analyze --arch --seq            # Complex feature decomposition
 ```
 
-### 3. **Skill-Based Task Routing with Super Claude**
+### 3. **Skill-Based Task Routing with SuperClaude**
 
 Tasks automatically route to the right agent with appropriate tools:
 
@@ -409,6 +439,7 @@ Tasks automatically route to the right agent with appropriate tools:
 - `testing`, `coverage`, `security` → quality-agent (uses --pup, --scan)
 - `documentation`, `readme`, `comments` → docs-agent (uses --c7, --persona-mentor)
 - `migration`, `backwards-compatibility` → migration-agent (uses --seq, --dry-run)
+- `crewai`, `langchain`, `openai`, `ai`, `ml` → ai-agent (uses --seq, --c7, --ultrathink)
 
 Super Claude auto-activates based on keywords:
 
@@ -425,7 +456,7 @@ If a task is blocked:
 Task T2 depends on T1
 - T1 must be completed first
 - Once T1 is done, T2 automatically becomes "ready"
-- The right agent will see it on next /check-tasks
+- The right agent will see it on next npm run check-tasks
 ```
 
 ## Quick Reference Card
@@ -449,7 +480,10 @@ cd /Users/aviswerdlow/Documents/Coding/bulk-grillers-pride && claude --dangerous
 # Terminal 6: Migration
 cd /Users/aviswerdlow/Documents/Coding/bulk-grillers-pride && claude --dangerously-skip-permissions
 
-# Terminal 7: Orchestrator
+# Terminal 7: AI
+cd /Users/aviswerdlow/Documents/Coding/bulk-grillers-pride && claude --dangerously-skip-permissions
+
+# Terminal 8: Orchestrator
 cd /Users/aviswerdlow/Documents/Coding/bulk-grillers-pride && claude --dangerously-skip-permissions
 ```
 
@@ -460,11 +494,11 @@ Then initialize each with their specific prompt from above!
 Each agent follows this workflow loop:
 
 ```
-1. /check-tasks → Find appropriate work
+1. npm run check-tasks → Find appropriate work
 2. /claim-task T1 → Start the task
 3. Work using Super Claude personas and tools
 4. /complete-task T1 "summary" → Mark done
-5. /check-tasks → Check for more work (ALWAYS)
+5. npm run check-tasks → Check for more work (ALWAYS)
 6. Loop back to step 2 if work available
 ```
 
@@ -486,7 +520,7 @@ With Super Claude integration, your multi-agent system gains:
 - **Quality gates**: Built-in security scanning, testing, and validation
 - **Continuous improvement**: Agents always check for new work after task completion
 
-**Remember**: Each agent uses Super Claude personas and runs /check-tasks after completing work to maintain continuous workflow.
+**Remember**: Each agent uses Super Claude personas and runs npm run check-tasks after completing work to maintain continuous workflow.
 
 ## Agent Configuration File Locations
 
@@ -498,4 +532,5 @@ For reference, each agent's CLAUDE.md file is located at:
 - **Quality Agent**: `CLAUDE-quality.md` (root)
 - **Documentation Agent**: `CLAUDE-docs.md` (root)
 - **Migration Agent**: `CLAUDE-migration.md` (root)
+- **AI Agent**: `CLAUDE-ai.md` (root)
 - **Orchestrator**: `ORCHESTRATOR.md` (root)

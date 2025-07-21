@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery, useMutation } from 'convex/react';
-import { api } from '../../../../../../../convex/_generated/api';
+import { api } from '@convex/_generated/api';
 import { useParams } from 'next/navigation';
 import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
@@ -52,10 +52,9 @@ import { CreateProductDialog } from '@/components/products/create-product-dialog
 import { EditProductDialog } from '@/components/products/edit-product-dialog';
 import { DeleteProductDialog } from '@/components/products/delete-product-dialog';
 import { Loading } from '@/components/loading';
-import { Product } from '@/types/models';
 import { toast } from 'sonner';
 import Link from 'next/link';
-import { Id } from '../../../../../../../convex/_generated/dataModel';
+import { Id, Doc } from '@convex/_generated/dataModel';
 
 type BulkAction = 'archive' | 'delete' | 'activate' | 'deactivate' | 'export';
 
@@ -67,9 +66,9 @@ export default function ManageProductsPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
   const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [editingProduct, setEditingProduct] = useState<Doc<'products'> | null>(null);
   const [bulkAction, setBulkAction] = useState<BulkAction | ''>('');
-  const [productsToDelete, setProductsToDelete] = useState<Product[]>([]);
+  const [productsToDelete, setProductsToDelete] = useState<Doc<'products'>[]>([]);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   // Get organization
@@ -128,12 +127,12 @@ export default function ManageProductsPage() {
     );
   }
 
-  const products = (productsResult?.page as Product[]) || [];
+  const products = productsResult?.page || [];
   const isLoading = productsResult === undefined;
 
   // Filter products based on search term
   const filteredProducts = products.filter(
-    (product: Product) =>
+    (product: Doc<'products'>) =>
       product.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.handle.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (product.vendor && product.vendor.toLowerCase().includes(searchTerm.toLowerCase())) ||
@@ -158,7 +157,7 @@ export default function ManageProductsPage() {
     if (selectedProducts.size === filteredProducts.length) {
       setSelectedProducts(new Set());
     } else {
-      setSelectedProducts(new Set(filteredProducts.map((p) => p._id)));
+      setSelectedProducts(new Set(filteredProducts.map((p: Doc<'products'>) => p._id)));
     }
   };
 
@@ -184,7 +183,7 @@ export default function ManageProductsPage() {
         break;
       case 'delete':
         // Show delete dialog for selected products
-        const selectedProductsList = filteredProducts.filter(p => selectedProducts.has(p._id));
+        const selectedProductsList = filteredProducts.filter((p: Doc<'products'>) => selectedProducts.has(p._id));
         setProductsToDelete(selectedProductsList);
         setShowDeleteDialog(true);
         break;
@@ -309,7 +308,7 @@ export default function ManageProductsPage() {
           <CardContent>
             <div className="text-2xl font-bold">{products.length}</div>
             <p className="text-xs text-muted-foreground">
-              {products.filter((p) => p.status === 'active').length} active
+              {products.filter((p: Doc<'products'>) => p.status === 'active').length} active
             </p>
           </CardContent>
         </Card>
@@ -322,7 +321,7 @@ export default function ManageProductsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {products.filter((p) => p.status === 'draft').length}
+              {products.filter((p: Doc<'products'>) => p.status === 'draft').length}
             </div>
             <p className="text-xs text-muted-foreground">
               Pending review
@@ -336,7 +335,7 @@ export default function ManageProductsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {products.filter((p) => p.status === 'archived').length}
+              {products.filter((p: Doc<'products'>) => p.status === 'archived').length}
             </div>
             <p className="text-xs text-muted-foreground">
               Hidden from catalog
@@ -426,13 +425,13 @@ export default function ManageProductsPage() {
                   <TableHead>Status</TableHead>
                   <TableHead className="hidden md:table-cell">Vendor</TableHead>
                   <TableHead className="hidden lg:table-cell">Type</TableHead>
-                  <TableHead className="hidden sm:table-cell">Price</TableHead>
+                  <TableHead className="hidden sm:table-cell">Stock</TableHead>
                   <TableHead className="hidden md:table-cell">Updated</TableHead>
                   <TableHead className="w-[70px]"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredProducts.map((product: Product) => (
+                {filteredProducts.map((product: Doc<'products'>) => (
                   <TableRow key={product._id} className={selectedProducts.has(product._id) ? 'bg-muted/50' : ''}>
                     <TableCell>
                       <Checkbox
@@ -442,10 +441,10 @@ export default function ManageProductsPage() {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-3">
-                        {product.imageUrl && (
+                        {product.images?.[0] && (
                           <img
-                            src={product.imageUrl}
-                            alt={product.title}
+                            src={product.images[0].url}
+                            alt={product.images[0].alt || product.title}
                             className="h-10 w-10 rounded object-cover"
                           />
                         )}
@@ -475,7 +474,7 @@ export default function ManageProductsPage() {
                       {product.productType || '—'}
                     </TableCell>
                     <TableCell className="hidden sm:table-cell text-muted-foreground">
-                      {product.price ? `$${product.price}` : '—'}
+                      —
                     </TableCell>
                     <TableCell className="hidden md:table-cell text-muted-foreground">
                       {new Date(product.updatedAt).toLocaleDateString()}

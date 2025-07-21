@@ -11,7 +11,7 @@ jest.mock('convex/react', () => ({
 }));
 
 // Import the mocked API (no need to mock it again as jest.config.js handles it)
-import { api } from '../../../../../convex/_generated/api';
+import { api } from '@convex/_generated/api';
 
 // Mock react-hook-form
 jest.mock('react-hook-form', () => ({

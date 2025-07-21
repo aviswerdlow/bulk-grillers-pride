@@ -1,0 +1,58 @@
+#!/usr/bin/env node
+
+/**
+ * Check Tasks Wrapper Script
+ * 
+ * This script allows agents to run check-tasks from any directory
+ * within the project by finding and executing the main check-tasks.js
+ */
+
+const { execSync } = require('child_process');
+const path = require('path');
+const fs = require('fs');
+
+// Find project root by looking for package.json
+function findProjectRoot(startPath = process.cwd()) {
+  let currentPath = startPath;
+  
+  while (currentPath !== '/') {
+    if (fs.existsSync(path.join(currentPath, 'package.json'))) {
+      // Verify this is the root package.json (has workspaces)
+      const packageJson = JSON.parse(fs.readFileSync(path.join(currentPath, 'package.json'), 'utf8'));
+      if (packageJson.workspaces) {
+        return currentPath;
+      }
+    }
+    currentPath = path.dirname(currentPath);
+  }
+  
+  throw new Error('Could not find project root. Make sure you are running this from within the project.');
+}
+
+try {
+  const projectRoot = findProjectRoot();
+  const checkTasksPath = path.join(projectRoot, '.claude', 'commands', 'check-tasks.js');
+  
+  if (!fs.existsSync(checkTasksPath)) {
+    console.error('Error: check-tasks.js not found at expected location:', checkTasksPath);
+    process.exit(1);
+  }
+  
+  // Get agent name from command line args if provided
+  const args = process.argv.slice(2);
+  
+  // Execute the check-tasks script
+  execSync(`node ${checkTasksPath} ${args.join(' ')}`, { 
+    stdio: 'inherit',
+    cwd: projectRoot // Always run from project root
+  });
+} catch (error) {
+  if (error.status) {
+    // execSync error - the command itself failed
+    process.exit(error.status);
+  } else {
+    // Our error
+    console.error('Error:', error.message);
+    process.exit(1);
+  }
+}

@@ -7,8 +7,8 @@ export default function SignInPage() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-slate-50 to-white">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">Welcome back</h1>
-          <p className="text-gray-600 mt-2">Sign in to your Bulk account</p>
+          <h1 className="text-2xl font-bold text-foreground">Welcome back</h1>
+          <p className="text-muted-foreground mt-2">Sign in to your Bulk account</p>
         </div>
 
         <Suspense fallback={<AuthLoading text="Loading sign in..." />}>

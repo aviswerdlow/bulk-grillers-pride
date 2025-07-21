@@ -1,10 +1,12 @@
+/**
+ * @deprecated Use frontend-test-helpers.tsx instead for standardized Convex mocking
+ * This file is maintained for backward compatibility during the refactoring process
+ */
 import * as React from 'react';
 import { ReactElement } from 'react';
 import { render, RenderOptions } from '@testing-library/react';
 import { ClerkProvider } from '@clerk/nextjs';
-import { ConvexProvider } from 'convex/react';
 import { ConvexProviderWithClerk } from 'convex/react-clerk';
-import { mockRouter } from 'next-router-mock';
 
 // Mock Convex client
 const mockConvexClient = {

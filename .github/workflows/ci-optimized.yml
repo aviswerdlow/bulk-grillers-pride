@@ -1,0 +1,470 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '18'
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
+  TURBO_REMOTE_ONLY: true
+
+jobs:
+  # ========================================
+  # SETUP: Install dependencies once
+  # ========================================
+  setup:
+    name: Setup and Cache Dependencies
+    runs-on: ubuntu-latest
+    outputs:
+      cache-key: ${{ steps.cache-key.outputs.key }}
+      affected: ${{ steps.affected.outputs.affected }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Required for --affected
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Generate cache key
+        id: cache-key
+        run: |
+          echo "key=${{ runner.os }}-node-${{ env.NODE_VERSION }}-${{ hashFiles('package-lock.json') }}" >> $GITHUB_OUTPUT
+
+      - name: Cache dependencies
+        id: cache-deps
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            apps/*/node_modules
+            packages/*/node_modules
+            ~/.cache/Cypress
+          key: ${{ steps.cache-key.outputs.key }}
+          restore-keys: |
+            ${{ runner.os }}-node-${{ env.NODE_VERSION }}-
+
+      - name: Install dependencies
+        if: steps.cache-deps.outputs.cache-hit != 'true'
+        run: npm ci
+
+      - name: Get affected packages
+        id: affected
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            AFFECTED=$(npx turbo run build --affected --dry-run=json | jq -r '.packages | join(",")')
+            echo "affected=$AFFECTED" >> $GITHUB_OUTPUT
+            echo "Affected packages: $AFFECTED"
+          else
+            echo "affected=" >> $GITHUB_OUTPUT
+          fi
+
+  # ========================================
+  # PARALLEL QUALITY CHECKS
+  # ========================================
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    needs: setup
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Restore dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            apps/*/node_modules
+            packages/*/node_modules
+          key: ${{ needs.setup.outputs.cache-key }}
+          fail-on-cache-miss: true
+
+      - name: Run linting
+        run: |
+          if [ -n "${{ needs.setup.outputs.affected }}" ]; then
+            npx turbo run lint --affected --concurrency=50%
+          else
+            npx turbo run lint --concurrency=50%
+          fi
+
+  type-check:
+    name: Type Check
+    runs-on: ubuntu-latest
+    needs: setup  # FIXED: Added missing dependency
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Restore dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            apps/*/node_modules
+            packages/*/node_modules
+          key: ${{ needs.setup.outputs.cache-key }}
+          fail-on-cache-miss: true
+
+      - name: Run type checking
+        run: |
+          if [ -n "${{ needs.setup.outputs.affected }}" ]; then
+            npx turbo run type-check --affected --concurrency=50%
+          else
+            npx turbo run type-check --concurrency=50%
+          fi
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    needs: setup  # FIXED: Added missing dependency
+    strategy:
+      matrix:
+        project: [web, convex]
+        shard: [1, 2]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Restore dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            apps/*/node_modules
+            packages/*/node_modules
+          key: ${{ needs.setup.outputs.cache-key }}
+          fail-on-cache-miss: true
+
+      - name: Run tests for ${{ matrix.project }} (shard ${{ matrix.shard }}/2)
+        run: |
+          if [ "${{ matrix.project }}" = "web" ]; then
+            npm run test:ci -- --selectProjects=web --testPathPattern="$([ ${{ matrix.shard }} = 1 ] && echo '(components|lib|utils)' || echo '(app|contracts)')" --maxWorkers=50%
+          else
+            npm run test:ci -- --selectProjects=convex --testPathPattern="$([ ${{ matrix.shard }} = 1 ] && echo '(ai|auth|categories)' || echo '(dashboard|imports|organizations|products|projects)')" --maxWorkers=50%
+          fi
+        env:
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+          NEXT_PUBLIC_CONVEX_URL: ${{ secrets.NEXT_PUBLIC_CONVEX_URL }}
+
+      - name: Upload coverage reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ matrix.project }}-${{ matrix.shard }}
+          path: coverage/
+          retention-days: 1
+
+  # ========================================
+  # BUILD
+  # ========================================
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: setup  # FIXED: Added missing dependency
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Restore dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            apps/*/node_modules
+            packages/*/node_modules
+          key: ${{ needs.setup.outputs.cache-key }}
+          fail-on-cache-miss: true
+
+      - name: Build application
+        run: |
+          if [ -n "${{ needs.setup.outputs.affected }}" ]; then
+            npx turbo run build --affected --concurrency=50%
+          else
+            npx turbo run build --concurrency=50%
+          fi
+        env:
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+          NEXT_PUBLIC_CONVEX_URL: ${{ secrets.NEXT_PUBLIC_CONVEX_URL }}
+
+      - name: Check bundle size
+        id: bundle-size
+        run: |
+          node scripts/check-bundle-size.js --json > bundle-size-report.json
+          echo "## Bundle Size Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          cat bundle-size-report.json | jq -r '
+            "### Summary\n" +
+            "- **Status**: " + (if .passed then "✅ Passed" else "❌ Failed" end) + "\n" +
+            "- **Total Bundle Size**: " + .summary.totalSize + "\n" +
+            "- **First Load JS**: " + .summary.firstLoadJS + "\n\n" +
+            "### Details\n" +
+            (.details | map("- " + .) | join("\n"))
+          ' >> $GITHUB_STEP_SUMMARY
+          
+          # FIXED: Fail if bundle size exceeds limits
+          if [ "$(jq -r '.passed' bundle-size-report.json)" = "false" ]; then
+            echo "Bundle size limits exceeded!"
+            exit 1
+          fi
+
+      - name: Upload bundle size report
+        uses: actions/upload-artifact@v4
+        with:
+          name: bundle-size-report
+          path: bundle-size-report.json
+          retention-days: 30
+
+      - name: Comment PR with bundle size
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = JSON.parse(fs.readFileSync('bundle-size-report.json', 'utf8'));
+            
+            const comment = `## 📊 Bundle Size Report
+            
+            ${report.passed ? '✅ All bundle sizes within budget!' : '❌ Bundle size limits exceeded!'}
+            
+            **Summary:**
+            - Total Bundle Size: ${report.summary.totalSize}
+            - First Load JS: ${report.summary.firstLoadJS}
+            
+            **Details:**
+            ${report.details.map(d => `- ${d}`).join('\n')}
+            
+            ---
+            <sub>Bundle size limits: First Load JS: 200 KB, Route JS: 100 KB</sub>`;
+            
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            
+            const bundleSizeComment = comments.find(comment => 
+              comment.body.includes('📊 Bundle Size Report') && 
+              comment.user.type === 'Bot'
+            );
+            
+            if (bundleSizeComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: bundleSizeComment.id,
+                body: comment,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: comment,
+              });
+            }
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: |
+            apps/web/.next/
+            apps/web/out/
+          retention-days: 1
+
+  # ========================================
+  # PARALLEL E2E TESTS
+  # ========================================
+  e2e:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    needs: [setup, build]  # FIXED: Added setup dependency
+    strategy:
+      matrix:
+        # FIXED: Parallelize E2E tests by suite
+        suite: [auth, products, categories, import-export]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Restore dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            apps/*/node_modules
+            packages/*/node_modules
+          key: ${{ needs.setup.outputs.cache-key }}
+          fail-on-cache-miss: true
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts
+          path: apps/web/
+
+      - name: Run E2E tests - ${{ matrix.suite }}
+        run: npm run test:e2e -- --grep "${{ matrix.suite }}"
+        env:
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+          NEXT_PUBLIC_CONVEX_URL: ${{ secrets.NEXT_PUBLIC_CONVEX_URL }}
+          TEST_USER_EMAIL: ${{ secrets.TEST_USER_EMAIL }}
+          TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report-${{ matrix.suite }}
+          path: playwright-report/
+          retention-days: 7
+
+  # ========================================
+  # COVERAGE & REPORTS
+  # ========================================
+  coverage:
+    name: Coverage Report
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download coverage artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: coverage-*
+          merge-multiple: true
+          path: coverage/
+
+      - name: Generate coverage summary
+        run: |
+          echo "## Test Coverage Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f coverage/lcov-report/index.html ]; then
+            echo "Coverage report generated successfully." >> $GITHUB_STEP_SUMMARY
+            # Add actual coverage percentages if available
+            if [ -f coverage/coverage-summary.json ]; then
+              echo "### Coverage Summary" >> $GITHUB_STEP_SUMMARY
+              jq -r '
+                .total | 
+                "- Statements: \(.statements.pct)%\n" +
+                "- Branches: \(.branches.pct)%\n" +
+                "- Functions: \(.functions.pct)%\n" +
+                "- Lines: \(.lines.pct)%"
+              ' coverage/coverage-summary.json >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "⚠️ Coverage report not found." >> $GITHUB_STEP_SUMMARY
+          fi
+
+  # ========================================
+  # SECURITY
+  # ========================================
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    needs: setup  # FIXED: Added dependency to use cached deps
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Restore dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            apps/*/node_modules
+            packages/*/node_modules
+          key: ${{ needs.setup.outputs.cache-key }}
+          fail-on-cache-miss: true
+
+      - name: Run npm audit
+        run: |
+          npm audit --production --audit-level=high
+          AUDIT_EXIT_CODE=$?
+          
+          echo "## Security Scan Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ $AUDIT_EXIT_CODE -eq 0 ]; then
+            echo "✅ No high or critical vulnerabilities found!" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Security vulnerabilities found!" >> $GITHUB_STEP_SUMMARY
+            npm audit --production --json | jq -r '
+              .vulnerabilities | to_entries | map(
+                "### " + .key + "\n" +
+                "- Severity: " + .value.severity + "\n" +
+                "- Via: " + (.value.via | map(.title) | join(", ")) + "\n"
+              ) | join("\n")
+            ' >> $GITHUB_STEP_SUMMARY
+            exit $AUDIT_EXIT_CODE
+          fi
+
+  # ========================================
+  # FINAL CHECK
+  # ========================================
+  all-checks:
+    name: All Checks Passed
+    needs: [lint, type-check, test, build, e2e, security]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Check job results
+        run: |
+          if [[ "${{ needs.lint.result }}" != "success" || 
+                "${{ needs.type-check.result }}" != "success" || 
+                "${{ needs.test.result }}" != "success" || 
+                "${{ needs.build.result }}" != "success" || 
+                "${{ needs.e2e.result }}" != "success" ||
+                "${{ needs.security.result }}" != "success" ]]; then
+            echo "❌ One or more checks failed"
+            exit 1
+          fi
+          echo "✅ All checks passed successfully!"

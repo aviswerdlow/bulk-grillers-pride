@@ -38,10 +38,10 @@ export function ApiKeyStatus({ organizationId, orgSlug, provider }: ApiKeyStatus
   // API key is configured and valid
   if (apiKeyStatus.hasApiKey && apiKeyStatus.isValid) {
     return (
-      <Alert className="border-green-200 bg-green-50">
-        <CheckCircle className="h-4 w-4 text-green-600" />
-        <AlertTitle className="text-green-900">API Key Configured</AlertTitle>
-        <AlertDescription className="text-green-800">
+      <Alert className="border-semantic-success bg-semantic-success pattern-success">
+        <CheckCircle className="h-4 w-4 text-semantic-success" />
+        <AlertTitle className="text-semantic-success">API Key Configured</AlertTitle>
+        <AlertDescription className="text-semantic-success">
           Your {apiKeyStatus.provider} API key is configured and ready to use.
         </AlertDescription>
       </Alert>
@@ -51,11 +51,11 @@ export function ApiKeyStatus({ organizationId, orgSlug, provider }: ApiKeyStatus
   // No API key configured
   if (!apiKeyStatus.hasApiKey) {
     return (
-      <Alert className="border-yellow-200 bg-yellow-50">
-        <AlertCircle className="h-4 w-4 text-yellow-600" />
-        <AlertTitle className="text-yellow-900">API Key Required</AlertTitle>
+      <Alert className="border-semantic-warning bg-semantic-warning pattern-warning">
+        <AlertCircle className="h-4 w-4 text-semantic-warning" />
+        <AlertTitle className="text-semantic-warning">API Key Required</AlertTitle>
         <AlertDescription className="space-y-2">
-          <p className="text-yellow-800">
+          <p className="text-semantic-warning">
             You need to configure your {apiKeyStatus.provider || "AI provider"} API key before you can use AI categorization.
           </p>
           <Button asChild size="sm" variant="outline" className="mt-2">
@@ -72,11 +72,11 @@ export function ApiKeyStatus({ organizationId, orgSlug, provider }: ApiKeyStatus
 
   // API key is invalid
   return (
-    <Alert className="border-red-200 bg-red-50">
-      <AlertCircle className="h-4 w-4 text-red-600" />
-      <AlertTitle className="text-red-900">Invalid API Key</AlertTitle>
+    <Alert className="border-semantic-danger bg-semantic-danger pattern-danger">
+      <AlertCircle className="h-4 w-4 text-semantic-danger" />
+      <AlertTitle className="text-semantic-danger">Invalid API Key</AlertTitle>
       <AlertDescription className="space-y-2">
-        <p className="text-red-800">
+        <p className="text-semantic-danger">
           {apiKeyStatus.error || `Your ${apiKeyStatus.provider} API key appears to be invalid.`}
         </p>
         <Button asChild size="sm" variant="outline" className="mt-2">

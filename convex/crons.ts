@@ -1,5 +1,5 @@
 import { cronJobs } from 'convex/server';
-import { cleanupExpiredTrash } from './functions/products/deletion';
+import { internal } from './_generated/api';
 
 const crons = cronJobs();
 
@@ -7,7 +7,14 @@ const crons = cronJobs();
 crons.daily(
   'cleanupExpiredTrash',
   { hourUTC: 0, minuteUTC: 0 },
-  cleanupExpiredTrash
+  internal.functions.products.deletion.cleanupExpiredTrash
+);
+
+// Schedule cleanup of expired deletion sessions every 5 minutes
+crons.interval(
+  'cleanupExpiredDeletionSessions',
+  { minutes: 5 },
+  internal.functions.accessibility.deletionSessions.cleanupExpiredSessions
 );
 
 export default crons;

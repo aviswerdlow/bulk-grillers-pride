@@ -33,6 +33,7 @@ You MUST utilize SuperClaude features for coordination:
 | quality-agent   | Testing, Security, Performance | --persona-qa, --persona-security | --pup, --seq  | E2E tests, audits, coverage                  |
 | docs-agent      | Technical Writing, Tutorials   | --persona-mentor                 | --c7, --seq   | Documentation, guides, comments              |
 | migration-agent | Schema Evolution, Data         | --persona-backend                | --seq, --c7   | Migrations, compatibility                    |
+| ai-agent        | AI/ML, CrewAI, LangChain       | --persona-analyzer               | --seq, --c7   | AI systems, prompts, multi-provider support  |
 
 ## Task Assignment Algorithm
 
@@ -57,9 +58,14 @@ Assignment_Rules:
 2. **Check Resources**: Review agent availability and current load
 3. **Decompose Tasks**: Break down using evidence-based analysis
 4. **Verify Skills**: Match tasks to agent SuperClaude personas
-5. **Create Dependencies**: Map task relationships
-6. **Assign Work**: Use `/assign-task` with justification
-7. **Monitor Progress**: Track completion and quality
+5. **Create Dependencies**: Map task relationships in issue descriptions
+6. **Assign Work**: Create GitHub Issues with appropriate labels and assignees
+7. **Monitor Progress**: Track issue status and quality
+8. **Task Completion**: 
+   - Ensure agents run `/check-tasks` to see available GitHub Issues
+   - Monitor issue assignments and status labels
+   - Verify issue closure with proper summaries
+   - Have agents run `/check-tasks` again after completing work
 
 ## SuperClaude Commands for Orchestration
 
@@ -79,11 +85,11 @@ Assignment_Rules:
 
 ## Communication Protocol
 
-- **Task Assignment**: Update AGENTS_BOARD.md with clear requirements
-- **Skill Matching**: Specify required SuperClaude personas/tools
-- **Progress Tracking**: Monitor task status and agent `/check-tasks` usage
+- **Task Assignment**: Create GitHub Issues with clear requirements
+- **Skill Matching**: Specify required SuperClaude personas/tools in issue labels
+- **Progress Tracking**: Monitor issue status and agent `/check-tasks` usage
 - **Quality Gates**: Ensure agents use appropriate testing/validation
-- **Inter-Agent Messages**: Use /.agent-messages/ for coordination
+- **Inter-Agent Messages**: Use issue comments and /.agent-messages/ for coordination
 
 ## Evidence-Based Coordination
 
@@ -104,21 +110,28 @@ Assignment_Justification:
 /agent-status all          # View all agent statuses with SuperClaude usage
 /agent-progress           # Check task progress and tool usage
 /agent-metrics            # View performance with persona effectiveness
-/reassign-task T1 agent   # Move task with justification
+gh issue list --state open # View all open tasks
+gh issue list --assignee agent-name # View agent's tasks
 /validate-assignments     # Ensure proper skill matching
 ```
 
-## Task Board Management
+## GitHub Issues Management
 
 ```yaml
-Task_Structure:
-  ID: Unique identifier (T1, T2, etc.)
-  Description: Clear, actionable description
-  Required_Skills: List skills and SuperClaude tools needed
-  Required_Persona: Specify SuperClaude persona
-  Dependencies: List blocking tasks
-  Priority: P0 (critical) to P3 (nice-to-have)
-  Estimated_Hours: Based on complexity analysis
+Issue_Structure:
+  Title: Clear, actionable description
+  Labels: 
+    - agent-[name] (for assignment)
+    - skill-[name] (required skills)
+    - persona-[name] (SuperClaude persona)
+    - priority-[P0-P3] (critical to nice-to-have)
+    - status-[state] (not-started, in-progress, blocked, done)
+  Body:
+    - Clear requirements and context
+    - Required SuperClaude tools
+    - Dependencies on other issues
+    - Estimated effort hours
+  Assignee: Target agent
 ```
 
 ## Quality Enforcement
@@ -140,12 +153,26 @@ Ensure all agents:
 # Receive: "Add shopping cart feature"
 /sc:analyze --arch --seq --feature "shopping cart"
 
-# Output task breakdown:
-T1: Design cart schema (backend-agent, --seq, 4h)
-T2: Create cart API (backend-agent, --c7, 6h)
-T3: Build cart UI (frontend-agent, --magic, 8h)
-T4: Add cart tests (quality-agent, --pup, 4h)
-T5: Document cart API (docs-agent, --c7, 2h)
+# Create GitHub Issues:
+gh issue create --title "Design cart schema" \
+  --label "agent-backend,persona-backend,skill-convex,priority-P0" \
+  --body "Design schema for shopping cart. Tools: --seq. Effort: 4h"
+
+gh issue create --title "Create cart API" \
+  --label "agent-backend,persona-backend,skill-api,priority-P0" \
+  --body "Implement cart API endpoints. Tools: --c7. Effort: 6h"
+
+gh issue create --title "Build cart UI" \
+  --label "agent-frontend,persona-frontend,skill-react,priority-P1" \
+  --body "Create cart UI components. Tools: --magic. Effort: 8h"
+
+gh issue create --title "Add cart tests" \
+  --label "agent-quality,persona-qa,skill-testing,priority-P1" \
+  --body "Write E2E tests for cart. Tools: --pup. Effort: 4h"
+
+gh issue create --title "Document cart API" \
+  --label "agent-docs,persona-mentor,skill-docs,priority-P2" \
+  --body "Create API documentation. Tools: --c7. Effort: 2h"
 ```
 
 ### Load Balancing
@@ -153,9 +180,12 @@ T5: Document cart API (docs-agent, --c7, 2h)
 ```bash
 # Check current workload
 /sc:analyze --workload --agents
+gh issue list --assignee frontend-agent --state open
 
 # Reassign if needed
-/reassign-task T3 frontend-agent "Lower current load than alternative"
+gh issue edit 123 --remove-assignee frontend-agent
+gh issue edit 123 --add-assignee backend-agent
+gh issue comment 123 --body "Reassigned due to workload balancing"
 ```
 
 ### Progress Monitoring

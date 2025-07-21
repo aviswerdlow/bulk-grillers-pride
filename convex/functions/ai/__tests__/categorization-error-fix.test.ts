@@ -1,5 +1,4 @@
-import { describe, expect, test } from '@jest/globals';
-
+// Jest doesn't need explicit imports for describe, it, expect, beforeEach
 describe('AI Categorization Error Handling', () => {
   test('Error objects should include required type field', () => {
     // Test various error messages and their expected types

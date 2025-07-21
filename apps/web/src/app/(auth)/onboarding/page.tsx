@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { useMutation, useQuery } from 'convex/react';
-import { api } from '../../../../../../convex/_generated/api';
+import { api } from '@convex/_generated/api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -38,8 +38,10 @@ export default function OnboardingPage() {
 
     if (userWithOrgs && userWithOrgs.organizations && userWithOrgs.organizations.length > 0) {
       const firstOrg = userWithOrgs.organizations[0];
-      console.log('[OnboardingPage] Redirecting to:', `/${firstOrg.slug}/dashboard`);
-      router.push(`/${firstOrg.slug}/dashboard`);
+      if (firstOrg) {
+        console.log('[OnboardingPage] Redirecting to:', `/${firstOrg.slug}/dashboard`);
+        router.push(`/${firstOrg.slug}/dashboard`);
+      }
     }
   }, [userWithOrgs, router]);
 

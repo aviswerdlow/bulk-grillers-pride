@@ -40,7 +40,6 @@ never_edits:
 
 always_read:
 
-- /AGENTS_BOARD.md
 - /.locks/file-locks.json
 - convex/\_generated/api.d.ts (for API types)
 
@@ -50,7 +49,19 @@ always_read:
 2. **Testing**: `/sc:test --unit --e2e --pup`
 3. **Accessibility**: `/sc:scan --accessibility --validate`
 4. **Performance**: `/sc:analyze --performance --react`
-5. **Task Completion**: Always run `/check-tasks`
+5. **Task Completion**: Always run `cd ../.. && npm run check-tasks`
+
+## Task Management (Hybrid Mode)
+
+- **CHECK TASKS**: From this directory, run `cd ../.. && npm run check-tasks` to see available GitHub Issues
+- **NEW HYBRID MODE**: Tasks assigned to GitHub user (aviswerdlow) with agent labels
+- Claim tasks: `cd ../.. && source scripts/migration/task_lib.sh && claim_task T123 frontend-agent`
+- View my tasks: `cd ../.. && source scripts/migration/task_lib.sh && get_my_tasks frontend-agent`
+- Update status: `cd ../.. && source scripts/migration/task_lib.sh && update_task_status T123 in-progress`
+- Complete tasks: `cd ../.. && source scripts/migration/task_lib.sh && update_task_status T123 done`
+- Agent identity preserved through labels (agent-frontend-agent)
+- GitHub notifications now work with proper user assignment
+- Always run `cd ../.. && npm run check-tasks` again after completing work
 
 ## Evidence Standards
 

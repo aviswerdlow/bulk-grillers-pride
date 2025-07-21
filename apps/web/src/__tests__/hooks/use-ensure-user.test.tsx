@@ -7,7 +7,7 @@ import { useUser, useAuth } from '@clerk/nextjs';
 jest.mock('convex/react');
 jest.mock('@clerk/nextjs');
 // Import the mocked API
-import { api } from '../../../../convex/_generated/api';
+import { api } from '@convex/_generated/api';
 
 describe('useEnsureUser', () => {
   const mockEnsureUser = jest.fn().mockResolvedValue(undefined);

@@ -1,0 +1,266 @@
+name: CI (Remote Cache Optimized)
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '18'
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
+  TURBO_REMOTE_ONLY: true
+  TURBO_CACHE: 'remote'
+  # Disable local caching completely
+  TURBO_CACHE_DIR: '.turbo/empty'
+
+jobs:
+  # Single setup job - no local cache storage
+  setup:
+    name: Install Dependencies
+    runs-on: ubuntu-latest
+    outputs:
+      affected: ${{ steps.affected.outputs.affected }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Get affected packages
+        id: affected
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            AFFECTED=$(npx turbo run build --affected --dry-run=json | jq -r '.packages | join(",")' || echo "")
+            echo "affected=$AFFECTED" >> $GITHUB_OUTPUT
+            echo "Affected packages: $AFFECTED"
+          else
+            echo "affected=" >> $GITHUB_OUTPUT
+          fi
+
+  # Parallel jobs that rely purely on remote cache
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    needs: setup
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linting
+        run: |
+          if [ -n "${{ needs.setup.outputs.affected }}" ]; then
+            npx turbo run lint --affected --concurrency=100%
+          else
+            npx turbo run lint --concurrency=100%
+          fi
+
+  type-check:
+    name: Type Check
+    runs-on: ubuntu-latest
+    needs: setup
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run type checking
+        run: |
+          if [ -n "${{ needs.setup.outputs.affected }}" ]; then
+            npx turbo run type-check --affected --concurrency=100%
+          else
+            npx turbo run type-check --concurrency=100%
+          fi
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    needs: setup
+    strategy:
+      matrix:
+        project: [web, convex]
+        shard: [1, 2]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests for ${{ matrix.project }} (shard ${{ matrix.shard }}/2)
+        run: |
+          if [ "${{ matrix.project }}" = "web" ]; then
+            npm run test:ci -- --selectProjects=web --testPathPattern="$([ ${{ matrix.shard }} = 1 ] && echo '(components|lib|utils)' || echo '(app|contracts)')" --maxWorkers=100%
+          else
+            npm run test:ci -- --selectProjects=convex --testPathPattern="$([ ${{ matrix.shard }} = 1 ] && echo '(ai|auth|categories)' || echo '(dashboard|imports|organizations|products|projects)')" --maxWorkers=100%
+          fi
+        env:
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+          NEXT_PUBLIC_CONVEX_URL: ${{ secrets.NEXT_PUBLIC_CONVEX_URL }}
+
+      - name: Upload coverage reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ matrix.project }}-${{ matrix.shard }}
+          path: coverage/
+          retention-days: 1
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: setup
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build application
+        run: |
+          if [ -n "${{ needs.setup.outputs.affected }}" ]; then
+            npx turbo run build --affected --concurrency=100%
+          else
+            npx turbo run build --concurrency=100%
+          fi
+        env:
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+          NEXT_PUBLIC_CONVEX_URL: ${{ secrets.NEXT_PUBLIC_CONVEX_URL }}
+
+      - name: Cache Analysis
+        run: |
+          echo "## 🚀 Turbo Remote Cache Performance" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          npx turbo run build --dry-run=json | jq -r '
+            "### Build Cache Statistics\n" +
+            "- Total Tasks: " + (.tasks | length | tostring) + "\n" +
+            "- Remote Cache Hits: " + ([.tasks[] | select(.cache.status == "HIT" and .cache.source == "REMOTE")] | length | tostring) + "\n" +
+            "- Cache Miss: " + ([.tasks[] | select(.cache.status == "MISS")] | length | tostring) + "\n" +
+            "- Remote Cache Hit Rate: " + (
+              if (.tasks | length) > 0 then
+                (([.tasks[] | select(.cache.status == "HIT" and .cache.source == "REMOTE")] | length) / (.tasks | length) * 100 | floor | tostring) + "%"
+              else "0%"
+              end
+            ) + "\n\n" +
+            "### Task Timing\n" +
+            (.tasks[] | "- **" + .taskId + "**: " + 
+              (if .cache.status == "HIT" then 
+                "✅ Cached (" + (.cache.timeSaved // "0") + "ms saved)"
+              else 
+                "🔨 Built (" + (.duration // "0") + "ms)"
+              end)
+            ) | join("\n")
+          ' >> $GITHUB_STEP_SUMMARY || echo "Unable to generate cache statistics" >> $GITHUB_STEP_SUMMARY
+
+      - name: Check bundle size
+        id: bundle-size
+        run: |
+          node scripts/check-bundle-size.js --json > bundle-size-report.json
+          echo "### Bundle Size Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          cat bundle-size-report.json | jq -r '
+            "- **Status**: " + (if .passed then "✅ Passed" else "❌ Failed" end) + "\n" +
+            "- **Total Bundle Size**: " + .summary.totalSize + "\n" +
+            "- **First Load JS**: " + .summary.firstLoadJS
+          ' >> $GITHUB_STEP_SUMMARY
+          
+          if [ "$(jq -r '.passed' bundle-size-report.json)" = "false" ]; then
+            echo "Bundle size limits exceeded!"
+            exit 1
+          fi
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: |
+            apps/web/.next/
+            apps/web/out/
+          retention-days: 1
+
+  # Final summary job
+  cache-summary:
+    name: Cache Performance Summary
+    needs: [lint, type-check, test, build]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate comprehensive cache report
+        run: |
+          echo "## 📈 Turbo Remote Cache Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Overall Performance" >> $GITHUB_STEP_SUMMARY
+          
+          # Run all tasks in dry-run to see cache status
+          npx turbo run build lint type-check test:ci --dry-run=json > turbo-summary.json
+          
+          jq -r '
+            "- **Total Packages**: " + (.packages | length | tostring) + "\n" +
+            "- **Total Tasks**: " + (.tasks | length | tostring) + "\n" +
+            "- **Remote Cache Hits**: " + ([.tasks[] | select(.cache.status == "HIT" and .cache.source == "REMOTE")] | length | tostring) + "\n" +
+            "- **Time Saved**: " + (
+              [.tasks[] | select(.cache.status == "HIT") | .cache.timeSaved // 0] | add // 0 | tostring
+            ) + "ms\n" +
+            "- **Overall Cache Hit Rate**: " + (
+              if (.tasks | length) > 0 then
+                (([.tasks[] | select(.cache.status == "HIT")] | length) / (.tasks | length) * 100 | floor | tostring) + "%"
+              else "0%"
+              end
+            )
+          ' turbo-summary.json >> $GITHUB_STEP_SUMMARY || echo "Unable to generate summary" >> $GITHUB_STEP_SUMMARY

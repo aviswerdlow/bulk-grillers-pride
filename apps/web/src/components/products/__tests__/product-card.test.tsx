@@ -1,11 +1,19 @@
-import { render, screen, fireEvent } from '@/__tests__/test-utils';
+import { 
+  render, 
+  screen, 
+  fireEvent
+} from '@/__tests__/test-utils';
+import {
+  setupTest, 
+  cleanupTest,
+  createMockProduct,
+  seedMockData 
+} from '@/__tests__/frontend-test-helpers';
 import { ProductCard } from '../product-card';
 import { Product } from '@/types/models';
 
-// Mock product data
-const mockProduct: Product = {
-  _id: 'prod_123' as any,
-  _creationTime: Date.now(),
+// Use standardized mock product creation
+const mockProduct: Product = createMockProduct({
   handle: 'test-product',
   title: 'Test Product',
   description: 'A test product description',
@@ -15,12 +23,8 @@ const mockProduct: Product = {
   categories: ['category1', 'category2', 'category3', 'category4'],
   image: 'https://example.com/product.jpg',
   tags: [],
-  organizationId: 'org_123' as any,
-  projectId: 'proj_123' as any,
-  createdBy: 'user_123' as any,
-  updatedAt: Date.now(),
   importJobId: 'import_123' as any,
-};
+}) as Product;
 
 describe('ProductCard', () => {
   const mockOnEdit = jest.fn();
@@ -28,7 +32,11 @@ describe('ProductCard', () => {
   const mockOnArchive = jest.fn();
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    setupTest();
+  });
+
+  afterEach(() => {
+    cleanupTest();
   });
 
   it('renders product information correctly', () => {
@@ -82,7 +90,10 @@ describe('ProductCard', () => {
 
   it('formats and displays update date', () => {
     const fixedDate = new Date('2024-01-15').getTime();
-    const productWithDate = { ...mockProduct, updatedAt: fixedDate };
+    const productWithDate = createMockProduct({ 
+      ...mockProduct, 
+      updatedAt: fixedDate 
+    }) as Product;
 
     render(<ProductCard product={productWithDate} />);
 

@@ -18,11 +18,30 @@ jest.mock('sonner', () => ({
   },
 }));
 
+// Mock lucide-react icons
+jest.mock('lucide-react', () => ({
+  Copy: ({ className }: { className?: string }) => <span className={className} data-testid="copy-icon">Copy</span>,
+  Check: ({ className }: { className?: string }) => <span className={className} data-testid="check-icon">Check</span>,
+}));
+
+// Mock Button component to pass through props
+jest.mock('@/components/ui/button', () => ({
+  Button: ({ children, onClick, className, ...props }: any) => (
+    <button onClick={onClick} className={className} {...props}>
+      {children}
+    </button>
+  ),
+}));
+
 describe('SkuCopyButton', () => {
   beforeEach(() => {
     mockWriteText.mockClear();
     (toast.success as jest.Mock).mockClear();
     (toast.error as jest.Mock).mockClear();
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
   });
 
   it('renders icon variant by default', () => {
@@ -62,7 +81,8 @@ describe('SkuCopyButton', () => {
     
     await waitFor(() => {
       // The button should show the check icon
-      const checkIcon = button.querySelector('svg');
+      const checkIcon = screen.getByTestId('check-icon');
+      expect(checkIcon).toBeInTheDocument();
       expect(checkIcon).toHaveClass('text-green-600');
     });
   });

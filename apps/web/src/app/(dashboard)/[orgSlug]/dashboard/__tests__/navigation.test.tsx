@@ -3,6 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useRouter, useParams } from 'next/navigation';
 import { useQuery } from 'convex/react';
+import { api } from '@convex/_generated/api';
 import OrganizationDashboard from '../page';
 // Mock data
 const mockOrganization = {
@@ -75,6 +76,31 @@ jest.mock('convex/react', () => ({
   useQuery: jest.fn(),
 }));
 
+// Mock the Convex API paths
+jest.mock('@convex/_generated/api', () => ({
+  api: {
+    functions: {
+      organizations: {
+        organizations: {
+          getOrganizationBySlug: jest.fn(),
+        },
+      },
+      projects: {
+        projects: {
+          getOrganizationProjects: jest.fn(),
+        },
+      },
+      dashboard: {
+        getDashboardStats: jest.fn(),
+        getRecentActivity: jest.fn(),
+      },
+    },
+  },
+}));
+jest.mock('@convex/_generated/dataModel', () => ({
+  Doc: {},
+}));
+
 // Mock loading component
 jest.mock('@/components/loading', () => ({
   PageLoading: ({ text }: { text?: string }) => <div>{text || 'Loading...'}</div>,
@@ -120,17 +146,21 @@ describe('Dashboard Navigation Tests', () => {
 
   describe('Quick Actions Navigation', () => {
     beforeEach(() => {
-      (useQuery as jest.Mock).mockImplementation((query: any) => {
-        if (query.toString().includes('getOrganizationBySlug')) {
+      (useQuery as jest.Mock).mockImplementation((query: any, args: any) => {
+        // Check if it's the getOrganizationBySlug query
+        if (query === api.functions.organizations.organizations.getOrganizationBySlug) {
           return mockOrganization;
         }
-        if (query.toString().includes('getOrganizationProjects')) {
+        // Check if it's the getOrganizationProjects query
+        if (query === api.functions.projects.projects.getOrganizationProjects) {
           return mockProjects;
         }
-        if (query.toString().includes('getDashboardStats')) {
+        // Check if it's the getDashboardStats query
+        if (query === api.functions.dashboard.getDashboardStats) {
           return mockDashboardStats;
         }
-        if (query.toString().includes('getRecentActivity')) {
+        // Check if it's the getRecentActivity query
+        if (query === api.functions.dashboard.getRecentActivity) {
           return mockRecentActivity;
         }
         return undefined;
@@ -179,11 +209,11 @@ describe('Dashboard Navigation Tests', () => {
 
   describe('Projects Section Navigation', () => {
     it('should have correct href for View All Projects link', async () => {
-      (useQuery as jest.Mock).mockImplementation((query: any) => {
-        if (query.toString().includes('getOrganizationBySlug')) {
+      (useQuery as jest.Mock).mockImplementation((query: any, args: any) => {
+        if (query === api.functions.organizations.organizations.getOrganizationBySlug) {
           return mockOrganization;
         }
-        if (query.toString().includes('getOrganizationProjects')) {
+        if (query === api.functions.projects.projects.getOrganizationProjects) {
           return mockProjects;
         }
         return undefined;
@@ -202,11 +232,11 @@ describe('Dashboard Navigation Tests', () => {
     });
 
     it('should have correct href for individual project links', async () => {
-      (useQuery as jest.Mock).mockImplementation((query: any) => {
-        if (query.toString().includes('getOrganizationBySlug')) {
+      (useQuery as jest.Mock).mockImplementation((query: any, args: any) => {
+        if (query === api.functions.organizations.organizations.getOrganizationBySlug) {
           return mockOrganization;
         }
-        if (query.toString().includes('getOrganizationProjects')) {
+        if (query === api.functions.projects.projects.getOrganizationProjects) {
           return mockProjects;
         }
         return undefined;
@@ -224,11 +254,11 @@ describe('Dashboard Navigation Tests', () => {
     });
 
     it('should show Create Project link when no projects exist', async () => {
-      (useQuery as jest.Mock).mockImplementation((query: any) => {
-        if (query === 'mock-getOrganizationBySlug') {
+      (useQuery as jest.Mock).mockImplementation((query: any, args: any) => {
+        if (query === api.functions.organizations.organizations.getOrganizationBySlug) {
           return mockOrganization;
         }
-        if (query === 'mock-getOrganizationProjects') {
+        if (query === api.functions.projects.projects.getOrganizationProjects) {
           return []; // No projects
         }
         return undefined;
@@ -249,7 +279,7 @@ describe('Dashboard Navigation Tests', () => {
   describe('Header Navigation', () => {
     it('should have correct href for New Project button in header', async () => {
       (useQuery as jest.Mock).mockImplementation((query: any) => {
-        if (query.toString().includes('getOrganizationBySlug')) {
+        if (query === api.functions.organizations.organizations.getOrganizationBySlug) {
           return mockOrganization;
         }
         return undefined;
@@ -271,10 +301,10 @@ describe('Dashboard Navigation Tests', () => {
   describe('Recent Activity Navigation', () => {
     it('should have correct href for View All Activity link', async () => {
       (useQuery as jest.Mock).mockImplementation((query: any) => {
-        if (query.toString().includes('getOrganizationBySlug')) {
+        if (query === api.functions.organizations.organizations.getOrganizationBySlug) {
           return mockOrganization;
         }
-        if (query.toString().includes('getRecentActivity')) {
+        if (query === api.functions.dashboard.getRecentActivity) {
           return mockRecentActivity;
         }
         return undefined;
@@ -296,16 +326,16 @@ describe('Dashboard Navigation Tests', () => {
   describe('All Navigation Links Summary', () => {
     it('should have all expected navigation links with correct hrefs', async () => {
       (useQuery as jest.Mock).mockImplementation((query: any) => {
-        if (query.toString().includes('getOrganizationBySlug')) {
+        if (query === api.functions.organizations.organizations.getOrganizationBySlug) {
           return mockOrganization;
         }
-        if (query.toString().includes('getOrganizationProjects')) {
+        if (query === api.functions.projects.projects.getOrganizationProjects) {
           return mockProjects;
         }
-        if (query.toString().includes('getDashboardStats')) {
+        if (query === api.functions.dashboard.getDashboardStats) {
           return mockDashboardStats;
         }
-        if (query.toString().includes('getRecentActivity')) {
+        if (query === api.functions.dashboard.getRecentActivity) {
           return mockRecentActivity;
         }
         return undefined;

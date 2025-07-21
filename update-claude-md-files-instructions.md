@@ -182,7 +182,6 @@ owns_paths:
 
 ## Always Read
 always_read:
-  - /AGENTS_BOARD.md
   - /.locks/file-locks.json
 
 ## SuperClaude Workflow

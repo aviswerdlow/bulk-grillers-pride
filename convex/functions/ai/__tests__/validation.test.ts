@@ -1,30 +1,68 @@
-import { describe, it, expect } from '@jest/globals';
-import { convexTest, createMockCtx } from '../../../__tests__/test-helpers';
+// Jest doesn't need explicit imports for describe, it, expect, beforeEach
+import { convexTest } from '../../../__tests__/test-helpers';
 
 // Mock the langchain module
 jest.mock('../langchain', () => ({
   AIProvider: 'openai' as const,
   processBatchWithLangChain: jest.fn(),
+  ProductCategorizationCache: jest.fn().mockImplementation(() => ({
+    get: jest.fn().mockReturnValue(null),
+    set: jest.fn(),
+    clear: jest.fn(),
+    size: jest.fn().mockReturnValue(0),
+  })),
+  initializeLLM: jest.fn(),
+  createCategorizationChain: jest.fn(),
+  formatProductsForPrompt: jest.fn(),
+  formatCategoriesForPrompt: jest.fn(),
+  estimateTokenCount: jest.fn().mockReturnValue(100),
+  estimateCost: jest.fn().mockReturnValue({
+    inputCost: 0.01,
+    outputCost: 0.02,
+    totalCost: 0.03,
+  }),
+  generateCacheKey: jest.fn().mockReturnValue('cache-key'),
+  CategorySuggestionSchema: {
+    parse: jest.fn(),
+  },
+  ProductCategorizationResultSchema: {
+    parse: jest.fn(),
+  },
+  ProductCategorizationErrorSchema: {
+    parse: jest.fn(),
+  },
+  BatchCategorizationResultSchema: {
+    parse: jest.fn(),
+  },
 }));
 
 describe('API Key Validation', () => {
-  let t: ReturnType<typeof convexTest>;
+  let ctx: any;
 
   beforeEach(() => {
-    t = convexTest();
+    ctx = convexTest();
   });
 
   describe('validateApiKeyConfiguration', () => {
     it('should detect missing API key', async () => {
-      const userId = await testHelper.createUser({
+      const userId = await ctx.db.insert('users', {
         clerkId: 'user_test123',
         email: 'test@example.com',
+        name: 'Test User',
+        role: 'user',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
       });
 
-      const orgId = await testHelper.createOrganization({
+      const orgId = await ctx.db.insert('organizations', {
         name: 'Test Org',
+        clerkOrganizationId: 'org_123',
         slug: 'test-org',
+        status: 'active',
         settings: {
+          defaultProductStatus: 'active',
+          requireProductApproval: false,
+          enableAiCategorization: true,
           aiProvider: 'openai',
           apiKeys: {
             openai: undefined,
@@ -32,18 +70,26 @@ describe('API Key Validation', () => {
             gemini: undefined,
           },
         },
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
       });
 
-      await testHelper.createMembership({
+      await ctx.db.insert('organizationMemberships', {
         organizationId: orgId,
         userId,
         role: 'admin',
+        status: 'active',
+        permissions: [],
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
       });
 
-      testHelper.withAuth('user_test123');
+      ctx.auth.getUserIdentity.mockResolvedValue({
+        subject: 'user_test123',
+      });
 
       const module = await import('../categorization');
-      const result = await testHelper.runQuery(module.validateApiKeyConfiguration, {
+      const result = await ctx.runQuery('validateApiKeyConfiguration', {
         organizationId: orgId,
       });
 
@@ -53,15 +99,24 @@ describe('API Key Validation', () => {
     });
 
     it('should validate OpenAI API key format', async () => {
-      const userId = await testHelper.createUser({
+      const userId = await ctx.db.insert('users', {
         clerkId: 'user_test123',
         email: 'test@example.com',
+        name: 'Test User',
+        role: 'user',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
       });
 
-      const orgId = await testHelper.createOrganization({
+      const orgId = await ctx.db.insert('organizations', {
         name: 'Test Org',
+        clerkOrganizationId: 'org_123',
         slug: 'test-org',
+        status: 'active',
         settings: {
+          defaultProductStatus: 'active',
+          requireProductApproval: false,
+          enableAiCategorization: true,
           aiProvider: 'openai',
           apiKeys: {
             openai: 'invalid-key',
@@ -69,18 +124,26 @@ describe('API Key Validation', () => {
             gemini: undefined,
           },
         },
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
       });
 
-      await testHelper.createMembership({
+      await ctx.db.insert('organizationMemberships', {
         organizationId: orgId,
         userId,
         role: 'admin',
+        status: 'active',
+        permissions: [],
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
       });
 
-      testHelper.withAuth('user_test123');
+      ctx.auth.getUserIdentity.mockResolvedValue({
+        subject: 'user_test123',
+      });
 
       const module = await import('../categorization');
-      const result = await testHelper.runQuery(module.validateApiKeyConfiguration, {
+      const result = await ctx.runQuery('validateApiKeyConfiguration', {
         organizationId: orgId,
       });
 
@@ -90,15 +153,24 @@ describe('API Key Validation', () => {
     });
 
     it('should validate valid OpenAI API key', async () => {
-      const userId = await testHelper.createUser({
+      const userId = await ctx.db.insert('users', {
         clerkId: 'user_test123',
         email: 'test@example.com',
+        name: 'Test User',
+        role: 'user',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
       });
 
-      const orgId = await testHelper.createOrganization({
+      const orgId = await ctx.db.insert('organizations', {
         name: 'Test Org',
+        clerkOrganizationId: 'org_123',
         slug: 'test-org',
+        status: 'active',
         settings: {
+          defaultProductStatus: 'active',
+          requireProductApproval: false,
+          enableAiCategorization: true,
           aiProvider: 'openai',
           apiKeys: {
             openai: 'sk-1234567890abcdefghijklmnopqrstuvwxyz1234567890',
@@ -106,18 +178,26 @@ describe('API Key Validation', () => {
             gemini: undefined,
           },
         },
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
       });
 
-      await testHelper.createMembership({
+      await ctx.db.insert('organizationMemberships', {
         organizationId: orgId,
         userId,
         role: 'admin',
+        status: 'active',
+        permissions: [],
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
       });
 
-      testHelper.withAuth('user_test123');
+      ctx.auth.getUserIdentity.mockResolvedValue({
+        subject: 'user_test123',
+      });
 
       const module = await import('../categorization');
-      const result = await testHelper.runQuery(module.validateApiKeyConfiguration, {
+      const result = await ctx.runQuery('validateApiKeyConfiguration', {
         organizationId: orgId,
       });
 
@@ -131,7 +211,7 @@ describe('API Key Validation', () => {
     it('should validate available models', async () => {
       const module = await import('../categorization');
       
-      const result = await testHelper.runQuery(module.checkModelAvailability, {
+      const result = await ctx.runQuery('checkModelAvailability', {
         provider: 'openai',
         model: 'gpt-4o',
       });
@@ -143,7 +223,7 @@ describe('API Key Validation', () => {
     it('should detect deprecated models', async () => {
       const module = await import('../categorization');
       
-      const result = await testHelper.runQuery(module.checkModelAvailability, {
+      const result = await ctx.runQuery('checkModelAvailability', {
         provider: 'openai',
         model: 'text-davinci-003',
       });
@@ -156,7 +236,7 @@ describe('API Key Validation', () => {
     it('should suggest corrections for misspelled models', async () => {
       const module = await import('../categorization');
       
-      const result = await testHelper.runQuery(module.checkModelAvailability, {
+      const result = await ctx.runQuery('checkModelAvailability', {
         provider: 'openai',
         model: 'o3',
       });
@@ -169,7 +249,7 @@ describe('API Key Validation', () => {
     it('should list available models for unknown model', async () => {
       const module = await import('../categorization');
       
-      const result = await testHelper.runQuery(module.checkModelAvailability, {
+      const result = await ctx.runQuery('checkModelAvailability', {
         provider: 'openai',
         model: 'unknown-model',
       });
@@ -183,15 +263,24 @@ describe('API Key Validation', () => {
 
   describe('createCategorizationJob with validation', () => {
     it('should reject job creation with missing API key', async () => {
-      const userId = await testHelper.createUser({
+      const userId = await ctx.db.insert('users', {
         clerkId: 'user_test123',
         email: 'test@example.com',
+        name: 'Test User',
+        role: 'user',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
       });
 
-      const orgId = await testHelper.createOrganization({
+      const orgId = await ctx.db.insert('organizations', {
         name: 'Test Org',
+        clerkOrganizationId: 'org_123',
         slug: 'test-org',
+        status: 'active',
         settings: {
+          defaultProductStatus: 'active',
+          requireProductApproval: false,
+          enableAiCategorization: true,
           aiProvider: 'openai',
           apiKeys: {
             openai: undefined,
@@ -199,26 +288,38 @@ describe('API Key Validation', () => {
             gemini: undefined,
           },
         },
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
       });
 
-      const projectId = await testHelper.createProject({
+      const projectId = await ctx.db.insert('projects', {
         organizationId: orgId,
         name: 'Test Project',
-        createdBy: userId,
+        slug: 'test-project',
+        status: 'active',
+        settings: {},
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
       });
 
-      await testHelper.createMembership({
+      await ctx.db.insert('organizationMemberships', {
         organizationId: orgId,
         userId,
         role: 'admin',
+        status: 'active',
+        permissions: [],
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
       });
 
-      testHelper.withAuth('user_test123');
+      ctx.auth.getUserIdentity.mockResolvedValue({
+        subject: 'user_test123',
+      });
 
       const module = await import('../categorization');
       
       await expect(
-        testHelper.runMutation(module.createCategorizationJob, {
+        ctx.runMutation('createCategorizationJob', {
           organizationId: orgId,
           projectId,
           jobType: 'bulk_categorization',
@@ -236,15 +337,24 @@ describe('API Key Validation', () => {
     });
 
     it('should reject job creation with invalid model', async () => {
-      const userId = await testHelper.createUser({
+      const userId = await ctx.db.insert('users', {
         clerkId: 'user_test123',
         email: 'test@example.com',
+        name: 'Test User',
+        role: 'user',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
       });
 
-      const orgId = await testHelper.createOrganization({
+      const orgId = await ctx.db.insert('organizations', {
         name: 'Test Org',
+        clerkOrganizationId: 'org_123',
         slug: 'test-org',
+        status: 'active',
         settings: {
+          defaultProductStatus: 'active',
+          requireProductApproval: false,
+          enableAiCategorization: true,
           aiProvider: 'openai',
           apiKeys: {
             openai: 'sk-1234567890abcdefghijklmnopqrstuvwxyz1234567890',
@@ -252,26 +362,38 @@ describe('API Key Validation', () => {
             gemini: undefined,
           },
         },
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
       });
 
-      const projectId = await testHelper.createProject({
+      const projectId = await ctx.db.insert('projects', {
         organizationId: orgId,
         name: 'Test Project',
-        createdBy: userId,
+        slug: 'test-project',
+        status: 'active',
+        settings: {},
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
       });
 
-      await testHelper.createMembership({
+      await ctx.db.insert('organizationMemberships', {
         organizationId: orgId,
         userId,
         role: 'admin',
+        status: 'active',
+        permissions: [],
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
       });
 
-      testHelper.withAuth('user_test123');
+      ctx.auth.getUserIdentity.mockResolvedValue({
+        subject: 'user_test123',
+      });
 
       const module = await import('../categorization');
       
       await expect(
-        testHelper.runMutation(module.createCategorizationJob, {
+        ctx.runMutation('createCategorizationJob', {
           organizationId: orgId,
           projectId,
           jobType: 'bulk_categorization',

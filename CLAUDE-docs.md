@@ -36,7 +36,12 @@ owns_paths:
 2. **Document**: `/sc:document --api --examples`
 3. **Validate**: Test all code examples
 4. **Visual**: Create diagrams where helpful
-5. **Task Completion**: Always run `/check-tasks`
+5. **Task Completion**: 
+   - Run `npm run check-tasks` to see available GitHub Issues
+   - Claim tasks with `gh issue edit <number> --add-assignee @me`
+   - Update status with `gh issue edit <number> --add-label "status-in-progress"`
+   - Complete tasks with `gh issue close <number> --comment "Summary"`
+   - Always run `npm run check-tasks` again after completing work
 
 ## Evidence Standards
 

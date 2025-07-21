@@ -1,8 +1,8 @@
 import { render, screen, fireEvent, waitFor, act } from '@/__tests__/test-utils';
 import OnboardingPage from '../page';
 import { mockUseQuery, mockUseMutation } from '@/__tests__/test-utils';
-import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
+import { toast } from 'sonner';
 
 // Mock Next.js router
 const mockPush = jest.fn();
@@ -152,7 +152,6 @@ describe('OnboardingPage', () => {
   });
 
   it('creates organization successfully', async () => {
-    const { toast } = require('sonner');
 
     // Make sure mutations are set up properly for this test
     mockUseMutation.mockReset();
@@ -205,7 +204,6 @@ describe('OnboardingPage', () => {
   });
 
   it('handles slug conflict error', async () => {
-    const { toast } = require('sonner');
     
     // Make sure mutations are set up properly for this test
     mockUseMutation.mockReset();
@@ -223,7 +221,9 @@ describe('OnboardingPage', () => {
 
     await act(async () => {
       fireEvent.change(nameInput, { target: { value: 'Test Organization' } });
-      fireEvent.submit(form!);
+      if (form) {
+        fireEvent.submit(form);
+      }
     });
 
     // Wait for error message using findByText for async content
@@ -274,7 +274,9 @@ describe('OnboardingPage', () => {
     
     // Clean up by resolving the promise
     await act(async () => {
-      resolveStoreUser!({});
+      if (resolveStoreUser) {
+        resolveStoreUser({});
+      }
     });
   });
 
@@ -322,13 +324,14 @@ describe('OnboardingPage', () => {
     
     // Clean up
     await act(async () => {
-      resolveStoreUser!({});
+      if (resolveStoreUser) {
+        resolveStoreUser({});
+      }
     });
   });
 
   // Additional test for handling general errors
   it('handles general creation errors', async () => {
-    const { toast } = require('sonner');
     
     // Make sure mutations are set up properly for this test
     mockUseMutation.mockReset();
@@ -346,7 +349,9 @@ describe('OnboardingPage', () => {
 
     await act(async () => {
       fireEvent.change(nameInput, { target: { value: 'Test Organization' } });
-      fireEvent.submit(form!);
+      if (form) {
+        fireEvent.submit(form);
+      }
       // Give time for async operations
       await new Promise(resolve => setTimeout(resolve, 100));
     });

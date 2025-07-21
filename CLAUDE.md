@@ -39,7 +39,6 @@ owns_paths:
 - .prettierrc.\*
 - .github/\*\*
 - /.locks/\*\*
-- /AGENTS_BOARD.md
 
 never_edits:
 
@@ -63,9 +62,9 @@ lock_tier_2_advisory:
 
 always_read:
 
-- /AGENTS_BOARD.md
 - /.locks/file-locks.json
 - /.agent-metrics/metrics.json
+- Run `npm run check-tasks` or `node scripts/check-tasks` to see GitHub Issues
 
 ## SuperClaude Workflow
 
@@ -94,13 +93,19 @@ always_read:
 4. **Coordination**:
 
    - Maintain agent lock system in /.locks/
-   - Update AGENTS_BOARD.md with infrastructure tasks
+   - Create GitHub Issues for infrastructure tasks
    - Monitor agent metrics for performance issues
 
-5. **Task Completion**:
-   - Always run `/check-tasks` after completing work
-   - Update task status in AGENTS_BOARD.md
-   - Check for newly unblocked tasks
+5. **Task Management** (Hybrid GitHub Issues):
+   - Run `npm run check-tasks` or `node scripts/check-tasks` to see available GitHub Issues
+   - **NEW HYBRID MODE**: Tasks are assigned to actual GitHub user (aviswerdlow)
+   - Agent identity preserved through labels (agent-infra-agent)
+   - Claim tasks: `source task_lib.sh && claim_task T123 infra-agent`
+   - Update status: `update_task_status T123 in-progress`
+   - View my tasks: `get_my_tasks infra-agent`
+   - Complete tasks: `update_task_status T123 done`
+   - GitHub notifications now work properly with user assignment
+   - Always run `npm run check-tasks` again after completing work
 
 ## Common Commands
 

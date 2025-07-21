@@ -120,7 +120,7 @@ This project uses a multi-agent AI system for development coordination:
 - **docs-agent**: Documentation maintenance
 - **migration-agent**: Schema and data migrations
 
-See [AGENTS_BOARD.md](./AGENTS_BOARD.md) for current tasks and coordination.
+Use GitHub Issues for task tracking and the `/check-tasks` command for coordination.
 
 ## 🔧 Configuration
 
@@ -149,7 +149,7 @@ See [Deployment Guide](./docs/VERCEL_DEPLOYMENT.md) for detailed instructions.
 
 ## 🤝 Contributing
 
-1. Check [AGENTS_BOARD.md](./AGENTS_BOARD.md) for available tasks
+1. Check GitHub Issues for available tasks or use `/check-tasks` command
 2. Follow the agent system for coordinated development
 3. Write tests for new features
 4. Ensure all tests pass before submitting
@@ -168,7 +168,7 @@ MIT License - see [LICENSE](./LICENSE) file for details.
 ## 🆘 Support
 
 - Check documentation in the `docs/` folder
-- Review [AGENTS_BOARD.md](./AGENTS_BOARD.md) for known issues
+- Review GitHub Issues for known issues and active work
 - Run `npm test` to verify your setup
 
 ---

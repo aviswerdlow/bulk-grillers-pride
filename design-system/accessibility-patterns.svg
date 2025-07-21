@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="0" height="0">
+  <defs>
+    <!-- Info Pattern: Sparse Dots -->
+    <pattern id="info-pattern" patternUnits="userSpaceOnUse" width="16" height="16">
+      <circle cx="2" cy="2" r="1" fill="currentColor" opacity="0.3"/>
+      <circle cx="10" cy="6" r="1" fill="currentColor" opacity="0.3"/>
+      <circle cx="6" cy="10" r="1" fill="currentColor" opacity="0.3"/>
+      <circle cx="14" cy="14" r="1" fill="currentColor" opacity="0.3"/>
+    </pattern>
+    
+    <!-- Info Pattern High Contrast -->
+    <pattern id="info-pattern-hc" patternUnits="userSpaceOnUse" width="16" height="16">
+      <circle cx="2" cy="2" r="1.5" fill="currentColor"/>
+      <circle cx="10" cy="6" r="1.5" fill="currentColor"/>
+      <circle cx="6" cy="10" r="1.5" fill="currentColor"/>
+      <circle cx="14" cy="14" r="1.5" fill="currentColor"/>
+    </pattern>
+
+    <!-- Warning Pattern: Diagonal Stripes -->
+    <pattern id="warning-pattern" patternUnits="userSpaceOnUse" width="8" height="8">
+      <path d="M0,8 L8,0" stroke="currentColor" stroke-width="2" opacity="0.4"/>
+    </pattern>
+    
+    <!-- Warning Pattern High Contrast -->
+    <pattern id="warning-pattern-hc" patternUnits="userSpaceOnUse" width="8" height="8">
+      <path d="M0,8 L8,0" stroke="currentColor" stroke-width="2.5"/>
+      <path d="M-4,4 L4,-4" stroke="currentColor" stroke-width="2.5"/>
+      <path d="M4,12 L12,4" stroke="currentColor" stroke-width="2.5"/>
+    </pattern>
+
+    <!-- Danger Pattern: Cross-Hatch -->
+    <pattern id="danger-pattern" patternUnits="userSpaceOnUse" width="8" height="8">
+      <path d="M0,0 L8,8 M8,0 L0,8" stroke="currentColor" stroke-width="1.5" opacity="0.5"/>
+    </pattern>
+    
+    <!-- Danger Pattern High Contrast -->
+    <pattern id="danger-pattern-hc" patternUnits="userSpaceOnUse" width="8" height="8">
+      <path d="M0,0 L8,8 M8,0 L0,8" stroke="currentColor" stroke-width="2"/>
+    </pattern>
+
+    <!-- Critical Pattern: Dense Checkerboard -->
+    <pattern id="critical-pattern" patternUnits="userSpaceOnUse" width="8" height="8">
+      <rect x="0" y="0" width="4" height="4" fill="currentColor" opacity="0.7"/>
+      <rect x="4" y="4" width="4" height="4" fill="currentColor" opacity="0.7"/>
+    </pattern>
+    
+    <!-- Critical Pattern High Contrast -->
+    <pattern id="critical-pattern-hc" patternUnits="userSpaceOnUse" width="8" height="8">
+      <rect x="0" y="0" width="4" height="4" fill="currentColor"/>
+      <rect x="4" y="4" width="4" height="4" fill="currentColor"/>
+      <rect x="0" y="4" width="4" height="4" fill="white"/>
+      <rect x="4" y="0" width="4" height="4" fill="white"/>
+    </pattern>
+
+    <!-- Focus Ring Pattern for Extra Visibility -->
+    <pattern id="focus-pattern" patternUnits="userSpaceOnUse" width="4" height="4">
+      <rect x="0" y="0" width="2" height="2" fill="currentColor"/>
+      <rect x="2" y="2" width="2" height="2" fill="currentColor"/>
+    </pattern>
+
+    <!-- Loading/Progress Pattern -->
+    <pattern id="progress-pattern" patternUnits="userSpaceOnUse" width="20" height="20">
+      <rect x="0" y="0" width="10" height="20" fill="currentColor" opacity="0.1">
+        <animate attributeName="opacity" values="0.1;0.3;0.1" dur="1.5s" repeatCount="indefinite"/>
+      </rect>
+      <rect x="10" y="0" width="10" height="20" fill="currentColor" opacity="0.3">
+        <animate attributeName="opacity" values="0.3;0.1;0.3" dur="1.5s" repeatCount="indefinite"/>
+      </rect>
+    </pattern>
+  </defs>
+</svg>

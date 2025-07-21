@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import { useMutation } from 'convex/react';
-import { api } from '../../../../convex/_generated/api';
+import { api } from '@convex/_generated/api';
 
 /**
  * Hook that ensures a user record exists in Convex when they sign in

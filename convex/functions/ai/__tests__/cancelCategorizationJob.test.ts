@@ -1,69 +1,119 @@
 import { cancelCategorizationJob } from '../categorization';
-import { Id } from '../../../_generated/dataModel';
+import { convexTest } from '../../../__tests__/test-helpers';
 
 describe('cancelCategorizationJob', () => {
-  let mockCtx: any;
-  let mockJob: any;
-  let mockUser: any;
-  let mockOrgMembership: any;
+  let ctx: any;
+  let jobId: string;
+  let userId: string;
+  let orgId: string;
 
-  beforeEach(() => {
-    // Reset mocks
-    mockJob = {
-      _id: 'job123' as Id<'aiCategorizationJobs'>,
-      organizationId: 'org123' as Id<'organizations'>,
-      status: 'running',
-      startedAt: Date.now() - 10000, // Started 10 seconds ago
-      errors: [], // Add empty errors array per schema
-    };
-
-    mockUser = {
-      _id: 'user123' as Id<'users'>,
+  beforeEach(async () => {
+    ctx = convexTest();
+    
+    // Create mock user
+    userId = await ctx.db.insert('users', {
       clerkId: 'user_test123',
       email: 'test@example.com',
-    };
+      name: 'Test User',
+      role: 'user',
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
 
-    mockOrgMembership = {
-      _id: 'membership123' as Id<'organizationMemberships'>,
-      userId: mockUser._id,
-      organizationId: mockJob.organizationId,
-      deletedAt: null,
-    };
+    // Create mock organization
+    orgId = await ctx.db.insert('organizations', {
+      name: 'Test Org',
+      clerkOrganizationId: 'org_123',
+      slug: 'test-org',
+      status: 'active',
+      settings: {
+        defaultProductStatus: 'active',
+        requireProductApproval: false,
+        enableAiCategorization: true,
+      },
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
 
-    mockCtx = {
-      auth: {
-        getUserIdentity: jest.fn().mockResolvedValue({
-          subject: 'user_test123',
-        }),
+    // Create membership
+    await ctx.db.insert('organizationMemberships', {
+      organizationId: orgId,
+      userId,
+      role: 'admin',
+      status: 'active',
+      permissions: [],
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+
+    // Create AI categorization job
+    jobId = await ctx.db.insert('aiCategorizationJobs', {
+      organizationId: orgId,
+      status: 'running',
+      startedAt: Date.now() - 10000, // Started 10 seconds ago
+      errors: [],
+      jobType: 'batch',
+      prompt: 'Test prompt',
+      aiProvider: 'openai',
+      aiModel: 'gpt-4',
+      productIds: [],
+      categoryContext: {},
+      progress: {
+        total: 10,
+        processed: 0,
+        successful: 0,
+        failed: 0,
+        skipped: 0,
       },
-      db: {
-        get: jest.fn().mockResolvedValue(mockJob),
-        patch: jest.fn().mockResolvedValue(undefined),
-        query: jest.fn().mockImplementation((table) => {
-          if (table === 'users') {
-            return {
-              withIndex: jest.fn().mockReturnValue({
-                unique: jest.fn().mockResolvedValue(mockUser),
-              }),
-            };
-          } else if (table === 'organizationMemberships') {
-            return {
-              withIndex: jest.fn().mockReturnValue({
-                filter: jest.fn().mockReturnValue({
-                  unique: jest.fn().mockResolvedValue(mockOrgMembership),
-                }),
-              }),
-            };
-          }
+      results: [],
+      notifications: { onComplete: true, onError: true },
+      notificationsSent: false,
+      createdBy: userId,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+
+    // Setup auth
+    ctx.auth.getUserIdentity.mockResolvedValue({
+      subject: 'user_test123',
+    });
+
+    // Mock query responses
+    ctx.db.query.mockImplementation((table: string) => {
+      const queryBuilder = {
+        withIndex: jest.fn(() => ({
+          unique: jest.fn(async () => {
+            if (table === 'users') {
+              const users = await ctx.db.query('users').collect();
+              return users.find((u: any) => u.clerkId === 'user_test123');
+            }
+            return null;
+          }),
+          filter: jest.fn(() => ({
+            unique: jest.fn(async () => {
+              if (table === 'organizationMemberships') {
+                const memberships = await ctx.db.query('organizationMemberships').collect();
+                return memberships.find((m: any) => 
+                  m.userId === userId && 
+                  m.organizationId === orgId && 
+                  !m.deletedAt
+                );
+              }
+              return null;
+            }),
+          })),
+        })),
+        collect: jest.fn(async () => {
+          const storage = (ctx.db as any).storage || {};
+          return storage[table] || [];
         }),
-      },
-    };
+      };
+      return queryBuilder;
+    });
   });
 
   it('should successfully cancel a running job', async () => {
-    const jobId = 'job123' as Id<'aiCategorizationJobs'>;
-
-    const result = await cancelCategorizationJob(mockCtx, { jobId });
+    const result = await cancelCategorizationJob(ctx, { jobId });
 
     expect(result).toEqual({
       success: true,
@@ -71,7 +121,7 @@ describe('cancelCategorizationJob', () => {
       jobId,
     });
 
-    expect(mockCtx.db.patch).toHaveBeenCalledWith(
+    expect(ctx.db.patch).toHaveBeenCalledWith(
       jobId,
       expect.objectContaining({
         status: 'cancelled',
@@ -90,11 +140,13 @@ describe('cancelCategorizationJob', () => {
   });
 
   it('should successfully cancel a pending job', async () => {
-    mockJob.status = 'pending';
-    mockJob.startedAt = undefined;
+    // Update job status to pending
+    await ctx.db.patch(jobId, {
+      status: 'pending',
+      startedAt: undefined,
+    });
 
-    const jobId = 'job123' as Id<'aiCategorizationJobs'>;
-    const result = await cancelCategorizationJob(mockCtx, { jobId });
+    const result = await cancelCategorizationJob(ctx, { jobId });
 
     expect(result).toEqual({
       success: true,
@@ -103,7 +155,7 @@ describe('cancelCategorizationJob', () => {
     });
 
     // Should set executionTime to 0 for jobs that haven't started
-    expect(mockCtx.db.patch).toHaveBeenCalledWith(
+    expect(ctx.db.patch).toHaveBeenCalledWith(
       jobId,
       expect.objectContaining({
         executionTime: 0,
@@ -112,86 +164,74 @@ describe('cancelCategorizationJob', () => {
   });
 
   it('should throw error when job is not found', async () => {
-    mockCtx.db.get.mockResolvedValue(null);
+    const nonExistentJobId = 'nonexistent';
+    ctx.db.get.mockResolvedValue(null);
 
-    const jobId = 'nonexistent' as Id<'aiCategorizationJobs'>;
-
-    await expect(cancelCategorizationJob(mockCtx, { jobId })).rejects.toThrow(
+    await expect(cancelCategorizationJob(ctx, { jobId: nonExistentJobId })).rejects.toThrow(
       'Job not found. The categorization job may have been deleted or does not exist.'
     );
   });
 
   it('should throw error when user is not authenticated', async () => {
-    mockCtx.auth.getUserIdentity.mockResolvedValue(null);
+    ctx.auth.getUserIdentity.mockResolvedValue(null);
 
-    const jobId = 'job123' as Id<'aiCategorizationJobs'>;
-
-    await expect(cancelCategorizationJob(mockCtx, { jobId })).rejects.toThrow('Not authenticated');
+    await expect(cancelCategorizationJob(ctx, { jobId })).rejects.toThrow('Not authenticated');
   });
 
   it('should throw error when job is already completed', async () => {
-    mockJob.status = 'completed';
+    await ctx.db.patch(jobId, { status: 'completed' });
 
-    const jobId = 'job123' as Id<'aiCategorizationJobs'>;
-
-    await expect(cancelCategorizationJob(mockCtx, { jobId })).rejects.toThrow(
+    await expect(cancelCategorizationJob(ctx, { jobId })).rejects.toThrow(
       'Cannot cancel a completed job. The categorization process has already finished successfully.'
     );
   });
 
   it('should throw error when job has failed', async () => {
-    mockJob.status = 'failed';
+    await ctx.db.patch(jobId, { status: 'failed' });
 
-    const jobId = 'job123' as Id<'aiCategorizationJobs'>;
-
-    await expect(cancelCategorizationJob(mockCtx, { jobId })).rejects.toThrow(
+    await expect(cancelCategorizationJob(ctx, { jobId })).rejects.toThrow(
       'Cannot cancel a failed job. The categorization process has already failed and stopped.'
     );
   });
 
   it('should throw error when job is already cancelled', async () => {
-    mockJob.status = 'cancelled';
+    await ctx.db.patch(jobId, { status: 'cancelled' });
 
-    const jobId = 'job123' as Id<'aiCategorizationJobs'>;
-
-    await expect(cancelCategorizationJob(mockCtx, { jobId })).rejects.toThrow(
+    await expect(cancelCategorizationJob(ctx, { jobId })).rejects.toThrow(
       'This job has already been cancelled.'
     );
   });
 
   it('should throw error when user does not have permission', async () => {
-    // User not member of organization
-    mockCtx.db.query.mockImplementation((table) => {
-      if (table === 'users') {
-        return {
-          withIndex: jest.fn().mockReturnValue({
-            unique: jest.fn().mockResolvedValue(mockUser),
+    // Override query to return no membership
+    ctx.db.query.mockImplementation((table: string) => {
+      const queryBuilder = {
+        withIndex: jest.fn(() => ({
+          unique: jest.fn(async () => {
+            if (table === 'users') {
+              const users = await ctx.db.query('users').collect();
+              return users.find((u: any) => u.clerkId === 'user_test123');
+            }
+            return null;
           }),
-        };
-      } else if (table === 'organizationMemberships') {
-        return {
-          withIndex: jest.fn().mockReturnValue({
-            filter: jest.fn().mockReturnValue({
-              unique: jest.fn().mockResolvedValue(null), // No membership found
-            }),
-          }),
-        };
-      }
+          filter: jest.fn(() => ({
+            unique: jest.fn(async () => null), // No membership found
+          })),
+        })),
+        collect: jest.fn(async () => []),
+      };
+      return queryBuilder;
     });
 
-    const jobId = 'job123' as Id<'aiCategorizationJobs'>;
-
-    await expect(cancelCategorizationJob(mockCtx, { jobId })).rejects.toThrow(
+    await expect(cancelCategorizationJob(ctx, { jobId })).rejects.toThrow(
       'You do not have permission to cancel this job'
     );
   });
 
   it('should throw error for unknown job status', async () => {
-    mockJob.status = 'processing'; // Invalid status
+    await ctx.db.patch(jobId, { status: 'processing' as any }); // Invalid status
 
-    const jobId = 'job123' as Id<'aiCategorizationJobs'>;
-
-    await expect(cancelCategorizationJob(mockCtx, { jobId })).rejects.toThrow(
+    await expect(cancelCategorizationJob(ctx, { jobId })).rejects.toThrow(
       'Cannot cancel job with status "processing". Only pending or running jobs can be cancelled.'
     );
   });

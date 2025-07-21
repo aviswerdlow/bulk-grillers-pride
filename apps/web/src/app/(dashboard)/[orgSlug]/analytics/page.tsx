@@ -2,7 +2,7 @@
 
 import { useParams } from 'next/navigation';
 import { useQuery } from 'convex/react';
-import { api } from '../../../../../../../convex/_generated/api';
+import { api } from '@convex/_generated/api';
 import { ActivityLogVisualization } from '@/components/activity/activity-log-visualization';
 import { Loading } from '@/components/loading';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

@@ -135,16 +135,16 @@ export function JobErrorAlert({
 
   return (
     <Alert 
-      variant={getErrorSeverity(primaryError.type) as "default" | "destructive"} 
+      variant={getErrorSeverity(primaryError?.type || 'ERROR') as "default" | "destructive"} 
       className={cn("border-2", className)}
     >
       <div className="flex items-start gap-2">
-        {getErrorIcon(primaryError.type)}
+        {getErrorIcon(primaryError?.type || 'ERROR')}
         <div className="flex-1">
-          <AlertTitle>{getErrorTitle(primaryError)}</AlertTitle>
+          <AlertTitle>{primaryError ? getErrorTitle(primaryError) : 'Error'}</AlertTitle>
           <AlertDescription className="space-y-2 mt-2">
-            <p>{primaryError.message}</p>
-            {getErrorAction(primaryError)}
+            <p>{primaryError?.message || 'An error occurred'}</p>
+            {primaryError && getErrorAction(primaryError)}
             
             {errors.length > 1 && (
               <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>

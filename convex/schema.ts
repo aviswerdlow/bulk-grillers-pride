@@ -1,5 +1,6 @@
 import { defineSchema, defineTable } from 'convex/server';
 import { v } from 'convex/values';
+import { agentRegistry, agentMemory, agentTasks, crewSessions } from './schema/crewai';
 
 export default defineSchema({
   // ================================
@@ -843,12 +844,19 @@ export default defineSchema({
     .index('by_organization', ['organizationId'])
     .index('by_expiration', ['expiresAt', 'recoveryStatus'])
     .index('by_product', ['productId'])
-    .index('by_bulk_operation', ['bulkOperationId']),
+    .index('by_bulk_operation', ['bulkOperationId'])
+    // New composite indexes for performance optimization
+    .index('by_org_deleted', ['organizationId', 'deletedAt'])
+    .index('by_org_expires', ['organizationId', 'expiresAt'])
+    .searchIndex('search_trash', {
+      searchField: 'productData.title',
+      filterFields: ['organizationId', 'projectId', 'recoveryStatus'],
+    }),
 
   // Enhanced deletion audit logs
   deletionAuditLogs: defineTable({
     organizationId: v.id('organizations'),
-    projectId: v.id('projects'),
+    projectId: v.optional(v.id('projects')),
     
     // Operation details
     operationType: v.union(
@@ -958,4 +966,499 @@ export default defineSchema({
     .index('by_status', ['organizationId', 'status'])
     .index('by_execution', ['executionId'])
     .index('by_started_at', ['organizationId', 'startedAt']),
+
+  // ================================
+  // PERFORMANCE MONITORING
+  // ================================
+  performanceMetrics: defineTable({
+    // Organization scope
+    organizationId: v.id('organizations'),
+    
+    // Operation identification
+    operation: v.string(), // e.g., "trash.query.list", "dashboard.load", "ai.categorization"
+    
+    // Timing metrics
+    startTime: v.number(), // Unix timestamp
+    duration: v.number(), // milliseconds
+    
+    // Resource metrics
+    itemCount: v.optional(v.number()), // Number of items processed
+    memoryUsed: v.optional(v.number()), // bytes (if available)
+    
+    // Context
+    projectId: v.optional(v.id('projects')),
+    userId: v.optional(v.id('users')),
+    
+    // Status
+    success: v.boolean(),
+    error: v.optional(v.string()),
+    
+    // Additional metadata
+    metadata: v.optional(v.any()), // Operation-specific data (e.g., query parameters)
+    
+    // Aggregation helpers
+    date: v.string(), // YYYY-MM-DD for daily aggregation
+    hour: v.number(), // 0-23 for hourly aggregation
+  })
+    .index('by_organization_operation', ['organizationId', 'operation'])
+    .index('by_timestamp', ['organizationId', 'startTime'])
+    .index('by_date', ['organizationId', 'date'])
+    .index('by_operation_date', ['operation', 'date'])
+    .index('by_project', ['organizationId', 'projectId'])
+    .index('by_user', ['organizationId', 'userId']),
+
+  // ================================
+  // CACHING LAYER
+  // ================================
+  cache: defineTable({
+    // Cache key (unique identifier)
+    key: v.string(),
+    
+    // Cached value (any JSON-serializable data)
+    value: v.any(),
+    
+    // TTL management
+    expiresAt: v.number(), // Unix timestamp when entry expires
+    createdAt: v.number(), // Unix timestamp when entry was created
+    
+    // Access statistics
+    hits: v.number(), // Number of times accessed
+    lastAccessedAt: v.number(), // Unix timestamp of last access
+    
+    // Organization scope (optional)
+    organizationId: v.optional(v.id('organizations')),
+    
+    // Metadata
+    dataType: v.string(), // Type of data cached (e.g., 'categories', 'products')
+    size: v.number(), // Approximate size in bytes
+  })
+    .index('by_key', ['key'])
+    .index('by_expiry', ['expiresAt'])
+    .index('by_organization', ['organizationId'])
+    .index('by_type', ['dataType'])
+    .index('by_access', ['lastAccessedAt']),
+
+  // ================================
+  // ACCESSIBILITY MANAGEMENT
+  // ================================
+  accessibilityPreferences: defineTable({
+    // User association
+    userId: v.id('users'),
+    
+    // User preferences
+    preferences: v.object({
+      reducedMotion: v.boolean(),
+      highContrast: v.boolean(),
+      screenReaderActive: v.boolean(),
+      keyboardNavigation: v.boolean(),
+      preferredConfirmationMethod: v.union(
+        v.literal('standard_click'),
+        v.literal('hold_to_confirm'),
+        v.literal('type_to_confirm'),
+        v.literal('biometric'),
+        v.literal('voice'),
+        v.literal('pattern_draw')
+      ),
+      focusIndicatorStyle: v.union(
+        v.literal('default'),
+        v.literal('high-visibility'),
+        v.literal('custom')
+      ),
+      announcementVerbosity: v.union(
+        v.literal('minimal'),
+        v.literal('standard'),
+        v.literal('verbose')
+      ),
+    }),
+    
+    // Timestamps
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index('by_user', ['userId']),
+
+  // Deletion session state management
+  deletionSessions: defineTable({
+    // Session identification
+    sessionId: v.string(), // Unique session identifier
+    userId: v.id('users'),
+    organizationId: v.id('organizations'),
+    
+    // Session state
+    state: v.union(
+      v.literal('active'),
+      v.literal('completed'),
+      v.literal('cancelled')
+    ),
+    currentStep: v.union(
+      v.literal('review_consequences'),
+      v.literal('select_options'),
+      v.literal('confirm'),
+      v.literal('processing'),
+      v.literal('complete')
+    ),
+    
+    // Deletion data
+    selectedProducts: v.array(v.id('products')),
+    confirmationMethod: v.union(
+      v.literal('standard_click'),
+      v.literal('hold_to_confirm'),
+      v.literal('type_to_confirm'),
+      v.literal('biometric'),
+      v.literal('voice'),
+      v.literal('pattern_draw')
+    ),
+    
+    // Focus history for accessibility
+    focusHistory: v.array(
+      v.object({
+        elementId: v.string(),
+        timestamp: v.number(),
+        context: v.union(
+          v.literal('modal'),
+          v.literal('wizard'),
+          v.literal('table'),
+          v.literal('form')
+        ),
+        scrollPosition: v.optional(
+          v.object({
+            x: v.number(),
+            y: v.number(),
+          })
+        ),
+        stepIndex: v.optional(v.number()),
+      })
+    ),
+    
+    // Security tracking
+    confirmationAttempts: v.optional(v.array(
+      v.object({
+        timestamp: v.number(),
+        method: v.string(),
+        isValid: v.boolean(),
+        errorReason: v.optional(v.string()),
+        ipAddress: v.optional(v.string()),
+        userAgent: v.optional(v.string()),
+      })
+    )),
+    validNonces: v.optional(v.array(v.string())), // For CSRF protection
+    rateLimitWindowStart: v.optional(v.number()), // For rate limiting
+    
+    // Timestamps
+    startedAt: v.number(),
+    completedAt: v.optional(v.number()),
+    lastActivityAt: v.number(), // For session timeout (30 minutes)
+  })
+    .index('by_session', ['sessionId'])
+    .index('by_user', ['userId'])
+    .index('by_organization', ['organizationId'])
+    .index('by_state', ['state'])
+    .index('by_activity', ['lastActivityAt']),
+
+  // ================================
+  // MIGRATION MANAGEMENT
+  // ================================
+  // Track schema migrations for version control
+  schemaMigrations: defineTable({
+    migrationId: v.string(), // Unique identifier like "001_cascade_deletion"
+    version: v.string(), // Semantic version
+    description: v.string(),
+    
+    // Status tracking
+    status: v.union(
+      v.literal('pending'),
+      v.literal('in_progress'),
+      v.literal('completed'),
+      v.literal('failed'),
+      v.literal('rolled_back')
+    ),
+    
+    // Timing
+    startedAt: v.number(),
+    completedAt: v.optional(v.number()),
+    failedAt: v.optional(v.number()),
+    rolledBackAt: v.optional(v.number()),
+    
+    // Changes made
+    changes: v.object({
+      tablesAdded: v.array(v.string()),
+      tablesModified: v.array(v.string()),
+      indexesAdded: v.array(v.string()),
+    }),
+    
+    // Error tracking
+    error: v.optional(v.string()),
+  })
+    .index('by_migration_id', ['migrationId'])
+    .index('by_status', ['status'])
+    .index('by_version', ['version']),
+
+  // ================================
+  // CASCADE DELETION TRANSACTION SUPPORT
+  // ================================
+  // Preserve deleted category assignments for recovery
+  categoryAssignmentsTrash: defineTable({
+    // Original assignment data
+    originalAssignmentId: v.id('categoryProductAssignments'),
+    organizationId: v.id('organizations'),
+    projectId: v.id('projects'),
+    categoryId: v.id('categories'),
+    productId: v.id('products'),
+    
+    // Assignment metadata (preserved from original)
+    assignedBy: v.union(v.literal('manual'), v.literal('ai'), v.literal('import')),
+    confidence: v.optional(v.number()),
+    rationale: v.optional(v.string()),
+    status: v.union(v.literal('active'), v.literal('pending'), v.literal('rejected')),
+    
+    // Assignment audit (preserved)
+    assignedByUser: v.optional(v.id('users')),
+    assignedAt: v.number(),
+    verifiedBy: v.optional(v.id('users')),
+    verifiedAt: v.optional(v.number()),
+    
+    // Deletion tracking
+    deletedAt: v.number(),
+    deletedBy: v.id('users'),
+    cascadeTransactionId: v.string(),
+    
+    // Recovery
+    recoverable: v.boolean(),
+    recoveredAt: v.optional(v.number()),
+    recoveredBy: v.optional(v.id('users')),
+  })
+    .index('by_product', ['productId'])
+    .index('by_transaction', ['cascadeTransactionId'])
+    .index('by_deleted_at', ['deletedAt'])
+    .index('by_category', ['categoryId']),
+
+  // Track cascade deletion transactions for atomicity
+  cascadeTransactions: defineTable({
+    transactionId: v.string(), // Unique transaction identifier
+    organizationId: v.id('organizations'),
+    
+    // Operation details
+    operationType: v.union(
+      v.literal('single_delete'),
+      v.literal('bulk_delete'),
+      v.literal('cascade_delete'),
+      v.literal('restore'),
+      v.literal('permanent_delete')
+    ),
+    status: v.union(
+      v.literal('pending'),
+      v.literal('in_progress'),
+      v.literal('completed'),
+      v.literal('failed'),
+      v.literal('rolled_back')
+    ),
+    
+    // Affected entities
+    primaryEntityId: v.id('products'),
+    affectedEntities: v.object({
+      products: v.array(v.id('products')),
+      variants: v.array(v.id('productVariants')),
+      assignments: v.array(v.id('categoryProductAssignments')),
+      images: v.array(v.string()),
+    }),
+    
+    // Operation steps for rollback
+    operations: v.array(v.object({
+      stepId: v.string(),
+      operation: v.string(),
+      targetType: v.string(),
+      targetId: v.string(),
+      status: v.union(v.literal('pending'), v.literal('completed'), v.literal('failed')),
+      startedAt: v.number(),
+      completedAt: v.optional(v.number()),
+      error: v.optional(v.string()),
+    })),
+    
+    // Execution tracking
+    startedAt: v.number(),
+    completedAt: v.optional(v.number()),
+    executedBy: v.id('users'),
+    
+    // Error handling
+    error: v.optional(v.object({
+      message: v.string(),
+      stack: v.optional(v.string()),
+      failedOperation: v.string(),
+      failedAt: v.number(),
+    })),
+    
+    // Rollback info
+    rollbackAt: v.optional(v.number()),
+    rollbackBy: v.optional(v.id('users')),
+    rollbackReason: v.optional(v.string()),
+    rollbackStatus: v.optional(v.union(
+      v.literal('in_progress'),
+      v.literal('completed'),
+      v.literal('failed')
+    )),
+    
+    // Performance metrics
+    metrics: v.optional(v.object({
+      totalDuration: v.number(),
+      operationCount: v.number(),
+      rollbackDuration: v.optional(v.number()),
+    })),
+  })
+    .index('by_transaction_id', ['transactionId'])
+    .index('by_status', ['status'])
+    .index('by_started_at', ['startedAt'])
+    .index('by_organization', ['organizationId']),
+
+  // Queue for deferred image cleanup
+  imageCleanupQueue: defineTable({
+    storageId: v.string(),
+    originalProductId: v.id('products'),
+    organizationId: v.id('organizations'),
+    
+    // File metadata
+    fileUrl: v.optional(v.string()),
+    fileName: v.optional(v.string()),
+    fileSize: v.optional(v.number()),
+    mimeType: v.optional(v.string()),
+    
+    // Queue metadata
+    queuedAt: v.number(),
+    queuedBy: v.union(v.literal('deletion'), v.literal('migration'), v.literal('manual')),
+    cascadeTransactionId: v.optional(v.string()),
+    priority: v.union(v.literal('low'), v.literal('normal'), v.literal('high')),
+    
+    // Processing status
+    status: v.union(
+      v.literal('pending'),
+      v.literal('processing'),
+      v.literal('completed'),
+      v.literal('failed'),
+      v.literal('skipped'),
+      v.literal('cancelled')
+    ),
+    processedAt: v.optional(v.number()),
+    processingStartedAt: v.optional(v.number()),
+    
+    // Retention policy
+    retainUntil: v.number(), // 90 days after queuing by default
+    permanentRetention: v.boolean(), // Override retention for legal/compliance
+    
+    // Error tracking
+    attempts: v.number(),
+    maxAttempts: v.number(), // Default 3
+    lastAttemptAt: v.optional(v.number()),
+    lastError: v.optional(v.object({
+      message: v.string(),
+      code: v.optional(v.string()),
+      timestamp: v.number(),
+    })),
+    
+    // Cleanup verification
+    verifiedDeleted: v.boolean(),
+    verificationMethod: v.optional(v.union(
+      v.literal('storage_api'),
+      v.literal('manual'),
+      v.literal('automated_scan')
+    )),
+  })
+    .index('by_status', ['status'])
+    .index('by_queued_at', ['queuedAt'])
+    .index('by_retain_until', ['retainUntil'])
+    .index('by_priority_status', ['priority', 'status'])
+    .index('by_product', ['originalProductId']),
+
+  // ================================
+  // CREWAI INTEGRATION
+  // ================================
+  agentRegistry,
+  agentMemory,
+  agentTasks,
+  crewSessions,
+  
+  // ================================
+  // PERFORMANCE BENCHMARKING
+  // ================================
+  performanceBenchmarks: defineTable({
+    name: v.string(),
+    description: v.string(),
+    status: v.union(v.literal('pending'), v.literal('running'), v.literal('completed'), v.literal('failed')),
+    systems: v.array(v.union(v.literal('langchain'), v.literal('crewai'))),
+    providers: v.array(v.union(v.literal('openai'), v.literal('anthropic'), v.literal('gemini'))),
+    
+    testParams: v.object({
+      productCounts: v.array(v.number()),
+      batchSizes: v.array(v.number()),
+      concurrencyLevels: v.array(v.number()),
+      warmupRuns: v.number(),
+      testRuns: v.number(),
+      timeoutMs: v.number(),
+    }),
+    
+    successCriteria: v.object({
+      maxResponseTimeP95: v.number(),
+      minThroughput: v.number(),
+      maxErrorRate: v.number(),
+      maxCostPerProduct: v.number(),
+    }),
+    
+    results: v.array(v.id('benchmarkMetrics')),
+    error: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.optional(v.number()),
+    completedAt: v.optional(v.number()),
+  })
+    .index('by_status', ['status'])
+    .index('by_createdAt', ['createdAt']),
+  
+  benchmarkMetrics: defineTable({
+    benchmarkId: v.id('performanceBenchmarks'),
+    timestamp: v.number(),
+    system: v.union(v.literal('langchain'), v.literal('crewai')),
+    provider: v.union(v.literal('openai'), v.literal('anthropic'), v.literal('gemini')),
+    
+    responseTime: v.object({
+      p50: v.number(),
+      p95: v.number(),
+      p99: v.number(),
+      mean: v.number(),
+      min: v.number(),
+      max: v.number(),
+    }),
+    
+    throughput: v.object({
+      productsPerMinute: v.number(),
+      requestsPerSecond: v.number(),
+      batchSize: v.number(),
+    }),
+    
+    resourceUsage: v.object({
+      tokenCount: v.number(),
+      memoryUsageMB: v.number(),
+      cpuPercentage: v.number(),
+    }),
+    
+    cost: v.object({
+      totalCost: v.number(),
+      costPerProduct: v.number(),
+      tokenCost: v.number(),
+    }),
+    
+    quality: v.object({
+      accuracy: v.number(),
+      errorRate: v.number(),
+      validationPassRate: v.number(),
+    }),
+    
+    testConfig: v.object({
+      productCount: v.number(),
+      concurrency: v.number(),
+      warmupRuns: v.number(),
+      testRuns: v.number(),
+    }),
+    
+    createdAt: v.number(),
+  })
+    .index('by_benchmarkId', ['benchmarkId'])
+    .index('by_system_provider', ['system', 'provider'])
+    .index('by_timestamp', ['timestamp']),
 });

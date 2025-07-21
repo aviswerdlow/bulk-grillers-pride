@@ -85,12 +85,14 @@ export function createTestScenario(options?: {
   const remainingCount = categoryCount - rootCount;
   for (let i = 0; i < remainingCount; i++) {
     const parent = categories[i % rootCount];
-    categories.push(catFactory.createSubcategory(parent._id, parent.path, {
-      overrides: {
-        organizationId: organization._id,
-        projectId: parent.projectId,
-      }
-    }));
+    if (parent) {
+      categories.push(catFactory.createSubcategory(parent._id, parent.path, {
+        overrides: {
+          organizationId: organization._id,
+          projectId: parent.projectId,
+        }
+      }));
+    }
   }
   
   // Create products

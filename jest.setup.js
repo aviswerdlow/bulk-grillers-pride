@@ -1,6 +1,10 @@
 // Add custom jest matchers from jest-dom
 require('@testing-library/jest-dom');
 
+// Configure jest-axe for accessibility testing
+const { toHaveNoViolations } = require('jest-axe');
+expect.extend(toHaveNoViolations);
+
 // Make React available globally for JSX without imports
 const React = require('react');
 global.React = React;

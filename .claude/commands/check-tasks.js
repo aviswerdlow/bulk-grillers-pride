@@ -2,11 +2,12 @@
 
 /**
  * /check-tasks command
- * Shows tasks appropriate for the current agent based on their skills and ownership
+ * Shows GitHub Issues appropriate for the current agent based on their skills and ownership
  */
 
 const fs = require('fs');
 const path = require('path');
+const { execSync } = require('child_process');
 
 // Detect current agent based on CLAUDE.md file
 function detectCurrentAgent() {
@@ -31,76 +32,6 @@ function detectCurrentAgent() {
   }
 }
 
-// Parse AGENTS_BOARD.md to extract tasks
-function parseTasks() {
-  try {
-    const boardPath = path.join(process.cwd(), 'AGENTS_BOARD.md');
-    if (!fs.existsSync(boardPath)) {
-      console.error('❌ AGENTS_BOARD.md not found');
-      return [];
-    }
-
-    const content = fs.readFileSync(boardPath, 'utf8');
-    const tasks = [];
-
-    // Find the Tasks with Required Skills table
-    const tableMatch = content.match(
-      /## Tasks with Required Skills[\s\S]*?\n\| --- \|.*?\|\n([\s\S]*?)(?=\n\n## |$)/
-    );
-    if (!tableMatch) {
-      console.error('❌ No Tasks table found in AGENTS_BOARD.md');
-      return [];
-    }
-
-    // Parse table rows
-    const tableRows = tableMatch[1].split('\n');
-    for (const row of tableRows) {
-      if (!row.trim() || row.includes('---')) continue;
-
-      const cells = row
-        .split('|')
-        .map((cell) => cell.trim())
-        .filter((cell) => cell);
-      if (cells.length >= 7) {
-        const [id, title, skills, owner, status, antiSkills, priority, hours] = cells;
-
-        // Parse status - handle various formats
-        let taskStatus = 'unassigned';
-        let assignee = owner || null;
-
-        if (status.includes('done') || status.includes('✔️')) {
-          taskStatus = 'done';
-        } else if (status.includes('in-progress') || status.includes('🏃')) {
-          taskStatus = 'in-progress';
-        } else if (status.includes('blocked') || status.includes('⏸️')) {
-          taskStatus = 'blocked';
-        } else if (status.includes('ready') || status.includes('✨')) {
-          taskStatus = 'ready';
-        } else if (status.includes('unassigned') || status.includes('📋')) {
-          taskStatus = 'unassigned';
-        } else if (status.includes('assigned') || status.includes('✅')) {
-          taskStatus = 'assigned';
-        }
-
-        tasks.push({
-          id: id,
-          title: title,
-          skills: skills.split(',').map((s) => s.trim()),
-          owner: assignee,
-          status: taskStatus,
-          priority: parseInt(priority.replace('P', '')) || 99,
-          estimate: hours + ' hours',
-        });
-      }
-    }
-
-    return tasks;
-  } catch (error) {
-    console.error('❌ Error parsing AGENTS_BOARD.md:', error.message);
-    return [];
-  }
-}
-
 // Get agent skills from CLAUDE.md
 function getAgentSkills(agentId) {
   try {
@@ -120,30 +51,88 @@ function getAgentSkills(agentId) {
       }
     }
 
-    // Also check the Agent Skills Registry table if agent ID matches
-    const tableMatch = content.match(
-      /\|\s*Agent\s*\|\s*Primary Skills[\s\S]*?\n([\s\S]*?)(?=\n\n|\n##|$)/
-    );
-    if (tableMatch) {
-      const tableRows = tableMatch[1].split('\n');
-      for (const row of tableRows) {
-        if (row.includes(agentId)) {
-          const cells = row.split('|').map((cell) => cell.trim());
-          if (cells.length >= 2) {
-            const primarySkills = cells[1].split(',').map((s) => s.trim().toLowerCase());
-            skills.push(...primarySkills);
-          }
-          break;
-        }
-      }
-    }
-
     // Deduplicate skills
     return [...new Set(skills)];
   } catch (error) {
     console.error('❌ Error getting agent skills:', error.message);
     return [];
   }
+}
+
+// Get GitHub issues using gh CLI
+function getGitHubIssues() {
+  try {
+    // Check if gh CLI is available
+    try {
+      execSync('gh --version', { stdio: 'ignore' });
+    } catch {
+      console.error('❌ GitHub CLI (gh) is not installed. Please install it first.');
+      console.error('   Visit: https://cli.github.com/');
+      return [];
+    }
+
+    // Get all open issues with our task labels
+    const issuesJson = execSync(
+      'gh issue list --state open --limit 200 --json number,title,labels,assignees,state,body',
+      { encoding: 'utf8' }
+    );
+
+    return JSON.parse(issuesJson);
+  } catch (error) {
+    console.error('❌ Error fetching GitHub issues:', error.message);
+    return [];
+  }
+}
+
+// Parse issue to extract task metadata
+function parseIssue(issue) {
+  const task = {
+    id: `#${issue.number}`,
+    title: issue.title,
+    skills: [],
+    owner: null,
+    status: 'unassigned',
+    priority: 99,
+    estimate: 'unknown',
+    labels: issue.labels.map(l => l.name),
+    url: `gh issue view ${issue.number}`
+  };
+
+  // Extract priority from labels
+  const priorityLabel = issue.labels.find(l => l.name.match(/^priority-p(\d)$/i));
+  if (priorityLabel) {
+    task.priority = parseInt(priorityLabel.name.match(/\d+/)[0]);
+  }
+
+  // Extract skills from labels
+  const skillLabels = issue.labels.filter(l => l.name.startsWith('skill-'));
+  task.skills = skillLabels.map(l => l.name.replace('skill-', ''));
+
+  // Extract status from labels
+  const statusLabel = issue.labels.find(l => 
+    ['status-in-progress', 'status-blocked', 'status-ready', 'status-done'].includes(l.name)
+  );
+  if (statusLabel) {
+    task.status = statusLabel.name.replace('status-', '');
+  }
+
+  // Extract owner from assignees or agent labels
+  if (issue.assignees && issue.assignees.length > 0) {
+    task.owner = issue.assignees[0].login;
+  } else {
+    const agentLabel = issue.labels.find(l => l.name.startsWith('agent-'));
+    if (agentLabel) {
+      task.owner = agentLabel.name.replace('agent-', '');
+    }
+  }
+
+  // Try to extract estimate from body
+  const estimateMatch = issue.body?.match(/estimate:\s*(\d+(?:\.\d+)?)\s*hours?/i);
+  if (estimateMatch) {
+    task.estimate = `${estimateMatch[1]} hours`;
+  }
+
+  return task;
 }
 
 // Determine if a task is appropriate for an agent
@@ -154,9 +143,13 @@ function isTaskAppropriate(task, agentId, skills) {
   }
 
   // Check if task is already assigned to another agent
-  // Note: owner field contains suggested agent even when unassigned
   if (task.status === 'in-progress' && task.owner && task.owner !== agentId) {
     return false;
+  }
+
+  // Check if task has agent-specific label
+  if (task.labels.includes(`agent-${agentId}`)) {
+    return true;
   }
 
   // Check if task requires specific skills
@@ -206,17 +199,19 @@ function checkTasks() {
     return;
   }
 
-  console.log(`\n🤖 Checking tasks for ${agentId}...\n`);
+  console.log(`\n🤖 Checking GitHub Issues for ${agentId}...\n`);
 
   const skills = getAgentSkills(agentId);
-  const tasks = parseTasks();
+  const issues = getGitHubIssues();
 
-  if (tasks.length === 0) {
-    console.log('📋 No tasks found in AGENTS_BOARD.md');
+  if (issues.length === 0) {
+    console.log('📋 No issues found. Make sure you are authenticated with gh CLI.');
+    console.log('   Run: gh auth login');
     return;
   }
 
-  // Categorize tasks
+  // Parse and categorize tasks
+  const tasks = issues.map(parseIssue);
   const appropriateTasks = [];
   const blockedTasks = [];
   const inProgressTasks = [];
@@ -225,7 +220,6 @@ function checkTasks() {
   for (const task of tasks) {
     if (task.status === 'done') continue;
 
-
     if (isTaskAppropriate(task, agentId, skills)) {
       if (task.status === 'blocked') {
         blockedTasks.push(task);
@@ -233,7 +227,7 @@ function checkTasks() {
         inProgressTasks.push(task);
       } else if (task.status === 'ready') {
         readyTasks.push(task);
-      } else if (task.status === 'unassigned' || task.status === 'assigned') {
+      } else if (task.status === 'unassigned' || (!task.owner && task.labels.includes(`agent-${agentId}`))) {
         appropriateTasks.push(task);
       }
     }
@@ -244,6 +238,7 @@ function checkTasks() {
     console.log('🔄 In Progress:');
     for (const task of inProgressTasks) {
       console.log(`   ${task.id} - ${task.title} (P${task.priority}, ${task.estimate})`);
+      console.log(`        View: ${task.url}`);
     }
     console.log('');
   }
@@ -253,6 +248,7 @@ function checkTasks() {
     const sorted = readyTasks.sort((a, b) => a.priority - b.priority);
     for (const task of sorted) {
       console.log(`   ${task.id} - ${task.title} (P${task.priority}, ${task.estimate})`);
+      console.log(`        View: ${task.url}`);
     }
     console.log('');
   }
@@ -262,6 +258,7 @@ function checkTasks() {
     const sorted = appropriateTasks.sort((a, b) => a.priority - b.priority);
     for (const task of sorted) {
       console.log(`   ${task.id} - ${task.title} (P${task.priority}, ${task.estimate})`);
+      console.log(`        View: ${task.url}`);
     }
     console.log('');
   }
@@ -270,6 +267,7 @@ function checkTasks() {
     console.log('🚧 Blocked Tasks:');
     for (const task of blockedTasks) {
       console.log(`   ${task.id} - ${task.title} (P${task.priority}, ${task.estimate})`);
+      console.log(`        View: ${task.url}`);
     }
     console.log('');
   }
@@ -283,8 +281,13 @@ function checkTasks() {
     console.log('📭 No appropriate tasks found for your skill set.');
     console.log(`💡 Your skills: ${skills.join(', ')}`);
   } else {
-    console.log('💡 Use `/claim-task <id>` to claim a task');
-    console.log('💡 Use `/complete-task <id> <summary>` to mark a task as done');
+    console.log('💡 To claim a task:');
+    console.log('   gh issue edit <number> --add-assignee @me');
+    console.log('   gh issue edit <number> --add-label "status-in-progress"');
+    console.log('');
+    console.log('💡 To complete a task:');
+    console.log('   gh issue edit <number> --add-label "status-done"');
+    console.log('   gh issue close <number> --comment "Task completed: <summary>"');
   }
 }
 

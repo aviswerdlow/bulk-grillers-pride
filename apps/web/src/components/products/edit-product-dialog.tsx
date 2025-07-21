@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useMutation } from 'convex/react';
-import { api } from '../../../../../convex/_generated/api';
-import { Doc } from '../../../../../convex/_generated/dataModel';
+import { api } from '@convex/_generated/api';
+import { Doc } from '@convex/_generated/dataModel';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { toast } from 'sonner';

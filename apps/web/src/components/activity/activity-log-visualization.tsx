@@ -92,11 +92,11 @@ export function ActivityLogVisualization({
         id: `event-${i}`,
         timestamp: now - (daysAgo * 24 * 60 * 60 * 1000) - (hoursAgo * 60 * 60 * 1000) - (minutesAgo * 60 * 1000),
         userId: `user-${Math.floor(Math.random() * 3)}`,
-        userName: users[Math.floor(Math.random() * users.length)],
-        action: actions[Math.floor(Math.random() * actions.length)],
-        resource: resources[Math.floor(Math.random() * resources.length)],
+        userName: users[Math.floor(Math.random() * users.length)]!,
+        action: actions[Math.floor(Math.random() * actions.length)]!,
+        resource: resources[Math.floor(Math.random() * resources.length)]!,
         resourceId: `res-${Math.floor(Math.random() * 100)}`,
-        resourceName: `${resources[Math.floor(Math.random() * resources.length)]} ${Math.floor(Math.random() * 100)}`,
+        resourceName: `${resources[Math.floor(Math.random() * resources.length)]!} ${Math.floor(Math.random() * 100)}`,
       });
     }
 
@@ -167,7 +167,7 @@ export function ActivityLogVisualization({
       if (!acc[event.userName]) {
         acc[event.userName] = { name: event.userName, actions: 0 };
       }
-      acc[event.userName].actions++;
+      acc[event.userName]!.actions++;
       return acc;
     }, {} as Record<string, { name: string; actions: number }>);
 
@@ -395,7 +395,7 @@ export function ActivityLogVisualization({
                       cx="50%"
                       cy="50%"
                       labelLine={false}
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
                       outerRadius={80}
                       fill="#8884d8"
                       dataKey="value"

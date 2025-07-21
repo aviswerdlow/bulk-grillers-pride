@@ -2,7 +2,7 @@
 
 import { useParams } from 'next/navigation';
 import { useQuery } from 'convex/react';
-import { api } from '../../../../../../../convex/_generated/api';
+import { api } from '@convex/_generated/api';
 import { TeamMembersList } from '@/components/auth/team-members-list';
 import { PendingInvitations } from '@/components/auth/pending-invitations';
 import { OrganizationGuard } from '@/components/auth/organization-guard';
