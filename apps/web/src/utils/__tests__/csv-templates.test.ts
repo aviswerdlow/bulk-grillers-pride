@@ -15,8 +15,15 @@ const originalRevokeObjectURL = URL.revokeObjectURL;
 const originalBlob = global.Blob;
 
 // Mock Blob
-let blobInstances: any[] = [];
-const mockBlob = jest.fn((content, options) => {
+interface MockBlobInstance {
+  content: string[];
+  options: { type: string };
+  size: number;
+  type: string;
+}
+
+let blobInstances: MockBlobInstance[] = [];
+const mockBlob = jest.fn((content: string[], options: { type: string }) => {
   const instance = {
     content,
     options,
@@ -28,7 +35,7 @@ const mockBlob = jest.fn((content, options) => {
 });
 
 describe('CSV Template Generators', () => {
-  let linkElement: any;
+  let linkElement: Partial<HTMLAnchorElement> & { click: jest.Mock; download: string };
 
   beforeEach(() => {
     // Reset all mocks
@@ -54,7 +61,7 @@ describe('CSV Template Generators', () => {
     URL.revokeObjectURL = mockRevokeObjectURL;
     
     // Setup Blob mock
-    global.Blob = mockBlob as any;
+    global.Blob = mockBlob as unknown as typeof Blob;
   });
 
   afterEach(() => {
@@ -286,7 +293,7 @@ describe('CSV Template Generators', () => {
       const categories = JSON.parse(jsonContent);
       
       // Verify level hierarchy
-      const levels = categories.map((cat: any) => cat.level);
+      const levels = categories.map((cat: { level: number }) => cat.level);
       expect(levels).toEqual([1, 2, 3, 4, 5, 5, 4, 5]);
       
       // Verify category names hierarchy
@@ -305,7 +312,7 @@ describe('CSV Template Generators', () => {
       // Mock Date to ensure consistent timestamps
       const mockDate = new Date('2025-01-01T00:00:00Z');
       const originalDate = global.Date;
-      global.Date = jest.fn(() => mockDate) as any;
+      global.Date = jest.fn(() => mockDate) as unknown as typeof Date;
       global.Date.prototype = originalDate.prototype;
       
       downloadCategoriesTemplate();
@@ -316,7 +323,7 @@ describe('CSV Template Generators', () => {
       
       // All timestamps should be the same (since we mocked Date)
       const expectedTimestamp = mockDate.toISOString();
-      categories.forEach((cat: any) => {
+      categories.forEach((cat: { created_at: string; updated_at: string }) => {
         expect(cat.created_at).toBe(expectedTimestamp);
         expect(cat.updated_at).toBe(expectedTimestamp);
       });

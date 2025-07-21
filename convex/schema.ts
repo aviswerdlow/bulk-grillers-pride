@@ -463,6 +463,10 @@ export default defineSchema({
     startedAt: v.optional(v.number()),
     completedAt: v.optional(v.number()),
     executionTime: v.optional(v.number()), // milliseconds
+    
+    // Cost Tracking
+    totalCost: v.optional(v.number()), // Total cost in USD
+    totalTokens: v.optional(v.number()), // Total tokens used
 
     // Real-time Progress Tracking
     currentBatch: v.optional(v.number()), // Current batch being processed
@@ -1407,7 +1411,8 @@ export default defineSchema({
     .index('by_resource', ['resourceType', 'resourceId', 'status'])
     .index('by_organization', ['organizationId', 'status'])
     .index('by_owner', ['ownerId', 'status'])
-    .index('by_expiry', ['expiresAt', 'status']),
+    .index('by_expiry', ['expiresAt', 'status'])
+    .index('by_status', ['status']),
 
   // ================================
   // CREWAI INTEGRATION
@@ -1503,4 +1508,180 @@ export default defineSchema({
     .index('by_benchmarkId', ['benchmarkId'])
     .index('by_system_provider', ['system', 'provider'])
     .index('by_timestamp', ['timestamp']),
+
+  // CrewAI Monitoring Tables
+  crewAIMetrics: defineTable({
+    jobId: v.id('aiCategorizationJobs'),
+    organizationId: v.id('organizations'),
+    timestamp: v.number(),
+    metricType: v.string(),
+    metricName: v.string(),
+    value: v.number(),
+    unit: v.string(),
+    tags: v.any(),
+    metadata: v.optional(v.any()),
+  })
+    .index('by_job', ['jobId'])
+    .index('by_organization_time', ['organizationId', 'timestamp'])
+    .index('by_timestamp', ['timestamp'])
+    .index('by_metric_name', ['metricName', 'timestamp']),
+
+  crewAIAggregatedMetrics: defineTable({
+    organizationId: v.id('organizations'),
+    period: v.string(),
+    startTime: v.number(),
+    endTime: v.number(),
+    metricName: v.string(),
+    count: v.number(),
+    sum: v.number(),
+    min: v.number(),
+    max: v.number(),
+    avg: v.number(),
+    p50: v.number(),
+    p95: v.number(),
+    p99: v.number(),
+    tags: v.any(),
+  })
+    .index('by_organization_time', ['organizationId', 'startTime'])
+    .index('by_metric_period', ['metricName', 'period', 'startTime']),
+
+  crewAIAlerts: defineTable({
+    organizationId: v.id('organizations'),
+    jobId: v.optional(v.id('aiCategorizationJobs')),
+    severity: v.string(),
+    type: v.string(),
+    message: v.string(),
+    metric: v.string(),
+    threshold: v.number(),
+    actualValue: v.number(),
+    timestamp: v.number(),
+    acknowledged: v.boolean(),
+    acknowledgedBy: v.optional(v.id('users')),
+    acknowledgedAt: v.optional(v.number()),
+    resolved: v.boolean(),
+    resolvedAt: v.optional(v.number()),
+    resolvedBy: v.optional(v.id('users')),
+    resolution: v.optional(v.string()),
+    actions: v.array(v.string()),
+    correlationId: v.optional(v.string()),
+    metadata: v.optional(v.any()),
+    notes: v.optional(v.string()),
+    occurrenceCount: v.optional(v.number()),
+    lastOccurrence: v.optional(v.number()),
+    remediationAttempts: v.optional(v.number()),
+    lastRemediationAt: v.optional(v.number()),
+    lastRemediationSuccess: v.optional(v.boolean()),
+  })
+    .index('by_organization_status', ['organizationId', 'resolved'])
+    .index('by_organization_time', ['organizationId', 'timestamp'])
+    .index('by_organization_type', ['organizationId', 'type'])
+    .index('by_job', ['jobId']),
+
+  crewAIAlertHistory: defineTable({
+    alertId: v.id('crewAIAlerts'),
+    action: v.string(),
+    userId: v.id('users'),
+    notes: v.optional(v.string()),
+    timestamp: v.number(),
+  })
+    .index('by_alert', ['alertId', 'timestamp']),
+
+  crewAIOptimizations: defineTable({
+    organizationId: v.id('organizations'),
+    type: v.string(),
+    priority: v.string(),
+    title: v.string(),
+    description: v.string(),
+    expectedImpact: v.object({
+      metric: v.string(),
+      currentValue: v.number(),
+      expectedValue: v.number(),
+      improvementPercent: v.number(),
+    }),
+    implementation: v.object({
+      effort: v.string(),
+      risk: v.string(),
+      steps: v.array(v.string()),
+      duration: v.optional(v.number()),
+    }),
+    status: v.string(),
+    createdAt: v.number(),
+    completedAt: v.optional(v.number()),
+    implementationStarted: v.optional(v.number()),
+    implementationNotes: v.optional(v.string()),
+    actualImpact: v.optional(v.any()),
+    successMetrics: v.optional(v.any()),
+    resultsUpdatedAt: v.optional(v.number()),
+    estimatedValue: v.optional(v.number()),
+    estimatedCost: v.optional(v.number()),
+    estimatedROI: v.optional(v.number()),
+    paybackPeriod: v.optional(v.number()),
+    targetMetric: v.optional(v.string()),
+    relevanceScore: v.optional(v.number()),
+    expectedGapReduction: v.optional(v.number()),
+    tactics: v.optional(v.array(v.string())),
+  })
+    .index('by_organization_status', ['organizationId', 'status'])
+    .index('by_organization_priority', ['organizationId', 'priority'])
+    .index('by_type', ['type', 'status']),
+
+  crewAICostTracking: defineTable({
+    jobId: v.id('aiCategorizationJobs'),
+    organizationId: v.id('organizations'),
+    timestamp: v.number(),
+    provider: v.string(),
+    model: v.string(),
+    inputTokens: v.number(),
+    outputTokens: v.number(),
+    inputCost: v.number(),
+    outputCost: v.number(),
+    totalCost: v.number(),
+    productCount: v.number(),
+    costPerCategorization: v.number(),
+    cacheHits: v.optional(v.number()),
+  })
+    .index('by_job', ['jobId'])
+    .index('by_organization_time', ['organizationId', 'timestamp'])
+    .index('by_provider_model', ['provider', 'model', 'timestamp']),
+
+  crewAIMonthlyReports: defineTable({
+    organizationId: v.id('organizations'),
+    month: v.number(),
+    year: v.number(),
+    stats: v.any(),
+    comparison: v.any(),
+    trends: v.any(),
+    insights: v.any(),
+    createdAt: v.number(),
+  })
+    .index('by_organization_period', ['organizationId', 'year', 'month']),
+
+  crewAIABTests: defineTable({
+    organizationId: v.id('organizations'),
+    optimizationId: v.id('crewAIOptimizations'),
+    config: v.any(),
+    status: v.string(),
+    createdAt: v.number(),
+    completedAt: v.optional(v.number()),
+    results: v.optional(v.any()),
+  })
+    .index('by_organization_status', ['organizationId', 'status'])
+    .index('by_optimization', ['optimizationId']),
+
+  crewAILearnings: defineTable({
+    organizationId: v.id('organizations'),
+    optimizationType: v.string(),
+    learnings: v.any(),
+    createdAt: v.number(),
+  })
+    .index('by_organization_type', ['organizationId', 'optimizationType']),
+
+  crewAIRemediationLog: defineTable({
+    alertId: v.id('crewAIAlerts'),
+    action: v.string(),
+    success: v.boolean(),
+    result: v.string(),
+    timestamp: v.number(),
+  })
+    .index('by_alert', ['alertId', 'timestamp']),
 });

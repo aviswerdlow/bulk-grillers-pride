@@ -1,4 +1,4 @@
-const React = require('react');
+import React from 'react';
 
 // Create a generic component factory
 const createComponent = (displayName, element = 'div') => {
@@ -114,4 +114,4 @@ const radixExports = {
   Slot: createComponent('Slot'),
 };
 
-module.exports = radixExports;
+export default radixExports;

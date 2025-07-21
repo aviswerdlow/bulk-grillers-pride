@@ -1,7 +1,7 @@
-const React = require('react');
+import React from 'react';
 
 // Generic mock for all Radix UI components
-module.exports = new Proxy(
+const radixUIMock = new Proxy(
   {},
   {
     get: (target, prop) => {
@@ -64,3 +64,5 @@ module.exports = new Proxy(
     },
   }
 );
+
+export default radixUIMock;

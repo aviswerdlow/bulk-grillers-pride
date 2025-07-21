@@ -14,7 +14,7 @@ jest.mock('@/components/ui/button', () => ({
 }));
 
 jest.mock('@/components/ui/badge', () => ({
-  Badge: ({ children, variant, className }) => <span className={className}>{children}</span>,
+  Badge: ({ children, className }) => <span className={className}>{children}</span>,
 }));
 
 jest.mock('@/components/ui/progress', () => ({
@@ -63,7 +63,7 @@ jest.mock('@/components/ui/alert', () => ({
 jest.mock('@/components/ui/avatar', () => ({
   Avatar: ({ children, className }) => <div className={className}>{children}</div>,
   AvatarFallback: ({ children }) => <div>{children}</div>,
-  AvatarImage: ({ src, alt }) => <img src={src} alt={alt} />,
+  AvatarImage: ({ src, alt }) => <div data-src={src} data-alt={alt} />,
 }));
 
 jest.mock('@/components/ui/dropdown-menu', () => ({

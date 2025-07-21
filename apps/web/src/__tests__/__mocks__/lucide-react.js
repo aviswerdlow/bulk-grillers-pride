@@ -1,7 +1,7 @@
-const React = require('react');
+import React from 'react';
 
 // Mock all lucide-react icons
-module.exports = new Proxy(
+const mockIcons = new Proxy(
   {},
   {
     get: (target, prop) => {
@@ -14,3 +14,5 @@ module.exports = new Proxy(
     },
   }
 );
+
+export default mockIcons;

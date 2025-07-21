@@ -1,4 +1,4 @@
-const React = require('react');
+import React from 'react';
 
 // Create providers that don't do the provider check
 const ClerkProvider = ({ children }) => React.createElement(React.Fragment, null, children);
@@ -86,7 +86,7 @@ const currentUser = () => ({
   emailAddresses: [{ emailAddress: 'test@example.com' }],
 });
 
-module.exports = {
+export {
   ClerkProvider,
   useAuth,
   useClerk,

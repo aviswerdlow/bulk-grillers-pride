@@ -64,9 +64,52 @@ export class LangChainToCrewAIAdapter {
     provider: AIProvider,
     apiKey: string,
     model: string,
-    options?: ProcessingOptions
+    options?: ProcessingOptions,
+    jobId?: Id<'aiCategorizationJobs'>
   ): Promise<BatchCategorizationResult> {
     console.log(`🔄 [ADAPTER] Starting LangChain to CrewAI adaptation for ${products.length} products`);
+    
+    // Use withMetricsCollection if jobId is provided
+    if (jobId) {
+      return await withMetricsCollection(ctx, jobId, async (collector) => {
+        return await this.processBatchWithLangChainInternal(
+          ctx,
+          products,
+          categories,
+          customPrompt,
+          provider,
+          apiKey,
+          model,
+          options,
+          collector
+        );
+      });
+    } else {
+      return await this.processBatchWithLangChainInternal(
+        ctx,
+        products,
+        categories,
+        customPrompt,
+        provider,
+        apiKey,
+        model,
+        options
+      );
+    }
+  }
+
+  private async processBatchWithLangChainInternal(
+    ctx: ActionCtx,
+    products: Doc<'products'>[],
+    categories: CategoryContext[],
+    customPrompt: string,
+    provider: AIProvider,
+    apiKey: string,
+    model: string,
+    options?: ProcessingOptions,
+    collector?: MetricsCollector
+  ): Promise<BatchCategorizationResult> {
+    const startTime = Date.now();
     
     try {
       // Step 1: Transform LangChain request to CrewAI format
@@ -93,6 +136,17 @@ export class LangChainToCrewAIAdapter {
       // Step 3: Execute CrewAI workflow for uncached products
       const crewResponse = await this.executeCrewAI(ctx, crewRequest, uncachedProducts);
       
+      // Collect performance metrics if collector is available
+      if (collector && crewResponse.metrics) {
+        await collector.collectPerformanceMetrics({
+          responseTime: Date.now() - startTime,
+          throughput: products.length / ((Date.now() - startTime) / 60000),
+          accuracy: crewResponse.products.filter(p => !p.error).length / crewResponse.products.length,
+          errorRate: crewResponse.products.filter(p => p.error).length / crewResponse.products.length,
+          cacheHitRate: cachedResults.length / products.length,
+        });
+      }
+      
       // Step 4: Transform CrewAI response back to LangChain format
       const transformedResults = await this.transformToLangChainResponse(
         crewResponse,
@@ -107,7 +161,30 @@ export class LangChainToCrewAIAdapter {
       const finalResults = [...cachedResults, ...transformedResults];
       
       // Step 7: Validate results match input products
-      return this.validateAndFinalizeResults(finalResults, products);
+      const validatedResults = this.validateAndFinalizeResults(finalResults, products);
+      
+      // Step 8: Track costs if collector is available
+      if (collector && jobId) {
+        const { inputCost, outputCost, totalCost } = await this.estimateProcessingCost(
+          products,
+          categories,
+          provider,
+          model
+        );
+        
+        // Track job cost
+        await ctx.runMutation(internal.functions.ai.monitoring.costAnalyzer.trackJobCost, {
+          jobId,
+          provider,
+          model,
+          inputTokens: Math.round(inputCost * 100000), // Estimate tokens from cost
+          outputTokens: Math.round(outputCost * 100000),
+          productCount: products.length,
+          cacheHits: cachedResults.length,
+        });
+      }
+      
+      return validatedResults;
       
     } catch (error) {
       console.error(`❌ [ADAPTER] Error in LangChain to CrewAI adaptation:`, error);
