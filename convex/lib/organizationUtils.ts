@@ -4,6 +4,9 @@ import { DatabaseReader } from '../_generated/server';
 
 /**
  * Get organization ID from the current authenticated user
+ * Note: This function returns the first active organization membership.
+ * In a multi-tenant system, you may want to pass the organizationId explicitly
+ * or store the current organization in session/context.
  */
 export async function getOrganizationId(
   ctx: { auth: Auth; db: DatabaseReader }
@@ -23,8 +26,14 @@ export async function getOrganizationId(
     return null;
   }
 
-  // Return the user's current organization
-  return user.currentOrganizationId || null;
+  // Get the user's first active organization membership
+  const membership = await ctx.db
+    .query('organizationMemberships')
+    .withIndex('by_user', (q) => q.eq('userId', user._id))
+    .filter((q) => q.eq(q.field('status'), 'active'))
+    .first();
+
+  return membership?.organizationId || null;
 }
 
 /**
@@ -50,9 +59,9 @@ export async function verifyOrganizationAccess(
 
   // Check if user is a member of the organization
   const membership = await ctx.db
-    .query('organizationMembers')
-    .withIndex('by_user_organization', (q) =>
-      q.eq('userId', user._id).eq('organizationId', organizationId)
+    .query('organizationMemberships')
+    .withIndex('by_organization_user', (q) =>
+      q.eq('organizationId', organizationId).eq('userId', user._id)
     )
     .unique();
 

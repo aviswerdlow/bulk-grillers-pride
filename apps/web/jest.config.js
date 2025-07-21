@@ -64,6 +64,7 @@ module.exports = {
     ...webProjectConfig.moduleNameMapper,
     // Mock Radix UI packages
     '^@radix-ui/react-icons$': '<rootDir>/apps/web/src/__tests__/__mocks__/lucide-react.js',
+    '^@radix-ui/react-dialog$': '<rootDir>/apps/web/src/__tests__/__mocks__/@radix-ui/react-dialog.js',
     '^@radix-ui/(.*)$': '<rootDir>/apps/web/src/__tests__/__mocks__/radix-ui-all.js',
     // Mock lucide-react
     '^lucide-react$': '<rootDir>/apps/web/src/__tests__/__mocks__/lucide-react.js',

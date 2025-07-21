@@ -22,110 +22,384 @@ const createComponent = (displayName, element = 'div') => {
   return Component;
 };
 
-// Export all necessary radix-ui components
-const radixExports = {
-  // Common pattern for all radix packages
-  Root: createComponent('Root'),
-  Item: createComponent('Item'),
-  Content: createComponent('Content'),
-  Trigger: createComponent('Trigger', 'button'),
-  Portal: ({ children }) => children,
+// Create a Portal component that just renders children
+const Portal = ({ children }) => children;
+Portal.displayName = 'Portal';
 
-  // Select specific - these are used by the select.tsx component
-  ScrollUpButton: createComponent('ScrollUpButton', 'button'),
-  ScrollDownButton: createComponent('ScrollDownButton', 'button'),
+// Dialog components
+const DialogRoot = createComponent('DialogRoot');
+const DialogTrigger = createComponent('DialogTrigger', 'button');
+const DialogPortal = Portal;
+const DialogOverlay = createComponent('DialogOverlay');
+const DialogContent = createComponent('DialogContent');
+const DialogHeader = createComponent('DialogHeader');
+const DialogFooter = createComponent('DialogFooter');
+const DialogTitle = createComponent('DialogTitle', 'h2');
+const DialogDescription = createComponent('DialogDescription', 'p');
+const DialogClose = createComponent('DialogClose', 'button');
 
-  // Label specific
-  Label: createComponent('Label', 'label'),
+// Popover components
+const PopoverRoot = createComponent('PopoverRoot');
+const PopoverTrigger = createComponent('PopoverTrigger', 'button');
+const PopoverPortal = Portal;
+const PopoverContent = createComponent('PopoverContent');
+const PopoverAnchor = createComponent('PopoverAnchor');
 
-  // Dialog specific
-  DialogRoot: createComponent('DialogRoot'),
-  DialogTrigger: createComponent('DialogTrigger', 'button'),
-  DialogPortal: ({ children }) => children,
-  DialogOverlay: createComponent('DialogOverlay'),
-  DialogContent: createComponent('DialogContent'),
-  DialogHeader: createComponent('DialogHeader'),
-  DialogFooter: createComponent('DialogFooter'),
-  DialogTitle: createComponent('DialogTitle', 'h2'),
-  DialogDescription: createComponent('DialogDescription', 'p'),
-  DialogClose: createComponent('DialogClose', 'button'),
+// ScrollArea components
+const ScrollAreaRoot = createComponent('ScrollAreaRoot');
+const ScrollAreaViewport = createComponent('ScrollAreaViewport');
+const ScrollAreaScrollbar = createComponent('ScrollAreaScrollbar');
+const ScrollAreaThumb = createComponent('ScrollAreaThumb');
+const ScrollAreaCorner = createComponent('ScrollAreaCorner');
 
-  // Popover specific
-  PopoverTrigger: createComponent('PopoverTrigger', 'button'),
-  PopoverContent: createComponent('PopoverContent'),
-  PopoverPortal: ({ children }) => children,
+// Label component
+const LabelRoot = createComponent('Label', 'label');
 
-  // Command specific (cmdk)
-  Command: createComponent('Command'),
-  CommandInput: createComponent('CommandInput', 'input'),
-  CommandList: createComponent('CommandList'),
-  CommandEmpty: createComponent('CommandEmpty'),
-  CommandGroup: createComponent('CommandGroup'),
-  CommandItem: createComponent('CommandItem'),
-  CommandSeparator: createComponent('CommandSeparator'),
-  Input: createComponent('Input', 'input'),
-  Empty: createComponent('Empty'),
+// Select components
+const SelectRoot = createComponent('SelectRoot');
+const SelectTrigger = createComponent('SelectTrigger', 'button');
+const SelectContent = createComponent('SelectContent');
+const SelectItem = createComponent('SelectItem');
+const SelectValue = createComponent('SelectValue');
+const SelectScrollUpButton = createComponent('SelectScrollUpButton', 'button');
+const SelectScrollDownButton = createComponent('SelectScrollDownButton', 'button');
+const SelectItemText = createComponent('SelectItemText');
+const SelectLabel = createComponent('SelectLabel');
+const SelectSeparator = createComponent('SelectSeparator');
+const SelectPortal = Portal;
+const SelectViewport = createComponent('SelectViewport');
+const SelectGroup = createComponent('SelectGroup');
+const SelectIcon = createComponent('SelectIcon');
 
-  // ScrollArea specific
-  ScrollArea: createComponent('ScrollArea'),
-  ScrollAreaViewport: createComponent('ScrollAreaViewport'),
-  ScrollAreaScrollbar: createComponent('ScrollAreaScrollbar'),
-  ScrollAreaThumb: createComponent('ScrollAreaThumb'),
-  ScrollAreaCorner: createComponent('ScrollAreaCorner'),
+// Checkbox components
+const CheckboxRoot = createComponent('CheckboxRoot', 'button');
+const CheckboxIndicator = createComponent('CheckboxIndicator');
 
-  // Other components
-  Image: createComponent('Image', 'img'),
-  Fallback: createComponent('Fallback'),
-  Toggle: createComponent('Toggle', 'button'),
-  Overlay: createComponent('Overlay'),
-  Header: createComponent('Header'),
-  Footer: createComponent('Footer'),
-  Title: createComponent('Title', 'h2'),
-  Description: createComponent('Description', 'p'),
-  Action: createComponent('Action', 'button'),
-  Cancel: createComponent('Cancel', 'button'),
-  ToggleGroup: createComponent('ToggleGroup'),
-  Separator: createComponent('Separator'),
-  Arrow: createComponent('Arrow'),
-  Sub: createComponent('Sub'),
-  SubTrigger: createComponent('SubTrigger', 'button'),
-  SubContent: createComponent('SubContent'),
-  RadioGroup: createComponent('RadioGroup'),
-  RadioItem: createComponent('RadioItem'),
-  ItemIndicator: createComponent('ItemIndicator'),
-  CheckboxItem: createComponent('CheckboxItem'),
-  ItemText: createComponent('ItemText'),
-  Label: createComponent('Label', 'label'),
-  Group: createComponent('Group'),
-  Value: createComponent('Value'),
-  Icon: createComponent('Icon'),
-  Viewport: createComponent('Viewport'),
-  SelectTrigger: createComponent('SelectTrigger', 'button'),
-  SelectContent: createComponent('SelectContent'),
-  SelectItem: createComponent('SelectItem'),
-  SelectValue: createComponent('SelectValue'),
-  SelectScrollUpButton: createComponent('SelectScrollUpButton', 'button'),
-  SelectScrollDownButton: createComponent('SelectScrollDownButton', 'button'),
-  SelectItemText: createComponent('SelectItemText'),
-  SelectLabel: createComponent('SelectLabel'),
-  SelectSeparator: createComponent('SelectSeparator'),
-  Indicator: createComponent('Indicator'),
-  List: createComponent('List'),
-  Slot: createComponent('Slot'),
+// RadioGroup components
+const RadioGroupRoot = createComponent('RadioGroupRoot');
+const RadioGroupItem = createComponent('RadioGroupItem');
+const RadioGroupIndicator = createComponent('RadioGroupIndicator');
+
+// Switch components
+const SwitchRoot = createComponent('SwitchRoot', 'button');
+const SwitchThumb = createComponent('SwitchThumb');
+
+// Separator component
+const SeparatorRoot = createComponent('Separator');
+
+// Toggle components
+const ToggleRoot = createComponent('Toggle', 'button');
+const ToggleGroupRoot = createComponent('ToggleGroup');
+const ToggleGroupItem = createComponent('ToggleGroupItem', 'button');
+
+// Dropdown Menu components
+const DropdownMenuRoot = createComponent('DropdownMenuRoot');
+const DropdownMenuTrigger = createComponent('DropdownMenuTrigger', 'button');
+const DropdownMenuContent = createComponent('DropdownMenuContent');
+const DropdownMenuItem = createComponent('DropdownMenuItem');
+const DropdownMenuCheckboxItem = createComponent('DropdownMenuCheckboxItem');
+const DropdownMenuRadioGroup = createComponent('DropdownMenuRadioGroup');
+const DropdownMenuRadioItem = createComponent('DropdownMenuRadioItem');
+const DropdownMenuItemIndicator = createComponent('DropdownMenuItemIndicator');
+const DropdownMenuLabel = createComponent('DropdownMenuLabel');
+const DropdownMenuSeparator = createComponent('DropdownMenuSeparator');
+const DropdownMenuSub = createComponent('DropdownMenuSub');
+const DropdownMenuSubContent = createComponent('DropdownMenuSubContent');
+const DropdownMenuSubTrigger = createComponent('DropdownMenuSubTrigger', 'button');
+const DropdownMenuPortal = Portal;
+
+// Avatar components
+const AvatarRoot = createComponent('AvatarRoot');
+const AvatarImage = createComponent('AvatarImage', 'img');
+const AvatarFallback = createComponent('AvatarFallback');
+
+// Tooltip components
+const TooltipProvider = ({ children }) => children;
+const TooltipRoot = createComponent('TooltipRoot');
+const TooltipTrigger = createComponent('TooltipTrigger', 'button');
+const TooltipContent = createComponent('TooltipContent');
+const TooltipPortal = Portal;
+
+// Tabs components
+const TabsRoot = createComponent('TabsRoot');
+const TabsList = createComponent('TabsList');
+const TabsTrigger = createComponent('TabsTrigger', 'button');
+const TabsContent = createComponent('TabsContent');
+
+// Collapsible components
+const CollapsibleRoot = createComponent('CollapsibleRoot');
+const CollapsibleTrigger = createComponent('CollapsibleTrigger', 'button');
+const CollapsibleContent = createComponent('CollapsibleContent');
+
+// AlertDialog components
+const AlertDialogRoot = createComponent('AlertDialogRoot');
+const AlertDialogTrigger = createComponent('AlertDialogTrigger', 'button');
+const AlertDialogPortal = Portal;
+const AlertDialogOverlay = createComponent('AlertDialogOverlay');
+const AlertDialogContent = createComponent('AlertDialogContent');
+const AlertDialogHeader = createComponent('AlertDialogHeader');
+const AlertDialogFooter = createComponent('AlertDialogFooter');
+const AlertDialogTitle = createComponent('AlertDialogTitle', 'h2');
+const AlertDialogDescription = createComponent('AlertDialogDescription', 'p');
+const AlertDialogAction = createComponent('AlertDialogAction', 'button');
+const AlertDialogCancel = createComponent('AlertDialogCancel', 'button');
+
+// Progress components
+const ProgressRoot = createComponent('ProgressRoot');
+const ProgressIndicator = createComponent('ProgressIndicator');
+
+// Slot component (special)
+const Slot = createComponent('Slot');
+
+// Form components
+const FormRoot = createComponent('FormRoot', 'form');
+const FormField = createComponent('FormField');
+const FormItem = createComponent('FormItem');
+const FormLabel = createComponent('FormLabel', 'label');
+const FormControl = createComponent('FormControl');
+const FormDescription = createComponent('FormDescription');
+const FormMessage = createComponent('FormMessage');
+const FormSubmit = createComponent('FormSubmit', 'button');
+
+// Create namespace exports for each Radix UI package
+const dialogExports = {
+  Root: DialogRoot,
+  Trigger: DialogTrigger,
+  Portal: DialogPortal,
+  Overlay: DialogOverlay,
+  Content: DialogContent,
+  Header: DialogHeader,
+  Footer: DialogFooter,
+  Title: DialogTitle,
+  Description: DialogDescription,
+  Close: DialogClose,
 };
 
-export default radixExports;
+const popoverExports = {
+  Root: PopoverRoot,
+  Trigger: PopoverTrigger,
+  Portal: PopoverPortal,
+  Content: PopoverContent,
+  Anchor: PopoverAnchor,
+};
 
-// Also export individual components for named imports
-export const {
-  Root,
-  Item,
-  Content,
-  Trigger,
-  Portal,
-  ScrollUpButton,
-  ScrollDownButton,
-  Label,
+const scrollAreaExports = {
+  Root: ScrollAreaRoot,
+  Viewport: ScrollAreaViewport,
+  Scrollbar: ScrollAreaScrollbar,
+  Thumb: ScrollAreaThumb,
+  Corner: ScrollAreaCorner,
+};
+
+const labelExports = {
+  Root: LabelRoot,
+};
+
+const selectExports = {
+  Root: SelectRoot,
+  Trigger: SelectTrigger,
+  Content: SelectContent,
+  Item: SelectItem,
+  Value: SelectValue,
+  ScrollUpButton: SelectScrollUpButton,
+  ScrollDownButton: SelectScrollDownButton,
+  ItemText: SelectItemText,
+  Label: SelectLabel,
+  Separator: SelectSeparator,
+  Portal: SelectPortal,
+  Viewport: SelectViewport,
+  Group: SelectGroup,
+  Icon: SelectIcon,
+};
+
+const checkboxExports = {
+  Root: CheckboxRoot,
+  Indicator: CheckboxIndicator,
+};
+
+const radioGroupExports = {
+  Root: RadioGroupRoot,
+  Item: RadioGroupItem,
+  Indicator: RadioGroupIndicator,
+};
+
+const switchExports = {
+  Root: SwitchRoot,
+  Thumb: SwitchThumb,
+};
+
+const separatorExports = {
+  Root: SeparatorRoot,
+};
+
+const toggleExports = {
+  Root: ToggleRoot,
+};
+
+const toggleGroupExports = {
+  Root: ToggleGroupRoot,
+  Item: ToggleGroupItem,
+};
+
+const dropdownMenuExports = {
+  Root: DropdownMenuRoot,
+  Trigger: DropdownMenuTrigger,
+  Content: DropdownMenuContent,
+  Item: DropdownMenuItem,
+  CheckboxItem: DropdownMenuCheckboxItem,
+  RadioGroup: DropdownMenuRadioGroup,
+  RadioItem: DropdownMenuRadioItem,
+  ItemIndicator: DropdownMenuItemIndicator,
+  Label: DropdownMenuLabel,
+  Separator: DropdownMenuSeparator,
+  Sub: DropdownMenuSub,
+  SubContent: DropdownMenuSubContent,
+  SubTrigger: DropdownMenuSubTrigger,
+  Portal: DropdownMenuPortal,
+};
+
+const avatarExports = {
+  Root: AvatarRoot,
+  Image: AvatarImage,
+  Fallback: AvatarFallback,
+};
+
+const tooltipExports = {
+  Provider: TooltipProvider,
+  Root: TooltipRoot,
+  Trigger: TooltipTrigger,
+  Content: TooltipContent,
+  Portal: TooltipPortal,
+};
+
+const tabsExports = {
+  Root: TabsRoot,
+  List: TabsList,
+  Trigger: TabsTrigger,
+  Content: TabsContent,
+};
+
+const collapsibleExports = {
+  Root: CollapsibleRoot,
+  Trigger: CollapsibleTrigger,
+  Content: CollapsibleContent,
+};
+
+const alertDialogExports = {
+  Root: AlertDialogRoot,
+  Trigger: AlertDialogTrigger,
+  Portal: AlertDialogPortal,
+  Overlay: AlertDialogOverlay,
+  Content: AlertDialogContent,
+  Header: AlertDialogHeader,
+  Footer: AlertDialogFooter,
+  Title: AlertDialogTitle,
+  Description: AlertDialogDescription,
+  Action: AlertDialogAction,
+  Cancel: AlertDialogCancel,
+};
+
+const progressExports = {
+  Root: ProgressRoot,
+  Indicator: ProgressIndicator,
+};
+
+const slotExports = {
+  Slot: Slot,
+};
+
+const formExports = {
+  Root: FormRoot,
+  Field: FormField,
+  Item: FormItem,
+  Label: FormLabel,
+  Control: FormControl,
+  Description: FormDescription,
+  Message: FormMessage,
+  Submit: FormSubmit,
+};
+
+// Main exports object that handles all packages
+const allExports = {
+  // Dialog exports
+  ...dialogExports,
+  Dialog: dialogExports,
+  // Popover exports
+  ...popoverExports,
+  Popover: popoverExports,
+  // ScrollArea exports
+  ...scrollAreaExports,
+  ScrollArea: scrollAreaExports,
+  // Label exports
+  ...labelExports,
+  Label: labelExports,
+  // Select exports
+  ...selectExports,
+  Select: selectExports,
+  // Checkbox exports
+  ...checkboxExports,
+  Checkbox: checkboxExports,
+  // RadioGroup exports
+  ...radioGroupExports,
+  RadioGroup: radioGroupExports,
+  // Switch exports
+  ...switchExports,
+  Switch: switchExports,
+  // Separator exports
+  ...separatorExports,
+  Separator: separatorExports,
+  // Toggle exports
+  ...toggleExports,
+  Toggle: toggleExports,
+  // ToggleGroup exports
+  ...toggleGroupExports,
+  ToggleGroup: toggleGroupExports,
+  // DropdownMenu exports
+  ...dropdownMenuExports,
+  DropdownMenu: dropdownMenuExports,
+  // Avatar exports
+  ...avatarExports,
+  Avatar: avatarExports,
+  // Tooltip exports
+  ...tooltipExports,
+  Tooltip: tooltipExports,
+  // Tabs exports
+  ...tabsExports,
+  Tabs: tabsExports,
+  // Collapsible exports
+  ...collapsibleExports,
+  Collapsible: collapsibleExports,
+  // AlertDialog exports
+  ...alertDialogExports,
+  AlertDialog: alertDialogExports,
+  // Progress exports
+  ...progressExports,
+  Progress: progressExports,
+  // Slot
+  Slot,
+  // Form exports
+  ...formExports,
+  Form: formExports,
+};
+
+// Export everything as both default and named exports
+export default allExports;
+
+// Also export all individual components as named exports
+export {
+  // Dialog
+  DialogRoot as Root,
+  DialogTrigger as Trigger,
+  DialogPortal as Portal,
+  DialogOverlay as Overlay,
+  DialogContent as Content,
+  DialogHeader as Header,
+  DialogFooter as Footer,
+  DialogTitle as Title,
+  DialogDescription as Description,
+  DialogClose as Close,
+  
+  // Keep specific exports for backwards compatibility
   DialogRoot,
   DialogTrigger,
   DialogPortal,
@@ -136,58 +410,49 @@ export const {
   DialogTitle,
   DialogDescription,
   DialogClose,
+  
+  // Popover
+  PopoverRoot,
   PopoverTrigger,
-  PopoverContent,
   PopoverPortal,
-  Command,
-  CommandInput,
-  CommandList,
-  CommandEmpty,
-  CommandGroup,
-  CommandItem,
-  CommandSeparator,
-  Input,
-  Empty,
-  ScrollArea,
+  PopoverContent,
+  PopoverAnchor,
+  
+  // ScrollArea
+  ScrollAreaRoot,
   ScrollAreaViewport,
   ScrollAreaScrollbar,
   ScrollAreaThumb,
   ScrollAreaCorner,
-  Image,
-  Fallback,
-  Toggle,
-  Overlay,
-  Header,
-  Footer,
-  Title,
-  Description,
-  Action,
-  Cancel,
-  ToggleGroup,
-  Separator,
-  Arrow,
-  Sub,
-  SubTrigger,
-  SubContent,
-  RadioGroup,
-  RadioItem,
-  ItemIndicator,
-  CheckboxItem,
-  ItemText,
-  Group,
-  Value,
-  Icon,
-  Viewport,
-  SelectTrigger,
-  SelectContent,
-  SelectItem,
-  SelectValue,
-  SelectScrollUpButton,
-  SelectScrollDownButton,
-  SelectItemText,
-  SelectLabel,
-  SelectSeparator,
-  Indicator,
-  List,
+  
+  // Label
+  LabelRoot,
+  
+  // Other exports
   Slot,
-} = radixExports;
+  Portal,
+};
+
+// Also export package-specific namespaces
+export {
+  dialogExports,
+  popoverExports,
+  scrollAreaExports,
+  labelExports,
+  selectExports,
+  checkboxExports,
+  radioGroupExports,
+  switchExports,
+  separatorExports,
+  toggleExports,
+  toggleGroupExports,
+  dropdownMenuExports,
+  avatarExports,
+  tooltipExports,
+  tabsExports,
+  collapsibleExports,
+  alertDialogExports,
+  progressExports,
+  slotExports,
+  formExports,
+};
