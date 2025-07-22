@@ -98,7 +98,7 @@ describe('UI Components Accessibility', () => {
     });
 
     it('traps focus within dialog', async () => {
-      const _user = userEvent.setup();
+      userEvent.setup();
       
       render(
         <Dialog defaultOpen>

@@ -1,5 +1,3 @@
-import React from 'react';
-import { CategorySelector } from '@/components/categories/category-selector';
 import { Category } from '@/types/models';
 import { Id } from '@convex/_generated/dataModel';
 

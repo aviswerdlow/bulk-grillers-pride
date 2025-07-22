@@ -55,16 +55,13 @@ export function CreateImportJobDialog({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   // Note: Using (api as any) as a workaround until Convex dev server regenerates the API types
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const createImportJob = useMutation((api as any).functions.imports.imports.createImportJob);
+  const createImportJob = useMutation(api.functions.imports.imports.createImportJob);
    
   const startProductImport = useMutation(
-    (api as any).functions.imports.productImport.startProductImport
+    api.functions.imports.productImport.startProductImport
   );
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const generateUploadUrl = useMutation((api as any).functions.imports.imports.generateUploadUrl);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const completeFileUpload = useMutation((api as any).functions.imports.imports.completeFileUpload);
+  const generateUploadUrl = useMutation(api.functions.imports.imports.generateUploadUrl);
+  const completeFileUpload = useMutation(api.functions.imports.imports.completeFileUpload);
 
   const {
     register,

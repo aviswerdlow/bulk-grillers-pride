@@ -60,7 +60,7 @@ const mockMembers = [
   },
 ];
 
-const mockActiveSessions = [
+const _mockActiveSessions = [
   { userId: 'user_123', lastActiveAt: Date.now() },
   { userId: 'user_456', lastActiveAt: Date.now() },
 ];
@@ -78,14 +78,12 @@ describe('TeamMembersList', () => {
     mockRemoveUser = jest.fn().mockResolvedValue(undefined);
 
     // Setup default query responses
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    mockUseQuery.mockImplementation((_query: any, _args?: any) => {
+    mockUseQuery.mockImplementation(() => {
       // Return mock members by default
       return mockMembers;
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    mockUseMutation.mockImplementation((_mutation: any) => {
+    mockUseMutation.mockImplementation(() => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const mutationName = (_mutation as any)?._functionName || (_mutation as any)?.name || (_mutation as any)?.toString() || '';
       let mutationFn: jest.Mock;
@@ -179,7 +177,7 @@ describe('TeamMembersList', () => {
     });
 
     it('shows "Unnamed User" for users without names', () => {
-      mockUseQuery.mockImplementation((_query: any, _args?: any) => {
+      mockUseQuery.mockImplementation(() => {
         // Return mock data for unnamed users test
         return [
           {
@@ -228,7 +226,7 @@ describe('TeamMembersList', () => {
     });
 
     it('shows empty state when no members', () => {
-      mockUseQuery.mockImplementation((_query: any, _args?: any) => {
+      mockUseQuery.mockImplementation(() => {
         // Return empty array for no members test
         return [];
       });
@@ -333,7 +331,7 @@ describe('TeamMembersList', () => {
           userId: 'user_456',
           role: 'member',
         });
-      } catch (error) {
+      } catch {
         // Error is expected
       }
 
@@ -393,7 +391,7 @@ describe('TeamMembersList', () => {
           organizationId: 'org_123',
           userId: 'user_789',
         });
-      } catch (error) {
+      } catch {
         // Error is expected
       }
 

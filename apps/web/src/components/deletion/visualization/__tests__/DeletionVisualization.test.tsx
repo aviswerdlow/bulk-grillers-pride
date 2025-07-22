@@ -13,27 +13,54 @@ jest.mock('@/contexts/accessibility', () => ({
 }));
 
 // Mock UI components
+interface MockComponentProps {
+  children?: React.ReactNode;
+  [key: string]: unknown;
+}
+
 jest.mock('@/components/ui/card', () => ({
-  Card: ({ children }: any) => <div data-testid="card">{children}</div>,
-  CardHeader: ({ children }: any) => <div data-testid="card-header">{children}</div>,
-  CardContent: ({ children }: any) => <div data-testid="card-content">{children}</div>,
-  CardTitle: ({ children }: any) => <h3>{children}</h3>,
+  Card: ({ children }: MockComponentProps) => <div data-testid="card">{children}</div>,
+  CardHeader: ({ children }: MockComponentProps) => <div data-testid="card-header">{children}</div>,
+  CardContent: ({ children }: MockComponentProps) => <div data-testid="card-content">{children}</div>,
+  CardTitle: ({ children }: MockComponentProps) => <h3>{children}</h3>,
 }));
 
 jest.mock('@/components/ui/alert', () => ({
-  Alert: ({ children }: any) => <div data-testid="alert">{children}</div>,
-  AlertDescription: ({ children }: any) => <div>{children}</div>,
+  Alert: ({ children }: MockComponentProps) => <div data-testid="alert">{children}</div>,
+  AlertDescription: ({ children }: MockComponentProps) => <div>{children}</div>,
 }));
 
 jest.mock('@/components/ui/badge', () => ({
-  Badge: ({ children }: any) => <span data-testid="badge">{children}</span>,
+  Badge: ({ children }: MockComponentProps) => <span data-testid="badge">{children}</span>,
 }));
 
+interface TabsProps extends MockComponentProps {
+  value?: string;
+  onValueChange?: (value: string) => void;
+}
+
+interface TabsListProps extends MockComponentProps {
+  currentValue?: string;
+  onValueChange?: (value: string) => void;
+}
+
+interface TabsTriggerProps extends MockComponentProps {
+  value: string;
+  currentValue?: string;
+  onValueChange?: (value: string) => void;
+}
+
+interface TabsContentProps extends MockComponentProps {
+  value: string;
+  currentValue?: string;
+}
+
 jest.mock('@/components/ui/tabs', () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const React = require('react');
   return {
-    Tabs: ({ children, value, onValueChange }: any) => {
-      const childrenWithProps = React.Children.map(children, (child: any) => {
+    Tabs: ({ children, value, onValueChange }: TabsProps) => {
+      const childrenWithProps = React.Children.map(children, (child: React.ReactElement) => {
         if (React.isValidElement(child)) {
           return React.cloneElement(child, { currentValue: value, onValueChange });
         }
@@ -41,8 +68,8 @@ jest.mock('@/components/ui/tabs', () => {
       });
       return <div data-testid="tabs">{childrenWithProps}</div>;
     },
-    TabsList: ({ children, currentValue, onValueChange }: any) => {
-      const childrenWithProps = React.Children.map(children, (child: any) => {
+    TabsList: ({ children, currentValue, onValueChange }: TabsListProps) => {
+      const childrenWithProps = React.Children.map(children, (child: React.ReactElement) => {
         if (React.isValidElement(child)) {
           return React.cloneElement(child, { currentValue, onValueChange });
         }
@@ -50,7 +77,7 @@ jest.mock('@/components/ui/tabs', () => {
       });
       return <div data-testid="tabs-list">{childrenWithProps}</div>;
     },
-    TabsTrigger: ({ children, value, currentValue, onValueChange }: any) => (
+    TabsTrigger: ({ children, value, onValueChange }: TabsTriggerProps) => (
       <button 
         role="tab" 
         aria-label={`${children} View`}
@@ -59,7 +86,7 @@ jest.mock('@/components/ui/tabs', () => {
         {children}
       </button>
     ),
-    TabsContent: ({ children, value, currentValue }: any) => {
+    TabsContent: ({ children, value, currentValue }: TabsContentProps) => {
       if (value === currentValue) {
         return <div>{children}</div>;
       }
@@ -82,8 +109,14 @@ jest.mock('lucide-react', () => ({
 }));
 
 // Mock the individual view components
+interface ViewProps {
+  items: DeletionImpactItem[];
+  selectedItems: Set<string>;
+  onItemToggle: (id: string) => void;
+}
+
 jest.mock('../DeletionTreeView', () => ({
-  DeletionTreeView: ({ items, selectedItems, onItemToggle }: any) => (
+  DeletionTreeView: ({ items, selectedItems, onItemToggle }: ViewProps) => (
     <div data-testid="tree-view">
       Tree View - {items.length} items, {selectedItems.size} selected
       <button onClick={() => onItemToggle('item-1')}>Toggle Item 1</button>
@@ -92,7 +125,7 @@ jest.mock('../DeletionTreeView', () => ({
 }));
 
 jest.mock('../DeletionListView', () => ({
-  DeletionListView: ({ items, selectedItems }: any) => (
+  DeletionListView: ({ items, selectedItems }: Omit<ViewProps, 'onItemToggle'>) => (
     <div data-testid="list-view">
       List View - {items.length} items, {selectedItems.size} selected
     </div>
@@ -100,7 +133,7 @@ jest.mock('../DeletionListView', () => ({
 }));
 
 jest.mock('../DeletionGraphView', () => ({
-  DeletionGraphView: ({ items, selectedItems }: any) => (
+  DeletionGraphView: ({ items, selectedItems }: Omit<ViewProps, 'onItemToggle'>) => (
     <div data-testid="graph-view">
       Graph View - {items.length} items, {selectedItems.size} selected
     </div>

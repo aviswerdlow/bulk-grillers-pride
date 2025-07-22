@@ -143,7 +143,7 @@ describe('Deletion Flow Accessibility', () => {
     });
 
     it('should announce product selection changes', async () => {
-      const _user = userEvent.setup();
+      userEvent.setup();
       const { rerender } = render(
         <ConvexClientProvider>
           <DeleteProductDialog
@@ -395,7 +395,7 @@ describe('Deletion Flow Accessibility', () => {
 
   describe('Alternative Confirmation Methods', () => {
     it('should support hold-to-confirm method', async () => {
-      const _user = userEvent.setup();
+      userEvent.setup();
       
       render(
         <ConvexClientProvider>

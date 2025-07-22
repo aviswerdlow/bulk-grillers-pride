@@ -36,7 +36,7 @@ describe('OrganizationSwitcher', () => {
     slug: 'test-org',
   });
 
-  const mockOrganizations = [
+  const _mockOrganizations = [
     {
       ...mockCurrentOrg,
       memberRole: 'admin',
@@ -76,8 +76,7 @@ describe('OrganizationSwitcher', () => {
     });
 
     // Mock Convex queries
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    mockUseQuery.mockImplementation((_query: any, _args?: any) => {
+    mockUseQuery.mockImplementation(() => {
       // Return undefined for all queries to avoid type conflicts
       // The component should handle undefined gracefully
       return undefined;
@@ -298,7 +297,7 @@ describe('OrganizationSwitcher', () => {
 
   describe('organization name initials', () => {
     it('generates correct initials for single word', () => {
-      mockUseQuery.mockImplementation((_query: any, _args?: any) => {
+      mockUseQuery.mockImplementation(() => {
         // Return undefined for all queries to avoid type conflicts
         return undefined;
       });
@@ -309,7 +308,7 @@ describe('OrganizationSwitcher', () => {
     });
 
     it('generates correct initials for multiple words', () => {
-      mockUseQuery.mockImplementation((_query: any, _args?: any) => {
+      mockUseQuery.mockImplementation(() => {
         // Return undefined for all queries to avoid type conflicts
         return undefined;
       });

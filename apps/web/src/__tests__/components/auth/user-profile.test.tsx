@@ -71,7 +71,7 @@ describe('UserProfile', () => {
   });
 
   it('shows loading state when data is not loaded', () => {
-    mockUseUser.user = null as any;
+    mockUseUser.user = null as unknown;
 
     render(<UserProfile />);
 

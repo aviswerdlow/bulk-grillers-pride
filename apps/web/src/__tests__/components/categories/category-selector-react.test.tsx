@@ -1,5 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { useQuery } from 'convex/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { Id } from '@convex/_generated/dataModel';
 
 // Mock Convex
@@ -12,12 +11,16 @@ jest.mock('@/components/categories/category-selector', () => ({
   CategorySelector: ({
     value,
     onChange,
-    organizationId,
-    projectId,
     multiple,
     disabled,
     onExpand,
-  }: any) => {
+  }: MockComponentProps & { 
+    value?: string | string[]; 
+    onChange?: (value: string | string[]) => void;
+    multiple?: boolean;
+    disabled?: boolean;
+    onExpand?: (categoryId: string) => void;
+  }) => {
     const mockCategories = [
       {
         _id: 'cat_1',
