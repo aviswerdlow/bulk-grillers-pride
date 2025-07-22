@@ -6,7 +6,7 @@
 /**
  * Generic API response wrapper
  */
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   data?: T;
   error?: ApiError;
   success: boolean;
@@ -19,7 +19,7 @@ export interface ApiResponse<T = any> {
 export interface ApiError {
   code: string;
   message: string;
-  details?: Record<string, any>;
+  details?: Record<string, unknown>;
   field?: string;
   stack?: string;
 }
@@ -27,7 +27,7 @@ export interface ApiError {
 /**
  * Paginated response structure
  */
-export interface PaginatedResponse<T = any> {
+export interface PaginatedResponse<T = unknown> {
   items: T[];
   pagination: {
     page: number;
@@ -61,7 +61,7 @@ export interface SortParams {
  */
 export interface FilterParams {
   search?: string;
-  filters?: Record<string, any>;
+  filters?: Record<string, unknown>;
   dateRange?: {
     start: Date | string;
     end: Date | string;
@@ -79,7 +79,7 @@ export interface QueryParams extends PaginationParams, SortParams, FilterParams 
 /**
  * Batch operation request
  */
-export interface BatchRequest<T = any> {
+export interface BatchRequest<T = unknown> {
   operations: BatchOperation<T>[];
   transactional?: boolean;
 }
@@ -87,7 +87,7 @@ export interface BatchRequest<T = any> {
 /**
  * Single batch operation
  */
-export interface BatchOperation<T = any> {
+export interface BatchOperation<T = unknown> {
   id: string;
   action: 'create' | 'update' | 'delete';
   data?: T;
@@ -112,7 +112,7 @@ export interface BatchOperationResult {
   id: string;
   success: boolean;
   error?: ApiError;
-  data?: any;
+  data?: unknown;
 }
 
 /**
@@ -136,13 +136,13 @@ export interface FileUploadResponse {
   fileType: string;
   url: string;
   thumbnailUrl?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 /**
  * WebSocket message structure
  */
-export interface WebSocketMessage<T = any> {
+export interface WebSocketMessage<T = unknown> {
   type: 'update' | 'create' | 'delete' | 'error' | 'ping' | 'pong';
   payload?: T;
   timestamp: number;

@@ -28,6 +28,7 @@ import {
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { useMutation } from 'convex/react';
+import { Organization } from '@/types/models';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -64,7 +65,7 @@ export default function OrganizationSettingsPage() {
 
   const currentUser = useQuery(api.functions.auth.users.currentWithOrganizations);
 
-  const currentUserRole = currentUser?.organizations?.find((org: any) => org._id === organization?._id)
+  const currentUserRole = currentUser?.organizations?.find((org) => org._id === organization?._id)
     ?.membership.role;
 
   // Loading state
@@ -161,7 +162,7 @@ function GeneralSettings({
   organization, 
   currentUserRole 
 }: { 
-  organization: any;
+  organization: Organization;
   currentUserRole?: string;
 }) {
   const [name, setName] = useState(organization.name);
@@ -532,7 +533,7 @@ function TeamSettings({
   organization, 
   currentUserRole 
 }: { 
-  organization: any;
+  organization: Organization;
   currentUserRole?: string;
 }) {
   return (
@@ -603,7 +604,7 @@ function TeamSettings({
 }
 
 // Billing Settings Component
-function BillingSettings({ organization }: { organization: any }) {
+function BillingSettings({ organization }: { organization: Organization }) {
   return (
     <div className="space-y-6">
       <Card>

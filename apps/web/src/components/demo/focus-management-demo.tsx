@@ -314,7 +314,7 @@ export function FocusManagementDemo() {
         <CardHeader>
           <CardTitle>Roving TabIndex (Toolbar)</CardTitle>
           <CardDescription>
-            Use arrow keys to navigate toolbar items. Only one item has tabindex="0" at a time.
+            Use arrow keys to navigate toolbar items. Only one item has tabindex=&ldquo;0&rdquo; at a time.
           </CardDescription>
         </CardHeader>
         <CardContent>

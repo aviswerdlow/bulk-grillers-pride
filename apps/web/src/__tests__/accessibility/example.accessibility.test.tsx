@@ -27,6 +27,7 @@ describe('Accessibility Setup Verification', () => {
     const { container } = render(
       <div>
         {/* Image without alt text - should fail */}
+        {/* eslint-disable-next-line jsx-a11y/alt-text, @next/next/no-img-element */}
         <img src="/test.jpg" />
       </div>
     );

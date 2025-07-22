@@ -1,5 +1,5 @@
-import React, { ReactElement } from 'react';
-import { render, screen, waitFor } from '@/__tests__/test-utils';
+import React from 'react';
+import { render, screen } from '@/__tests__/test-utils';
 import userEvent from '@testing-library/user-event';
 import { setupTest, cleanupTest } from '@/__tests__/frontend-test-helpers';
 import { A11yTestUtils } from '../utils/A11yTestUtils';
@@ -79,7 +79,7 @@ describe('UI Components Accessibility', () => {
         );
       };
 
-      const { container } = render(<TestDialog />);
+      render(<TestDialog />);
 
       // Test keyboard navigation
       await A11yTestUtils.testKeyboardNavigation(
@@ -98,7 +98,7 @@ describe('UI Components Accessibility', () => {
     });
 
     it('traps focus within dialog', async () => {
-      const user = userEvent.setup();
+      const _user = userEvent.setup();
       
       render(
         <Dialog defaultOpen>
@@ -182,7 +182,7 @@ describe('UI Components Accessibility', () => {
         );
       };
 
-      const { rerender } = render(<TestAlert />);
+      render(<TestAlert />);
       
       await A11yTestUtils.testScreenReaderAnnouncements(
         async () => {

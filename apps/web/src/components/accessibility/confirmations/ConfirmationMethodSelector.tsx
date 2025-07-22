@@ -136,7 +136,7 @@ export function ConfirmationMethodSelector({
       <div>
         <h3 className="text-sm font-medium mb-1">Confirmation Method</h3>
         <p className="text-sm text-muted-foreground">
-          Choose how you'd like to confirm important actions
+          Choose how you&apos;d like to confirm important actions
         </p>
       </div>
 

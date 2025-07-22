@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, screen } from '@/__tests__/test-utils';
 import { ProductCardMini } from '../product-card-mini';
+import { ProductCardSkeleton } from '../product-card-skeleton';
 import { setupTest, cleanupTest, createMockProduct } from '@/__tests__/frontend-test-helpers';
 import { Product } from '@/types/models';
 

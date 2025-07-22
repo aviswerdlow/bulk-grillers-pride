@@ -13,7 +13,7 @@ export interface DeletionImpactItem {
     count?: number;
     size?: number;
     lastModified?: Date;
-    [key: string]: any;
+    [key: string]: string | number | boolean | Date | undefined;
   };
 }
 

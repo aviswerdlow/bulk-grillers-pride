@@ -26,14 +26,9 @@ const createComponent = (displayName, element = 'div') => {
 const Portal = ({ children }) => children;
 Portal.displayName = 'Portal';
 
-// Export all Dialog components
-export const Root = createComponent('DialogRoot');
-export const Trigger = createComponent('DialogTrigger', 'button');
+// Export all Popover components
+export const Root = createComponent('PopoverRoot');
+export const Trigger = createComponent('PopoverTrigger', 'button');
 export const Portal = Portal;
-export const Overlay = createComponent('DialogOverlay');
-export const Content = createComponent('DialogContent');
-export const Header = createComponent('DialogHeader');
-export const Footer = createComponent('DialogFooter');
-export const Title = createComponent('DialogTitle', 'h2');
-export const Description = createComponent('DialogDescription', 'p');
-export const Close = createComponent('DialogClose', 'button');
+export const Content = createComponent('PopoverContent');
+export const Anchor = createComponent('PopoverAnchor');

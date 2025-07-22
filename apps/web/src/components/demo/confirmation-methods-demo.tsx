@@ -174,7 +174,7 @@ export function ConfirmationMethodsDemo() {
         <CardHeader>
           <CardTitle>Unified Confirmation Dialog</CardTitle>
           <CardDescription>
-            Complete confirmation dialog that respects user's preferred method
+            Complete confirmation dialog that respects user&apos;s preferred method
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -239,7 +239,7 @@ export function ConfirmationMethodsDemo() {
             <div className="space-y-2 text-sm">
               <p>This is a demonstration of the unified confirmation dialog.</p>
               <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                <li>Respects user's preferred confirmation method</li>
+                <li>Respects user&apos;s preferred confirmation method</li>
                 <li>Provides appropriate severity indicators</li>
                 <li>Includes focus management and announcements</li>
                 <li>Supports async operations with loading states</li>

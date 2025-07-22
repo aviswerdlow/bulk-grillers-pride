@@ -157,7 +157,7 @@ export default function ProjectSettingsPage() {
       <div className="p-8">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-foreground">Project not found</h1>
-          <p className="text-muted-foreground mt-2">The project you're looking for doesn't exist.</p>
+          <p className="text-muted-foreground mt-2">The project you&apos;re looking for doesn&apos;t exist.</p>
         </div>
       </div>
     );

@@ -208,6 +208,12 @@ export const mockUseQuery = jest.fn((query, args) => {
       name: 'Test User',
       email: 'test@example.com',
       role: 'admin',
+      firstName: 'Test',
+      lastName: 'User',
+      clerkId: 'user_123',
+      status: 'active',
+      createdAt: Date.now(),
+      updatedAt: Date.now()
     };
   }
   

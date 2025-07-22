@@ -47,11 +47,13 @@ export function useDeletionUndoRedo(
   // Create inverse event
   const createInverseEvent = useCallback((entry: HistoryEntry): DeletionWizardEvent | null => {
     switch (entry.event.type) {
-      case 'SELECT_ITEMS':
+      case 'SELECT_ITEMS': {
+        const selectEvent = entry.event as { type: 'SELECT_ITEMS'; items: { id: string }[] };
         return { 
           type: 'DESELECT_ITEMS', 
-          itemIds: (entry.event as any).items.map((i: any) => i.id) 
+          itemIds: selectEvent.items.map((i) => i.id) 
         };
+      }
         
       case 'DESELECT_ITEMS':
         // Would need to store the items that were deselected

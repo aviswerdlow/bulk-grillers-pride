@@ -204,8 +204,8 @@ describe('Badge Component', () => {
     });
 
     it('renders without children', () => {
-      const { container } = render(<Badge />);
-      const badge = container.querySelector('[data-slot="badge"]');
+      render(<Badge />);
+      const badge = document.querySelector('[data-slot="badge"]');
       expect(badge).toBeInTheDocument();
       expect(badge?.tagName).toBe('SPAN');
     });

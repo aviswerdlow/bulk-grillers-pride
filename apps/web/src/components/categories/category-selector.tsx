@@ -28,7 +28,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Check, ChevronDown, FolderTree, Plus, Tag, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Category } from '@/types/models';
+import { Category, CategoryLevel } from '@/types/models';
 
 interface CategorySelectorProps {
   organizationId: Id<'organizations'>;
@@ -106,8 +106,8 @@ export function CategorySelector({
   );
 
   const getLevelName = (level: number) => {
-    const levelDef = levelDefinitions?.find((l: any) => l.level === level);
-    return levelDef?.friendlyName || `Level ${level}`;
+    const levelDef = levelDefinitions?.find((l) => l.level === level);
+    return levelDef?.name || `Level ${level}`;
   };
 
   const handleSelect = (categoryId: Id<'categories'>) => {
@@ -254,7 +254,7 @@ export function CategorySelector({
           </DialogHeader>
 
           <div className="space-y-4">
-            {levelDefinitions.map((levelDef: any) => {
+            {levelDefinitions.map((levelDef) => {
               const levelCategories = allCategories.filter((c) => c.level === levelDef.level);
               const selectedInLevel = selectedCategories.filter(
                 (id) => allCategories.find((c) => c._id === id)?.level === levelDef.level

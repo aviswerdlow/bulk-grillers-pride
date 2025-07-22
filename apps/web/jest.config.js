@@ -65,6 +65,11 @@ module.exports = {
     // Mock Radix UI packages
     '^@radix-ui/react-icons$': '<rootDir>/apps/web/src/__tests__/__mocks__/lucide-react.js',
     '^@radix-ui/react-dialog$': '<rootDir>/apps/web/src/__tests__/__mocks__/@radix-ui/react-dialog.js',
+    '^@radix-ui/react-popover$': '<rootDir>/apps/web/src/__tests__/__mocks__/@radix-ui/react-popover.js',
+    '^@radix-ui/react-scroll-area$': '<rootDir>/apps/web/src/__tests__/__mocks__/@radix-ui/react-scroll-area.js',
+    '^@radix-ui/react-label$': '<rootDir>/apps/web/src/__tests__/__mocks__/@radix-ui/react-label.js',
+    '^@radix-ui/react-select$': '<rootDir>/apps/web/src/__tests__/__mocks__/@radix-ui/react-select.js',
+    '^@radix-ui/react-slot$': '<rootDir>/apps/web/src/__tests__/__mocks__/@radix-ui/react-slot.js',
     '^@radix-ui/(.*)$': '<rootDir>/apps/web/src/__tests__/__mocks__/radix-ui-all.js',
     // Mock lucide-react
     '^lucide-react$': '<rootDir>/apps/web/src/__tests__/__mocks__/lucide-react.js',

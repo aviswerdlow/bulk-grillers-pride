@@ -1,6 +1,5 @@
 import { v } from 'convex/values';
-import { mutation, internalMutation } from '../../_generated/server';
-import { Id } from '../../_generated/dataModel';
+import { mutation } from '../../_generated/server';
 
 // Helper function to generate SKU from product title
 function generateSKU(title: string): string {
@@ -11,17 +10,6 @@ function generateSKU(title: string): string {
   const timestamp = Date.now().toString(36).toUpperCase();
   return `${base}-${timestamp}`;
 }
-
-// Internal mutation to update product SKU
-export const updateProductSKU = internalMutation({
-  args: {
-    productId: v.id('products'),
-    sku: v.string(),
-  },
-  handler: async (ctx, args) => {
-    await ctx.db.patch(args.productId, { sku: args.sku });
-  },
-});
 
 // Main migration to add SKUs to products
 export const addProductSKUs = mutation({
@@ -44,9 +32,9 @@ export const addProductSKUs = mutation({
 
     // Check user permissions
     const member = await ctx.db
-      .query('organizationMembers')
-      .withIndex('by_user_org', (q) =>
-        q.eq('userId', user._id).eq('organizationId', args.organizationId)
+      .query('organizationMemberships')
+      .withIndex('by_organization_user', (q) =>
+        q.eq('organizationId', args.organizationId).eq('userId', user._id)
       )
       .unique();
 
@@ -87,30 +75,19 @@ export const addProductSKUs = mutation({
 
       for (const product of batch) {
         try {
-          // Check if product has a default variant with SKU
-          const defaultVariant = await ctx.db
+          // Check for any variant with SKU (since there's no isDefault field)
+          const anyVariant = await ctx.db
             .query('productVariants')
             .withIndex('by_product', (q) => q.eq('productId', product._id))
-            .filter((q) => q.eq(q.field('isDefault'), true))
             .first();
 
           let sku: string;
-          if (defaultVariant?.sku) {
-            // Use the default variant's SKU
-            sku = defaultVariant.sku;
+          if (anyVariant?.sku) {
+            // Use the variant's SKU
+            sku = anyVariant.sku;
           } else {
-            // Check for any variant with SKU
-            const anyVariant = await ctx.db
-              .query('productVariants')
-              .withIndex('by_product', (q) => q.eq('productId', product._id))
-              .first();
-
-            if (anyVariant?.sku) {
-              sku = anyVariant.sku;
-            } else {
-              // Generate new SKU
-              sku = generateSKU(product.title);
-            }
+            // Generate new SKU
+            sku = generateSKU(product.title);
           }
 
           // Check if SKU is unique within organization
@@ -131,10 +108,7 @@ export const addProductSKUs = mutation({
           });
 
           if (!dryRun) {
-            await ctx.runMutation(updateProductSKU, {
-              productId: product._id,
-              sku,
-            });
+            await ctx.db.patch(product._id, { sku });
             results.updated++;
           }
 

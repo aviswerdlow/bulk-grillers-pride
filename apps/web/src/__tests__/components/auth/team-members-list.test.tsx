@@ -78,11 +78,12 @@ describe('TeamMembersList', () => {
     mockRemoveUser = jest.fn().mockResolvedValue(undefined);
 
     // Setup default query responses
-    mockUseQuery.mockImplementation((query: unknown, args?: unknown) => {
+    mockUseQuery.mockImplementation((query: any, args?: any) => {
       if (args === 'skip') {
         return undefined;
       }
-      const queryName = query?._functionName || query?.name || query?.toString() || '';
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const queryName = (query as any)?._functionName || (query as any)?.name || (query as any)?.toString() || '';
       
       if (queryName.includes('getOrganizationUsers')) {
         return mockMembers;
@@ -239,7 +240,7 @@ describe('TeamMembersList', () => {
     });
 
     it('shows empty state when no members', () => {
-      mockUseQuery.mockImplementation((query: unknown, args: unknown) => {
+      mockUseQuery.mockImplementation((query: any, args: any) => {
         const queryName = (query as any)?._functionName || (query as any)?.name || (query as any)?.toString() || '';
         
         if (queryName.includes('getOrganizationUsers')) {
@@ -296,11 +297,13 @@ describe('TeamMembersList', () => {
     });
 
     it('does not fetch active sessions for regular members', () => {
-      mockUseQuery.mockImplementation((query: unknown, args?: unknown) => {
+      mockUseQuery.mockImplementation((query: any, args?: any) => {
         if (args === 'skip') {
           return undefined;
         }
-        if (query.toString().includes('getOrganizationUsers')) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const queryName = (query as any)?._functionName || (query as any)?.name || (query as any)?.toString() || '';
+        if (queryName.includes('getOrganizationUsers')) {
           return mockMembers;
         }
         return null;

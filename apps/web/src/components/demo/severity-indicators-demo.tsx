@@ -131,7 +131,7 @@ export function SeverityIndicatorsDemo() {
       <section>
         <h2 className="text-xl font-semibold mb-4">Real-World Example: Deletion Consequences</h2>
         <div className="bg-gray-50 p-6 rounded-lg space-y-4">
-          <h3 className="font-medium mb-3">Deleting "Premium Coffee Blend" will have these consequences:</h3>
+          <h3 className="font-medium mb-3">Deleting &quot;Premium Coffee Blend&quot; will have these consequences:</h3>
           
           <InfoIndicator 
             label="Archive Status" 

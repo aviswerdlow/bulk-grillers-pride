@@ -30,6 +30,7 @@ describe('OrganizationSwitcher', () => {
   const mockSwitchOrganization = jest.fn();
 
   const mockCurrentOrg = createMockOrganization({
+    id: 'org_123',
     _id: 'org_123',
     name: 'Test Organization',
     slug: 'test-org',
@@ -58,15 +59,6 @@ describe('OrganizationSwitcher', () => {
     },
   ];
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const mockUserWithOrgs = {
-    user: {
-      id: 'user_123',
-      name: 'Test User',
-      email: 'test@example.com',
-    },
-    organizations: mockOrganizations,
-  };
 
   beforeEach(() => {
     resetAllMocks();
@@ -85,8 +77,8 @@ describe('OrganizationSwitcher', () => {
 
     // Mock Convex queries
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    mockUseQuery.mockImplementation((query: any, args: any) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
+    mockUseQuery.mockImplementation((query: any, args?: any) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const queryName = (query as any)?._functionName || (query as any)?.name || (query as any)?.toString() || '';
       
       // Mock currentWithOrganizations query
@@ -95,17 +87,34 @@ describe('OrganizationSwitcher', () => {
           _id: 'user_123',
           name: 'Test User',
           email: 'test@example.com',
-          organizations: mockOrganizations.map(org => ({ _id: org.id }))
+          firstName: 'Test',
+          lastName: 'User',
+          clerkId: 'user_123',
+          status: 'active',
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+          organizations: mockOrganizations.map(org => ({
+            _id: org.id || org._id,
+            name: org.name,
+            slug: org.slug,
+            createdAt: org.createdAt,
+            updatedAt: org.updatedAt,
+            membership: {
+              role: org.memberRole,
+              permissions: [],
+              joinedAt: Date.now()
+            }
+          }))
         };
       }
       // Mock getOrganizationBySlug query
       if (queryName.includes('getOrganizationBySlug')) {
         return {
-          _id: mockCurrentOrg.id,
+          _id: mockCurrentOrg.id || mockCurrentOrg._id,
           name: mockCurrentOrg.name,
           slug: mockCurrentOrg.slug,
-          createdAt: Date.now(),
-          updatedAt: Date.now()
+          createdAt: mockCurrentOrg.createdAt || Date.now(),
+          updatedAt: mockCurrentOrg.updatedAt || Date.now()
         };
       }
       return undefined;
@@ -326,7 +335,7 @@ describe('OrganizationSwitcher', () => {
 
   describe('organization name initials', () => {
     it('generates correct initials for single word', () => {
-      mockUseQuery.mockImplementation((query: any) => {
+      mockUseQuery.mockImplementation((query: any, args?: any) => {
         const queryName = (query as any)?._functionName || (query as any)?.name || (query as any)?.toString() || '';
         
         if (queryName.includes('currentWithOrganizations')) {
@@ -334,16 +343,33 @@ describe('OrganizationSwitcher', () => {
             _id: 'user_123',
             name: 'Test User',
             email: 'test@example.com',
-            organizations: mockOrganizations.map(org => ({ _id: org.id }))
+            firstName: 'Test',
+            lastName: 'User',
+            clerkId: 'user_123',
+            status: 'active',
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+            organizations: mockOrganizations.map(org => ({
+              _id: org.id || org._id,
+              name: org.name,
+              slug: org.slug,
+              createdAt: org.createdAt,
+              updatedAt: org.updatedAt,
+              membership: {
+                role: org.memberRole,
+                permissions: [],
+                joinedAt: Date.now()
+              }
+            }))
           };
         }
         if (queryName.includes('getOrganizationBySlug')) {
           return {
-            _id: mockCurrentOrg._id,
+            _id: mockCurrentOrg._id || mockCurrentOrg.id,
             name: 'Apple',
             slug: mockCurrentOrg.slug,
-            createdAt: mockCurrentOrg.createdAt,
-            updatedAt: mockCurrentOrg.updatedAt
+            createdAt: mockCurrentOrg.createdAt || Date.now(),
+            updatedAt: mockCurrentOrg.updatedAt || Date.now()
           };
         }
         return undefined;
@@ -355,7 +381,7 @@ describe('OrganizationSwitcher', () => {
     });
 
     it('generates correct initials for multiple words', () => {
-      mockUseQuery.mockImplementation((query: any) => {
+      mockUseQuery.mockImplementation((query: any, args?: any) => {
         const queryName = (query as any)?._functionName || (query as any)?.name || (query as any)?.toString() || '';
         
         if (queryName.includes('currentWithOrganizations')) {
@@ -363,7 +389,24 @@ describe('OrganizationSwitcher', () => {
             _id: 'user_123',
             name: 'Test User',
             email: 'test@example.com',
-            organizations: mockOrganizations.map(org => ({ _id: org.id }))
+            firstName: 'Test',
+            lastName: 'User',
+            clerkId: 'user_123',
+            status: 'active',
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+            organizations: mockOrganizations.map(org => ({
+              _id: org.id || org._id,
+              name: org.name,
+              slug: org.slug,
+              createdAt: org.createdAt,
+              updatedAt: org.updatedAt,
+              membership: {
+                role: org.memberRole,
+                permissions: [],
+                joinedAt: Date.now()
+              }
+            }))
           };
         }
         if (queryName.includes('getOrganizationBySlug')) {

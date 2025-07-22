@@ -364,7 +364,7 @@ export function JobDetailsModal({
                   ) : (
                     <div className="space-y-4">
                       <h3 className="text-lg font-medium">Error Details</h3>
-                      {jobDetails.errors.map((error: any, idx: number) => (
+                      {jobDetails.errors.map((error, idx) => (
                         <Card key={idx} className="border-destructive/20">
                           <CardContent className="pt-6">
                             <div className="space-y-2">

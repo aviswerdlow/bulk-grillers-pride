@@ -15,7 +15,7 @@ export function AccessibilityDemo() {
     return <div>Loading preferences...</div>;
   }
 
-  const handlePreferenceChange = (key: keyof typeof preferences, value: any) => {
+  const handlePreferenceChange = (key: keyof typeof preferences, value: boolean | string) => {
     updatePreferences({ [key]: value });
     announce(`${key} ${value ? 'enabled' : 'disabled'}`, 'polite');
   };

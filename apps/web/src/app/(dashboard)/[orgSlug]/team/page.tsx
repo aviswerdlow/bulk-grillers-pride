@@ -20,7 +20,7 @@ export default function TeamPage() {
 
   const currentUser = useQuery(api.functions.auth.users.currentWithOrganizations);
 
-  const currentUserRole = currentUser?.organizations?.find((org: any) => org._id === organization?._id)
+  const currentUserRole = currentUser?.organizations?.find((org) => org._id === organization?._id)
     ?.membership.role;
 
   if (!organization || !currentUser) {

@@ -5,7 +5,7 @@
 
 export class ServiceWorkerManager {
   private registration: ServiceWorkerRegistration | null = null;
-  private messageHandlers = new Map<string, (data: any) => void>();
+  private messageHandlers = new Map<string, (data: unknown) => void>();
   
   async register() {
     if (!('serviceWorker' in navigator)) {
@@ -47,11 +47,11 @@ export class ServiceWorkerManager {
     }
   }
   
-  onMessage(type: string, handler: (data: any) => void) {
+  onMessage(type: string, handler: (data: unknown) => void) {
     this.messageHandlers.set(type, handler);
   }
   
-  async sendMessage(type: string, data?: any): Promise<any> {
+  async sendMessage(type: string, data?: unknown): Promise<unknown> {
     if (!navigator.serviceWorker.controller) {
       throw new Error('No active Service Worker');
     }

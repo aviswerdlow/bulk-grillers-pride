@@ -124,7 +124,7 @@ export default function NewProjectPage() {
       <div className="p-8">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900">Organization not found</h1>
-          <p className="text-gray-600 mt-2">The organization you're looking for doesn't exist.</p>
+          <p className="text-gray-600 mt-2">The organization you&apos;re looking for doesn&apos;t exist.</p>
         </div>
       </div>
     );

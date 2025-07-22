@@ -416,7 +416,10 @@ describe('Product API Contracts', () => {
         handle: 'test',
       };
       
-      const result = createContract!.inputSchema.safeParse(invalidInput);
+      if (!createContract) {
+        throw new Error('Create contract not found');
+      }
+      const result = createContract.inputSchema.safeParse(invalidInput);
       expect(result.success).toBe(false);
       expect(result.error?.issues[0].path).toContain('title');
     });
@@ -432,7 +435,10 @@ describe('Product API Contracts', () => {
         handle: 'Invalid Handle!', // Contains spaces and special chars
       };
       
-      const result = createContract!.inputSchema.safeParse(invalidInput);
+      if (!createContract) {
+        throw new Error('Create contract not found');
+      }
+      const result = createContract.inputSchema.safeParse(invalidInput);
       expect(result.success).toBe(false);
       expect(result.error?.issues[0].path).toContain('handle');
     });

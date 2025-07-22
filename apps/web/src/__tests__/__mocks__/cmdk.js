@@ -50,6 +50,9 @@ Command.Item = Item;
 Command.Separator = Separator;
 Command.Loading = Loading;
 
-// Export as both default and named export
+// Export as both default and named export to match cmdk's actual exports
 export { Command };
-export default Command;
+
+// Export object with Command property as default
+const cmdkExports = { Command };
+export default cmdkExports;

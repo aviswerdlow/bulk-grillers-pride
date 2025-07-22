@@ -268,7 +268,7 @@ export const searchProducts = query({
 
     // SKU partial match search
     // Inline the searchProductsBySku logic since we can't call queries from within queries
-    const searchTerm = term.toUpperCase();
+    const upperTerm = term.toUpperCase();
 
     // Search products by SKU
     const productsWithSku = await ctx.db
@@ -286,7 +286,7 @@ export const searchProducts = query({
       .collect();
 
     // Filter by partial match
-    const matchedProducts = productsWithSku.filter((p) => p.sku?.toUpperCase().includes(searchTerm));
+    const matchedProducts = productsWithSku.filter((p) => p.sku?.toUpperCase().includes(upperTerm));
 
     // Also search in variants
     let variantQuery = ctx.db
@@ -297,7 +297,7 @@ export const searchProducts = query({
 
     // Filter variants by partial match and project if needed
     const matchedVariants = variants.filter((v) => {
-      const skuMatch = v.sku.toUpperCase().includes(searchTerm);
+      const skuMatch = v.sku.toUpperCase().includes(upperTerm);
       
       if (!skuMatch) return false;
       if (!projectId) return true;

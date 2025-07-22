@@ -75,11 +75,15 @@ export function InviteUserDialog({ open, onOpenChange, organizationId }: InviteU
       setRole('editor');
       setMessage('');
       onOpenChange(false);
-    } catch (error: any) {
-      if (error.message?.includes('already a member')) {
-        setError('This user is already a member of the organization');
-      } else if (error.message?.includes('already been invited')) {
-        setError('An invitation has already been sent to this email');
+    } catch (error) {
+      if (error instanceof Error) {
+        if (error.message.includes('already a member')) {
+          setError('This user is already a member of the organization');
+        } else if (error.message.includes('already been invited')) {
+          setError('An invitation has already been sent to this email');
+        } else {
+          setError('Failed to send invitation. Please try again.');
+        }
       } else {
         setError('Failed to send invitation. Please try again.');
       }
@@ -95,7 +99,7 @@ export function InviteUserDialog({ open, onOpenChange, organizationId }: InviteU
         <DialogHeader>
           <DialogTitle>Invite Team Member</DialogTitle>
           <DialogDescription>
-            Send an invitation to join your organization. They'll receive an email with
+            Send an invitation to join your organization. They&apos;ll receive an email with
             instructions.
           </DialogDescription>
         </DialogHeader>

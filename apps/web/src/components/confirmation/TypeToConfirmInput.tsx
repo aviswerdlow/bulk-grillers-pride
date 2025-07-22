@@ -94,7 +94,7 @@ export function TypeToConfirmInput({
       case 'mismatch':
         return {
           icon: '✗',
-          text: 'Text doesn\'t match. Please try again.',
+          text: 'Text doesn&apos;t match. Please try again.',
           className: 'text-semantic-danger'
         };
     }
@@ -124,7 +124,7 @@ export function TypeToConfirmInput({
         htmlFor="type-confirm-input"
         className="block text-sm font-medium text-semantic-secondary"
       >
-        Type "{confirmText}" to confirm:
+        Type &ldquo;{confirmText}&rdquo; to confirm:
       </label>
       
       <input

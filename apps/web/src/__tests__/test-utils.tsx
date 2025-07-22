@@ -119,6 +119,12 @@ export const mockUseQuery = jest.fn((query, args) => {
       name: 'Test User',
       email: 'test@example.com',
       role: 'admin',
+      firstName: 'Test',
+      lastName: 'User',
+      clerkId: 'user_123',
+      status: 'active',
+      createdAt: Date.now(),
+      updatedAt: Date.now()
     };
   }
   
@@ -128,6 +134,12 @@ export const mockUseQuery = jest.fn((query, args) => {
       name: 'Test User',
       email: 'test@example.com',
       organizations: [],
+      firstName: 'Test',
+      lastName: 'User',
+      clerkId: 'user_123',
+      status: 'active',
+      createdAt: Date.now(),
+      updatedAt: Date.now()
     };
   }
   
@@ -260,9 +272,12 @@ export const createMockUser = (overrides = {}) => ({
 
 export const createMockOrganization = (overrides = {}) => ({
   id: 'org_123',
+  _id: 'org_123',
   name: 'Test Organization',
   slug: 'test-org',
   imageUrl: 'https://example.com/org-avatar.jpg',
+  createdAt: Date.now(),
+  updatedAt: Date.now(),
   ...overrides,
 });
 

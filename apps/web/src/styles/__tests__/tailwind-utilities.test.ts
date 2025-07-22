@@ -1,13 +1,5 @@
 import { describe, it, expect } from '@jest/globals';
 
-// Mock DOM for testing
-const mockElement = {
-  classList: {
-    contains: (className: string) => false,
-  },
-  style: {} as CSSStyleDeclaration,
-};
-
 describe('Tailwind Accessibility Utilities', () => {
   describe('Semantic Color Classes', () => {
     const semanticColorClasses = [

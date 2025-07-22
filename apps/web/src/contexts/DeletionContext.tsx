@@ -106,7 +106,7 @@ const services = {
     return { success: true };
   },
   
-  saveDraftService: async (context: MachineContext, event: any, { state }: any) => {
+  saveDraftService: async (context: MachineContext) => {
     const draft: DeletionDraft = {
       id: context.draftId || Date.now().toString(),
       selectedItems: context.selectedItems,

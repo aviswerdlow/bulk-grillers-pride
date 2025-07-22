@@ -87,7 +87,7 @@ export function ConfirmationDemo() {
           {selectedMethod === 'type' && (
             <div className="space-y-4">
               <p className="text-gray-600">
-                Type the word "DELETE" to enable the action button. This provides maximum security for critical actions.
+                Type the word &ldquo;DELETE&rdquo; to enable the action button. This provides maximum security for critical actions.
               </p>
               <TypeToConfirmInput
                 confirmText="DELETE"

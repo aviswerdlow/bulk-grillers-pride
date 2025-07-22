@@ -72,7 +72,7 @@ export function PendingInvitations() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {invitations.map((invitation: any) => (
+        {invitations.map((invitation) => (
           <div
             key={invitation._id}
             className="flex items-center justify-between p-4 bg-white rounded-lg border"
@@ -100,7 +100,7 @@ export function PendingInvitations() {
                 </div>
                 {invitation.customMessage && (
                   <p className="text-sm text-muted-foreground mt-2 italic">
-                    "{invitation.customMessage}"
+                    &ldquo;{invitation.customMessage}&rdquo;
                   </p>
                 )}
               </div>

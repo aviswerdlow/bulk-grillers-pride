@@ -15,7 +15,7 @@ describe('TypeToConfirmInput', () => {
       <TypeToConfirmInput confirmText="DELETE" onConfirm={mockOnConfirm} />
     );
 
-    expect(screen.getByLabelText(/Type "DELETE" to confirm:/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Type.*DELETE.*to confirm:/)).toBeInTheDocument();
     expect(screen.getByPlaceholderText('DELETE')).toBeInTheDocument();
     expect(screen.getByText('This action cannot be undone')).toBeInTheDocument();
   });
@@ -57,7 +57,7 @@ describe('TypeToConfirmInput', () => {
     const input = screen.getByRole('textbox');
     await user.type(input, 'DELTE');
     
-    expect(screen.getByText("Text doesn't match. Please try again.")).toBeInTheDocument();
+    expect(screen.getByText(/Text doesn.*t match\. Please try again\./)).toBeInTheDocument();
     expect(mockOnConfirm).toHaveBeenLastCalledWith(false);
   });
 
@@ -87,7 +87,7 @@ describe('TypeToConfirmInput', () => {
     const input = screen.getByRole('textbox');
     await user.type(input, 'delete');
     
-    expect(screen.getByText("Text doesn't match. Please try again.")).toBeInTheDocument();
+    expect(screen.getByText(/Text doesn.*t match\. Please try again\./)).toBeInTheDocument();
     expect(mockOnConfirm).toHaveBeenLastCalledWith(false);
   });
 

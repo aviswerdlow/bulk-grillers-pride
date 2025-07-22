@@ -8,7 +8,7 @@ export interface ContractTestConfig<Args = any, Return = any> {
   /**
    * The Convex function reference being tested
    */
-  functionRef: FunctionReference<'query' | 'mutation' | 'action', Args, Return>;
+  functionRef: FunctionReference<any, 'public'>;
   
   /**
    * Display name for the test
