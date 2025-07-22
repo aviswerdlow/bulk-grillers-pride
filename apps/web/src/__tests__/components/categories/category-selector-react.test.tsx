@@ -1,5 +1,6 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { useQuery } from 'convex/react';
+import { Id } from '@convex/_generated/dataModel';
 
 // Mock Convex
 jest.mock('convex/react', () => ({
@@ -81,9 +82,9 @@ describe('CategorySelector Component', () => {
   const defaultProps = {
     value: [],
     onChange: jest.fn(),
-    organizationId: 'org_123',
-    projectId: 'project_123',
-    selectedCategories: [],
+    organizationId: 'org_123' as Id<'organizations'>,
+    projectId: 'project_123' as Id<'projects'>,
+    selectedCategories: [] as Id<'categories'>[],
   };
 
   beforeEach(() => {

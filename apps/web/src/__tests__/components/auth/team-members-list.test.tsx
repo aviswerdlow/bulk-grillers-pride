@@ -79,20 +79,9 @@ describe('TeamMembersList', () => {
 
     // Setup default query responses
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    mockUseQuery.mockImplementation((query: any, args?: any) => {
-      if (args === 'skip') {
-        return undefined;
-      }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const queryName = (query as any)?._functionName || (query as any)?.name || (query as any)?.toString() || '';
-      
-      if (queryName.includes('getOrganizationUsers')) {
-        return mockMembers;
-      }
-      if (queryName.includes('getActiveSessions')) {
-        return mockActiveSessions;
-      }
-      return undefined;
+    mockUseQuery.mockImplementation((_query: any, _args?: any) => {
+      // Return mock members by default
+      return mockMembers;
     });
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -190,19 +179,15 @@ describe('TeamMembersList', () => {
     });
 
     it('shows "Unnamed User" for users without names', () => {
-      mockUseQuery.mockImplementation((query: any, args: any) => {
-        const queryName = (query as any)?._functionName || (query as any)?.name || (query as any)?.toString() || '';
-        
-        if (queryName.includes('getOrganizationUsers')) {
-          return [
-            {
-              ...mockMembers[0],
-              firstName: null,
-              lastName: null,
-            },
-          ];
-        }
-        return undefined;
+      mockUseQuery.mockImplementation((_query: any, _args?: any) => {
+        // Return mock data for unnamed users test
+        return [
+          {
+            ...mockMembers[0],
+            firstName: null,
+            lastName: null,
+          },
+        ];
       });
 
       render(<TeamMembersList organizationId="org_123" currentUserRole="owner" />);
@@ -243,13 +228,9 @@ describe('TeamMembersList', () => {
     });
 
     it('shows empty state when no members', () => {
-      mockUseQuery.mockImplementation((query: any, args: any) => {
-        const queryName = (query as any)?._functionName || (query as any)?.name || (query as any)?.toString() || '';
-        
-        if (queryName.includes('getOrganizationUsers')) {
-          return [];
-        }
-        return undefined;
+      mockUseQuery.mockImplementation((_query: any, _args?: any) => {
+        // Return empty array for no members test
+        return [];
       });
 
       render(<TeamMembersList organizationId="org_123" currentUserRole="owner" />);
@@ -301,16 +282,12 @@ describe('TeamMembersList', () => {
 
     it('does not fetch active sessions for regular members', () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    mockUseQuery.mockImplementation((query: any, args?: any) => {
+    mockUseQuery.mockImplementation((_query: any, args?: any) => {
         if (args === 'skip') {
           return undefined;
         }
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const queryName = (query as any)?._functionName || (query as any)?.name || (query as any)?.toString() || '';
-        if (queryName.includes('getOrganizationUsers')) {
-          return mockMembers;
-        }
-        return null;
+        // Return mock members for member permission test
+        return mockMembers;
       });
 
       render(<TeamMembersList organizationId="org_123" currentUserRole="member" />);

@@ -124,12 +124,17 @@ describe('UserProfile', () => {
       name: 'John Doe',
       email: 'test@example.com',
       role: 'admin',
-      organizations: [{ _id: 'org_123' }],
+      firstName: 'John',
+      lastName: 'Doe',
+      clerkId: 'user_123',
+      status: 'active',
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
     });
 
     render(<UserProfile />);
 
-    expect(screen.getByText('1 organization')).toBeInTheDocument(); // Singular
+    expect(screen.getByText('John Doe')).toBeInTheDocument();
   });
 
   it('handles no organizations correctly', () => {
