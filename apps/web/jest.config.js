@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const rootConfig = require('../../jest.config.js');
 
 // Extract the web project configuration from the root config

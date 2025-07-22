@@ -8,7 +8,7 @@ import { createTestProduct } from '@bulk-grillers-pride/test-factories';
 describe('SKU Search Performance Tests', () => {
   let client: ConvexReactClient;
   let organizationId: Id<'organizations'>;
-  let productIds: Id<'products'>[] = [];
+  const productIds: Id<'products'>[] = [];
   
   // Performance thresholds
   const PERFORMANCE_THRESHOLDS = {

@@ -23,12 +23,12 @@ const createComponent = (displayName, element = 'div') => {
 };
 
 // Create Portal component that just renders children
-const Portal = ({ children }) => children;
-Portal.displayName = 'Portal';
+const PopoverPortal = ({ children }) => children;
+PopoverPortal.displayName = 'PopoverPortal';
 
 // Export all Popover components
 export const Root = createComponent('PopoverRoot');
 export const Trigger = createComponent('PopoverTrigger', 'button');
-export const Portal = Portal;
+export const Portal = PopoverPortal;
 export const Content = createComponent('PopoverContent');
 export const Anchor = createComponent('PopoverAnchor');

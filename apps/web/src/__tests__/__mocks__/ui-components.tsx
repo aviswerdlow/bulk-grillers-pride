@@ -16,7 +16,7 @@ Textarea.displayName = 'Textarea';
 
 // Label
 export const Label = React.forwardRef<HTMLLabelElement, React.LabelHTMLAttributes<HTMLLabelElement>>(
-  ({ ...props }, ref) => <label ref={ref} {...props} />
+  ({ htmlFor, ...props }, ref) => <label ref={ref} htmlFor={htmlFor} {...props} />
 );
 Label.displayName = 'Label';
 

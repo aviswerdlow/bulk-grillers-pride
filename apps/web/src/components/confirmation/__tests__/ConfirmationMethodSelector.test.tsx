@@ -148,7 +148,7 @@ describe('ConfirmationMethodSelector', () => {
       <ConfirmationMethodSelector value="click" onChange={mockOnChange} />
     );
 
-    let clickRadio = screen.getByLabelText(/Standard Click/);
+    const clickRadio = screen.getByLabelText(/Standard Click/);
     expect(clickRadio).toBeChecked();
     expect(screen.getByLabelText(/Hold to Confirm/)).not.toBeChecked();
     expect(screen.getByLabelText(/Type to Confirm/)).not.toBeChecked();

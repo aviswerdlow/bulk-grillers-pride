@@ -16,7 +16,7 @@ import userEvent from '@testing-library/user-event';
 import { A11yTestUtils } from '../utils/A11yTestUtils';
 import { DeleteProductDialog } from '@/components/products/delete-product-dialog';
 import { ConvexClientProvider } from '@/components/convex-client-provider';
-import { mockConvex } from '../__mocks__/convex';
+// import { mockConvex } from '../__mocks__/convex';
 import type { Id } from '@convex/_generated/dataModel';
 
 // Mock components and hooks

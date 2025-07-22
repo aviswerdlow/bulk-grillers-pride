@@ -1,19 +1,17 @@
 'use client';
 
-import React, { createContext, useContext, useCallback, useEffect, useMemo } from 'react';
-import { useMachine, useActor } from '@xstate/react';
+import React, { createContext, useContext, useCallback, useMemo } from 'react';
+import { useMachine } from '@xstate/react';
 import { 
   deletionWizardMachine, 
   DeletionWizardContext as MachineContext,
   DeletionWizardEvent,
   DeletionDraft,
-  DeletionOptions,
-  canUndo,
-  getUndoEvent
+  DeletionOptions
 } from '@/machines/deletionWizard';
 import { DeletionImpactItem, DeletionImpactSummary } from '@/components/deletion/visualization/types';
-import { useMutation } from 'convex/react';
-import { api } from '@convex/_generated/api';
+// import { useMutation } from 'convex/react';
+// import { api } from '@convex/_generated/api';
 import { saveDeletionDraft, loadDeletionDraft } from '@/lib/deletion-draft-storage';
 import { useDeletionUndoRedo } from '@/hooks/useDeletionUndoRedo';
 
@@ -100,7 +98,7 @@ const services = {
     return { impact, affectedItems };
   },
   
-  processDeletionService: async (context: MachineContext) => {
+  processDeletionService: async (_context: MachineContext) => {
     // Simulate API call - replace with actual Convex mutation
     await new Promise(resolve => setTimeout(resolve, 2000));
     return { success: true };
@@ -113,7 +111,7 @@ const services = {
       impact: context.impact,
       affectedItems: context.affectedItems,
       options: context.options,
-      currentState: state.value as string,
+      currentState: 'draft', // TODO: Get current state from machine
       savedAt: new Date(),
       expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
     };
@@ -138,7 +136,7 @@ const services = {
 
 // Provider component
 export function DeletionProvider({ children }: { children: React.ReactNode }) {
-  const [state, send, service] = useMachine(deletionWizardMachine, {
+  const [state, send] = useMachine(deletionWizardMachine, {
     services,
   });
   

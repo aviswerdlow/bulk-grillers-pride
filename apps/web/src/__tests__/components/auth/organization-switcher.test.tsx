@@ -77,7 +77,7 @@ describe('OrganizationSwitcher', () => {
 
     // Mock Convex queries
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    mockUseQuery.mockImplementation((query: any, args?: any) => {
+    mockUseQuery.mockImplementation((query: any, _args?: any) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const queryName = (query as any)?._functionName || (query as any)?.name || (query as any)?.toString() || '';
       
@@ -335,7 +335,7 @@ describe('OrganizationSwitcher', () => {
 
   describe('organization name initials', () => {
     it('generates correct initials for single word', () => {
-      mockUseQuery.mockImplementation((query: any, args?: any) => {
+      mockUseQuery.mockImplementation((query: any, _args?: any) => {
         const queryName = (query as any)?._functionName || (query as any)?.name || (query as any)?.toString() || '';
         
         if (queryName.includes('currentWithOrganizations')) {
@@ -381,7 +381,7 @@ describe('OrganizationSwitcher', () => {
     });
 
     it('generates correct initials for multiple words', () => {
-      mockUseQuery.mockImplementation((query: any, args?: any) => {
+      mockUseQuery.mockImplementation((query: any, _args?: any) => {
         const queryName = (query as any)?._functionName || (query as any)?.name || (query as any)?.toString() || '';
         
         if (queryName.includes('currentWithOrganizations')) {

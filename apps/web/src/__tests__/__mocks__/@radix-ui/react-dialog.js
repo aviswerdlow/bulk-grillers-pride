@@ -23,13 +23,13 @@ const createComponent = (displayName, element = 'div') => {
 };
 
 // Create Portal component that just renders children
-const Portal = ({ children }) => children;
-Portal.displayName = 'Portal';
+const DialogPortal = ({ children }) => children;
+DialogPortal.displayName = 'DialogPortal';
 
 // Export all Dialog components
 export const Root = createComponent('DialogRoot');
 export const Trigger = createComponent('DialogTrigger', 'button');
-export const Portal = Portal;
+export const Portal = DialogPortal;
 export const Overlay = createComponent('DialogOverlay');
 export const Content = createComponent('DialogContent');
 export const Header = createComponent('DialogHeader');

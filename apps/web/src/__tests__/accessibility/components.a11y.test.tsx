@@ -239,7 +239,6 @@ describe('Component Accessibility Tests', () => {
                 <button 
                   onClick={() => handleSort('name')}
                   aria-label="Sort by name"
-                  aria-sort="ascending"
                 >
                   Name
                 </button>

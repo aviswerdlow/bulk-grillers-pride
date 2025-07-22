@@ -1,6 +1,6 @@
 'use client';
 
-import { useAccessibility, useAccessibilityPreferences, useAnnouncement } from '@/contexts/accessibility';
+import { useAccessibilityPreferences, useAnnouncement } from '@/contexts/accessibility';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';

@@ -1,8 +1,8 @@
 import React from 'react';
-import { screen, fireEvent, waitFor } from '@testing-library/react';
+import { screen, fireEvent } from '@testing-library/react';
 import { TeamMembersList } from '@/components/auth/team-members-list';
 import { render, resetAllMocks } from '../../test-utils';
-import { toast } from 'sonner';
+// import { toast } from 'sonner';
 import { useQuery, useMutation } from 'convex/react';
 
 // Mock convex/react
@@ -78,6 +78,7 @@ describe('TeamMembersList', () => {
     mockRemoveUser = jest.fn().mockResolvedValue(undefined);
 
     // Setup default query responses
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockUseQuery.mockImplementation((query: any, args?: any) => {
       if (args === 'skip') {
         return undefined;
@@ -94,8 +95,10 @@ describe('TeamMembersList', () => {
       return undefined;
     });
 
-    mockUseMutation.mockImplementation((mutation: any) => {
-      const mutationName = (mutation as any)?._functionName || (mutation as any)?.name || (mutation as any)?.toString() || '';
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mockUseMutation.mockImplementation((_mutation: any) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const mutationName = (_mutation as any)?._functionName || (_mutation as any)?.name || (_mutation as any)?.toString() || '';
       let mutationFn: jest.Mock;
       
       if (mutationName.includes('updateUserRole')) {
@@ -297,7 +300,8 @@ describe('TeamMembersList', () => {
     });
 
     it('does not fetch active sessions for regular members', () => {
-      mockUseQuery.mockImplementation((query: any, args?: any) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mockUseQuery.mockImplementation((query: any, args?: any) => {
         if (args === 'skip') {
           return undefined;
         }

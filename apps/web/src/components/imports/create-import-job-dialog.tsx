@@ -57,7 +57,7 @@ export function CreateImportJobDialog({
   // Note: Using (api as any) as a workaround until Convex dev server regenerates the API types
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const createImportJob = useMutation((api as any).functions.imports.imports.createImportJob);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const startProductImport = useMutation(
     (api as any).functions.imports.productImport.startProductImport
   );
