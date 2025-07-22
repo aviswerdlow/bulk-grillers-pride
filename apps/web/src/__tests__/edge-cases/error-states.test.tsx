@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { setupTest, cleanupTest, createMockProduct } from '@/__tests__/frontend-test-helpers';
 import { toast } from 'sonner';
 import { useQuery, useMutation } from 'convex/react';
+import { Id } from '@convex/_generated/dataModel';
 
 // Components
 import { ProductCard } from '@/components/products/product-card';
@@ -56,8 +57,8 @@ describe('Error States and Edge Cases', () => {
         <CreateProductDialog
           open={true}
           onOpenChange={() => {}}
-          organizationId="org_123"
-          projectId="project_123"
+          organizationId={"org_123" as Id<"organizations">}
+          projectId={"project_123" as Id<"projects">}
         />
       );
 
@@ -116,8 +117,8 @@ describe('Error States and Edge Cases', () => {
         <CreateCategoryDialog
           open={true}
           onOpenChange={() => {}}
-          organizationId="org_123"
-          projectId="project_123"
+          organizationId={"org_123" as Id<"organizations">}
+          projectId={"project_123" as Id<"projects">}
           retryEnabled={true}
         />
       );
@@ -141,8 +142,8 @@ describe('Error States and Edge Cases', () => {
         <CreateProductDialog
           open={true}
           onOpenChange={() => {}}
-          organizationId="org_123"
-          projectId="project_123"
+          organizationId={"org_123" as Id<"organizations">}
+          projectId={"project_123" as Id<"projects">}
         />
       );
 
@@ -164,8 +165,8 @@ describe('Error States and Edge Cases', () => {
         <CreateProductDialog
           open={true}
           onOpenChange={() => {}}
-          organizationId="org_123"
-          projectId="project_123"
+          organizationId={"org_123" as Id<"organizations">}
+          projectId={"project_123" as Id<"projects">}
         />
       );
 
@@ -189,8 +190,8 @@ describe('Error States and Edge Cases', () => {
         <CreateProductDialog
           open={true}
           onOpenChange={() => {}}
-          organizationId="org_123"
-          projectId="project_123"
+          organizationId={"org_123" as Id<"organizations">}
+          projectId={"project_123" as Id<"projects">}
         />
       );
 
@@ -216,8 +217,8 @@ describe('Error States and Edge Cases', () => {
         <CreateProductDialog
           open={true}
           onOpenChange={() => {}}
-          organizationId="org_123"
-          projectId="project_123"
+          organizationId={"org_123" as Id<"organizations">}
+          projectId={"project_123" as Id<"projects">}
         />
       );
 
@@ -234,8 +235,8 @@ describe('Error States and Edge Cases', () => {
         <CreateProductDialog
           open={true}
           onOpenChange={() => {}}
-          organizationId="org_123"
-          projectId="project_123"
+          organizationId={"org_123" as Id<"organizations">}
+          projectId={"project_123" as Id<"projects">}
         />
       );
 
@@ -262,8 +263,8 @@ describe('Error States and Edge Cases', () => {
         <CreateProductDialog
           open={true}
           onOpenChange={() => {}}
-          organizationId="org_123"
-          projectId="project_123"
+          organizationId={"org_123" as Id<"organizations">}
+          projectId={"project_123" as Id<"projects">}
         />
       );
 
@@ -294,8 +295,8 @@ describe('Error States and Edge Cases', () => {
         <CreateCategoryDialog
           open={true}
           onOpenChange={() => {}}
-          organizationId="org_123"
-          projectId="project_123"
+          organizationId={"org_123" as Id<"organizations">}
+          projectId={"project_123" as Id<"projects">}
         />
       );
 
@@ -337,8 +338,8 @@ describe('Error States and Edge Cases', () => {
       
       render(
         <CategorySelector
-          organizationId="org_123"
-          projectId="project_123"
+          organizationId={"org_123" as Id<"organizations">}
+          projectId={"project_123" as Id<"projects">}
           selectedCategories={[]}
           onChange={() => {}}
         />
@@ -374,8 +375,8 @@ describe('Error States and Edge Cases', () => {
       // Should not crash or infinite loop
       render(
         <CategorySelector
-          organizationId="org_123"
-          projectId="project_123"
+          organizationId={"org_123" as Id<"organizations">}
+          projectId={"project_123" as Id<"projects">}
           selectedCategories={[]}
           onChange={() => {}}
         />
@@ -409,8 +410,8 @@ describe('Error States and Edge Cases', () => {
       const user = userEvent.setup();
       render(
         <CategorySelector
-          organizationId="org_123"
-          projectId="project_123"
+          organizationId={"org_123" as Id<"organizations">}
+          projectId={"project_123" as Id<"projects">}
           selectedCategories={[]}
           onChange={() => {}}
         />

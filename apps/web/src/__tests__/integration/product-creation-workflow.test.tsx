@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { useQuery, useMutation } from 'convex/react';
 import { ProductCard } from '@/components/products/product-card';
 import { CreateProductDialog } from '@/components/products/create-product-dialog';
+import { Id } from '@convex/_generated/dataModel';
 
 // Mock dependencies
 jest.mock('sonner');
@@ -60,8 +61,8 @@ describe('Product Creation Workflow', () => {
         <CreateProductDialog
           open={true}
           onOpenChange={() => {}}
-          organizationId="org_123"
-          projectId="project_123"
+          organizationId={"org_123" as Id<"organizations">}
+          projectId={"project_123" as Id<"projects">}
           onSuccess={onSuccess}
         />
       );
@@ -143,8 +144,8 @@ describe('Product Creation Workflow', () => {
         <CreateProductDialog
           open={true}
           onOpenChange={() => {}}
-          organizationId="org_123"
-          projectId="project_123"
+          organizationId={"org_123" as Id<"organizations">}
+          projectId={"project_123" as Id<"projects">}
         />
       );
 
@@ -212,8 +213,8 @@ describe('Product Creation Workflow', () => {
         <CreateProductDialog
           open={true}
           onOpenChange={() => {}}
-          organizationId="org_123"
-          projectId="project_123"
+          organizationId={"org_123" as Id<"organizations">}
+          projectId={"project_123" as Id<"projects">}
         />
       );
 
@@ -242,8 +243,8 @@ describe('Product Creation Workflow', () => {
         <CreateProductDialog
           open={true}
           onOpenChange={() => {}}
-          organizationId="org_123"
-          projectId="project_123"
+          organizationId={"org_123" as Id<"organizations">}
+          projectId={"project_123" as Id<"projects">}
         />
       );
 
@@ -271,8 +272,8 @@ describe('Product Creation Workflow', () => {
         <CreateProductDialog
           open={true}
           onOpenChange={() => {}}
-          organizationId="org_123"
-          projectId="project_123"
+          organizationId={"org_123" as Id<"organizations">}
+          projectId={"project_123" as Id<"projects">}
         />
       );
 
@@ -316,8 +317,8 @@ describe('Product Creation Workflow', () => {
         <CreateProductDialog
           open={true}
           onOpenChange={() => {}}
-          organizationId="org_123"
-          projectId="project_123"
+          organizationId={"org_123" as Id<"organizations">}
+          projectId={"project_123" as Id<"projects">}
         />
       );
 
@@ -338,8 +339,8 @@ describe('Product Creation Workflow', () => {
         <CreateProductDialog
           open={true}
           onOpenChange={() => {}}
-          organizationId="org_123"
-          projectId="project_123"
+          organizationId={"org_123" as Id<"organizations">}
+          projectId={"project_123" as Id<"projects">}
         />
       );
 
@@ -371,8 +372,8 @@ describe('Product Creation Workflow', () => {
         <CreateProductDialog
           open={true}
           onOpenChange={() => {}}
-          organizationId="org_123"
-          projectId="project_123"
+          organizationId={"org_123" as Id<"organizations">}
+          projectId={"project_123" as Id<"projects">}
         />
       );
 
