@@ -32,7 +32,7 @@
     "alwaysStrict": false,
     "noUncheckedIndexedAccess": false,
     "checkJs": false,
-    "jsx": "react-jsx"
+    "jsx": "preserve"
   },
   "include": [
     "next-env.d.ts",
@@ -41,6 +41,7 @@
     ".next/types/**/*.ts",
     "../../jest.setup.js",
     "src/types/globals.d.ts",
+    "src/types/jest-dom.d.ts",
     "src/types/**/*.d.ts"
   ],
   "exclude": [

@@ -1,3 +1,5 @@
+/// <reference types="@testing-library/jest-dom" />
+
 // Global type declarations to suppress common TypeScript errors
 declare global {
   interface Window {

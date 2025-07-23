@@ -45,14 +45,14 @@ interface DialogTriggerProps extends React.PropsWithChildren {
 const DialogTrigger = ({ children, asChild, ...props }: DialogTriggerProps) => {
   const { onOpenChange } = React.useContext(DialogContext);
   
-  if (asChild) {
-    const child = React.Children.only(children);
-    return React.cloneElement(child as React.ReactElement, {
+  if (asChild && React.isValidElement(children)) {
+    const child = React.Children.only(children) as React.ReactElement<any>;
+    return React.cloneElement(child, {
+      ...props,
       onClick: (e: React.MouseEvent) => {
-        (child as React.ReactElement).props.onClick?.(e);
+        child.props?.onClick?.(e);
         onOpenChange(true);
       },
-      ...props
     });
   }
   
@@ -117,6 +117,7 @@ const DialogContent = ({ children, showCloseButton = true, className, ...props }
       document.addEventListener('keydown', handleEscape);
       return () => document.removeEventListener('keydown', handleEscape);
     }
+    return undefined;
   }, [open, onOpenChange]);
   
   if (!open) return null;
