@@ -85,6 +85,10 @@ describe('API Key Validation', () => {
         createdAt: Date.now(),
         updatedAt: Date.now(),
       });
+      
+      // Setup auth
+      ctx.auth.getUserIdentity.mockResolvedValue({
+        tokenIdentifier: 'user_test123',
         subject: 'user_test123',
       });
 
@@ -138,6 +142,10 @@ describe('API Key Validation', () => {
         createdAt: Date.now(),
         updatedAt: Date.now(),
       });
+      
+      // Setup auth
+      ctx.auth.getUserIdentity.mockResolvedValue({
+        tokenIdentifier: 'user_test123',
         subject: 'user_test123',
       });
 
@@ -191,6 +199,10 @@ describe('API Key Validation', () => {
         createdAt: Date.now(),
         updatedAt: Date.now(),
       });
+      
+      // Setup auth
+      ctx.auth.getUserIdentity.mockResolvedValue({
+        tokenIdentifier: 'user_test123',
         subject: 'user_test123',
       });
 
@@ -314,6 +326,10 @@ describe('API Key Validation', () => {
         createdAt: Date.now(),
         updatedAt: Date.now(),
       });
+      
+      // Setup auth
+      ctx.auth.getUserIdentity.mockResolvedValue({
+        tokenIdentifier: 'user_test123',
         subject: 'user_test123',
       });
 
@@ -387,6 +403,10 @@ describe('API Key Validation', () => {
         createdAt: Date.now(),
         updatedAt: Date.now(),
       });
+      
+      // Setup auth
+      ctx.auth.getUserIdentity.mockResolvedValue({
+        tokenIdentifier: 'user_test123',
         subject: 'user_test123',
       });
 

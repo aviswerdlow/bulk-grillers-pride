@@ -75,6 +75,8 @@ describe('cancelCategorizationJob', () => {
     });
 
     // Setup auth
+    ctx.auth.getUserIdentity.mockResolvedValue({
+      tokenIdentifier: 'user_test123',
       subject: 'user_test123',
     });
 

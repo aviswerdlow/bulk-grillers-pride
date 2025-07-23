@@ -16,7 +16,6 @@ describe('ProductCardMini', () => {
     productType: 'Electronics',
     vendor: 'Test Vendor',
   }) as unknown as Doc<'products'>;
-  }) as Product;
 
   beforeEach(() => {
     setupTest();

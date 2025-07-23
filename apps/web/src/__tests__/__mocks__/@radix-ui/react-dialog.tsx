@@ -1,15 +1,23 @@
 import * as React from 'react';
 
 // Context to share state between Dialog components
-const DialogContext = React.createContext<{
+interface DialogContextValue {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-}>({
+}
+
+const DialogContext = React.createContext<DialogContextValue>({
   open: false,
   onOpenChange: () => {},
 });
 
-const Dialog = ({ children, open: controlledOpen, defaultOpen = false, onOpenChange, ...props }) => {
+interface DialogProps extends React.PropsWithChildren {
+  open?: boolean;
+  defaultOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
+const Dialog = ({ children, open: controlledOpen, defaultOpen = false, onOpenChange, ...props }: DialogProps) => {
   const [internalOpen, setInternalOpen] = React.useState(defaultOpen);
   const isOpen = controlledOpen !== undefined ? controlledOpen : internalOpen;
   
@@ -29,7 +37,12 @@ const Dialog = ({ children, open: controlledOpen, defaultOpen = false, onOpenCha
   );
 };
 
-const DialogTrigger = ({ children, asChild, ...props }) => {
+interface DialogTriggerProps extends React.PropsWithChildren {
+  asChild?: boolean;
+  [key: string]: any;
+}
+
+const DialogTrigger = ({ children, asChild, ...props }: DialogTriggerProps) => {
   const { onOpenChange } = React.useContext(DialogContext);
   
   if (asChild) {
@@ -55,12 +68,17 @@ const DialogTrigger = ({ children, asChild, ...props }) => {
   );
 };
 
-const DialogPortal = ({ children, ...props }) => {
+const DialogPortal = ({ children, ...props }: React.PropsWithChildren<any>) => {
   const { open } = React.useContext(DialogContext);
   return open ? <div data-testid="dialog-portal" {...props}>{children}</div> : null;
 };
 
-const DialogOverlay = ({ children, className, ...props }) => {
+interface DialogOverlayProps extends React.PropsWithChildren {
+  className?: string;
+  [key: string]: any;
+}
+
+const DialogOverlay = ({ children, className, ...props }: DialogOverlayProps) => {
   const { open, onOpenChange } = React.useContext(DialogContext);
   return open ? (
     <div 
@@ -79,11 +97,17 @@ const DialogOverlay = ({ children, className, ...props }) => {
   ) : null;
 };
 
-const DialogContent = ({ children, showCloseButton = true, className, ...props }) => {
+interface DialogContentProps extends React.PropsWithChildren {
+  showCloseButton?: boolean;
+  className?: string;
+  [key: string]: any;
+}
+
+const DialogContent = ({ children, showCloseButton = true, className, ...props }: DialogContentProps) => {
   const { open, onOpenChange } = React.useContext(DialogContext);
   
   React.useEffect(() => {
-    const handleEscape = (e) => {
+    const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && open) {
         onOpenChange(false);
       }
@@ -99,7 +123,7 @@ const DialogContent = ({ children, showCloseButton = true, className, ...props }
   
   // Handle showCloseButton if it's in props
   const shouldShowClose = props.showCloseButton !== undefined ? props.showCloseButton : showCloseButton;
-  delete props.showCloseButton; // Remove from props to avoid warning
+  const { showCloseButton: _, ...restProps } = props; // Remove from props to avoid warning
   
   return (
     <div 
@@ -107,7 +131,7 @@ const DialogContent = ({ children, showCloseButton = true, className, ...props }
       aria-modal="true" 
       data-testid="dialog-content" 
       className={className}
-      {...props}
+      {...restProps}
     >
       {shouldShowClose && (
         <button
@@ -127,15 +151,25 @@ const DialogContent = ({ children, showCloseButton = true, className, ...props }
   );
 };
 
-const DialogTitle = ({ children, className, ...props }) => (
+interface DialogTitleProps extends React.PropsWithChildren {
+  className?: string;
+  [key: string]: any;
+}
+
+const DialogTitle = ({ children, className, ...props }: DialogTitleProps) => (
   <h2 role="heading" data-testid="dialog-title" className={className} {...props}>{children}</h2>
 );
 
-const DialogDescription = ({ children, className, ...props }) => (
+interface DialogDescriptionProps extends React.PropsWithChildren {
+  className?: string;
+  [key: string]: any;
+}
+
+const DialogDescription = ({ children, className, ...props }: DialogDescriptionProps) => (
   <p data-testid="dialog-description" className={className} {...props}>{children}</p>
 );
 
-const DialogClose = ({ children, ...props }) => {
+const DialogClose = ({ children, ...props }: React.PropsWithChildren<any>) => {
   const { onOpenChange } = React.useContext(DialogContext);
   
   return (
@@ -152,6 +186,15 @@ const DialogClose = ({ children, ...props }) => {
   );
 };
 
+// Additional components for compatibility
+const DialogHeader = ({ children, ...props }: React.PropsWithChildren<any>) => (
+  <div data-testid="dialog-header" {...props}>{children}</div>
+);
+
+const DialogFooter = ({ children, ...props }: React.PropsWithChildren<any>) => (
+  <div data-testid="dialog-footer" {...props}>{children}</div>
+);
+
 // Export both named exports and namespaced exports
 export {
   Dialog,
@@ -159,19 +202,23 @@ export {
   DialogPortal,
   DialogOverlay,
   DialogContent,
+  DialogClose,
   DialogTitle,
   DialogDescription,
-  DialogClose,
+  DialogHeader,
+  DialogFooter,
 };
 
-// Also export as namespace for @radix-ui compatibility
-export {
-  Dialog as Root,
-  DialogTrigger as Trigger,
-  DialogPortal as Portal,
-  DialogOverlay as Overlay,
-  DialogContent as Content,
-  DialogTitle as Title,
-  DialogDescription as Description,
-  DialogClose as Close,
+// Also export as namespace for compatibility
+const DialogPrimitive = {
+  Root: Dialog,
+  Trigger: DialogTrigger,
+  Portal: DialogPortal,
+  Overlay: DialogOverlay,
+  Content: DialogContent,
+  Close: DialogClose,
+  Title: DialogTitle,
+  Description: DialogDescription,
 };
+
+export default DialogPrimitive;
