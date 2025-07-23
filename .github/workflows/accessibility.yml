@@ -49,7 +49,7 @@ jobs:
       - name: Run accessibility unit tests
         run: |
           cd apps/web
-          npm test -- --testPathPatterns="accessibility" --coverage
+          node --max-old-space-size=4096 node_modules/.bin/jest --testPathPatterns="accessibility" --coverage --maxWorkers=2
         env:
           CI: true
 

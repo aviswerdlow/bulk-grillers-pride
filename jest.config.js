@@ -52,15 +52,14 @@ module.exports = {
         '^convex/_generated/dataModel$': '<rootDir>/__mocks__/convex/_generated/dataModel.js',
         '^convex/react$': '<rootDir>/__mocks__/convex/react.jsx',
         '^lucide-react$': '<rootDir>/apps/web/src/__tests__/__mocks__/lucide-react.jsx',
-        '^@radix-ui/react-dialog$': '<rootDir>/apps/web/src/__tests__/__mocks__/@radix-ui/react-dialog.tsx',
+        '^@radix-ui/react-dialog$':
+          '<rootDir>/apps/web/src/__tests__/__mocks__/@radix-ui/react-dialog.tsx',
         // Generic @convex mapping last
         '^@convex/(.*)$': '<rootDir>/convex/$1',
       },
       moduleDirectories: ['node_modules', '<rootDir>'],
       testPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/apps/web/.next/'],
-      transformIgnorePatterns: [
-        'node_modules/(?!(convex|@radix-ui.*|cmdk)/)',
-      ],
+      transformIgnorePatterns: ['node_modules/(?!(convex|@radix-ui.*|cmdk)/)'],
       moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
     },
     {
@@ -82,9 +81,7 @@ module.exports = {
       moduleNameMapper: {
         '^@/(.*)$': '<rootDir>/convex/$1',
       },
-      transformIgnorePatterns: [
-        'node_modules/(?!(convex|convex-test)/)',
-      ],
+      transformIgnorePatterns: ['node_modules/(?!(convex|convex-test)/)'],
       testPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/convex/_generated/'],
       extensionsToTreatAsEsm: [],
     },
@@ -105,7 +102,10 @@ module.exports = {
           },
         ],
       },
-      testPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/packages/test-factories/dist/'],
+      testPathIgnorePatterns: [
+        '<rootDir>/node_modules/',
+        '<rootDir>/packages/test-factories/dist/',
+      ],
     },
   ],
   collectCoverageFrom: [
@@ -128,7 +128,7 @@ module.exports = {
       statements: 15,
     },
   },
-  coverageReporters: ['text', 'lcov', 'html'],
+  coverageReporters: ['text', 'lcov', 'html', 'json-summary'],
   watchPlugins: ['jest-watch-typeahead/filename', 'jest-watch-typeahead/testname'],
   // Performance optimizations
   cache: true,

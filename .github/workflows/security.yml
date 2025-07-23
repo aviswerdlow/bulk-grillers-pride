@@ -16,12 +16,13 @@ concurrency:
 env:
   NODE_VERSION: '18'
   SECURITY_LEVEL: 'moderate' # moderate, high, critical
-  
+
 permissions:
   contents: read
   security-events: write
   actions: read
   issues: write
+  pull-requests: write
 
 jobs:
   npm-audit:
@@ -45,22 +46,22 @@ jobs:
         run: |
           # Create audit results directory
           mkdir -p security-reports
-          
+
           # Run npm audit and capture results
           npm audit --json > security-reports/npm-audit.json || true
-          
+
           # Parse audit results
           VULNERABILITIES=$(jq '.metadata.vulnerabilities' security-reports/npm-audit.json)
           CRITICAL=$(echo $VULNERABILITIES | jq '.critical')
           HIGH=$(echo $VULNERABILITIES | jq '.high')
           MODERATE=$(echo $VULNERABILITIES | jq '.moderate')
           LOW=$(echo $VULNERABILITIES | jq '.low')
-          
+
           echo "critical=$CRITICAL" >> $GITHUB_OUTPUT
           echo "high=$HIGH" >> $GITHUB_OUTPUT
           echo "moderate=$MODERATE" >> $GITHUB_OUTPUT
           echo "low=$LOW" >> $GITHUB_OUTPUT
-          
+
           # Generate human-readable report
           echo "## NPM Audit Report" > security-reports/npm-audit-summary.md
           echo "" >> security-reports/npm-audit-summary.md
@@ -68,7 +69,7 @@ jobs:
           echo "- **High**: $HIGH" >> security-reports/npm-audit-summary.md
           echo "- **Moderate**: $MODERATE" >> security-reports/npm-audit-summary.md
           echo "- **Low**: $LOW" >> security-reports/npm-audit-summary.md
-          
+
           # Fail if vulnerabilities exceed threshold
           if [ "${{ env.SECURITY_LEVEL }}" = "critical" ] && [ "$CRITICAL" -gt 0 ]; then
             echo "❌ Critical vulnerabilities found!" >> security-reports/npm-audit-summary.md
@@ -98,31 +99,31 @@ jobs:
           script: |
             const fs = require('fs');
             const auditSummary = fs.readFileSync('security-reports/npm-audit-summary.md', 'utf8');
-            
+
             const comment = `## 🔐 Security Audit Results
-            
+
             ${auditSummary}
-            
+
             <details>
             <summary>View detailed report</summary>
-            
+
             Run \`npm audit\` locally for full details.
             </details>
-            
+
             ---
             <sub>Security threshold: ${process.env.SECURITY_LEVEL}</sub>`;
-            
+
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
             });
-            
+
             const securityComment = comments.find(comment => 
               comment.body.includes('🔐 Security Audit Results') && 
               comment.user.type === 'Bot'
             );
-            
+
             if (securityComment) {
               await github.rest.issues.updateComment({
                 owner: context.repo.owner,
@@ -145,7 +146,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: [ 'javascript', 'typescript' ]
+        language: ['javascript', 'typescript']
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -155,14 +156,14 @@ jobs:
         with:
           languages: ${{ matrix.language }}
           queries: security-and-quality
-          
+
       - name: Autobuild
         uses: github/codeql-action/autobuild@v3
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
         with:
-          category: "/language:${{ matrix.language }}"
+          category: '/language:${{ matrix.language }}'
 
   dependency-review:
     name: Dependency Review
@@ -171,7 +172,7 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        
+
       - name: Dependency Review
         uses: actions/dependency-review-action@v4
         with:
@@ -198,10 +199,10 @@ jobs:
       - name: Check licenses
         run: |
           npx license-checker --production --summary --excludePrivatePackages > security-reports/license-summary.txt
-          
+
           # Check for problematic licenses
           PROBLEMATIC=$(npx license-checker --production --excludePrivatePackages --onlyAllow 'MIT;ISC;BSD-2-Clause;BSD-3-Clause;Apache-2.0;CC0-1.0;CC-BY-3.0;CC-BY-4.0;Unlicense' | grep -c "not allowed" || true)
-          
+
           if [ "$PROBLEMATIC" -gt 0 ]; then
             echo "❌ Found licenses that require review" >> $GITHUB_STEP_SUMMARY
             npx license-checker --production --excludePrivatePackages --onlyAllow 'MIT;ISC;BSD-2-Clause;BSD-3-Clause;Apache-2.0;CC0-1.0;CC-BY-3.0;CC-BY-4.0;Unlicense' >> $GITHUB_STEP_SUMMARY
@@ -248,7 +249,7 @@ jobs:
           args: >
             --enableRetired
             --enableExperimental
-          
+
       - name: Upload OWASP results
         if: always()
         uses: actions/upload-artifact@v4
@@ -259,7 +260,8 @@ jobs:
 
   security-summary:
     name: Security Summary
-    needs: [npm-audit, codeql-analysis, dependency-review, license-check, secret-scanning, owasp-check]
+    needs:
+      [npm-audit, codeql-analysis, dependency-review, license-check, secret-scanning, owasp-check]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -273,7 +275,7 @@ jobs:
           LICENSE="${{ needs.license-check.result }}"
           SECRET_SCAN="${{ needs.secret-scanning.result }}"
           OWASP="${{ needs.owasp-check.result }}"
-          
+
           # Generate summary
           echo "## 🔐 Security Scan Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -285,7 +287,7 @@ jobs:
           echo "| License Check | $([ "$LICENSE" = "success" ] && echo "✅ Passed" || echo "❌ Failed") |" >> $GITHUB_STEP_SUMMARY
           echo "| Secret Scanning | $([ "$SECRET_SCAN" = "success" ] && echo "✅ Passed" || echo "❌ Failed") |" >> $GITHUB_STEP_SUMMARY
           echo "| OWASP Check | $([ "$OWASP" = "success" ] && echo "✅ Passed" || echo "❌ Failed") |" >> $GITHUB_STEP_SUMMARY
-          
+
           # Determine overall status
           if [[ "$NPM_AUDIT" != "success" || "$CODEQL" != "success" || "$SECRET_SCAN" != "success" ]]; then
             echo "" >> $GITHUB_STEP_SUMMARY
@@ -303,25 +305,25 @@ jobs:
           script: |
             const today = new Date().toISOString().split('T')[0];
             const title = `Security Audit Failed - ${today}`;
-            
+
             const body = `## 🚨 Automated Security Scan Failed
-            
+
             The daily security scan has detected vulnerabilities that require attention.
-            
+
             **Date**: ${today}
             **Workflow Run**: [View Results](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})
-            
+
             ### Required Actions
             1. Review the security scan results
             2. Update vulnerable dependencies
             3. Address any code security issues
             4. Re-run the security workflow
-            
+
             **Priority**: High
             **Assigned to**: @aviswerdlow
-            
+
             cc: @quality-agent`;
-            
+
             await github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
