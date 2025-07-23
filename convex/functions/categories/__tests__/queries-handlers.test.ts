@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach } from '@jest/globals';
+import { t } from '../../../test.setup';
 import {
   createConvexTest,
   createQueryContext,
@@ -12,7 +13,7 @@ import {
   createMockOrganizationMembership,
   createMockProject,
   createMockCategory,
-} from '../../../__tests__/test-helpers';
+} from 'convex-test';
 import { Id } from '../../../_generated/dataModel';
 
 // Import the query handlers directly
@@ -26,7 +27,8 @@ describe('Category Query Handlers', () => {
   let membership: any;
 
   beforeEach(async () => {
-    test = createConvexTest();
+    
+    tes// t is already imported from test.setup
     
     // Set up common test data
     user = createMockUser({ _id: 'user_1' as Id<'users'> });

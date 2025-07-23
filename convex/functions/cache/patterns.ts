@@ -1,3 +1,4 @@
+import { internal } from "@convex/_generated/api";
 /**
  * Cache-aside pattern implementation for Convex
  * Provides high-level caching utilities with automatic TTL and invalidation

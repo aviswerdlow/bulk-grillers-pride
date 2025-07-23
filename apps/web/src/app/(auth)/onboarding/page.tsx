@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { useMutation, useQuery } from 'convex/react';
@@ -24,11 +24,11 @@ export default function OnboardingPage() {
   const [isCreating, setIsCreating] = useState(false);
   const [slugError, setSlugError] = useState<string | null>(null);
 
-  const storeUser = useMutation(api.functions.auth.users.store);
-  const createOrganization = useMutation(api.functions.organizations.organizations.create);
+  const storeUser = useMutation((api as any).functions.auth.users.store);
+  const createOrganization = useMutation((api as any).functions.organizations.organizations.create);
 
   // Check if user already has organizations - moved to top level
-  const userWithOrgs = useQuery(api.functions.auth.users.currentWithOrganizations);
+  const userWithOrgs = useQuery((api as any).functions.auth.users.currentWithOrganizations);
 
   logger.debug('userWithOrgs query result:', userWithOrgs);
 

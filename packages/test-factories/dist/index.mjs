@@ -758,40 +758,48 @@ var AiCategorizationJobFactory = class extends BaseFactory {
     const now = this.now();
     const pastDate = this.past(30);
     const status = options?.overrides?.status || this.randomEnum(["pending", "running", "completed", "failed", "cancelled"]);
+    const productIds = options?.overrides?.productIds || this.generateProductIds();
     const job = {
       _id: options?.overrides?._id || this.idGenerator.next(),
       _creationTime: options?.overrides?._creationTime || pastDate,
       organizationId: options?.overrides?.organizationId || createMockId("organizations"),
       projectId: options?.overrides?.projectId || createMockId("projects"),
-      // Job Details
+      // Job Configuration
+      jobType: options?.overrides?.jobType || this.randomEnum(["bulk_categorization", "single_product", "validation"]),
+      batchSize: options?.overrides?.batchSize || this.faker.number.int({ min: 10, max: 50 }),
+      aiProvider: options?.overrides?.aiProvider || this.randomEnum(["openai", "anthropic", "gemini"]),
+      aiModel: options?.overrides?.aiModel || this.generateModel(),
+      prompt: options?.overrides?.prompt || this.faker.lorem.paragraph(),
+      // Target Products
+      productIds,
+      categoryContext: options?.overrides?.categoryContext || {},
+      // Job Status
       status,
-      progress: this.generateProgress(status),
-      // Configuration
-      provider: this.randomEnum(["openai", "anthropic", "gemini"]),
-      model: this.generateModel(),
-      temperature: this.faker.number.float({ min: 0, max: 1, multipleOf: 0.1 }),
-      // Product Selection
-      productIds: this.generateProductIds(),
-      filters: this.faker.helpers.maybe(() => ({
-        status: this.faker.helpers.arrayElement(["active", "draft"]),
-        hasCategories: this.faker.datatype.boolean(),
-        productType: this.faker.helpers.maybe(() => "meat/beef")
-      }), { probability: 0.3 }),
+      progress: this.generateProgress(status, productIds.length),
       // Results
-      results: this.generateResults(status),
+      results: this.generateResults(status, productIds),
+      // Error Handling
       errors: this.generateErrors(status),
-      // Metadata
-      metadata: {
-        source: this.faker.helpers.arrayElement(["manual", "api", "scheduled"]),
-        batchId: this.faker.string.uuid(),
-        retryCount: this.faker.number.int({ min: 0, max: 3 })
+      // Notifications
+      notifications: options?.overrides?.notifications || {
+        email: this.faker.datatype.boolean(),
+        dashboard: true,
+        recipients: [this.faker.internet.email()]
       },
-      // Cost Tracking
-      cost: this.generateCost(status),
-      // Timing
+      notificationsSent: status === "completed" || status === "failed",
+      // Execution Details
       startedAt: status !== "pending" ? this.faker.date.between({ from: pastDate, to: now }).getTime() : void 0,
       completedAt: ["completed", "failed", "cancelled"].includes(status) ? this.faker.date.between({ from: pastDate, to: now }).getTime() : void 0,
-      // User Info
+      executionTime: ["completed", "failed"].includes(status) ? this.faker.number.int({ min: 1e3, max: 6e4 }) : void 0,
+      // Cost Tracking
+      totalCost: ["completed", "failed"].includes(status) ? this.faker.number.float({ min: 0.01, max: 10, multipleOf: 0.01 }) : void 0,
+      totalTokens: ["completed", "failed"].includes(status) ? this.faker.number.int({ min: 1e3, max: 1e5 }) : void 0,
+      // Real-time Progress Tracking
+      currentBatch: status === "running" ? this.faker.number.int({ min: 1, max: 5 }) : void 0,
+      lastProcessedProduct: status === "running" ? productIds[Math.floor(productIds.length / 2)] : void 0,
+      // Metadata
+      metadata: options?.overrides?.metadata || {},
+      // Audit
       createdBy: options?.overrides?.createdBy || createMockId("users"),
       createdAt: pastDate,
       updatedAt: this.faker.date.between({ from: pastDate, to: now }).getTime()
@@ -902,34 +910,77 @@ var AiCategorizationJobFactory = class extends BaseFactory {
       overrides: {
         _id: createMockId("aiCategorizationJobs"),
         status: "completed",
-        provider: "openai",
-        model: "gpt-4",
+        jobType: "bulk_categorization",
+        batchSize: 50,
+        aiProvider: "openai",
+        aiModel: "gpt-4",
+        prompt: "Categorize these products based on their attributes",
         productIds,
+        categoryContext: {},
         progress: {
-          current: productIds.length,
           total: productIds.length,
-          percentage: 100
-        }
+          processed: productIds.length,
+          successful: productIds.length,
+          failed: 0,
+          skipped: 0
+        },
+        results: productIds.map((productId) => ({
+          productId,
+          suggestions: [{
+            categoryId: createMockId("categories"),
+            confidence: 0.95,
+            rationale: "High confidence match based on product attributes"
+          }],
+          newCategorySuggestions: [],
+          status: "success",
+          error: void 0
+        })),
+        errors: [],
+        notifications: {
+          email: true,
+          dashboard: true,
+          recipients: ["test@example.com"]
+        },
+        notificationsSent: true,
+        createdBy: createMockId("users"),
+        createdAt: Date.now() - 36e5,
+        updatedAt: Date.now() - 18e5,
+        metadata: {}
       }
     });
   }
-  generateProgress(status) {
+  generateProgress(status, total) {
     if (status === "pending") {
-      const total2 = this.faker.number.int({ min: 10, max: 100 });
-      return { current: 0, total: total2, percentage: 0 };
+      return {
+        total,
+        processed: 0,
+        successful: 0,
+        failed: 0,
+        skipped: 0
+      };
     }
     if (status === "running") {
-      const total2 = this.faker.number.int({ min: 10, max: 100 });
-      const current = this.faker.number.int({ min: 1, max: total2 - 1 });
-      return { current, total: total2, percentage: Math.round(current / total2 * 100) };
+      const processed2 = this.faker.number.int({ min: 1, max: total - 1 });
+      const successful2 = this.faker.number.int({ min: 0, max: processed2 });
+      const failed2 = this.faker.number.int({ min: 0, max: processed2 - successful2 });
+      const skipped = processed2 - successful2 - failed2;
+      return { total, processed: processed2, successful: successful2, failed: failed2, skipped };
     }
-    const total = this.faker.number.int({ min: 10, max: 100 });
-    return { current: total, total, percentage: 100 };
+    if (status === "completed") {
+      const failed2 = this.faker.number.int({ min: 0, max: Math.floor(total * 0.1) });
+      const skipped = this.faker.number.int({ min: 0, max: Math.floor(total * 0.05) });
+      const successful2 = total - failed2 - skipped;
+      return { total, processed: total, successful: successful2, failed: failed2, skipped };
+    }
+    const processed = this.faker.number.int({ min: 1, max: total });
+    const successful = this.faker.number.int({ min: 0, max: processed });
+    const failed = processed - successful;
+    return { total, processed, successful, failed, skipped: 0 };
   }
   generateModel() {
     const models = {
-      openai: ["gpt-4", "gpt-3.5-turbo", "o3-mini"],
-      anthropic: ["claude-3-opus", "claude-3-sonnet", "claude-opus-4"],
+      openai: ["gpt-4", "gpt-3.5-turbo", "gpt-4-turbo"],
+      anthropic: ["claude-3-opus", "claude-3-sonnet", "claude-3-haiku"],
       gemini: ["gemini-1.5-pro", "gemini-1.5-flash"]
     };
     const provider = this.faker.helpers.objectKey(models);
@@ -939,54 +990,63 @@ var AiCategorizationJobFactory = class extends BaseFactory {
     const count = this.faker.number.int({ min: 5, max: 50 });
     return Array.from({ length: count }, () => createMockId("products"));
   }
-  generateResults(status) {
-    if (["pending", "running", "failed", "cancelled"].includes(status)) {
+  generateResults(status, productIds) {
+    if (["pending", "running", "cancelled"].includes(status)) {
       return [];
     }
-    const count = this.faker.number.int({ min: 5, max: 20 });
-    return Array.from({ length: count }, () => ({
-      productId: createMockId("products"),
-      suggestedCategoryIds: Array.from({
+    const resultsCount = status === "completed" ? productIds.length : this.faker.number.int({ min: 0, max: productIds.length });
+    return productIds.slice(0, resultsCount).map((productId) => ({
+      productId,
+      suggestions: Array.from({
         length: this.faker.number.int({ min: 1, max: 3 })
-      }, () => createMockId("categories")),
-      confidence: this.faker.number.float({ min: 0.5, max: 0.99, multipleOf: 0.01 }),
-      rationale: this.faker.lorem.sentence(),
-      appliedAt: this.faker.helpers.maybe(
-        () => this.faker.date.recent({ days: 7 }).getTime(),
-        { probability: 0.7 }
+      }, () => ({
+        categoryId: createMockId("categories"),
+        confidence: this.faker.number.float({ min: 0.5, max: 0.99, multipleOf: 0.01 }),
+        rationale: this.faker.lorem.sentence()
+      })),
+      newCategorySuggestions: this.faker.helpers.maybe(
+        () => Array.from({ length: this.faker.number.int({ min: 1, max: 2 }) }, () => ({
+          name: this.faker.commerce.department(),
+          parentId: this.faker.helpers.maybe(() => createMockId("categories")),
+          rationale: this.faker.lorem.sentence(),
+          confidence: this.faker.number.float({ min: 0.5, max: 0.95, multipleOf: 0.01 })
+        })),
+        { probability: 0.2 }
+      ) || [],
+      status: this.faker.helpers.arrayElement(["success", "error", "skipped"]),
+      error: this.faker.helpers.maybe(
+        () => this.faker.helpers.arrayElement([
+          "Failed to categorize product",
+          "Insufficient product data",
+          "API error during processing"
+        ]),
+        { probability: 0.1 }
       )
     }));
   }
   generateErrors(status) {
     if (status === "failed") {
       return [{
+        type: this.faker.helpers.arrayElement(["api_error", "rate_limit", "validation_error", "network_error"]),
         message: this.faker.helpers.arrayElement([
           "API rate limit exceeded",
           "Invalid API key",
-          "Model not available"
+          "Model not available",
+          "Network timeout"
         ]),
-        timestamp: this.faker.date.recent({ days: 1 }).getTime(),
-        type: "api_error"
+        productId: this.faker.helpers.maybe(() => createMockId("products")),
+        timestamp: this.faker.date.recent({ days: 1 }).getTime()
       }];
     }
     if (status === "completed" && this.faker.datatype.boolean({ probability: 0.2 })) {
       return [{
+        type: "validation_error",
         message: "Failed to categorize product: insufficient data",
         productId: createMockId("products"),
-        timestamp: this.faker.date.recent({ days: 1 }).getTime(),
-        type: "validation_error"
+        timestamp: this.faker.date.recent({ days: 1 }).getTime()
       }];
     }
     return [];
-  }
-  generateCost(status) {
-    if (["pending", "cancelled"].includes(status)) {
-      return { inputTokens: 0, outputTokens: 0, totalCost: 0 };
-    }
-    const inputTokens = this.faker.number.int({ min: 1e3, max: 5e4 });
-    const outputTokens = this.faker.number.int({ min: 500, max: 1e4 });
-    const totalCost = inputTokens * 3e-5 + outputTokens * 6e-5;
-    return { inputTokens, outputTokens, totalCost };
   }
 };
 

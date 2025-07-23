@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach } from '@jest/globals';
+import { t } from '../../../test.setup';
 import {
   createConvexTest,
   createMutationContext,
@@ -14,13 +15,13 @@ import {
   createMockProject,
   createMockCategory,
   createMockProduct,
-} from '../../../__tests__/test-helpers';
+} from 'convex-test';
 // Import the mutation objects to access their handlers
 import { assignProductToCategory as assignProductToCategoryMutation, removeProductFromCategory as removeProductFromCategoryMutation } from '../products';
 
 // Extract the handlers for use in tests
-const assignProductToCategory = assignProductToCategoryMutation.handler;
-const removeProductFromCategory = removeProductFromCategoryMutation.handler;
+const assignProductToCategory = (ctx: any, args: any) => assignProductToCategoryMutation.handler(ctx, args);
+const removeProductFromCategory = (ctx: any, args: any) => removeProductFromCategoryMutation.handler(ctx, args);
 import { Id } from '../../../_generated/dataModel';
 
 describe('Category Product Assignments', () => {
@@ -33,7 +34,8 @@ describe('Category Product Assignments', () => {
   let product: any;
 
   beforeEach(async () => {
-    test = createConvexTest();
+    
+    tes// t is already imported from test.setup
     
     // Set up common test data
     user = createMockUser({ _id: 'user_1' as Id<'users'> });
@@ -113,7 +115,7 @@ describe('Category Product Assignments', () => {
         });
 
         // Verify product was updated
-        const updatedProduct = await test.db.get(product._id);
+        const updatedProduct = await t.db.get(product._id);
         expect(updatedProduct.categories).toContain(category._id);
         expect(updatedProduct.version).toBe(2);
         expect(updatedProduct.lastModifiedBy).toBe(user._id);
@@ -147,7 +149,7 @@ describe('Category Product Assignments', () => {
         const assignmentId = await assignProductToCategory(ctx, args);
 
         // Assert
-        const assignment = await test.db.get(assignmentId);
+        const assignment = await t.db.get(assignmentId);
         expect(assignment).toMatchObject({
           assignedBy: 'ai',
           confidence: 0.95,
@@ -168,7 +170,7 @@ describe('Category Product Assignments', () => {
         const assignmentId = await assignProductToCategory(ctx, args);
 
         // Assert
-        const assignment = await test.db.get(assignmentId);
+        const assignment = await t.db.get(assignmentId);
         expect(assignment.assignedBy).toBe('import');
       });
 
@@ -182,7 +184,7 @@ describe('Category Product Assignments', () => {
         });
         
         product.categories = [otherCategory._id];
-        await test.db.patch(product._id, { categories: [otherCategory._id] });
+        await t.db.patch(product._id, { categories: [otherCategory._id] });
         
         await seedDatabase(test, { categories: [otherCategory] });
         
@@ -196,7 +198,7 @@ describe('Category Product Assignments', () => {
         });
 
         // Assert
-        const updatedProduct = await test.db.get(product._id);
+        const updatedProduct = await t.db.get(product._id);
         expect(updatedProduct.categories).toHaveLength(2);
         expect(updatedProduct.categories).toContain(otherCategory._id);
         expect(updatedProduct.categories).toContain(category._id);
@@ -220,7 +222,7 @@ describe('Category Product Assignments', () => {
       it('should fail for viewer role', async () => {
         // Arrange
         membership.role = 'viewer';
-        await test.db.patch(membership._id, { role: 'viewer' });
+        await t.db.patch(membership._id, { role: 'viewer' });
         
         const ctx = createMutationContext(test);
 
@@ -340,8 +342,8 @@ describe('Category Product Assignments', () => {
         });
 
         // Assert
-        const a1 = await test.db.get(assignment1);
-        const a2 = await test.db.get(assignment2);
+        const a1 = await t.db.get(assignment1);
+        const a2 = await t.db.get(assignment2);
         expect(a1.confidence).toBe(0);
         expect(a2.confidence).toBe(1);
       });
@@ -360,7 +362,7 @@ describe('Category Product Assignments', () => {
         });
 
         // Assert
-        const assignment = await test.db.get(assignmentId);
+        const assignment = await t.db.get(assignmentId);
         expect(assignment.rationale).toBe(longRationale);
       });
     });
@@ -392,7 +394,7 @@ describe('Category Product Assignments', () => {
       assignmentId = assignment._id;
       
       // Update product to have the category
-      await test.db.patch(product._id, {
+      await t.db.patch(product._id, {
         categories: [category._id],
       });
     });
@@ -412,11 +414,11 @@ describe('Category Product Assignments', () => {
         expect(result).toBe(assignmentId);
         
         // Verify assignment was soft deleted
-        const assignment = await test.db.get(assignmentId);
+        const assignment = await t.db.get(assignmentId);
         expect(assignment.status).toBe('rejected');
         
         // Verify product was updated
-        const updatedProduct = await test.db.get(product._id);
+        const updatedProduct = await t.db.get(product._id);
         expect(updatedProduct.categories).not.toContain(category._id);
         expect(updatedProduct.version).toBe(2);
         
@@ -445,7 +447,7 @@ describe('Category Product Assignments', () => {
         });
         
         await seedDatabase(test, { categories: [otherCategory] });
-        await test.db.patch(product._id, {
+        await t.db.patch(product._id, {
           categories: [category._id, otherCategory._id],
         });
         
@@ -458,7 +460,7 @@ describe('Category Product Assignments', () => {
         });
 
         // Assert
-        const updatedProduct = await test.db.get(product._id);
+        const updatedProduct = await t.db.get(product._id);
         expect(updatedProduct.categories).toHaveLength(1);
         expect(updatedProduct.categories).toContain(otherCategory._id);
         expect(updatedProduct.categories).not.toContain(category._id);
@@ -481,7 +483,7 @@ describe('Category Product Assignments', () => {
       it('should fail for viewer role', async () => {
         // Arrange
         membership.role = 'viewer';
-        await test.db.patch(membership._id, { role: 'viewer' });
+        await t.db.patch(membership._id, { role: 'viewer' });
         
         const ctx = createMutationContext(test);
 
@@ -516,7 +518,7 @@ describe('Category Product Assignments', () => {
 
       it('should fail for already removed assignment', async () => {
         // Arrange
-        await test.db.patch(assignmentId, { status: 'rejected' });
+        await t.db.patch(assignmentId, { status: 'rejected' });
         
         const ctx = createMutationContext(test);
 
@@ -562,16 +564,16 @@ describe('Category Product Assignments', () => {
         });
 
         // Assert
-        const updatedProduct = await test.db.get(product._id);
+        const updatedProduct = await t.db.get(product._id);
         expect(updatedProduct.categories).toEqual([]);
       });
 
       it('should preserve other assignment metadata', async () => {
         // Arrange
-        const originalAssignment = await test.db.get(assignmentId);
+        const originalAssignment = await t.db.get(assignmentId);
         originalAssignment.confidence = 0.95;
         originalAssignment.rationale = 'AI assigned';
-        await test.db.patch(assignmentId, {
+        await t.db.patch(assignmentId, {
           confidence: 0.95,
           rationale: 'AI assigned',
         });
@@ -585,7 +587,7 @@ describe('Category Product Assignments', () => {
         });
 
         // Assert
-        const updatedAssignment = await test.db.get(assignmentId);
+        const updatedAssignment = await t.db.get(assignmentId);
         expect(updatedAssignment.confidence).toBe(0.95);
         expect(updatedAssignment.rationale).toBe('AI assigned');
         expect(updatedAssignment.status).toBe('rejected');

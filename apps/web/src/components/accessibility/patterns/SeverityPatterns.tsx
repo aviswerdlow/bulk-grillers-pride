@@ -197,7 +197,7 @@ export function PatternDefs({ highContrast = false }: { highContrast?: boolean }
 export { patterns };
 
 // Utility function to get pattern by severity
-export function getPattern(severity: SeverityLevel, highContrast = false): PatternDefinition {
+export function getPattern(severity: SeverityLevel): PatternDefinition {
   const pattern = patterns[severity];
   if (!pattern) {
     console.warn(`Unknown severity level: ${severity}`);
@@ -207,14 +207,13 @@ export function getPattern(severity: SeverityLevel, highContrast = false): Patte
 }
 
 // Utility function to get pattern URL for CSS
-export function getPatternUrl(severity: SeverityLevel, highContrast = false): string {
-  const pattern = getPattern(severity, highContrast);
-  const id = highContrast ? `${pattern.id}-hc` : pattern.id;
-  return `url(#${id})`;
+export function getPatternUrl(severity: SeverityLevel): string {
+  const pattern = getPattern(severity);
+  return `url(#${pattern.id})`;
 }
 
 // Utility function to get colors for a severity level
-export function getPatternColors(severity: SeverityLevel, highContrast = false) {
-  const pattern = getPattern(severity, highContrast);
-  return highContrast ? pattern.colorScheme.highContrast : pattern.colorScheme;
+export function getPatternColors(severity: SeverityLevel) {
+  const pattern = getPattern(severity);
+  return pattern.colorScheme;
 }

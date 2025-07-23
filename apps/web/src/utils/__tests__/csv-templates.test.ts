@@ -1,4 +1,10 @@
-import { downloadProductsTemplate, downloadVariantsTemplate, downloadCategoriesTemplate } from '../csv-templates';
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+/**
+ * @jest-environment jsdom
+ */
+import React from 'react';
+import { downloadCategoriesTemplate, downloadProductsTemplate, downloadVariantsTemplate } from '../csv-templates';
+
 
 // Mock DOM methods
 const mockCreateElement = jest.fn();
@@ -313,7 +319,7 @@ describe('CSV Template Generators', () => {
       const mockDate = new Date('2025-01-01T00:00:00Z');
       const originalDate = global.Date;
       global.Date = jest.fn(() => mockDate) as unknown as typeof Date;
-      global.Date.prototype = originalDate.prototype;
+      (global.Date as any).prototype = originalDate.prototype;
       
       downloadCategoriesTemplate();
 

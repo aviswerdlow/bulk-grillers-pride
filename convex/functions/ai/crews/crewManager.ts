@@ -1,3 +1,4 @@
+import { internal } from "@convex/_generated/api";
 /**
  * CrewAI Manager
  * 

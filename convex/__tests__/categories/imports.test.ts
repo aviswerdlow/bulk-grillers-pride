@@ -1,3 +1,4 @@
+import { t } from '../../test.setup';
 import { describe, it, expect, beforeEach } from '@jest/globals';
 import {
   createConvexTest,
@@ -9,6 +10,7 @@ import {
   assertDocumentExists,
   assertDocumentNotExists,
   type ConvexTestContext,
+  convexTest
 } from '../convex-test-standard';
 import {
   createMockUser,
@@ -17,15 +19,12 @@ import {
   createMockProject,
   createMockProduct,
   createMockCategory,
-} from '../test-helpers';
-import { createCategoryLevelDefinitions, importCategory, bulkImportCategories } from '../functions/categories/imports';
+} from '../../test-helpers';
+import { createCategoryLevelDefinitions, importCategory, bulkImportCategories } from '../../functions/categories/imports';
 
 describe('imports', () => {
-  let test: ConvexTestContext;
-
   beforeEach(() => {
-    test = createConvexTest();
-  });
+    });
 
   describe('createCategoryLevelDefinitions', () => {
     describe('Happy Path', () => {
@@ -39,14 +38,14 @@ describe('imports', () => {
           role: 'owner',
         });
 
-        await seedDatabase(test, {
+        await seedDatabase(t, {
           users: [user],
           organizations: [org],
           organizationMemberships: [membership],
         });
 
-        setupAuth(test, { tokenIdentifier: user.clerkId });
-        const ctx = createMutationContext(test);
+        setupAuth(t, { tokenIdentifier: user.clerkId });
+        const ctx = createMutationContext(t);
 
         // Act
         const args = {
@@ -67,8 +66,8 @@ describe('imports', () => {
     describe('Authorization', () => {
       it('should fail for unauthenticated user', async () => {
         // Arrange
-        setupAuth(test, null);
-        const ctx = createMutationContext(test);
+        setupAuth(t, null);
+        const ctx = createMutationContext(t);
 
         // Act & Assert
         await expect(createCategoryLevelDefinitions(ctx, {} as any)).rejects.toThrow();
@@ -80,13 +79,13 @@ describe('imports', () => {
         const org = createMockOrganization();
         // Note: No membership created
 
-        await seedDatabase(test, {
+        await seedDatabase(t, {
           users: [user],
           organizations: [org],
         });
 
-        setupAuth(test, { tokenIdentifier: user.clerkId });
-        const ctx = createMutationContext(test);
+        setupAuth(t, { tokenIdentifier: user.clerkId });
+        const ctx = createMutationContext(t);
 
         // Act & Assert
         const args = {
@@ -100,8 +99,8 @@ describe('imports', () => {
       it('should fail with invalid arguments', async () => {
         // Arrange
         const user = createMockUser();
-        setupAuth(test, { tokenIdentifier: user.clerkId });
-        const ctx = createMutationContext(test);
+        setupAuth(t, { tokenIdentifier: user.clerkId });
+        const ctx = createMutationContext(t);
 
         // Act & Assert
         await expect(createCategoryLevelDefinitions(ctx, {} as any)).rejects.toThrow();
@@ -127,14 +126,14 @@ describe('imports', () => {
           role: 'owner',
         });
 
-        await seedDatabase(test, {
+        await seedDatabase(t, {
           users: [user],
           organizations: [org],
           organizationMemberships: [membership],
         });
 
-        setupAuth(test, { tokenIdentifier: user.clerkId });
-        const ctx = createMutationContext(test);
+        setupAuth(t, { tokenIdentifier: user.clerkId });
+        const ctx = createMutationContext(t);
 
         // Act
         const args = {
@@ -159,8 +158,8 @@ describe('imports', () => {
     describe('Authorization', () => {
       it('should fail for unauthenticated user', async () => {
         // Arrange
-        setupAuth(test, null);
-        const ctx = createMutationContext(test);
+        setupAuth(t, null);
+        const ctx = createMutationContext(t);
 
         // Act & Assert
         await expect(importCategory(ctx, {} as any)).rejects.toThrow();
@@ -172,13 +171,13 @@ describe('imports', () => {
         const org = createMockOrganization();
         // Note: No membership created
 
-        await seedDatabase(test, {
+        await seedDatabase(t, {
           users: [user],
           organizations: [org],
         });
 
-        setupAuth(test, { tokenIdentifier: user.clerkId });
-        const ctx = createMutationContext(test);
+        setupAuth(t, { tokenIdentifier: user.clerkId });
+        const ctx = createMutationContext(t);
 
         // Act & Assert
         const args = {
@@ -192,8 +191,8 @@ describe('imports', () => {
       it('should fail with invalid arguments', async () => {
         // Arrange
         const user = createMockUser();
-        setupAuth(test, { tokenIdentifier: user.clerkId });
-        const ctx = createMutationContext(test);
+        setupAuth(t, { tokenIdentifier: user.clerkId });
+        const ctx = createMutationContext(t);
 
         // Act & Assert
         await expect(importCategory(ctx, {} as any)).rejects.toThrow();
@@ -219,14 +218,14 @@ describe('imports', () => {
           role: 'owner',
         });
 
-        await seedDatabase(test, {
+        await seedDatabase(t, {
           users: [user],
           organizations: [org],
           organizationMemberships: [membership],
         });
 
-        setupAuth(test, { tokenIdentifier: user.clerkId });
-        const ctx = createMutationContext(test);
+        setupAuth(t, { tokenIdentifier: user.clerkId });
+        const ctx = createMutationContext(t);
 
         // Act
         const args = {
@@ -247,8 +246,8 @@ describe('imports', () => {
     describe('Authorization', () => {
       it('should fail for unauthenticated user', async () => {
         // Arrange
-        setupAuth(test, null);
-        const ctx = createMutationContext(test);
+        setupAuth(t, null);
+        const ctx = createMutationContext(t);
 
         // Act & Assert
         await expect(bulkImportCategories(ctx, {} as any)).rejects.toThrow();
@@ -260,13 +259,13 @@ describe('imports', () => {
         const org = createMockOrganization();
         // Note: No membership created
 
-        await seedDatabase(test, {
+        await seedDatabase(t, {
           users: [user],
           organizations: [org],
         });
 
-        setupAuth(test, { tokenIdentifier: user.clerkId });
-        const ctx = createMutationContext(test);
+        setupAuth(t, { tokenIdentifier: user.clerkId });
+        const ctx = createMutationContext(t);
 
         // Act & Assert
         const args = {
@@ -280,8 +279,8 @@ describe('imports', () => {
       it('should fail with invalid arguments', async () => {
         // Arrange
         const user = createMockUser();
-        setupAuth(test, { tokenIdentifier: user.clerkId });
-        const ctx = createMutationContext(test);
+        setupAuth(t, { tokenIdentifier: user.clerkId });
+        const ctx = createMutationContext(t);
 
         // Act & Assert
         await expect(bulkImportCategories(ctx, {} as any)).rejects.toThrow();

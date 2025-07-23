@@ -1,76 +1,182 @@
-// Add custom jest matchers from jest-dom
-require('@testing-library/jest-dom');
+// Jest Setup
+import '@testing-library/jest-dom';
 
-// Configure jest-axe for accessibility testing
-const { toHaveNoViolations } = require('jest-axe');
-expect.extend(toHaveNoViolations);
-
-// Make React available globally for JSX without imports
-const React = require('react');
-global.React = React;
-
-// Mock next/router
-jest.mock('next/router', () => require('next-router-mock'));
-
-// Mock next/navigation
-jest.mock('next/navigation', () => ({
-  useRouter() {
-    return {
-      push: jest.fn(),
-      replace: jest.fn(),
-      prefetch: jest.fn(),
-      back: jest.fn(),
-      forward: jest.fn(),
-      refresh: jest.fn(),
-    };
-  },
-  useSearchParams() {
-    return new URLSearchParams();
-  },
-  usePathname() {
-    return '/';
-  },
-  useParams() {
-    return {};
-  },
-}));
-
-// Mock convex/react-clerk
-jest.mock('convex/react-clerk', () => ({
-  ConvexProviderWithClerk: ({ children }) => children,
-}));
-
-// Mock environment variables
-process.env.NEXT_PUBLIC_CONVEX_URL = 'https://test.convex.cloud';
-process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY = 'test-clerk-key';
-
-// Suppress console errors during tests unless explicitly needed
-const originalError = console.error;
-beforeAll(() => {
-  console.error = (...args) => {
-    if (typeof args[0] === 'string' && args[0].includes('Warning: ReactDOM.render')) {
-      return;
-    }
-    originalError.call(console, ...args);
+// Global mocks for both node and jsdom environments
+if (typeof window === 'undefined') {
+  // In node environment (Convex tests), create a minimal window object
+  global.window = {
+    matchMedia: jest.fn().mockImplementation(query => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: jest.fn(),
+      removeListener: jest.fn(),
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
+      dispatchEvent: jest.fn(),
+    })),
+    scrollTo: jest.fn(),
+    location: {
+      href: 'http://localhost',
+      origin: 'http://localhost',
+      protocol: 'http:',
+      host: 'localhost',
+      hostname: 'localhost',
+      port: '',
+      pathname: '/',
+      search: '',
+      hash: ''
+    },
+    navigator: {
+      userAgent: 'node.js',
+      clipboard: {
+        writeText: jest.fn().mockResolvedValue(undefined),
+        readText: jest.fn().mockResolvedValue(''),
+      }
+    },
+    document: {
+      createElement: jest.fn(() => ({
+        style: {},
+        setAttribute: jest.fn(),
+        getAttribute: jest.fn(),
+        appendChild: jest.fn(),
+        removeChild: jest.fn(),
+        addEventListener: jest.fn(),
+        removeEventListener: jest.fn(),
+        dispatchEvent: jest.fn(),
+      })),
+      body: {
+        appendChild: jest.fn(),
+        removeChild: jest.fn(),
+      },
+      getElementById: jest.fn(),
+      getElementsByClassName: jest.fn(() => []),
+      getElementsByTagName: jest.fn(() => []),
+      querySelector: jest.fn(),
+      querySelectorAll: jest.fn(() => []),
+    },
+    localStorage: {
+      getItem: jest.fn(),
+      setItem: jest.fn(),
+      removeItem: jest.fn(),
+      clear: jest.fn(),
+    },
+    sessionStorage: {
+      getItem: jest.fn(),
+      setItem: jest.fn(),
+      removeItem: jest.fn(),
+      clear: jest.fn(),
+    },
+    requestAnimationFrame: jest.fn(cb => setTimeout(cb, 0)),
+    cancelAnimationFrame: jest.fn(id => clearTimeout(id)),
   };
-});
+  
+  // Also set it on global for direct access
+  for (const key in global.window) {
+    if (!(key in global)) {
+      global[key] = global.window[key];
+    }
+  }
 
-afterAll(() => {
-  console.error = originalError;
-});
+  // Mock HTMLElement for node environment
+  global.HTMLElement = class HTMLElement {
+    constructor() {
+      this.style = {};
+      this.classList = {
+        add: jest.fn(),
+        remove: jest.fn(),
+        contains: jest.fn(),
+        toggle: jest.fn(),
+      };
+      this.dataset = {};
+      this.attributes = {};
+    }
+    
+    setAttribute(name, value) {
+      this.attributes[name] = value;
+    }
+    
+    getAttribute(name) {
+      return this.attributes[name];
+    }
+    
+    removeAttribute(name) {
+      delete this.attributes[name];
+    }
+    
+    addEventListener() {}
+    removeEventListener() {}
+    dispatchEvent() {}
+    appendChild() {}
+    removeChild() {}
+    insertBefore() {}
+    querySelector() { return null; }
+    querySelectorAll() { return []; }
+    scrollIntoView() {}
+    focus() {}
+    blur() {}
+    click() {}
+  };
+  
+  // Also mock other HTML elements that might be needed
+  global.HTMLDivElement = global.HTMLElement;
+  global.HTMLSpanElement = global.HTMLElement;
+  global.HTMLButtonElement = global.HTMLElement;
+  global.HTMLInputElement = global.HTMLElement;
+  global.HTMLFormElement = global.HTMLElement;
+  global.HTMLAnchorElement = global.HTMLElement;
+  global.HTMLImageElement = global.HTMLElement;
+  global.HTMLVideoElement = global.HTMLElement;
+  global.HTMLCanvasElement = global.HTMLElement;
+  global.HTMLIFrameElement = global.HTMLElement;
 
-// Global test utilities
-global.ResizeObserver = jest.fn().mockImplementation(() => ({
-  observe: jest.fn(),
-  unobserve: jest.fn(),
-  disconnect: jest.fn(),
-}));
+}
+
+
+
+// Mock window.matchMedia
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: jest.fn().mockImplementation(query => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: jest.fn(),
+    removeListener: jest.fn(),
+    addEventListener: jest.fn(),
+    removeEventListener: jest.fn(),
+    dispatchEvent: jest.fn(),
+  })),
+});
 
 // Mock IntersectionObserver
-global.IntersectionObserver = jest.fn().mockImplementation(() => ({
-  observe: jest.fn(),
-  unobserve: jest.fn(),
-  disconnect: jest.fn(),
-}));
+global.IntersectionObserver = class IntersectionObserver {
+  constructor() {}
+  disconnect() {}
+  observe() {}
+  unobserve() {}
+  takeRecords() { return []; }
+};
 
-// UI component mocks are loaded per test file as needed
+// Mock ResizeObserver
+global.ResizeObserver = class ResizeObserver {
+  constructor() {}
+  disconnect() {}
+  observe() {}
+  unobserve() {}
+};
+
+// Mock scrollTo
+window.scrollTo = jest.fn();
+
+// Mock HTMLElement methods
+HTMLElement.prototype.scrollIntoView = jest.fn();
+HTMLElement.prototype.releasePointerCapture = jest.fn();
+HTMLElement.prototype.hasPointerCapture = jest.fn();
+
+// Global console mocks
+global.console = {
+  ...console,
+  error: jest.fn(),
+  warn: jest.fn(),
+};

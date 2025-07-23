@@ -1,3 +1,4 @@
+import { internal } from "@convex/_generated/api";
 /**
  * Example implementations showing how to integrate caching
  * into existing Convex functions

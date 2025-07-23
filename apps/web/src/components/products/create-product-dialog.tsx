@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useMutation } from 'convex/react';
 import { api } from '@convex/_generated/api';
 import { Id } from '@convex/_generated/dataModel';
@@ -63,7 +63,7 @@ export function CreateProductDialog({
   const [currentTag, setCurrentTag] = useState('');
   const [tags, setTags] = useState<string[]>([]);
 
-  const createProduct = useMutation(api.functions.products.products.createProduct);
+  const createProduct = useMutation((api as any).functions.products.products.createProduct);
 
   const {
     register,

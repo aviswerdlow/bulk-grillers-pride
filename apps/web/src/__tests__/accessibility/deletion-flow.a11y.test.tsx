@@ -1,3 +1,13 @@
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+/**
+ * @jest-environment jsdom
+ */
+import React from 'react';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { mockUseAction, mockUseMutation, mockUseQuery, renderWithProviders } from '@/__tests__/test-helpers';
+import { A11yTestUtils } from '../utils/A11yTestUtils';
+import { ConvexClientProvider } from '@/components/convex-client-provider';
+import { DeleteProductDialog } from '@/components/products/delete-product-dialog';
 /**
  * Deletion Flow Accessibility Tests
  * 
@@ -10,12 +20,7 @@
  * - WCAG compliance
  */
 
-import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { A11yTestUtils } from '../utils/A11yTestUtils';
-import { DeleteProductDialog } from '@/components/products/delete-product-dialog';
-import { ConvexClientProvider } from '@/components/convex-client-provider';
 // import { mockConvex } from '../__mocks__/convex';
 import type { Id } from '@convex/_generated/dataModel';
 
@@ -25,16 +30,13 @@ jest.mock('@clerk/nextjs', () => ({
   useOrganization: () => ({ organization: { id: 'test-org' } })
 }));
 
-import { useMutation } from 'convex/react';
-
-jest.mock('convex/react', () => ({
-  ...jest.requireActual('convex/react'),
-  useQuery: jest.fn(),
-  useMutation: jest.fn(() => jest.fn()),
-  useAction: jest.fn(() => jest.fn())
-}));
+;
 
 describe('Deletion Flow Accessibility', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   const mockProduct = {
     _id: 'product1' as Id<'products'>,
     title: 'Test Product',
@@ -56,8 +58,7 @@ describe('Deletion Flow Accessibility', () => {
 
   describe('Keyboard Navigation', () => {
     it('should support full keyboard navigation through the dialog', async () => {
-      render(
-        <ConvexClientProvider>
+      renderWithProviders(<ConvexClientProvider>
           <DeleteProductDialog
             open={true}
             onOpenChange={mockOnOpenChange}
@@ -82,8 +83,7 @@ describe('Deletion Flow Accessibility', () => {
     });
 
     it('should trap focus within the dialog', async () => {
-      render(
-        <ConvexClientProvider>
+      renderWithProviders(<ConvexClientProvider>
           <DeleteProductDialog
             open={true}
             onOpenChange={mockOnOpenChange}
@@ -105,8 +105,7 @@ describe('Deletion Flow Accessibility', () => {
     it('should handle escape key to close dialog', async () => {
       const user = userEvent.setup();
       
-      render(
-        <ConvexClientProvider>
+      renderWithProviders(<ConvexClientProvider>
           <DeleteProductDialog
             open={true}
             onOpenChange={mockOnOpenChange}
@@ -126,8 +125,7 @@ describe('Deletion Flow Accessibility', () => {
     it('should announce dialog opening', async () => {
       await A11yTestUtils.testScreenReaderAnnouncements(
         async () => {
-          render(
-            <ConvexClientProvider>
+          renderWithProviders(<ConvexClientProvider>
               <DeleteProductDialog
                 open={true}
                 onOpenChange={mockOnOpenChange}
@@ -144,8 +142,7 @@ describe('Deletion Flow Accessibility', () => {
 
     it('should announce product selection changes', async () => {
       userEvent.setup();
-      const { rerender } = render(
-        <ConvexClientProvider>
+      const { rerender } = renderWithProviders(<ConvexClientProvider>
           <DeleteProductDialog
             open={true}
             onOpenChange={mockOnOpenChange}
@@ -178,8 +175,7 @@ describe('Deletion Flow Accessibility', () => {
     it('should announce deletion completion', async () => {
       const user = userEvent.setup();
       
-      render(
-        <ConvexClientProvider>
+      renderWithProviders(<ConvexClientProvider>
           <DeleteProductDialog
             open={true}
             onOpenChange={mockOnOpenChange}
@@ -202,8 +198,7 @@ describe('Deletion Flow Accessibility', () => {
 
   describe('Pattern Visibility for Colorblind Users', () => {
     it('should apply patterns for severity indicators', async () => {
-      render(
-        <ConvexClientProvider>
+      renderWithProviders(<ConvexClientProvider>
           <DeleteProductDialog
             open={true}
             onOpenChange={mockOnOpenChange}
@@ -222,8 +217,7 @@ describe('Deletion Flow Accessibility', () => {
     });
 
     it('should provide texture descriptions for screen readers', () => {
-      render(
-        <ConvexClientProvider>
+      renderWithProviders(<ConvexClientProvider>
           <DeleteProductDialog
             open={true}
             onOpenChange={mockOnOpenChange}
@@ -249,8 +243,7 @@ describe('Deletion Flow Accessibility', () => {
       await A11yTestUtils.testFocusRestoration(
         triggerButton,
         async () => {
-          render(
-            <ConvexClientProvider>
+          renderWithProviders(<ConvexClientProvider>
               <DeleteProductDialog
                 open={true}
                 onOpenChange={mockOnOpenChange}
@@ -271,8 +264,7 @@ describe('Deletion Flow Accessibility', () => {
     it('should maintain focus order in multi-step wizard', async () => {
       const user = userEvent.setup();
       
-      render(
-        <ConvexClientProvider>
+      renderWithProviders(<ConvexClientProvider>
           <DeleteProductDialog
             open={true}
             onOpenChange={mockOnOpenChange}
@@ -298,8 +290,7 @@ describe('Deletion Flow Accessibility', () => {
 
   describe('Color Contrast Compliance', () => {
     it('should meet WCAG AA color contrast standards', async () => {
-      const { container } = render(
-        <ConvexClientProvider>
+      const { container } = renderWithProviders(<ConvexClientProvider>
           <DeleteProductDialog
             open={true}
             onOpenChange={mockOnOpenChange}
@@ -322,8 +313,7 @@ describe('Deletion Flow Accessibility', () => {
       // Set high contrast mode
       document.documentElement.setAttribute('data-high-contrast', 'true');
 
-      render(
-        <ConvexClientProvider>
+      renderWithProviders(<ConvexClientProvider>
           <DeleteProductDialog
             open={true}
             onOpenChange={mockOnOpenChange}
@@ -347,8 +337,7 @@ describe('Deletion Flow Accessibility', () => {
 
   describe('ARIA Semantics', () => {
     it('should have proper ARIA attributes', async () => {
-      render(
-        <ConvexClientProvider>
+      renderWithProviders(<ConvexClientProvider>
           <DeleteProductDialog
             open={true}
             onOpenChange={mockOnOpenChange}
@@ -368,8 +357,7 @@ describe('Deletion Flow Accessibility', () => {
     });
 
     it('should have proper heading hierarchy', () => {
-      render(
-        <ConvexClientProvider>
+      renderWithProviders(<ConvexClientProvider>
           <DeleteProductDialog
             open={true}
             onOpenChange={mockOnOpenChange}
@@ -397,8 +385,7 @@ describe('Deletion Flow Accessibility', () => {
     it('should support hold-to-confirm method', async () => {
       userEvent.setup();
       
-      render(
-        <ConvexClientProvider>
+      renderWithProviders(<ConvexClientProvider>
           <DeleteProductDialog
             open={true}
             onOpenChange={mockOnOpenChange}
@@ -433,8 +420,7 @@ describe('Deletion Flow Accessibility', () => {
     it('should support type-to-confirm method', async () => {
       const user = userEvent.setup();
       
-      render(
-        <ConvexClientProvider>
+      renderWithProviders(<ConvexClientProvider>
           <DeleteProductDialog
             open={true}
             onOpenChange={mockOnOpenChange}
@@ -475,8 +461,7 @@ describe('Deletion Flow Accessibility', () => {
       
       const user = userEvent.setup();
       
-      render(
-        <ConvexClientProvider>
+      renderWithProviders(<ConvexClientProvider>
           <DeleteProductDialog
             open={true}
             onOpenChange={mockOnOpenChange}
@@ -509,8 +494,7 @@ describe('Deletion Flow Accessibility', () => {
       
       const user = userEvent.setup();
       
-      render(
-        <ConvexClientProvider>
+      renderWithProviders(<ConvexClientProvider>
           <DeleteProductDialog
             open={true}
             onOpenChange={mockOnOpenChange}

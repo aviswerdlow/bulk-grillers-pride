@@ -31,7 +31,7 @@ export function WizardFocusController({
   announceStepChanges = true,
   enableKeyboardNavigation = true,
 }: WizardFocusControllerProps) {
-  const { pushFocus, popFocus } = useFocusManagement();
+  const { pushFocus } = useFocusManagement();
   const { announce } = useAnnouncement();
   const { registerShortcut, unregisterShortcut } = useAccessibility();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -67,7 +67,7 @@ export function WizardFocusController({
         (focusableElements[0] as HTMLElement).focus();
       }
     }, 100); // Small delay to ensure DOM is ready
-  }, [currentStepInfo?.focusTarget]);
+  }, [currentStepInfo]);
 
   // Handle step changes
   useEffect(() => {
@@ -119,12 +119,13 @@ export function WizardFocusController({
       }
     };
 
-    containerRef.current?.addEventListener('keydown', handleKeyDown);
+    const container = containerRef.current;
+    container?.addEventListener('keydown', handleKeyDown);
     
     return () => {
       unregisterShortcut('alt+left');
       unregisterShortcut('alt+right');
-      containerRef.current?.removeEventListener('keydown', handleKeyDown);
+      container?.removeEventListener('keydown', handleKeyDown);
     };
   }, [enableKeyboardNavigation, registerShortcut, unregisterShortcut, goToPreviousStep, goToNextStep, isFirstStep, isLastStep]);
 
@@ -199,8 +200,9 @@ export function WizardFocusController({
       }
     };
 
-    containerRef.current?.addEventListener('keydown', handleArrowNavigation);
-    return () => containerRef.current?.removeEventListener('keydown', handleArrowNavigation);
+    const container = containerRef.current;
+    container?.addEventListener('keydown', handleArrowNavigation);
+    return () => container?.removeEventListener('keydown', handleArrowNavigation);
   }, [focusZones]);
 
   return (

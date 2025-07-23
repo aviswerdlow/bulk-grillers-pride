@@ -1,3 +1,8 @@
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+/**
+ * @jest-environment jsdom
+ */
+import React from 'react';
 import {
   Logger,
   detectSentryErrors,
@@ -71,18 +76,18 @@ describe('Error Monitoring Utilities', () => {
       const originalEnv = process.env.NODE_ENV;
 
       // Test in production
-      process.env.NODE_ENV = 'production';
+      (process.env as any).NODE_ENV = 'production';
       const prodLogger = new Logger('TestComponent');
       prodLogger.debug('Debug message');
       expect(consoleDebugSpy).not.toHaveBeenCalled();
 
       // Test in development
-      process.env.NODE_ENV = 'development';
+      (process.env as any).NODE_ENV = 'development';
       const devLogger = new Logger('TestComponent');
       devLogger.debug('Debug message');
       expect(consoleDebugSpy).toHaveBeenCalled();
 
-      process.env.NODE_ENV = originalEnv;
+      (process.env as any).NODE_ENV = originalEnv;
     });
 
     it('should format error objects correctly', () => {
@@ -281,9 +286,9 @@ describe('Error Monitoring Utilities', () => {
       setupGlobalErrorHandling(logger);
 
       const rejectionEvent = new Event('unhandledrejection') as PromiseRejectionEvent;
-      rejectionEvent.reason = new Error('Promise rejected');
+      (rejectionEvent as any).reason = new Error('Promise rejected');
       // Don't create an actual rejected promise, just mock it
-      rejectionEvent.promise = { catch: jest.fn() };
+      (rejectionEvent as any).promise = { catch: jest.fn() };
 
       window.dispatchEvent(rejectionEvent);
 

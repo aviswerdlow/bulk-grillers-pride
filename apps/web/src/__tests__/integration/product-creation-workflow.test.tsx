@@ -1,21 +1,19 @@
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+/**
+ * @jest-environment jsdom
+ */
 import React from 'react';
-import { render, screen, waitFor, within } from '@/__tests__/test-utils';
+import { within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { setupTest, cleanupTest, createMockProduct } from '@/__tests__/frontend-test-helpers';
-import { toast } from 'sonner';
-import { useQuery, useMutation } from 'convex/react';
-import { ProductCard } from '@/components/products/product-card';
+import { cleanupTest, createMockProduct, mockUseMutation, render, screen, setupTest, waitFor, within, renderWithProviders } from '@/__tests__/test-helpers';
 import { CreateProductDialog } from '@/components/products/create-product-dialog';
+import { ProductCard } from '@/components/products/product-card';
 import { Id } from '@convex/_generated/dataModel';
+import { toast } from 'sonner';
+;
 
 // Mock dependencies
 jest.mock('sonner');
-jest.mock('convex/react', () => ({
-  ...jest.requireActual('convex/react'),
-  useQuery: jest.fn(),
-  useMutation: jest.fn(() => jest.fn()),
-}));
-
 // Mock next/navigation
 jest.mock('next/navigation', () => ({
   useRouter: () => ({
@@ -26,6 +24,10 @@ jest.mock('next/navigation', () => ({
 }));
 
 describe('Product Creation Workflow', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   const mockCreateProduct = jest.fn();
   const mockUploadImage = jest.fn();
   const mockGetUploadUrl = jest.fn();
@@ -34,7 +36,7 @@ describe('Product Creation Workflow', () => {
     setupTest();
     jest.clearAllMocks();
     
-    (useMutation as jest.Mock).mockImplementation((fn) => {
+    mockUseMutation.mockImplementation((fn) => {
       if (fn.name?.includes('createProduct')) return mockCreateProduct;
       if (fn.name?.includes('uploadImage')) return mockUploadImage;
       if (fn.name?.includes('getUploadUrl')) return mockGetUploadUrl;
@@ -57,13 +59,11 @@ describe('Product Creation Workflow', () => {
       const onSuccess = jest.fn();
       
       // Render the product creation dialog
-      render(
-        <CreateProductDialog
+      renderWithProviders(<CreateProductDialog
           open={true}
           onOpenChange={() => {}}
           organizationId={"org_123" as Id<"organizations">}
           projectId={"project_123" as Id<"projects">}
-          onSuccess={onSuccess}
         />
       );
 
@@ -140,8 +140,7 @@ describe('Product Creation Workflow', () => {
       // Mock duplicate handle error
       mockCreateProduct.mockRejectedValueOnce(new Error('Handle already exists'));
       
-      render(
-        <CreateProductDialog
+      renderWithProviders(<CreateProductDialog
           open={true}
           onOpenChange={() => {}}
           organizationId={"org_123" as Id<"organizations">}
@@ -188,9 +187,10 @@ describe('Product Creation Workflow', () => {
         vendor: 'GrillMaster Co.',
         productType: 'Outdoor Grills',
         tags: ['outdoor', 'barbecue'],
+        createdAt: Date.now(),
       });
 
-      render(<ProductCard product={newProduct} />);
+      renderWithProviders(<ProductCard product={newProduct as any} />);
 
       // Verify all product information is displayed
       expect(screen.getByText('Premium Grill')).toBeInTheDocument();
@@ -209,8 +209,7 @@ describe('Product Creation Workflow', () => {
     it('validates required fields before submission', async () => {
       const user = userEvent.setup();
       
-      render(
-        <CreateProductDialog
+      renderWithProviders(<CreateProductDialog
           open={true}
           onOpenChange={() => {}}
           organizationId={"org_123" as Id<"organizations">}
@@ -239,8 +238,7 @@ describe('Product Creation Workflow', () => {
     it('validates handle format', async () => {
       const user = userEvent.setup();
       
-      render(
-        <CreateProductDialog
+      renderWithProviders(<CreateProductDialog
           open={true}
           onOpenChange={() => {}}
           organizationId={"org_123" as Id<"organizations">}
@@ -268,8 +266,7 @@ describe('Product Creation Workflow', () => {
       const user = userEvent.setup();
       const file = new File(['image content'], 'product.jpg', { type: 'image/jpeg' });
       
-      render(
-        <CreateProductDialog
+      renderWithProviders(<CreateProductDialog
           open={true}
           onOpenChange={() => {}}
           organizationId={"org_123" as Id<"organizations">}
@@ -313,8 +310,7 @@ describe('Product Creation Workflow', () => {
       const user = userEvent.setup();
       const file = new File(['content'], 'document.pdf', { type: 'application/pdf' });
       
-      render(
-        <CreateProductDialog
+      renderWithProviders(<CreateProductDialog
           open={true}
           onOpenChange={() => {}}
           organizationId={"org_123" as Id<"organizations">}
@@ -335,8 +331,7 @@ describe('Product Creation Workflow', () => {
     it('allows saving as draft and publishing later', async () => {
       const user = userEvent.setup();
       
-      render(
-        <CreateProductDialog
+      renderWithProviders(<CreateProductDialog
           open={true}
           onOpenChange={() => {}}
           organizationId={"org_123" as Id<"organizations">}
@@ -368,8 +363,7 @@ describe('Product Creation Workflow', () => {
     it('allows immediate publishing', async () => {
       const user = userEvent.setup();
       
-      render(
-        <CreateProductDialog
+      renderWithProviders(<CreateProductDialog
           open={true}
           onOpenChange={() => {}}
           organizationId={"org_123" as Id<"organizations">}

@@ -59,13 +59,13 @@ export default function OrganizationSettingsPage() {
   const params = useParams();
   const orgSlug = params.orgSlug as string;
 
-  const organization = useQuery(api.functions.organizations.organizations.getOrganizationBySlug, {
+  const organization = useQuery((api as any).functions.organizations.organizations.getOrganizationBySlug, {
     slug: orgSlug,
   });
 
-  const currentUser = useQuery(api.functions.auth.users.currentWithOrganizations);
+  const currentUser = useQuery((api as any).functions.auth.users.currentWithOrganizations);
 
-  const currentUserRole = currentUser?.organizations?.find((org) => org._id === organization?._id)
+  const currentUserRole = currentUser?.organizations?.find((org: any) => org._id === organization?._id)
     ?.membership.role;
 
   // Loading state
@@ -263,20 +263,20 @@ function ApiKeysSettings({ organizationId }: { organizationId: Id<'organizations
   const [showNewApiKey, setShowNewApiKey] = useState(false);
   
   // Query for masked API keys
-  const maskedApiKeys = useQuery(api.functions.organizations.apiKeys.getMaskedApiKeys, {
+  const maskedApiKeys = useQuery((api as any).functions.organizations.apiKeys.getMaskedApiKeys, {
     organizationId,
   });
   
   // Mutation for removing API keys
-  const removeApiKey = useMutation(api.functions.organizations.apiKeys.removeApiKey);
+  const removeApiKey = useMutation((api as any).functions.organizations.apiKeys.removeApiKey);
   
   // Mutation for updating API keys
-  const updateApiKeys = useMutation(api.functions.organizations.apiKeys.updateApiKeys);
+  const updateApiKeys = useMutation((api as any).functions.organizations.apiKeys.updateApiKeys);
   
   // Transform the masked API keys into the format we need for display
   const apiKeys = maskedApiKeys?.apiKeys
     ? Object.entries(maskedApiKeys.apiKeys)
-        .filter(([_, maskedKey]) => maskedKey !== null)
+        .filter(([, maskedKey]) => maskedKey !== null)
         .map(([provider, maskedKey]) => ({
           id: provider,
           name: `${provider.charAt(0).toUpperCase() + provider.slice(1)} API Key`,
@@ -531,7 +531,7 @@ function ApiKeysSettings({ organizationId }: { organizationId: Id<'organizations
 // Team Settings Component
 function TeamSettings({ 
   organization, 
-  currentUserRole 
+//   currentUserRole 
 }: { 
   organization: Organization;
   currentUserRole?: string;
@@ -605,6 +605,7 @@ function TeamSettings({
 
 // Billing Settings Component
 function BillingSettings({ organization }: { organization: Organization }) {
+  void organization;
   return (
     <div className="space-y-6">
       <Card>

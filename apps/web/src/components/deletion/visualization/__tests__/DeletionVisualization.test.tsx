@@ -1,8 +1,11 @@
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { DeletionVisualization } from '../DeletionVisualization';
 import { DeletionImpactItem, DeletionImpactSummary } from '../types';
+
+import { renderWithProviders } from '@/__tests__/test-helpers';
 
 // Mock the accessibility context
 jest.mock('@/contexts/accessibility', () => ({
@@ -187,11 +190,9 @@ const mockSummary: DeletionImpactSummary = {
   warnings: ['Some items cannot be recovered']
 };
 
-
 describe('DeletionVisualization', () => {
   it('renders with default tree view', () => {
-    render(
-      <DeletionVisualization items={mockItems} summary={mockSummary} />
+    renderWithProviders(<DeletionVisualization items={mockItems} summary={mockSummary} />
     );
     
     expect(screen.getByText('Impact Analysis')).toBeInTheDocument();
@@ -202,8 +203,7 @@ describe('DeletionVisualization', () => {
 
   it('switches between views', async () => {
     const user = userEvent.setup();
-    render(
-      <DeletionVisualization items={mockItems} summary={mockSummary} />
+    renderWithProviders(<DeletionVisualization items={mockItems} summary={mockSummary} />
     );
     
     // Switch to list view
@@ -219,8 +219,7 @@ describe('DeletionVisualization', () => {
 
   it('handles item selection', async () => {
     const onSelectionChange = jest.fn();
-    render(
-      <DeletionVisualization 
+    renderWithProviders(<DeletionVisualization 
         items={mockItems} 
         summary={mockSummary}
         onSelectionChange={onSelectionChange}
@@ -236,8 +235,7 @@ describe('DeletionVisualization', () => {
   });
 
   it('displays impact summary', () => {
-    render(
-      <DeletionVisualization items={mockItems} summary={mockSummary} />
+    renderWithProviders(<DeletionVisualization items={mockItems} summary={mockSummary} />
     );
     
     expect(screen.getByText('3')).toBeInTheDocument(); // Total items
@@ -246,8 +244,7 @@ describe('DeletionVisualization', () => {
   });
 
   it('shows loading state', () => {
-    render(
-      <DeletionVisualization 
+    renderWithProviders(<DeletionVisualization 
         items={[]} 
         summary={mockSummary}
         loading={true}
@@ -258,8 +255,7 @@ describe('DeletionVisualization', () => {
   });
 
   it('shows error state', () => {
-    render(
-      <DeletionVisualization 
+    renderWithProviders(<DeletionVisualization 
         items={[]} 
         summary={mockSummary}
         error="Failed to load impact analysis"
@@ -270,8 +266,7 @@ describe('DeletionVisualization', () => {
   });
 
   it('respects default view prop', () => {
-    render(
-      <DeletionVisualization 
+    renderWithProviders(<DeletionVisualization 
         items={mockItems} 
         summary={mockSummary}
         defaultView="list"

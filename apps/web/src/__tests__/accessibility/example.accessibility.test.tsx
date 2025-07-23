@@ -1,13 +1,16 @@
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import React from 'react';
 import { render } from '@testing-library/react';
 import { axe, toHaveNoViolations } from 'jest-axe';
+
+import { renderWithProviders } from '@/__tests__/test-helpers';
 
 // Extend Jest matchers
 expect.extend(toHaveNoViolations);
 
 describe('Accessibility Setup Verification', () => {
   it('should have no accessibility violations in a simple component', async () => {
-    const { container } = render(
-      <div>
+    const { container } = renderWithProviders(<div>
         <h1>Test Heading</h1>
         <button>Click me</button>
         <nav>
@@ -24,8 +27,7 @@ describe('Accessibility Setup Verification', () => {
   });
 
   it('should detect accessibility violations', async () => {
-    const { container } = render(
-      <div>
+    const { container } = renderWithProviders(<div>
         {/* Image without alt text - should fail */}
         {/* eslint-disable-next-line jsx-a11y/alt-text, @next/next/no-img-element */}
         <img src="/test.jpg" />

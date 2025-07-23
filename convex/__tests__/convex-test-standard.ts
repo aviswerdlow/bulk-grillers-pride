@@ -13,6 +13,7 @@
  */
 
 import { Id } from '../_generated/dataModel';
+import { t } from '../../test.setup';
 import { QueryCtx, MutationCtx, ActionCtx } from '../_generated/server';
 
 // ============================================================================
@@ -142,11 +143,11 @@ export function debugMockCalls(test: ConvexTestContext): void {
   console.log('\n=== Mock Function Calls ===');
   
   const mocks = {
-    'db.query': test.db.query,
-    'db.insert': test.db.insert,
-    'db.get': test.db.get,
-    'db.patch': test.db.patch,
-    'db.delete': test.db.delete,
+    'db.query': t.db.query,
+    'db.insert': t.db.insert,
+    'db.get': t.db.get,
+    'db.patch': t.db.patch,
+    'db.delete': t.db.delete,
     'auth.getUserIdentity': test.auth.getUserIdentity,
     'runQuery': test.runQuery,
     'runMutation': test.runMutation,
@@ -536,7 +537,7 @@ export function createConvexTest(): ConvexTestContext {
  */
 export function createQueryContext(test: ConvexTestContext): QueryCtx {
   return {
-    db: test.db,
+    db: t.db,
     auth: test.auth,
   } as unknown as QueryCtx;
 }
@@ -546,7 +547,7 @@ export function createQueryContext(test: ConvexTestContext): QueryCtx {
  */
 export function createMutationContext(test: ConvexTestContext): MutationCtx {
   return {
-    db: test.db,
+    db: t.db,
     auth: test.auth,
     scheduler: test.scheduler,
   } as unknown as MutationCtx;
@@ -607,7 +608,7 @@ export async function seedDatabase(test: ConvexTestContext, data: {
         });
       } else {
         // Otherwise, use the insert method to generate an ID
-        await test.db.insert(table, doc);
+        await t.db.insert(table, doc);
       }
     }
   }
@@ -671,11 +672,11 @@ export async function assertDocumentNotExists(
  * Legacy compatibility wrapper for existing tests
  * @deprecated Use createConvexTest() instead
  */
-export function convexTest() {
+export function t {
   const test = createConvexTest();
   
   return {
-    db: test.db,
+    db: t.db,
     auth: test.auth,
     runQuery: test.runQuery,
     runMutation: test.runMutation,

@@ -1,4 +1,7 @@
-import { convexTest } from '../test-helpers';
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import { t } from '../../test.setup';
+import { convexTest } from '../../test-helpers';
+import { createOrganization, getOrganizationBySlug } from '../organizations';
 
 describe('Organizations API', () => {
   let ctx: any;
@@ -6,7 +9,7 @@ describe('Organizations API', () => {
   let orgId: string;
 
   beforeEach(async () => {
-    ctx = convexTest();
+    ctx = await t.run(async (ctx) => ctx);
 
     // Create test user
     userId = await ctx.db.insert('users', {
@@ -55,6 +58,7 @@ describe('Organizations API', () => {
 
   describe('getOrganization', () => {
     it('should return organization by ID when user is member', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const result = await ctx.runQuery('getOrganization', { organizationId: orgId });
 
       expect(result).toBeDefined();
@@ -64,12 +68,14 @@ describe('Organizations API', () => {
     });
 
     it('should throw error when organization not found', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       await expect(
         ctx.runQuery('getOrganization', { organizationId: 'nonexistent' as any })
       ).rejects.toThrow();
     });
 
     it('should throw error when user is not a member', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       // Create another org without membership
       const otherOrgId = await ctx.db.insert('organizations', {
         name: 'Other Org',
@@ -89,6 +95,7 @@ describe('Organizations API', () => {
 
   describe('getOrganizationBySlug', () => {
     it('should return organization by slug when user is member', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const result = await ctx.runQuery('getOrganizationBySlug', { slug: 'test-org' });
 
       expect(result).toBeDefined();
@@ -98,6 +105,7 @@ describe('Organizations API', () => {
     });
 
     it('should return null when organization not found', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const result = await ctx.runQuery('getOrganizationBySlug', { slug: 'nonexistent' });
       expect(result).toBeNull();
     });
@@ -105,6 +113,7 @@ describe('Organizations API', () => {
 
   describe('getUserOrganizations', () => {
     it('should return all organizations user is member of', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       // Create another organization with membership
       const orgId2 = await ctx.db.insert('organizations', {
         name: 'Second Org',
@@ -134,6 +143,7 @@ describe('Organizations API', () => {
     });
 
     it('should return empty array when user has no organizations', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       // Create user without any memberships
       const newUserId = await ctx.db.insert('users', {
         clerkId: 'user_456',
@@ -158,6 +168,7 @@ describe('Organizations API', () => {
 
   describe('updateOrganization', () => {
     it('should update organization when user is admin', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const updates = {
         organizationId: orgId,
         name: 'Updated Organization',
@@ -177,6 +188,7 @@ describe('Organizations API', () => {
     });
 
     it('should throw error when user is not admin', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       // Update membership to member role
       await ctx.db.patch(await ctx.db.query('organizationMemberships').collect()[0]._id, {
         role: 'member',
@@ -193,6 +205,7 @@ describe('Organizations API', () => {
 
   describe('createOrganization', () => {
     it('should create new organization with user as owner', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const newOrg = {
         name: 'New Organization',
         clerkOrganizationId: 'org_789',
@@ -218,6 +231,7 @@ describe('Organizations API', () => {
     });
 
     it('should throw error for duplicate slug', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       await expect(
         ctx.runMutation('createOrganization', {
           name: 'Duplicate Org',
@@ -230,6 +244,7 @@ describe('Organizations API', () => {
 
   describe('getOrganizationStats', () => {
     it('should return correct organization statistics', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       // Create test data
       const projectId = await ctx.db.insert('projects', {
         organizationId: orgId,

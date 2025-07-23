@@ -277,7 +277,10 @@ export async function processBatchWithLangChain(
   console.log(`📊 [LANGCHAIN] Products: ${products.length}`);
   console.log(`🏷️ [LANGCHAIN] Categories: ${categories.length}`);
   console.log(`🤖 [LANGCHAIN] Provider: ${provider}, Model: ${model}`);
-  console.log(`🔑 [LANGCHAIN] API Key: ${apiKey.substring(0, 10)}... (${apiKey.length} chars)`);
+  // Only log API key info in development with minimal exposure
+  if (process.env.NODE_ENV === 'development') {
+    console.debug(`🔑 [LANGCHAIN] API Key configured (${apiKey.length} chars)`);
+  }
   console.log(`🌡️ [LANGCHAIN] Options:`, options);
   
   const maxRetries = options?.maxRetries ?? 3;

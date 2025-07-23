@@ -3,7 +3,7 @@
 import { ConvexReactClient } from 'convex/react';
 import { ClerkProvider, useAuth } from '@clerk/nextjs';
 import { ConvexProviderWithClerk } from 'convex/react-clerk';
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { createLogger } from '@/utils/error-monitoring';
 
 const logger = createLogger('ConvexClientProvider');

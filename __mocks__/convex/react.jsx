@@ -1,6 +1,6 @@
 // Mock for convex/react
 // Enhanced mock with common query responses
-const useQuery = jest.fn((query, args) => {
+export const useQuery = jest.fn((query, args) => {
   // Mock common queries with sensible defaults
   const queryName = query?._functionName || query?.name || '';
   
@@ -42,9 +42,9 @@ const useQuery = jest.fn((query, args) => {
   
   if (queryName.includes('getCategories') || queryName.includes('getAllCategories')) {
     return [
-      { _id: 'cat_1', name: 'Meat', parentId: null, level: 0 },
-      { _id: 'cat_2', name: 'Beef', parentId: 'cat_1', level: 1 },
-      { _id: 'cat_3', name: 'Pork', parentId: 'cat_1', level: 1 },
+      { _id: 'cat_1', name: 'Meat', path: 'meat', parentId: null, level: 0 },
+      { _id: 'cat_2', name: 'Beef', path: 'meat/beef', parentId: 'cat_1', level: 1 },
+      { _id: 'cat_3', name: 'Pork', path: 'meat/pork', parentId: 'cat_1', level: 1 },
     ];
   }
   
@@ -52,7 +52,7 @@ const useQuery = jest.fn((query, args) => {
   return undefined;
 });
 
-const useMutation = jest.fn(() => {
+export const useMutation = jest.fn(() => {
   const mutationFn = jest.fn((args) => {
     // Ensure args have the toString method if they're IDs
     if (args && typeof args === 'object') {
@@ -70,7 +70,7 @@ const useMutation = jest.fn(() => {
   return mutationFn;
 });
 
-const useAction = jest.fn(() => {
+export const useAction = jest.fn(() => {
   const actionFn = jest.fn((args) => {
     // Ensure args have the toString method if they're IDs
     if (args && typeof args === 'object') {
@@ -87,34 +87,22 @@ const useAction = jest.fn(() => {
   });
   return actionFn;
 });
-const usePaginatedQuery = jest.fn(() => ({ 
+
+export const usePaginatedQuery = jest.fn(() => ({ 
   results: [], 
   status: 'LoadingFirstPage',
   loadMore: jest.fn()
 }));
 
-const ConvexProvider = ({ children }) => children;
-const ConvexReactClient = jest.fn();
+export const ConvexProvider = ({ children: _children }) => _children;
+export const ConvexReactClient = jest.fn();
 
 // Auth-related exports
-const useConvexAuth = jest.fn(() => ({
+export const useConvexAuth = jest.fn(() => ({
   isLoading: false,
   isAuthenticated: true,
 }));
 
-const Authenticated = ({ children }) => children;
-const Unauthenticated = ({ children }) => null;
-const AuthLoading = ({ children }) => null;
-
-module.exports = {
-  useQuery,
-  useMutation,
-  useAction,
-  usePaginatedQuery,
-  ConvexProvider,
-  ConvexReactClient,
-  useConvexAuth,
-  Authenticated,
-  Unauthenticated,
-  AuthLoading,
-};
+export const Authenticated = ({ children: _children }) => _children;
+export const Unauthenticated = ({ children: _children }) => null;
+export const AuthLoading = ({ children: _children }) => null;

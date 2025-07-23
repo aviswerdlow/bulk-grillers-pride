@@ -3,7 +3,7 @@
  * These types are used across UI components to ensure consistency
  */
 
-import { ReactNode } from 'react';
+import React, { ReactNode } from 'react';
 
 /**
  * Base props for all dialog components
@@ -111,7 +111,7 @@ export interface VisibilityState {
 /**
  * Selection state for multi-select components
  */
-export interface SelectionState<T = any> {
+export interface SelectionState<T = unknown> {
   selectedItems: T[];
   isAllSelected: boolean;
   isPartiallySelected: boolean;
@@ -184,7 +184,7 @@ export interface BadgeConfig {
 /**
  * Tree node for hierarchical components
  */
-export interface TreeNode<T = any> {
+export interface TreeNode<T = unknown> {
   id: string;
   label: string;
   value: T;

@@ -88,9 +88,11 @@ export function LiveRegionManager({
   preventSpam = true,
   spamThreshold = 500,
 }: LiveRegionManagerProps) {
+  void politenessDefault;
+  void clearDelay;
   const { announce } = useAnnouncement();
   const queueRef = useRef<AnnouncementQueue | undefined>(undefined);
-  const [isReady, setIsReady] = useState(false);
+  const [, setIsReady] = useState(false);
 
   useEffect(() => {
     // Initialize queue
@@ -106,12 +108,12 @@ export function LiveRegionManager({
   }, [announce, preventSpam, spamThreshold]);
 
   // Provide queue through context or props if needed
-  const contextValue = {
-    announce: (message: string, priority?: 'polite' | 'assertive') => {
-      queueRef.current?.add(message, priority || politenessDefault);
-    },
-    isReady,
-  };
+  // const contextValue = {
+  //   announce: (message: string, priority?: 'polite' | 'assertive') => {
+  //     queueRef.current?.add(message, priority || politenessDefault);
+  //   },
+  //   isReady,
+  // };
 
   return (
     <div className={cn('live-region-manager', className)}>

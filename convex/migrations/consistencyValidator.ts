@@ -15,14 +15,13 @@ import { Doc } from '../_generated/dataModel';
 /**
  * Validate consistency of category assignments trash
  */
-export const validateCategoryAssignmentsTrash = internalQuery({
-  handler: async (ctx) => {
+const validateCategoryAssignmentsTrashHelper = async (ctx: any) => {
     const issues = [];
     
     // Get all trash entries
     const trashEntries = await ctx.db
       .query('categoryAssignmentsTrash')
-      .filter((q) => q.eq(q.field('recoverable'), true))
+      .filter((q: any) => q.eq(q.field('recoverable'), true))
       .collect();
     
     for (const entry of trashEntries) {
@@ -76,20 +75,18 @@ export const validateCategoryAssignmentsTrash = internalQuery({
     }
     
     return issues;
-  },
-});
+};
 
 /**
  * Validate consistency of product trash
  */
-export const validateProductTrash = internalQuery({
-  handler: async (ctx) => {
+const validateProductTrashHelper = async (ctx: any) => {
     const issues = [];
     
     // Get all trash entries
     const trashEntries = await ctx.db
       .query('productTrash')
-      .filter((q) => q.eq(q.field('recoveryStatus'), 'recoverable'))
+      .filter((q: any) => q.eq(q.field('recoveryStatus'), 'recoverable'))
       .collect();
     
     for (const entry of trashEntries) {
@@ -137,7 +134,6 @@ export const validateProductTrash = internalQuery({
       const preservedAssignments = await ctx.db
         .query('categoryAssignmentsTrash')
         .withIndex('by_product', (q: any) => q.eq('productId', entry.productId))
-        .filter((q: any) => q.eq(q.field('cascadeTransactionId'), entry.cascadeTransactionId || ''))
         .collect();
       
       if (entry.relatedData.categoryAssignmentIds.length !== preservedAssignments.length) {
@@ -153,21 +149,19 @@ export const validateProductTrash = internalQuery({
     }
     
     return issues;
-  },
-});
+};
 
 /**
  * Validate distributed locks consistency
  */
-export const validateDistributedLocks = internalQuery({
-  handler: async (ctx) => {
+const validateDistributedLocksHelper = async (ctx: any) => {
     const issues = [];
     const now = Date.now();
     
     // Get all active locks
     const activeLocks = await ctx.db
       .query('distributedLocks')
-      .filter((q) => q.eq(q.field('status'), 'active'))
+      .filter((q: any) => q.eq(q.field('status'), 'active'))
       .collect();
     
     for (const lock of activeLocks) {
@@ -213,14 +207,12 @@ export const validateDistributedLocks = internalQuery({
     }
     
     return issues;
-  },
-});
+};
 
 /**
  * Validate image cleanup queue consistency
  */
-export const validateImageCleanupQueue = internalQuery({
-  handler: async (ctx) => {
+const validateImageCleanupQueueHelper = async (ctx: any) => {
     const issues = [];
     const now = Date.now();
     
@@ -271,17 +263,12 @@ export const validateImageCleanupQueue = internalQuery({
     }
     
     return issues;
-  },
-});
+};
 
 /**
- * Main consistency validator that runs all checks
+ * Helper function to run consistency validation
  */
-export const runConsistencyValidation = internalMutation({
-  args: {
-    fix: v.optional(v.boolean()),
-  },
-  handler: async (ctx, args) => {
+const runConsistencyValidationHelper = async (ctx: any, args: { fix?: boolean }) => {
     const results = {
       timestamp: Date.now(),
       totalIssues: 0,
@@ -299,10 +286,10 @@ export const runConsistencyValidation = internalMutation({
       lockIssues,
       queueIssues,
     ] = await Promise.all([
-      validateCategoryAssignmentsTrash(ctx, {}),
-      validateProductTrash(ctx, {}),
-      validateDistributedLocks(ctx, {}),
-      validateImageCleanupQueue(ctx, {}),
+      validateCategoryAssignmentsTrashHelper(ctx),
+      validateProductTrashHelper(ctx),
+      validateDistributedLocksHelper(ctx),
+      validateImageCleanupQueueHelper(ctx),
     ]);
     
     // Aggregate results
@@ -355,6 +342,17 @@ export const runConsistencyValidation = internalMutation({
     console.log('Consistency validation completed:', results);
     
     return results;
+};
+
+/**
+ * Main consistency validator that runs all checks
+ */
+export const runConsistencyValidation = internalMutation({
+  args: {
+    fix: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
+    return await runConsistencyValidationHelper(ctx, args);
   },
 });
 
@@ -363,7 +361,7 @@ export const runConsistencyValidation = internalMutation({
  */
 export const generateConsistencyReport = internalQuery({
   handler: async (ctx) => {
-    const results = await runConsistencyValidation(ctx, { fix: false });
+    const results = await runConsistencyValidationHelper(ctx, { fix: false });
     
     const report = {
       timestamp: results.timestamp,

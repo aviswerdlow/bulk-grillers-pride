@@ -1,4 +1,6 @@
-import { convexTest } from '../test-helpers';
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import { t } from '../../test.setup';
+import { convexTest } from '../../test-helpers';
 
 describe('API Keys Management', () => {
   let ctx: any;
@@ -6,7 +8,7 @@ describe('API Keys Management', () => {
   let orgId: string;
 
   beforeEach(async () => {
-    ctx = convexTest();
+    ctx = await t.run(async (ctx) => ctx);
 
     // Create test user
     userId = await ctx.db.insert('users', {
@@ -60,6 +62,7 @@ describe('API Keys Management', () => {
 
   describe('getMaskedApiKeys', () => {
     it('should return masked API keys for admin users', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const result = await ctx.runQuery('getMaskedApiKeys', { organizationId: orgId });
 
       expect(result).toBeDefined();
@@ -69,6 +72,7 @@ describe('API Keys Management', () => {
     });
 
     it('should throw error for non-admin users', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       // Update membership to member role
       const membership = (await ctx.db.query('organizationMemberships').collect())[0];
       await ctx.db.patch(membership._id, { role: 'member' });
@@ -79,6 +83,7 @@ describe('API Keys Management', () => {
     });
 
     it('should return empty object when no API keys are set', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       // Create org without API keys
       const newOrgId = await ctx.db.insert('organizations', {
         name: 'New Org',
@@ -107,6 +112,7 @@ describe('API Keys Management', () => {
 
   describe('updateApiKeys', () => {
     it('should update API keys and create audit log', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const updates = {
         organizationId: orgId,
         provider: 'openAI' as const,
@@ -133,6 +139,7 @@ describe('API Keys Management', () => {
     });
 
     it('should allow empty string to remove API key', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       await ctx.runMutation('updateApiKeys', {
         organizationId: orgId,
         provider: 'openAI',
@@ -144,6 +151,7 @@ describe('API Keys Management', () => {
     });
 
     it('should throw error for non-admin users', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       // Update membership to member role
       const membership = (await ctx.db.query('organizationMemberships').collect())[0];
       await ctx.db.patch(membership._id, { role: 'member' });
@@ -158,6 +166,7 @@ describe('API Keys Management', () => {
     });
 
     it('should validate API key format', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       // Test OpenAI key format
       await expect(
         ctx.runMutation('updateApiKeys', {
@@ -180,6 +189,7 @@ describe('API Keys Management', () => {
 
   describe('removeApiKey', () => {
     it('should remove API key and create audit log', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       await ctx.runMutation('removeApiKey', {
         organizationId: orgId,
         provider: 'openAI',
@@ -202,6 +212,7 @@ describe('API Keys Management', () => {
     });
 
     it('should handle removing non-existent key gracefully', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       // Create org without the key
       const newOrgId = await ctx.db.insert('organizations', {
         name: 'New Org',
@@ -232,6 +243,7 @@ describe('API Keys Management', () => {
     });
 
     it('should throw error for non-admin users', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       // Update membership to owner role (still should have access)
       const membership = (await ctx.db.query('organizationMemberships').collect())[0];
       await ctx.db.patch(membership._id, { role: 'owner' });
@@ -257,6 +269,7 @@ describe('API Keys Management', () => {
 
   describe('API Key Security', () => {
     it('should never return full API keys in queries', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       // Try to query organization directly (should not expose keys)
       const org = await ctx.db.get(orgId);
       
@@ -270,6 +283,7 @@ describe('API Keys Management', () => {
     });
 
     it('should validate all supported providers', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const providers = ['openAI', 'anthropic', 'google'] as const;
       
       for (const provider of providers) {

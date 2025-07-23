@@ -4,7 +4,7 @@ import React, { createContext, useContext, useEffect, useState, useCallback, use
 import { useUser } from '@clerk/nextjs';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '@convex/_generated/api';
-import { Id } from '@convex/_generated/dataModel';
+// import { Id } from '@convex/_generated/dataModel';
 
 // Types based on the architecture document
 export interface AccessibilityPreferences {
@@ -71,8 +71,8 @@ export function AccessibilityProvider({ children }: { children: React.ReactNode 
   const announcementIdCounter = useRef(0);
 
   // Convex hooks
-  const storedPreferences = useQuery(api.functions.accessibility.preferences.getAccessibilityPreferences);
-  const updatePreferencesMutation = useMutation(api.functions.accessibility.preferences.updateAccessibilityPreferences);
+  const storedPreferences = useQuery((api as any).functions.accessibility.preferences.getAccessibilityPreferences);
+  const updatePreferencesMutation = useMutation((api as any).functions.accessibility.preferences.updateAccessibilityPreferences);
 
   // Load preferences from backend or local storage
   useEffect(() => {

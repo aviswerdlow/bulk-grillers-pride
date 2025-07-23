@@ -1,5 +1,6 @@
 import { v } from 'convex/values';
-import { mutation, internalMutation, query, internal } from '../../_generated/server';
+import { mutation, internalMutation, query } from '../../_generated/server';
+import { internal } from '../../_generated/api';
 import { Doc, Id } from '../../_generated/dataModel';
 import { authenticateAndAuthorize, requireRole } from '../../lib/auth';
 import { withTransaction, CascadeTransaction } from '../../migrations/CascadeTransaction';
@@ -64,9 +65,9 @@ async function createTrashEntry(
     expiresAt: now + thirtyDaysInMs,
     bulkOperationId,
     relatedData: {
-      variantIds: variants.map((v) => v._id),
-      categoryAssignmentIds: categoryAssignments.map((ca) => ca._id),
-      aiJobIds: aiJobs.map((job) => job._id),
+      variantIds: variants.map((v: any) => v._id),
+      categoryAssignmentIds: categoryAssignments.map((ca: any) => ca._id),
+      aiJobIds: aiJobs.map((job: any) => job._id),
       imageStorageIds: product.images.map((img) => img.storageId),
     },
     recoveryStatus: 'recoverable',
@@ -251,7 +252,7 @@ async function createDeletionAuditLog(
   ctx: any,
   operationType: 'soft_delete' | 'bulk_delete' | 'restore' | 'permanent_delete' | 'auto_cleanup',
   products: Doc<'products'>[],
-  user: Doc<'users'>,
+  user: { _id: Id<'users'>; [key: string]: any },
   confirmationMethod?: string
 ) {
   const now = Date.now();
@@ -303,9 +304,11 @@ async function createDeletionAuditLog(
     }
   }
 
+  if (products.length === 0) return;
+  
   await ctx.db.insert('deletionAuditLogs', {
-    organizationId: products[0].organizationId,
-    projectId: products[0].projectId,
+    organizationId: products[0]!.organizationId,
+    projectId: products[0]!.projectId,
     operationType,
     affectedProducts: productsWithCategories,
     totalCount: products.length,
@@ -380,13 +383,9 @@ async function processSingleDeletion(
       await options.transaction.execute(
         async () => ctx.db.patch(productId, {
           status: 'archived' as const,
-          archivedAt: Date.now(),
-          archivedBy: user._id,
         }),
         async () => ctx.db.patch(productId, {
           status: 'active' as const,
-          archivedAt: undefined,
-          archivedBy: undefined,
         }),
         'Archive product',
         'products',
@@ -395,8 +394,6 @@ async function processSingleDeletion(
     } else {
       await ctx.db.patch(productId, {
         status: 'archived' as const,
-        archivedAt: Date.now(),
-        archivedBy: user._id,
       });
     }
 
@@ -445,7 +442,7 @@ export const deleteProduct = mutation({
           
           await transaction.execute(
             async () => {
-              trashEntryId = await createTrashEntry(ctx, product, user, args.reason, undefined, 'manual', transaction.getTransactionId());
+              trashEntryId = await createTrashEntry(ctx, product, user as any, args.reason, undefined, 'manual', transaction.getTransactionId());
               return trashEntryId;
             },
             async () => {
@@ -463,13 +460,9 @@ export const deleteProduct = mutation({
           await transaction.execute(
             async () => ctx.db.patch(args.productId, {
               status: 'archived' as const,
-              archivedAt: Date.now(),
-              archivedBy: user._id,
             }),
             async () => ctx.db.patch(args.productId, {
               status: 'active' as const,
-              archivedAt: undefined,
-              archivedBy: undefined,
             }),
             'Archive product',
             'products',
@@ -477,32 +470,30 @@ export const deleteProduct = mutation({
           );
 
           // Handle cascades within transaction
-          await handleCascadeDeletion(ctx, product, user, transaction.getTransactionId(), transaction);
+          await handleCascadeDeletion(ctx, product, user as any, transaction.getTransactionId(), transaction);
 
           // Track affected entities
           await transaction.trackAffectedEntity('products', args.productId);
           
-          return { trashEntry };
+          return { trashEntryId };
         }
       );
 
       // Create audit log
-      await createDeletionAuditLog(ctx, 'soft_delete', [product], user);
+      await createDeletionAuditLog(ctx, 'soft_delete', [product], user as any);
 
-      return { success: true, trashId: result.trashEntry };
+      return { success: true, trashId: result.trashEntryId };
     } else {
       // Legacy non-transactional deletion
-      const trashEntry = await createTrashEntry(ctx, product, user, args.reason);
+      const trashEntry = await createTrashEntry(ctx, product, user as any, args.reason);
 
       await ctx.db.patch(args.productId, {
         status: 'archived' as const,
-        archivedAt: Date.now(),
-        archivedBy: user._id,
       });
 
-      await handleCascadeDeletion(ctx, product, user);
+      await handleCascadeDeletion(ctx, product, user as any);
 
-      await createDeletionAuditLog(ctx, 'soft_delete', [product], user);
+      await createDeletionAuditLog(ctx, 'soft_delete', [product], user as any);
 
       return { success: true, trashId: trashEntry };
     }
@@ -544,11 +535,7 @@ export const internalTrackProgress = internalMutation({
       .withIndex('by_transaction_id', q => q.eq('transactionId', args.transactionId))
       .first();
     
-    if (transaction) {
-      await ctx.db.patch(transaction._id, {
-        updatedAt: Date.now(),
-      });
-    }
+    // No need to update transaction timestamp
   },
 });
 
@@ -570,7 +557,7 @@ export const bulkDeleteProductsWithPreview = mutation({
     }
 
     // Get first product to check organization
-    const firstProduct = await ctx.db.get(args.productIds[0]);
+    const firstProduct = await ctx.db.get(args.productIds[0]!);
     if (!firstProduct) throw new Error('Product not found');
 
     // Permission check
@@ -578,7 +565,7 @@ export const bulkDeleteProductsWithPreview = mutation({
 
     // Validate deletion if not skipping preview
     if (!args.skipPreview) {
-      const validation = await validateDeletion(ctx, { productIds: args.productIds });
+      const validation = await ctx.runQuery(internal.functions.deletion.cascadeDeletionPreview.validateDeletion, { productIds: args.productIds });
       if (!validation.canDelete) {
         throw new Error(`Cannot delete: ${validation.blockingReasons.join(', ')}`);
       }
@@ -594,7 +581,7 @@ export const bulkDeleteProductsWithPreview = mutation({
       organizationId: firstProduct.organizationId,
       operationType: 'bulk_delete',
       status: 'in_progress',
-      primaryEntityId: args.productIds[0], // First product as primary
+      primaryEntityId: args.productIds[0]!, // First product as primary
       affectedEntities: {
         products: args.productIds,
         variants: [],
@@ -606,8 +593,8 @@ export const bulkDeleteProductsWithPreview = mutation({
       executedBy: user._id,
     });
 
-    const results = [];
-    const successfulProducts = [];
+    const results: any[] = [];
+    const successfulProducts: Doc<'products'>[] = [];
 
     // Execute bulk deletion with distributed lock
     return await withLock(
@@ -629,7 +616,7 @@ export const bulkDeleteProductsWithPreview = mutation({
 
           try {
             // Process deletion
-            const result = await processSingleDeletion(ctx, productId, user, {
+            const result = await processSingleDeletion(ctx, productId, user as any, {
               bulkOperationId,
               reason: args.reason,
               deletionType: 'bulk',
@@ -653,9 +640,9 @@ export const bulkDeleteProductsWithPreview = mutation({
         if (successfulProducts.length > 0) {
           await createDeletionAuditLog(
             ctx,
+            'bulk_delete',
             successfulProducts,
             user,
-            'bulk_delete',
             args.confirmationText
           );
         }
@@ -710,7 +697,7 @@ export const bulkDeleteProducts = mutation({
     }
 
     // Get first product to check organization
-    const firstProduct = await ctx.db.get(args.productIds[0]);
+    const firstProduct = await ctx.db.get(args.productIds[0]!);
     if (!firstProduct) throw new Error('Product not found');
 
     // Permission check
@@ -718,8 +705,8 @@ export const bulkDeleteProducts = mutation({
 
     // Batch process
     const bulkOperationId = generateBulkOperationId();
-    const results = [];
-    const successfulProducts = [];
+    const results: any[] = [];
+    const successfulProducts: Doc<'products'>[] = [];
 
     // Execute bulk deletion with distributed lock on the operation
     return await withLock(
@@ -745,7 +732,7 @@ export const bulkDeleteProducts = mutation({
             'bulk_delete',
             productId,
             async (transaction) => {
-              const result = await processSingleDeletion(ctx, productId, user, {
+              const result = await processSingleDeletion(ctx, productId, user as any, {
                 bulkOperationId,
                 reason: args.reason,
                 deletionType: 'bulk',
@@ -791,7 +778,7 @@ export const bulkDeleteProducts = mutation({
         ctx,
         'bulk_delete',
         successfulProducts,
-        user,
+        user as any,
         args.confirmationText
       );
     }
@@ -823,7 +810,7 @@ export const bulkDeleteProducts = mutation({
 /**
  * Restore related data for a product
  */
-async function restoreRelatedData(ctx: any, trashEntry: Doc<'productTrash'>, user: Doc<'users'>) {
+async function restoreRelatedData(ctx: any, trashEntry: Doc<'productTrash'>, user: { _id: Id<'users'>; [key: string]: any }) {
   // Restore variants
   for (const variantId of trashEntry.relatedData.variantIds) {
     const variant = await ctx.db.get(variantId);
@@ -934,7 +921,7 @@ export const restoreProducts = mutation({
     trashIds: v.array(v.id('productTrash')),
   },
   handler: async (ctx, args) => {
-    const firstTrashEntry = await ctx.db.get(args.trashIds[0]);
+    const firstTrashEntry = await ctx.db.get(args.trashIds[0] as Id<'productTrash'>);
     if (!firstTrashEntry) throw new Error('Trash entry not found');
 
     const { user } = await requireRole(ctx, firstTrashEntry.organizationId, ['owner', 'admin']);
@@ -944,7 +931,7 @@ export const restoreProducts = mutation({
     const skuConflicts = [];
 
     for (const trashId of args.trashIds) {
-      const trashEntry = await ctx.db.get(trashId);
+      const trashEntry = await ctx.db.get(trashId as Id<'productTrash'>);
       if (!trashEntry || trashEntry.recoveryStatus !== 'recoverable') {
         continue;
       }
@@ -955,7 +942,9 @@ export const restoreProducts = mutation({
       // Check for SKU conflicts before restoration
       const existingProductWithSku = await ctx.db
         .query('products')
-        .withIndex('by_organization', (q: any) => q.eq('organizationId', product.organizationId))
+        .withIndex('by_organization_project', (q: any) => 
+          q.eq('organizationId', product.organizationId).eq('projectId', product.projectId)
+        )
         .filter((q: any) => 
           q.and(
             q.eq(q.field('sku'), product.sku),
@@ -975,7 +964,9 @@ export const restoreProducts = mutation({
         while (true) {
           const skuCheck = await ctx.db
             .query('products')
-            .withIndex('by_organization', (q: any) => q.eq('organizationId', product.organizationId))
+            .withIndex('by_organization_project', (q: any) => 
+          q.eq('organizationId', product.organizationId).eq('projectId', product.projectId)
+        )
             .filter((q: any) => q.eq(q.field('sku'), newSku))
             .first();
           
@@ -992,8 +983,6 @@ export const restoreProducts = mutation({
         await ctx.db.patch(trashEntry.productId, {
           status: 'active' as const,
           sku: newSku,
-          archivedAt: undefined,
-          archivedBy: undefined,
         });
 
         // Add note about SKU change in audit log metadata
@@ -1015,8 +1004,6 @@ export const restoreProducts = mutation({
         // No SKU conflict - restore normally
         await ctx.db.patch(trashEntry.productId, {
           status: 'active' as const,
-          archivedAt: undefined,
-          archivedBy: undefined,
         });
       }
 
@@ -1046,7 +1033,7 @@ export const restoreProducts = mutation({
         ? `Restored with SKU changes: ${skuChanges}`
         : undefined;
       
-      await createDeletionAuditLog(ctx, 'restore', restoredProducts, user, confirmationMethod);
+      await createDeletionAuditLog(ctx, 'restore', restoredProducts, user as any, confirmationMethod);
     }
 
     return { 
@@ -1089,7 +1076,7 @@ export const permanentlyDeleteProducts = mutation({
     confirmationText: v.string(), // "PERMANENTLY DELETE X"
   },
   handler: async (ctx, args) => {
-    const firstTrashEntry = await ctx.db.get(args.trashIds[0]);
+    const firstTrashEntry = await ctx.db.get(args.trashIds[0] as Id<'productTrash'>);
     if (!firstTrashEntry) throw new Error('Trash entry not found');
 
     const { user } = await requireRole(ctx, firstTrashEntry.organizationId, ['owner']);
@@ -1103,7 +1090,7 @@ export const permanentlyDeleteProducts = mutation({
     const deletedProducts = [];
 
     for (const trashId of args.trashIds) {
-      const trashEntry = await ctx.db.get(trashId);
+      const trashEntry = await ctx.db.get(trashId as Id<'productTrash'>);
       if (!trashEntry) continue;
 
       const product = await ctx.db.get(trashEntry.productId);
@@ -1123,7 +1110,7 @@ export const permanentlyDeleteProducts = mutation({
 
     // Audit log
     if (deletedProducts.length > 0) {
-      await createDeletionAuditLog(ctx, 'permanent_delete', deletedProducts, user, args.confirmationText);
+      await createDeletionAuditLog(ctx, 'permanent_delete', deletedProducts, user as any, args.confirmationText);
     }
 
     return {
@@ -1173,9 +1160,11 @@ export const cleanupExpiredTrash = internalMutation({
     if (expired.length > 0 && deletedProducts.length > 0) {
       // For system operations, we need a system user reference
       // This is simplified - in production you'd have a system user
-      await ctx.db.insert('deletionAuditLogs', {
-        organizationId: expired[0].organizationId,
-        projectId: expired[0].projectId,
+      const firstExpired = expired[0];
+      if (firstExpired) {
+        await ctx.db.insert('deletionAuditLogs', {
+          organizationId: firstExpired.organizationId,
+          projectId: firstExpired.projectId,
         operationType: 'auto_cleanup' as const,
         affectedProducts: deletedProducts.map((p) => ({
           productId: p._id,
@@ -1194,6 +1183,7 @@ export const cleanupExpiredTrash = internalMutation({
         userEmail: 'system@bulkgrillerspride.com',
         userName: 'System',
       });
+      }
     }
 
     return { cleanedUp: expired.length };
@@ -1313,14 +1303,14 @@ export const getTrashItems = query({
 
     // Enrich items with additional information
     const enrichedItems = await Promise.all(
-      paginatedResults.page.map(async (item) => {
+      paginatedResults!.page.map(async (item) => {
         const deletedByUser = await ctx.db.get(item.deletedBy);
         return {
           ...item,
           daysRemaining: calculateDaysRemaining(item.expiresAt),
           isExpiringSoon: item.expiresAt - Date.now() < 7 * 24 * 60 * 60 * 1000,
           deletedByName: deletedByUser 
-            ? `${deletedByUser.firstName} ${deletedByUser.lastName}` 
+            ? `${(deletedByUser as any).firstName} ${(deletedByUser as any).lastName}` 
             : 'Unknown',
         };
       })
@@ -1344,8 +1334,8 @@ export const getTrashItems = query({
 
     return {
       items: enrichedItems,
-      continueCursor: paginatedResults.continueCursor,
-      isDone: paginatedResults.isDone,
+      continueCursor: paginatedResults!.continueCursor,
+      isDone: paginatedResults!.isDone,
       totalCount,
     };
   },

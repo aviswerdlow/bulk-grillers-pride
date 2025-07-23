@@ -18,7 +18,7 @@ interface ApiKeyStatusProps {
 export function ApiKeyStatus({ organizationId, orgSlug, provider }: ApiKeyStatusProps) {
   // Check API key configuration
   const apiKeyStatus = useQuery(
-    api.functions.ai.categorization.validateApiKeyConfiguration,
+    (api as any).functions.ai.categorization.validateApiKeyConfiguration,
     { organizationId, provider }
   );
 

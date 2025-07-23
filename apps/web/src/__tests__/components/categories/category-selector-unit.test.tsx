@@ -1,6 +1,7 @@
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import React from 'react';
 import { Category } from '@/types/models';
 import { Id } from '@convex/_generated/dataModel';
-
 // Test the utility functions and logic independently
 describe('CategorySelector - Unit Tests', () => {
   // Test flatten categories logic
@@ -20,20 +21,9 @@ describe('CategorySelector - Unit Tests', () => {
               name: 'Computers',
               level: 2,
               path: '/electronics/computers',
-              parentId: 'cat1' as Id<'categories'>,
               organizationId: 'org1' as Id<'organizations'>,
               projectId: 'proj1' as Id<'projects'>,
-              children: [
-                {
-                  _id: 'cat3' as Id<'categories'>,
-                  name: 'Laptops',
-                  level: 3,
-                  path: '/electronics/computers/laptops',
-                  parentId: 'cat2' as Id<'categories'>,
-                  organizationId: 'org1' as Id<'organizations'>,
-                  projectId: 'proj1' as Id<'projects'>,
-                },
-              ],
+              children: [] as Category[],
             },
           ],
         },
@@ -59,9 +49,9 @@ describe('CategorySelector - Unit Tests', () => {
       const flattened = flattenCategories(categories);
 
       expect(flattened).toHaveLength(3);
-      expect(flattened[0].name).toBe('Electronics');
-      expect(flattened[1].name).toBe('Computers');
-      expect(flattened[2].name).toBe('Laptops');
+      expect(flattened[0]?.name).toBe('Electronics');
+      expect(flattened[1]?.name).toBe('Computers');
+      expect(flattened[2]?.name).toBe('Laptops');
     });
   });
 
@@ -69,7 +59,7 @@ describe('CategorySelector - Unit Tests', () => {
   describe('getCategoryPath', () => {
     it('should generate correct path from category', () => {
       const getCategoryPath = (category: Category) => {
-        return category.path.split('/').filter(Boolean).join(' > ');
+        return (String(category.path || "")).split('/').filter(Boolean).join(' > ');
       };
 
       const category: Category = {
@@ -86,7 +76,7 @@ describe('CategorySelector - Unit Tests', () => {
 
     it('should handle root level categories', () => {
       const getCategoryPath = (category: Category) => {
-        return category.path.split('/').filter(Boolean).join(' > ');
+        return (String(category.path || "")).split('/').filter(Boolean).join(' > ');
       };
 
       const category: Category = {
@@ -204,7 +194,7 @@ describe('CategorySelector - Unit Tests', () => {
       );
 
       expect(filteredCategories).toHaveLength(1);
-      expect(filteredCategories[0].name).toBe('Phones');
+      expect(filteredCategories[0]?.name).toBe('Phones');
     });
 
     it('should filter categories by path', () => {
@@ -243,8 +233,8 @@ describe('CategorySelector - Unit Tests', () => {
       );
 
       expect(filteredCategories).toHaveLength(2);
-      expect(filteredCategories[0].name).toBe('Laptops');
-      expect(filteredCategories[1].name).toBe('Desktops');
+      expect(filteredCategories[0]?.name).toBe('Laptops');
+      expect(filteredCategories[1]?.name).toBe('Desktops');
     });
   });
 
@@ -253,7 +243,7 @@ describe('CategorySelector - Unit Tests', () => {
     it('should return friendly name when level definition exists', () => {
       const levelDefinitions = [
         {
-          _id: 'level1' as any,
+          _id: 'level1' as Id<'categoryLevelDefinitions'>,
           organizationId: 'org1' as Id<'organizations'>,
           projectId: 'proj1' as Id<'projects'>,
           level: 1,
@@ -262,7 +252,7 @@ describe('CategorySelector - Unit Tests', () => {
           friendlyName: 'Department',
         },
         {
-          _id: 'level2' as any,
+          _id: 'level2' as Id<'categoryLevelDefinitions'>,
           organizationId: 'org1' as Id<'organizations'>,
           projectId: 'proj1' as Id<'projects'>,
           level: 2,
@@ -284,7 +274,7 @@ describe('CategorySelector - Unit Tests', () => {
     it('should return fallback name when level definition not found', () => {
       const levelDefinitions = [
         {
-          _id: 'level1' as any,
+          _id: 'level1' as Id<'categoryLevelDefinitions'>,
           organizationId: 'org1' as Id<'organizations'>,
           projectId: 'proj1' as Id<'projects'>,
           level: 1,

@@ -1,3 +1,5 @@
+import { internal } from "@convex/_generated/api";
+import { t } from '../../../../test.setup';
 /**
  * Tests for CrewAI Shared Memory System
  */
@@ -15,7 +17,8 @@ describe('SharedMemory', () => {
   let organizationId: Id<'organizations'>;
 
   beforeEach(async () => {
-    test = createConvexTest();
+    
+    tes// t is already imported from test.setup
     // Create test organization
     organizationId = await test.mutation(async (ctx) => {
       return await ctx.db.insert('organizations', {
@@ -55,6 +58,7 @@ describe('SharedMemory', () => {
 
   describe('Memory Storage and Retrieval', () => {
     it('should store and retrieve memory successfully', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       await test.mutation(async (ctx) => {
         const memoryId = await ctx.runMutation(internal.ai.memory.sharedMemory.writeMemory, {
           organizationId,
@@ -81,6 +85,7 @@ describe('SharedMemory', () => {
     });
 
     it('should update existing memory', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       // First write
       await test.mutation(async (ctx) => {
         await ctx.runMutation(internal.ai.memory.sharedMemory.writeMemory, {
@@ -116,6 +121,7 @@ describe('SharedMemory', () => {
     });
 
     it('should handle memory expiration', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       await test.mutation(async (ctx) => {
         await ctx.runMutation(internal.ai.memory.sharedMemory.writeMemory, {
           organizationId,
@@ -186,6 +192,7 @@ describe('SharedMemory', () => {
     });
 
     it('should search memories by pattern', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const results = await test.query(async (ctx) => {
         return await ctx.runQuery(internal.ai.memory.sharedMemory.searchMemories, {
           organizationId,
@@ -198,6 +205,7 @@ describe('SharedMemory', () => {
     });
 
     it('should filter by memory type', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const results = await test.query(async (ctx) => {
         return await ctx.runQuery(internal.ai.memory.sharedMemory.searchMemories, {
           organizationId,
@@ -210,6 +218,7 @@ describe('SharedMemory', () => {
     });
 
     it('should filter by importance', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const results = await test.query(async (ctx) => {
         return await ctx.runQuery(internal.ai.memory.sharedMemory.searchMemories, {
           organizationId,
@@ -222,6 +231,7 @@ describe('SharedMemory', () => {
     });
 
     it('should limit results', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const results = await test.query(async (ctx) => {
         return await ctx.runQuery(internal.ai.memory.sharedMemory.searchMemories, {
           organizationId,
@@ -235,6 +245,7 @@ describe('SharedMemory', () => {
 
   describe('Concurrency Control', () => {
     it('should lock memory for exclusive access', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const memoryId = await test.mutation(async (ctx) => {
         return await ctx.runMutation(internal.ai.memory.sharedMemory.writeMemory, {
           organizationId,
@@ -275,6 +286,7 @@ describe('SharedMemory', () => {
     });
 
     it('should unlock memory', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const memoryId = await test.mutation(async (ctx) => {
         return await ctx.runMutation(internal.ai.memory.sharedMemory.writeMemory, {
           organizationId,
@@ -308,6 +320,7 @@ describe('SharedMemory', () => {
     });
 
     it('should handle lock expiration', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const memoryId = await test.mutation(async (ctx) => {
         return await ctx.runMutation(internal.ai.memory.sharedMemory.writeMemory, {
           organizationId,
@@ -344,6 +357,7 @@ describe('SharedMemory', () => {
 
   describe('Memory Summarization', () => {
     it('should summarize memories when limit exceeded', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       // Create many memories
       await test.mutation(async (ctx) => {
         for (let i = 0; i < 10; i++) {
@@ -385,6 +399,7 @@ describe('SharedMemory', () => {
 
   describe('Memory Statistics', () => {
     it('should calculate memory statistics', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       // Create test memories
       await test.mutation(async (ctx) => {
         const types: Array<'shortTerm' | 'longTerm' | 'episodic'> = ['shortTerm', 'longTerm', 'episodic'];
@@ -422,6 +437,7 @@ describe('SharedMemory', () => {
 
   describe('Memory Cleanup', () => {
     it('should clean up expired memories', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       // Create memories with short TTL
       await test.mutation(async (ctx) => {
         for (let i = 0; i < 3; i++) {
@@ -451,6 +467,7 @@ describe('SharedMemory', () => {
 
   describe('MemoryManager', () => {
     it('should provide high-level memory operations', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       await test.mutation(async (ctx) => {
         const manager = new MemoryManager(ctx, organizationId, {
           agentId: 'test-agent',
@@ -482,6 +499,7 @@ describe('SharedMemory', () => {
     });
 
     it('should handle working memory', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       await test.mutation(async (ctx) => {
         const manager = new MemoryManager(ctx, organizationId, {
           agentId: 'test-agent',
@@ -498,6 +516,7 @@ describe('SharedMemory', () => {
     });
 
     it('should store errors', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       await test.mutation(async (ctx) => {
         const manager = new MemoryManager(ctx, organizationId, {
           agentId: 'test-agent',
@@ -513,7 +532,8 @@ describe('SharedMemory', () => {
   });
 
   describe('MemoryCache', () => {
-    it('should cache and retrieve data', () => {
+    it('should cache and retrieve data', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const cache = new MemoryCache(1000); // 1 second TTL
 
       cache.set('key1', { value: 'test' });
@@ -522,6 +542,7 @@ describe('SharedMemory', () => {
     });
 
     it('should expire cached data', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const cache = new MemoryCache(100); // 100ms TTL
 
       cache.set('key1', { value: 'expires' });
@@ -531,7 +552,8 @@ describe('SharedMemory', () => {
       expect(result).toBeNull();
     });
 
-    it('should cleanup expired entries', () => {
+    it('should cleanup expired entries', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const cache = new MemoryCache(100);
 
       cache.set('key1', { value: 1 });

@@ -1,35 +1,38 @@
-import { interpret } from 'xstate';
-import { deletionWizardMachine, DeletionWizardEvent } from '@/machines/deletionWizard';
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import React from 'react';
 import { DeletionImpactItem } from '@/components/deletion/visualization/types';
+import { deletionWizardMachine } from '@/machines/deletionWizard';
+import { InterpreterFrom, interpret } from 'xstate';
+
 
 describe('Deletion Wizard State Machine', () => {
-  let service: any;
+  let service: InterpreterFrom<typeof deletionWizardMachine>;
 
   beforeEach(() => {
     service = interpret(deletionWizardMachine);
   });
 
   afterEach(() => {
-    service.stop();
+    (service as any).stop();
   });
 
   describe('State Transitions', () => {
     it('should start in idle state', () => {
       service.start();
-      expect(service.state.value).toBe('idle');
+      expect((service as any).state?.value).toBe('idle');
     });
 
     it('should transition to selecting on START', () => {
       service.start();
       service.send({ type: 'START' });
-      expect(service.state.value).toBe('selecting');
+      expect((service as any).state?.value).toBe('selecting');
     });
 
     it('should stay in selecting without items when NEXT is sent', () => {
       service.start();
       service.send({ type: 'START' });
       service.send({ type: 'NEXT' });
-      expect(service.state.value).toBe('selecting');
+      expect((service as any).state?.value).toBe('selecting');
     });
 
     it('should transition through all states correctly', () => {
@@ -45,11 +48,11 @@ describe('Deletion Wizard State Machine', () => {
       
       // Start wizard
       service.send({ type: 'START' });
-      expect(service.state.value).toBe('selecting');
+      expect((service as any).state?.value).toBe('selecting');
       
       // Select items
       service.send({ type: 'SELECT_ITEMS', items: [mockItem] });
-      expect(service.state.context.selectedItems).toHaveLength(1);
+      expect((service as any).state?.context.selectedItems).toHaveLength(1);
       
       // Can't test full flow without mocking services
       // Would need to mock calculateImpactService and processDeletionService
@@ -61,7 +64,7 @@ describe('Deletion Wizard State Machine', () => {
       // Test cancel from selecting
       service.send({ type: 'START' });
       service.send({ type: 'CANCEL' });
-      expect(service.state.value).toBe('idle');
+      expect((service as any).state?.value).toBe('idle');
     });
   });
 
@@ -88,8 +91,8 @@ describe('Deletion Wizard State Machine', () => {
       service.send({ type: 'START' });
       service.send({ type: 'SELECT_ITEMS', items: mockItems });
       
-      expect(service.state.context.selectedItems).toHaveLength(2);
-      expect(service.state.context.selectedItems[0].id).toBe('1');
+      expect((service as any).state?.context.selectedItems).toHaveLength(2);
+      expect((service as any).state?.context.selectedItems[0].id).toBe('1');
     });
 
     it('should remove items on DESELECT_ITEMS', () => {
@@ -98,8 +101,8 @@ describe('Deletion Wizard State Machine', () => {
       service.send({ type: 'SELECT_ITEMS', items: mockItems });
       service.send({ type: 'DESELECT_ITEMS', itemIds: ['1'] });
       
-      expect(service.state.context.selectedItems).toHaveLength(1);
-      expect(service.state.context.selectedItems[0].id).toBe('2');
+      expect((service as any).state?.context.selectedItems).toHaveLength(1);
+      expect((service as any).state?.context.selectedItems[0].id).toBe('2');
     });
 
     it('should handle multiple selections and deselections', () => {
@@ -108,16 +111,16 @@ describe('Deletion Wizard State Machine', () => {
       
       // Add first item
       service.send({ type: 'SELECT_ITEMS', items: [mockItems[0]] });
-      expect(service.state.context.selectedItems).toHaveLength(1);
+      expect((service as any).state?.context.selectedItems).toHaveLength(1);
       
       // Add second item
       service.send({ type: 'SELECT_ITEMS', items: [mockItems[1]] });
-      expect(service.state.context.selectedItems).toHaveLength(2);
+      expect((service as any).state?.context.selectedItems).toHaveLength(2);
       
       // Remove first item
       service.send({ type: 'DESELECT_ITEMS', itemIds: ['1'] });
-      expect(service.state.context.selectedItems).toHaveLength(1);
-      expect(service.state.context.selectedItems[0].id).toBe('2');
+      expect((service as any).state?.context.selectedItems).toHaveLength(1);
+      expect((service as any).state?.context.selectedItems[0].id).toBe('2');
     });
   });
 
@@ -133,9 +136,9 @@ describe('Deletion Wizard State Machine', () => {
       
       service.send({ type: 'UPDATE_OPTIONS', options: newOptions });
       
-      expect(service.state.context.options.cascadeDeletes).toBe(false);
-      expect(service.state.context.options.createBackup).toBe(false);
-      expect(service.state.context.options.preserveReferences).toBe(false); // default
+      expect((service as any).state?.context.options.cascadeDeletes).toBe(false);
+      expect((service as any).state?.context.options.createBackup).toBe(false);
+      expect((service as any).state?.context.options.preserveReferences).toBe(false); // default
     });
 
     it('should merge options, not replace them', () => {
@@ -149,8 +152,8 @@ describe('Deletion Wizard State Machine', () => {
       service.send({ type: 'UPDATE_OPTIONS', options: { createBackup: false } });
       
       // Both should be updated
-      expect(service.state.context.options.cascadeDeletes).toBe(false);
-      expect(service.state.context.options.createBackup).toBe(false);
+      expect((service as any).state?.context.options.cascadeDeletes).toBe(false);
+      expect((service as any).state?.context.options.createBackup).toBe(false);
     });
   });
 
@@ -159,12 +162,12 @@ describe('Deletion Wizard State Machine', () => {
       service.start();
       
       service.send({ type: 'START' });
-      expect(service.state.context.history).toHaveLength(1);
-      expect(service.state.context.history[0].event.type).toBe('START');
+      expect((service as any).state?.context.history).toHaveLength(1);
+      expect((service as any).state?.context.history[0].event.type).toBe('START');
       
       service.send({ type: 'CANCEL' });
-      expect(service.state.context.history).toHaveLength(2);
-      expect(service.state.context.history[1].event.type).toBe('CANCEL');
+      expect((service as any).state?.context.history).toHaveLength(2);
+      expect((service as any).state?.context.history[1].event.type).toBe('CANCEL');
     });
 
     it('should include timestamp in history entries', () => {
@@ -174,7 +177,7 @@ describe('Deletion Wizard State Machine', () => {
       service.send({ type: 'START' });
       
       const afterTime = Date.now();
-      const historyEntry = service.state.context.history[0];
+      const historyEntry = (service as any).state?.context.history[0];
       
       expect(historyEntry.timestamp).toBeGreaterThanOrEqual(beforeTime);
       expect(historyEntry.timestamp).toBeLessThanOrEqual(afterTime);
@@ -186,7 +189,7 @@ describe('Deletion Wizard State Machine', () => {
       service.start();
       service.send({ type: 'ERROR', error: 'Test error message' });
       
-      expect(service.state.context.error).toBe('Test error message');
+      expect((service as any).state?.context.error).toBe('Test error message');
     });
 
     it('should clear error when entering selecting state', () => {
@@ -194,11 +197,11 @@ describe('Deletion Wizard State Machine', () => {
       
       // Set an error
       service.send({ type: 'ERROR', error: 'Test error' });
-      expect(service.state.context.error).toBe('Test error');
+      expect((service as any).state?.context.error).toBe('Test error');
       
       // Start should clear error
       service.send({ type: 'START' });
-      expect(service.state.context.error).toBeNull();
+      expect((service as any).state?.context.error).toBeNull();
     });
   });
 
@@ -223,7 +226,7 @@ describe('Deletion Wizard State Machine', () => {
       service.start();
       service.send({ type: 'LOAD_DRAFT', draft: mockDraft });
       
-      expect(service.state.context.draftId).toBe('draft-123');
+      expect((service as any).state?.context.draftId).toBe('draft-123');
     });
   });
 });

@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach } from '@jest/globals';
+import { t } from '../../../test.setup';
 import {
   createConvexTest,
   createMutationContext,
@@ -13,7 +14,7 @@ import {
   createMockOrganizationMembership,
   createMockProject,
   createMockCategory,
-} from '../../../__tests__/test-helpers';
+} from 'convex-test';
 // Import the mutation objects to access their handlers
 import { 
   createCategoryLevelDefinitions as createCategoryLevelDefinitionsMutation, 
@@ -22,9 +23,9 @@ import {
 } from '../imports';
 
 // Extract the handlers for use in tests
-const createCategoryLevelDefinitions = createCategoryLevelDefinitionsMutation.handler;
-const importCategory = importCategoryMutation.handler;
-const bulkImportCategories = bulkImportCategoriesMutation.handler;
+const createCategoryLevelDefinitions = (ctx: any, args: any) => createCategoryLevelDefinitionsMutation.handler(ctx, args);
+const importCategory = (ctx: any, args: any) => importCategoryMutation.handler(ctx, args);
+const bulkImportCategories = (ctx: any, args: any) => bulkImportCategoriesMutation.handler(ctx, args);
 import { Id } from '../../../_generated/dataModel';
 
 describe('Category Import Functions', () => {
@@ -35,7 +36,8 @@ describe('Category Import Functions', () => {
   let membership: any;
 
   beforeEach(async () => {
-    test = createConvexTest();
+    
+    tes// t is already imported from test.setup
     
     // Set up common test data
     user = createMockUser({ _id: 'user_1' as Id<'users'> });
@@ -154,7 +156,7 @@ describe('Category Import Functions', () => {
         // Assert
         expect(result).toContain(existingLevel._id);
         
-        const updated = await test.db.get(existingLevel._id);
+        const updated = await t.db.get(existingLevel._id);
         expect(updated).toMatchObject({
           friendlyName: 'Updated Department',
           description: 'Updated description',
@@ -230,7 +232,7 @@ describe('Category Import Functions', () => {
       it('should fail for viewer role', async () => {
         // Arrange
         membership.role = 'viewer';
-        await test.db.patch(membership._id, { role: 'viewer' });
+        await t.db.patch(membership._id, { role: 'viewer' });
         
         const ctx = createMutationContext(test);
 
@@ -265,7 +267,7 @@ describe('Category Import Functions', () => {
         // Assert
         expect(categoryId).toBeDefined();
         
-        const category = await test.db.get(categoryId);
+        const category = await t.db.get(categoryId);
         expect(category).toMatchObject({
           name: 'Electronics',
           externalId: 'ext_electronics',
@@ -308,7 +310,7 @@ describe('Category Import Functions', () => {
         });
 
         // Assert
-        const category = await test.db.get(categoryId);
+        const category = await t.db.get(categoryId);
         expect(category).toMatchObject({
           name: 'Computers',
           parentId: parentCategory._id,
@@ -347,7 +349,7 @@ describe('Category Import Functions', () => {
         // Assert
         expect(categoryId).toBe(existingCategory._id);
         
-        const updated = await test.db.get(categoryId);
+        const updated = await t.db.get(categoryId);
         expect(updated).toMatchObject({
           name: 'Updated Name',
           description: 'Updated description',
@@ -371,7 +373,7 @@ describe('Category Import Functions', () => {
         });
 
         // Assert
-        const category = await test.db.get(categoryId);
+        const category = await t.db.get(categoryId);
         expect(category.parentId).toBeUndefined();
         expect(category.path).toBe('/orphaned-category');
       });
@@ -400,8 +402,8 @@ describe('Category Import Functions', () => {
         });
 
         // Assert
-        const cat1 = await test.db.get(id1);
-        const cat2 = await test.db.get(id2);
+        const cat1 = await t.db.get(id1);
+        const cat2 = await t.db.get(id2);
         expect(cat1.handle).toBe('test-category');
         expect(cat2.handle).toBe('test-category'); // Note: In real implementation, this should be unique
       });
@@ -502,7 +504,7 @@ describe('Category Import Functions', () => {
         expect(result.imported).toBe(2);
         expect(result.errors).toHaveLength(0);
         
-        const updated = await test.db.get(existingCategory._id);
+        const updated = await t.db.get(existingCategory._id);
         expect(updated.name).toBe('Updated Electronics');
         expect(updated.version).toBe(2);
       });

@@ -3,7 +3,7 @@
  */
 
 import { describe, expect, test, jest, beforeEach, afterEach } from '@jest/globals';
-import { convexTest } from 'convex-test';
+import { t } from '../../../../test.setup';
 import { ConcurrentProcessor } from '../concurrentProcessor';
 import { createAgents } from '../agents';
 import { ErrorHandler, CircuitBreaker, RateLimiter } from '../errorHandler';

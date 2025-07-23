@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Progress } from "@/components/ui/progress";
-import { Bot, Zap, Clock, CheckCircle, XCircle, AlertCircle, Play, Square } from "lucide-react";
+import { Bot, Zap, Clock, CheckCircle, XCircle, AlertCircle, Play } from "lucide-react";
 import { CreateCategorizationJobDialog } from "@/components/ai/create-categorization-job-dialog";
 import { JobActionsDropdown } from "@/components/ai/job-actions-dropdown";
 import { JobDetailsModal } from "@/components/ai/job-details-modal";
@@ -53,13 +53,13 @@ export default function AiCategorizationPage() {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
 
   // Get organization
-  const organization = useQuery(api.functions.organizations.organizations.getOrganizationBySlug, {
+  const organization = useQuery((api as any).functions.organizations.organizations.getOrganizationBySlug, {
     slug: orgSlug,
   });
 
   // Get projects for this organization
   const projects = useQuery(
-    api.functions.projects.projects.getOrganizationProjects,
+    (api as any).functions.projects.projects.getOrganizationProjects,
     organization ? { organizationId: organization._id } : "skip"
   );
 
@@ -67,9 +67,7 @@ export default function AiCategorizationPage() {
   const currentProject = projects?.[0];
 
   // Get AI categorization jobs
-  // Note: Using (api as any) as a workaround until Convex dev server regenerates the API types
   const jobs = useQuery(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (api as any).functions.ai.categorization.getCategorizationJobs,
     organization && currentProject ? {
       organizationId: organization._id,
@@ -78,11 +76,7 @@ export default function AiCategorizationPage() {
   );
 
   // Cancel job mutation
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const cancelJob = useMutation((api as any).functions.ai.categorization.cancelCategorizationJob);
-  
-  // Debug: Check if the function exists
-  // console.log('cancelCategorizationJob exists:', !!(api as any).functions?.ai?.categorization?.cancelCategorizationJob);
 
   if (organization === undefined || projects === undefined) {
     return <Loading size="lg" text="Loading AI categorization..." />;

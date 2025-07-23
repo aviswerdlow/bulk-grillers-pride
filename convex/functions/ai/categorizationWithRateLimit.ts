@@ -67,7 +67,7 @@ export const createCategorizationJob = withRateLimit(
     
     // Call the original categorization job creation through internal API
     const jobId = await ctx.scheduler.runNow(
-      api.functions.ai.categorization.createCategorizationJob,
+      api.ai.categorization.createCategorizationJob,
       args
     );
     
@@ -165,7 +165,7 @@ export const createCategorizationJobManual = mutation({
     
     // Create the job using the original function
     const jobId = await ctx.scheduler.runNow(
-      api.functions.ai.categorization.createCategorizationJob,
+      api.ai.categorization.createCategorizationJob,
       args
     );
     

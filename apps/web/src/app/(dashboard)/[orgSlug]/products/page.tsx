@@ -62,19 +62,18 @@ export default function ProductsPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [editingProduct, setEditingProduct] = useState<any>(null);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   // Get organization
-  const organization = useQuery(api.functions.organizations.organizations.getOrganizationBySlug, {
+  const organization = useQuery((api as any).functions.organizations.organizations.getOrganizationBySlug, {
     slug: orgSlug,
   });
 
   // Get projects for this organization
   const projects = useQuery(
-    api.functions.projects.projects.getOrganizationProjects,
+    (api as any).functions.projects.projects.getOrganizationProjects,
     organization ? { organizationId: organization._id } : 'skip'
   );
 
@@ -82,9 +81,7 @@ export default function ProductsPage() {
   const currentProject = projects?.[0];
 
   // Get products for the current project
-  // Note: Using (api as any) as a workaround until Convex dev server regenerates the API types
   const productsResult = useQuery(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (api as any).functions.products.products.getProjectProducts,
     currentProject
       ? {
@@ -125,7 +122,7 @@ export default function ProductsPage() {
 
   // Filter products based on search term
   const filteredProducts = products.filter(
-    (product: Product) =>
+    (product: Doc<'products'>) =>
       product.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.handle.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (product.vendor && product.vendor.toLowerCase().includes(searchTerm.toLowerCase())) ||
@@ -304,14 +301,14 @@ export default function ProductsPage() {
             </div>
           ) : viewMode === 'grid' ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filteredProducts.map((product: Product) => (
+              {filteredProducts.map((product: Doc<'products'>) => (
                 <ProductCard
                   key={product._id}
-                  product={product}
-                  onEdit={() => setEditingProduct(product)}
+                  product={product as any}
+                  onEdit={() => setEditingProduct(product as Product)}
                   onView={() => console.log('View product:', product._id)}
                   onArchive={() => {
-                    setProductToDelete(product);
+                    setProductToDelete(product as Product);
                     setShowDeleteDialog(true);
                   }}
                 />
@@ -332,7 +329,7 @@ export default function ProductsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredProducts.map((product: Product) => (
+                {filteredProducts.map((product: Doc<'products'>) => (
                   <TableRow key={product._id}>
                     <TableCell>
                       <div>
@@ -390,7 +387,7 @@ export default function ProductsPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => setEditingProduct(product)}>
+                          <DropdownMenuItem onClick={() => setEditingProduct(product as Product)}>
                             <Edit className="h-4 w-4 mr-2" />
                             Edit
                           </DropdownMenuItem>
@@ -401,7 +398,7 @@ export default function ProductsPage() {
                           <DropdownMenuItem
                             className="text-destructive"
                             onClick={() => {
-                              setProductToDelete(product);
+                              setProductToDelete(product as Product);
                               setShowDeleteDialog(true);
                             }}
                           >

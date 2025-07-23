@@ -1,18 +1,9 @@
-import { renderHook } from '@testing-library/react';
-import { usePattern, usePatterns } from '../usePattern';
-import { AccessibilityProvider } from '@/contexts/accessibility';
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import React from 'react';
-
-// Mock the accessibility context
-jest.mock('@/contexts/accessibility', () => ({
-  ...jest.requireActual('@/contexts/accessibility'),
-  usePatternTheme: jest.fn(() => ({ highContrast: false, reducedMotion: false })),
-}));
-
-// Wrapper component for tests
-function TestWrapper({ children }: { children: React.ReactNode }) {
-  return <AccessibilityProvider>{children}</AccessibilityProvider>;
-}
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { cleanupTest, mockUseQuery, mockUseMutation, renderWithProviders, setupTest, renderHookWithProviders } from '@/__tests__/test-helpers';
+import { usePattern, usePatterns } from '../usePattern';
+import { AccessibilityProvider, usePatternTheme } from '@/contexts/accessibility';
 
 describe('usePattern', () => {
   beforeEach(() => {
@@ -20,9 +11,7 @@ describe('usePattern', () => {
   });
 
   it('returns pattern config for info severity', () => {
-    const { result } = renderHook(() => usePattern('info'), {
-      wrapper: TestWrapper,
-    });
+    const { result } = renderHookWithProviders(() => usePattern('info'));
 
     expect(result.current.severity).toBe('info');
     expect(result.current.patternUrl).toBe('url(#pattern-info)');
@@ -32,9 +21,7 @@ describe('usePattern', () => {
   });
 
   it('returns pattern config for warning severity', () => {
-    const { result } = renderHook(() => usePattern('warning'), {
-      wrapper: TestWrapper,
-    });
+    const { result } = renderHookWithProviders(() => usePattern('warning'));
 
     expect(result.current.severity).toBe('warning');
     expect(result.current.patternUrl).toBe('url(#pattern-warning)');
@@ -43,9 +30,7 @@ describe('usePattern', () => {
   });
 
   it('returns pattern config for danger severity', () => {
-    const { result } = renderHook(() => usePattern('danger'), {
-      wrapper: TestWrapper,
-    });
+    const { result } = renderHookWithProviders(() => usePattern('danger'));
 
     expect(result.current.severity).toBe('danger');
     expect(result.current.patternUrl).toBe('url(#pattern-danger)');
@@ -54,9 +39,7 @@ describe('usePattern', () => {
   });
 
   it('returns pattern config for critical severity', () => {
-    const { result } = renderHook(() => usePattern('critical'), {
-      wrapper: TestWrapper,
-    });
+    const { result } = renderHookWithProviders(() => usePattern('critical'));
 
     expect(result.current.severity).toBe('critical');
     expect(result.current.patternUrl).toBe('url(#pattern-critical)');
@@ -66,12 +49,9 @@ describe('usePattern', () => {
 
   it('returns high contrast config when enabled', () => {
     // Mock high contrast mode
-    const mockUsePatternTheme = jest.requireMock('@/contexts/accessibility').usePatternTheme;
-    mockUsePatternTheme.mockReturnValue({ highContrast: true, reducedMotion: false });
+    jest.spyOn(require('@/contexts/accessibility'), 'usePatternTheme').mockReturnValue({ highContrast: true, reducedMotion: false });
 
-    const { result } = renderHook(() => usePattern('info'), {
-      wrapper: TestWrapper,
-    });
+    const { result } = renderHookWithProviders(() => usePattern('info'));
 
     expect(result.current.highContrast).toBe(true);
     expect(result.current.patternUrl).toBe('url(#pattern-info-hc)');
@@ -82,9 +62,7 @@ describe('usePattern', () => {
 describe('usePatterns', () => {
   it('returns multiple pattern configs', () => {
     const severities = ['info', 'warning', 'danger'] as const;
-    const { result } = renderHook(() => usePatterns([...severities]), {
-      wrapper: TestWrapper,
-    });
+    const { result } = renderHookWithProviders(() => usePatterns([...severities]));
 
     expect(Object.keys(result.current)).toHaveLength(3);
     expect(result.current.info.severity).toBe('info');
@@ -93,18 +71,14 @@ describe('usePatterns', () => {
   });
 
   it('returns empty object for empty array', () => {
-    const { result } = renderHook(() => usePatterns([]), {
-      wrapper: TestWrapper,
-    });
+    const { result } = renderHookWithProviders(() => usePatterns([]));
 
     expect(Object.keys(result.current)).toHaveLength(0);
   });
 
   it('memoizes results correctly', () => {
     const severities = ['info', 'warning'] as const;
-    const { result, rerender } = renderHook(() => usePatterns([...severities]), {
-      wrapper: TestWrapper,
-    });
+    const { result, rerender } = renderHookWithProviders(() => usePatterns([...severities]));
 
     const firstResult = result.current;
     
@@ -115,13 +89,11 @@ describe('usePatterns', () => {
   });
 
   it('updates when high contrast changes', () => {
-    const mockUsePatternTheme = jest.requireMock('@/contexts/accessibility').usePatternTheme;
+    const mockUsePatternTheme = jest.spyOn(require('@/contexts/accessibility'), 'usePatternTheme');
     mockUsePatternTheme.mockReturnValue({ highContrast: false, reducedMotion: false });
 
     const severities = ['info'] as const;
-    const { result, rerender } = renderHook(() => usePatterns([...severities]), {
-      wrapper: TestWrapper,
-    });
+    const { result, rerender } = renderHookWithProviders(() => usePatterns([...severities]));
 
     const normalResult = result.current;
     expect(normalResult.info.highContrast).toBe(false);

@@ -1,13 +1,13 @@
 import { describe, it, expect, beforeEach } from '@jest/globals';
-import { convexTest } from '../../../__tests__/test-helpers';
+import { t } from '../../../test.setup';
 import { api } from '../../../_generated/api';
 import { Id } from '../../../_generated/dataModel';
+import { createOrganization, getOrganizationBySlug } from '../organizations';
 
 describe('Organizations Functions', () => {
-  let test: ReturnType<typeof convexTest>;
-
+  
   beforeEach(() => {
-    test = convexTest();
+    // t is already imported from test.setup
   });
 
   describe('create', () => {
@@ -23,7 +23,7 @@ describe('Organizations Functions', () => {
         role: 'admin' as const,
       };
 
-      test.db.insert('users', mockUser);
+      t.db.insert('users', mockUser);
 
       const args = {
         name: 'Test Organization',
@@ -31,7 +31,7 @@ describe('Organizations Functions', () => {
       };
 
       // Act
-      const result = await test.runMutation('organizations.create', {
+      const result = await t.runMutation('organizations.create', {
         ...args,
         userId,
       });
@@ -52,7 +52,7 @@ describe('Organizations Functions', () => {
       });
 
       // Verify membership was created
-      const memberships = await test.db
+      const memberships = await t.db
         .query('organizationMembers')
         .filter(m => m.eq(m.field('organizationId'), result._id))
         .collect();
@@ -67,7 +67,7 @@ describe('Organizations Functions', () => {
 
     it('should reject creation with invalid slug', async () => {
       const userId = 'user123' as Id<'users'>;
-      test.db.insert('users', {
+      t.db.insert('users', {
         _id: userId,
         _creationTime: Date.now(),
         email: 'test@example.com',
@@ -77,7 +77,7 @@ describe('Organizations Functions', () => {
       });
 
       await expect(
-        test.mutation(api.organizations.create, {
+        t.runMutation('organizations.create', {
           name: 'Test Organization',
           slug: 'invalid slug!', // Invalid slug with space and special char
           userId,
@@ -89,7 +89,7 @@ describe('Organizations Functions', () => {
       const userId = 'user123' as Id<'users'>;
       const existingOrgId = 'org123' as Id<'organizations'>;
       
-      test.db.insert('users', {
+      t.db.insert('users', {
         _id: userId,
         _creationTime: Date.now(),
         email: 'test@example.com',
@@ -98,7 +98,7 @@ describe('Organizations Functions', () => {
         role: 'admin' as const,
       });
 
-      test.db.insert('organizations', {
+      t.db.insert('organizations', {
         _id: existingOrgId,
         _creationTime: Date.now(),
         name: 'Existing Org',
@@ -114,7 +114,7 @@ describe('Organizations Functions', () => {
       });
 
       await expect(
-        test.mutation(api.organizations.create, {
+        t.runMutation('organizations.create', {
           name: 'Another Organization',
           slug: 'test-org', // Duplicate slug
           userId,
@@ -124,7 +124,7 @@ describe('Organizations Functions', () => {
 
     it('should reject creation for non-existent user', async () => {
       await expect(
-        test.mutation(api.organizations.create, {
+        t.runMutation('organizations.create', {
           name: 'Test Organization',
           slug: 'test-org',
           userId: 'nonexistent' as Id<'users'>,
@@ -141,7 +141,7 @@ describe('Organizations Functions', () => {
       userId = 'user123' as Id<'users'>;
       orgId = 'org123' as Id<'organizations'>;
 
-      test.db.insert('users', {
+      t.db.insert('users', {
         _id: userId,
         _creationTime: Date.now(),
         email: 'test@example.com',
@@ -150,7 +150,7 @@ describe('Organizations Functions', () => {
         role: 'admin' as const,
       });
 
-      test.db.insert('organizations', {
+      t.db.insert('organizations', {
         _id: orgId,
         _creationTime: Date.now(),
         name: 'Original Org',
@@ -165,7 +165,7 @@ describe('Organizations Functions', () => {
         enforceUniqueSku: false,
       });
 
-      test.db.insert('organizationMembers', {
+      t.db.insert('organizationMembers', {
         _id: 'member123' as Id<'organizationMembers'>,
         _creationTime: Date.now(),
         userId,
@@ -176,7 +176,7 @@ describe('Organizations Functions', () => {
     });
 
     it('should update organization name', async () => {
-      const result = await test.mutation(api.organizations.update, {
+      const result = await t.runMutation('organizations.update', {
         id: orgId,
         name: 'Updated Organization',
         userId,
@@ -190,7 +190,7 @@ describe('Organizations Functions', () => {
     });
 
     it('should update multiple fields', async () => {
-      const result = await test.mutation(api.organizations.update, {
+      const result = await t.runMutation('organizations.update', {
         id: orgId,
         name: 'Updated Organization',
         description: 'New description',
@@ -209,7 +209,7 @@ describe('Organizations Functions', () => {
 
     it('should reject update from non-owner', async () => {
       const otherUserId = 'user456' as Id<'users'>;
-      test.db.insert('users', {
+      t.db.insert('users', {
         _id: otherUserId,
         _creationTime: Date.now(),
         email: 'other@example.com',
@@ -218,7 +218,7 @@ describe('Organizations Functions', () => {
         role: 'user' as const,
       });
 
-      test.db.insert('organizationMembers', {
+      t.db.insert('organizationMembers', {
         _id: 'member456' as Id<'organizationMembers'>,
         _creationTime: Date.now(),
         userId: otherUserId,
@@ -228,7 +228,7 @@ describe('Organizations Functions', () => {
       });
 
       await expect(
-        test.mutation(api.organizations.update, {
+        t.runMutation('organizations.update', {
           id: orgId,
           name: 'Unauthorized Update',
           userId: otherUserId,
@@ -248,7 +248,7 @@ describe('Organizations Functions', () => {
       orgId = 'org123' as Id<'organizations'>;
 
       // Create owner
-      test.db.insert('users', {
+      t.db.insert('users', {
         _id: ownerId,
         _creationTime: Date.now(),
         email: 'owner@example.com',
@@ -258,7 +258,7 @@ describe('Organizations Functions', () => {
       });
 
       // Create new user
-      test.db.insert('users', {
+      t.db.insert('users', {
         _id: newUserId,
         _creationTime: Date.now(),
         email: 'newuser@example.com',
@@ -268,7 +268,7 @@ describe('Organizations Functions', () => {
       });
 
       // Create organization
-      test.db.insert('organizations', {
+      t.db.insert('organizations', {
         _id: orgId,
         _creationTime: Date.now(),
         name: 'Test Organization',
@@ -284,7 +284,7 @@ describe('Organizations Functions', () => {
       });
 
       // Add owner as member
-      test.db.insert('organizationMembers', {
+      t.db.insert('organizationMembers', {
         _id: 'member123' as Id<'organizationMembers'>,
         _creationTime: Date.now(),
         userId: ownerId,
@@ -295,7 +295,7 @@ describe('Organizations Functions', () => {
     });
 
     it('should add new member with specified role', async () => {
-      const result = await test.mutation(api.organizations.addMember, {
+      const result = await t.runMutation('organizations.addMember', {
         organizationId: orgId,
         email: 'newuser@example.com',
         role: 'admin',
@@ -309,7 +309,7 @@ describe('Organizations Functions', () => {
       });
 
       // Verify membership was created
-      const membership = await test.db
+      const membership = await t.db
         .query('organizationMembers')
         .filter(m => 
           m.and(
@@ -328,7 +328,7 @@ describe('Organizations Functions', () => {
 
     it('should reject adding existing member', async () => {
       // First add the member
-      await test.mutation(api.organizations.addMember, {
+      await t.runMutation('organizations.addMember', {
         organizationId: orgId,
         email: 'newuser@example.com',
         role: 'member',
@@ -337,7 +337,7 @@ describe('Organizations Functions', () => {
 
       // Try to add again
       await expect(
-        test.mutation(api.organizations.addMember, {
+        t.runMutation('organizations.addMember', {
           organizationId: orgId,
           email: 'newuser@example.com',
           role: 'admin',
@@ -348,7 +348,7 @@ describe('Organizations Functions', () => {
 
     it('should reject non-owner adding members', async () => {
       const regularUserId = 'regular123' as Id<'users'>;
-      test.db.insert('users', {
+      t.db.insert('users', {
         _id: regularUserId,
         _creationTime: Date.now(),
         email: 'regular@example.com',
@@ -357,7 +357,7 @@ describe('Organizations Functions', () => {
         role: 'user' as const,
       });
 
-      test.db.insert('organizationMembers', {
+      t.db.insert('organizationMembers', {
         _id: 'member456' as Id<'organizationMembers'>,
         _creationTime: Date.now(),
         userId: regularUserId,
@@ -367,7 +367,7 @@ describe('Organizations Functions', () => {
       });
 
       await expect(
-        test.mutation(api.organizations.addMember, {
+        t.runMutation('organizations.addMember', {
           organizationId: orgId,
           email: 'newuser@example.com',
           role: 'member',
@@ -378,7 +378,7 @@ describe('Organizations Functions', () => {
 
     it('should reject adding non-existent user', async () => {
       await expect(
-        test.mutation(api.organizations.addMember, {
+        t.runMutation('organizations.addMember', {
           organizationId: orgId,
           email: 'nonexistent@example.com',
           role: 'member',
@@ -393,7 +393,7 @@ describe('Organizations Functions', () => {
       const userId = 'user123' as Id<'users'>;
       
       // Create user
-      test.db.insert('users', {
+      t.db.insert('users', {
         _id: userId,
         _creationTime: Date.now(),
         email: 'test@example.com',
@@ -406,7 +406,7 @@ describe('Organizations Functions', () => {
       const org1Id = 'org1' as Id<'organizations'>;
       const org2Id = 'org2' as Id<'organizations'>;
       
-      test.db.insert('organizations', {
+      t.db.insert('organizations', {
         _id: org1Id,
         _creationTime: Date.now(),
         name: 'Org 1',
@@ -421,7 +421,7 @@ describe('Organizations Functions', () => {
         enforceUniqueSku: false,
       });
 
-      test.db.insert('organizations', {
+      t.db.insert('organizations', {
         _id: org2Id,
         _creationTime: Date.now(),
         name: 'Org 2',
@@ -437,7 +437,7 @@ describe('Organizations Functions', () => {
       });
 
       // Add memberships
-      test.db.insert('organizationMembers', {
+      t.db.insert('organizationMembers', {
         _id: 'member1' as Id<'organizationMembers'>,
         _creationTime: Date.now(),
         userId,
@@ -446,7 +446,7 @@ describe('Organizations Functions', () => {
         joinedAt: Date.now(),
       });
 
-      test.db.insert('organizationMembers', {
+      t.db.insert('organizationMembers', {
         _id: 'member2' as Id<'organizationMembers'>,
         _creationTime: Date.now(),
         userId,
@@ -456,7 +456,7 @@ describe('Organizations Functions', () => {
       });
 
       // Act
-      const result = await test.query(api.organizations.getUserOrganizations, {
+      const result = await t.runQuery('organizations.getUserOrganizations', {
         userId,
       });
 
@@ -483,7 +483,7 @@ describe('Organizations Functions', () => {
     it('should return empty array for user with no organizations', async () => {
       const userId = 'user123' as Id<'users'>;
       
-      test.db.insert('users', {
+      t.db.insert('users', {
         _id: userId,
         _creationTime: Date.now(),
         email: 'test@example.com',
@@ -492,7 +492,7 @@ describe('Organizations Functions', () => {
         role: 'user' as const,
       });
 
-      const result = await test.query(api.organizations.getUserOrganizations, {
+      const result = await t.runQuery('organizations.getUserOrganizations', {
         userId,
       });
 

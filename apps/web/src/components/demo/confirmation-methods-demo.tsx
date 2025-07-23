@@ -11,7 +11,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { Trash2, Save, Send } from 'lucide-react';
+import { Trash2, Save } from 'lucide-react';
 
 export function ConfirmationMethodsDemo() {
   const [holdResult, setHoldResult] = useState<string>('');

@@ -6,9 +6,9 @@
 
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Product } from '@/types/models';
-import { CoreDeletionForm } from './CoreDeletionForm';
+// import { CoreDeletionForm } from './CoreDeletionForm';
 
 interface EnhancedDeletionFormProps {
   product?: Product;
@@ -61,7 +61,7 @@ export function EnhancedDeletionForm({
   }, [onDelete]);
   
   // Touch gesture support for swipe-to-delete
-  const handleTouchStart = (e: React.TouchEvent, itemId: string) => {
+  const handleTouchStart = (e: React.TouchEvent) => {
     setTouchStart(e.touches[0].clientX);
   };
   

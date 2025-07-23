@@ -1,4 +1,6 @@
-import { createLogger, LogLevel } from '@/utils/error-monitoring';
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import React from 'react';
+import { LogLevel, createLogger } from '@/utils/error-monitoring';
 
 describe('Logging Utility', () => {
   let consoleDebugSpy: jest.SpyInstance;
@@ -17,12 +19,12 @@ describe('Logging Utility', () => {
 
   afterEach(() => {
     jest.restoreAllMocks();
-    process.env.NODE_ENV = originalEnv;
+    (process.env as any).NODE_ENV = originalEnv;
   });
 
   describe('Development Environment', () => {
     beforeEach(() => {
-      process.env.NODE_ENV = 'development';
+      (process.env as any).NODE_ENV = 'development';
     });
 
     it('should log debug messages in development', () => {
@@ -65,7 +67,7 @@ describe('Logging Utility', () => {
 
   describe('Production Environment', () => {
     beforeEach(() => {
-      process.env.NODE_ENV = 'production';
+      (process.env as any).NODE_ENV = 'production';
     });
 
     it('should not log debug messages in production', () => {

@@ -1,9 +1,9 @@
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import React from 'react';
-import { render, screen } from '@/__tests__/test-utils';
-import { setupTest, cleanupTest } from '@/__tests__/frontend-test-helpers';
-import { Alert, AlertTitle, AlertDescription } from '../alert';
-import { InfoIcon, AlertCircle } from 'lucide-react';
-
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { cleanupTest, mockUseQuery, mockUseMutation, renderWithProviders, setupTest } from '@/__tests__/test-helpers';
+import { Alert, AlertDescription, AlertTitle } from '../alert';
+import { AlertCircle, InfoIcon } from 'lucide-react';
 describe('Alert', () => {
   beforeEach(() => {
     setupTest();
@@ -15,8 +15,7 @@ describe('Alert', () => {
 
   describe('Rendering', () => {
     it('renders with default variant', () => {
-      render(
-        <Alert>
+      renderWithProviders(<Alert>
           <AlertTitle>Default Alert</AlertTitle>
           <AlertDescription>This is a default alert message.</AlertDescription>
         </Alert>
@@ -30,8 +29,7 @@ describe('Alert', () => {
     });
 
     it('renders with destructive variant', () => {
-      render(
-        <Alert variant="destructive">
+      renderWithProviders(<Alert variant="destructive">
           <AlertTitle>Error Alert</AlertTitle>
           <AlertDescription>This is an error alert message.</AlertDescription>
         </Alert>
@@ -42,8 +40,7 @@ describe('Alert', () => {
     });
 
     it('renders with icon', () => {
-      render(
-        <Alert>
+      renderWithProviders(<Alert>
           <InfoIcon className="h-4 w-4" />
           <AlertTitle>Alert with Icon</AlertTitle>
           <AlertDescription>This alert has an icon.</AlertDescription>
@@ -57,8 +54,7 @@ describe('Alert', () => {
     });
 
     it('applies custom className', () => {
-      render(
-        <Alert className="custom-alert-class">
+      renderWithProviders(<Alert className="custom-alert-class">
           <AlertTitle>Custom Alert</AlertTitle>
         </Alert>
       );
@@ -68,8 +64,7 @@ describe('Alert', () => {
     });
 
     it('renders with multiple paragraphs in description', () => {
-      render(
-        <Alert>
+      renderWithProviders(<Alert>
           <AlertTitle>Multi-paragraph Alert</AlertTitle>
           <AlertDescription>
             <p>First paragraph of the alert.</p>
@@ -78,7 +73,7 @@ describe('Alert', () => {
         </Alert>
       );
 
-      const alert = screen.getByRole('alert');
+//       const alert = screen.getByRole('alert');
       expect(screen.getByText('First paragraph of the alert.')).toBeInTheDocument();
       expect(screen.getByText('Second paragraph of the alert.')).toBeInTheDocument();
     });
@@ -86,8 +81,7 @@ describe('Alert', () => {
 
   describe('Alert Components', () => {
     it('renders AlertTitle correctly', () => {
-      render(
-        <Alert>
+      renderWithProviders(<Alert>
           <AlertTitle className="custom-title">Important Notice</AlertTitle>
         </Alert>
       );
@@ -98,8 +92,7 @@ describe('Alert', () => {
     });
 
     it('renders AlertDescription correctly', () => {
-      render(
-        <Alert>
+      renderWithProviders(<Alert>
           <AlertDescription className="custom-description">
             Detailed description of the alert.
           </AlertDescription>
@@ -111,8 +104,7 @@ describe('Alert', () => {
     });
 
     it('renders without title', () => {
-      render(
-        <Alert>
+      renderWithProviders(<Alert>
           <AlertDescription>Alert with description only.</AlertDescription>
         </Alert>
       );
@@ -122,8 +114,7 @@ describe('Alert', () => {
     });
 
     it('renders without description', () => {
-      render(
-        <Alert>
+      renderWithProviders(<Alert>
           <AlertTitle>Alert with title only</AlertTitle>
         </Alert>
       );
@@ -134,8 +125,7 @@ describe('Alert', () => {
 
   describe('Icon Positioning', () => {
     it('applies correct spacing when icon is present', () => {
-      render(
-        <Alert>
+      renderWithProviders(<Alert>
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Alert with Icon</AlertTitle>
           <AlertDescription>Icon should be positioned correctly.</AlertDescription>
@@ -151,8 +141,7 @@ describe('Alert', () => {
     });
 
     it('renders correctly without icon', () => {
-      render(
-        <Alert>
+      renderWithProviders(<Alert>
           <AlertTitle>No Icon Alert</AlertTitle>
           <AlertDescription>This alert has no icon.</AlertDescription>
         </Alert>
@@ -166,15 +155,14 @@ describe('Alert', () => {
 
   describe('Variants', () => {
     it('applies default variant styles', () => {
-      render(<Alert>Default variant alert</Alert>);
+      renderWithProviders(<Alert>Default variant alert</Alert>);
 
       const alert = screen.getByRole('alert');
       expect(alert).toHaveClass('bg-background', 'text-foreground');
     });
 
     it('applies destructive variant styles', () => {
-      render(
-        <Alert variant="destructive">
+      renderWithProviders(<Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Error</AlertTitle>
           <AlertDescription>Something went wrong!</AlertDescription>
@@ -184,15 +172,14 @@ describe('Alert', () => {
       const alert = screen.getByRole('alert');
       expect(alert).toHaveClass('border-destructive/50', 'text-destructive');
       
-      const icon = alert.querySelector('svg');
+//       const icon = alert.querySelector('svg');
       expect(alert).toHaveClass('[&>svg]:text-destructive');
     });
   });
 
   describe('Accessibility', () => {
     it('has alert role', () => {
-      render(
-        <Alert>
+      renderWithProviders(<Alert>
           <AlertTitle>Accessible Alert</AlertTitle>
           <AlertDescription>This alert is accessible.</AlertDescription>
         </Alert>
@@ -203,8 +190,7 @@ describe('Alert', () => {
     });
 
     it('maintains semantic structure', () => {
-      render(
-        <Alert>
+      renderWithProviders(<Alert>
           <AlertTitle>Semantic Alert</AlertTitle>
           <AlertDescription>This maintains proper heading hierarchy.</AlertDescription>
         </Alert>
@@ -215,8 +201,7 @@ describe('Alert', () => {
     });
 
     it('supports keyboard navigation', () => {
-      render(
-        <Alert>
+      renderWithProviders(<Alert>
           <AlertTitle>Keyboard Accessible</AlertTitle>
           <AlertDescription>
             This alert can contain <a href="#link">focusable elements</a>.
@@ -233,8 +218,7 @@ describe('Alert', () => {
   describe('Forwarded Refs', () => {
     it('forwards ref to Alert', () => {
       const ref = React.createRef<HTMLDivElement>();
-      render(
-        <Alert ref={ref}>
+      renderWithProviders(<Alert ref={ref}>
           <AlertTitle>Ref Test</AlertTitle>
         </Alert>
       );
@@ -245,8 +229,7 @@ describe('Alert', () => {
 
     it('forwards ref to AlertTitle', () => {
       const ref = React.createRef<HTMLHeadingElement>();
-      render(
-        <Alert>
+      renderWithProviders(<Alert>
           <AlertTitle ref={ref}>Title Ref Test</AlertTitle>
         </Alert>
       );
@@ -257,8 +240,7 @@ describe('Alert', () => {
 
     it('forwards ref to AlertDescription', () => {
       const ref = React.createRef<HTMLDivElement>();
-      render(
-        <Alert>
+      renderWithProviders(<Alert>
           <AlertDescription ref={ref}>Description Ref Test</AlertDescription>
         </Alert>
       );
@@ -270,8 +252,7 @@ describe('Alert', () => {
 
   describe('Complex Content', () => {
     it('renders with custom content', () => {
-      render(
-        <Alert>
+      renderWithProviders(<Alert>
           <AlertTitle>Complex Alert</AlertTitle>
           <AlertDescription>
             <div>
@@ -293,8 +274,7 @@ describe('Alert', () => {
     });
 
     it('renders with multiple alerts', () => {
-      render(
-        <div>
+      renderWithProviders(<div>
           <Alert variant="default">
             <AlertTitle>Info</AlertTitle>
             <AlertDescription>Informational message.</AlertDescription>

@@ -204,7 +204,6 @@ declare class AiCategorizationJobFactory extends BaseFactory<AiCategorizationJob
     private generateProductIds;
     private generateResults;
     private generateErrors;
-    private generateCost;
 }
 
 /**

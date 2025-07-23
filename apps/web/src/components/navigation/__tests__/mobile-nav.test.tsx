@@ -1,7 +1,10 @@
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { MobileNav } from '../mobile-nav';
 import { usePathname } from 'next/navigation';
+
+import { renderWithProviders } from '@/__tests__/test-helpers';
 
 // Mock next/navigation
 jest.mock('next/navigation', () => ({
@@ -10,7 +13,7 @@ jest.mock('next/navigation', () => ({
 
 // Mock utils
 jest.mock('@/lib/utils', () => ({
-  cn: (...args: any[]) => args.filter(Boolean).join(' '),
+  cn: (...args: unknown[]) => args.filter(Boolean).join(' '),
 }));
 
 describe('MobileNav', () => {
@@ -23,7 +26,7 @@ describe('MobileNav', () => {
   });
 
   it('renders all navigation links', () => {
-    render(<MobileNav orgSlug={orgSlug} onClose={mockOnClose} />);
+    renderWithProviders(<MobileNav orgSlug={orgSlug} onClose={mockOnClose} />);
 
     const expectedLinks = [
       'Dashboard',
@@ -45,23 +48,25 @@ describe('MobileNav', () => {
   });
 
   it('highlights the active link based on current path', () => {
-    render(<MobileNav orgSlug={orgSlug} onClose={mockOnClose} />);
+    renderWithProviders(<MobileNav orgSlug={orgSlug} onClose={mockOnClose} />);
 
     const dashboardLink = screen.getByText('Dashboard').closest('a');
     expect(dashboardLink).toHaveClass('bg-semantic-info', 'text-white');
   });
 
   it('calls onClose when a link is clicked', () => {
-    render(<MobileNav orgSlug={orgSlug} onClose={mockOnClose} />);
+    renderWithProviders(<MobileNav orgSlug={orgSlug} onClose={mockOnClose} />);
 
     const projectsLink = screen.getByText('Projects');
-    fireEvent.click(projectsLink);
+    if (projectsLink) {
+      fireEvent.click(projectsLink as HTMLElement);
+    }
 
     expect(mockOnClose).toHaveBeenCalledTimes(1);
   });
 
   it('generates correct href for each link', () => {
-    render(<MobileNav orgSlug={orgSlug} onClose={mockOnClose} />);
+    renderWithProviders(<MobileNav orgSlug={orgSlug} onClose={mockOnClose} />);
 
     const dashboardLink = screen.getByText('Dashboard').closest('a');
     expect(dashboardLink).toHaveAttribute('href', '/test-org/dashboard');
@@ -71,7 +76,7 @@ describe('MobileNav', () => {
   });
 
   it('renders icons for each navigation item', () => {
-    render(<MobileNav orgSlug={orgSlug} onClose={mockOnClose} />);
+    renderWithProviders(<MobileNav orgSlug={orgSlug} onClose={mockOnClose} />);
 
     // Check that SVG icons are rendered (they will have the lucide-* class)
     const icons = screen.getAllByRole('img', { hidden: true });
@@ -80,7 +85,7 @@ describe('MobileNav', () => {
 
   it('applies hover styles to non-active links', () => {
     (usePathname as jest.Mock).mockReturnValue('/test-org/products');
-    render(<MobileNav orgSlug={orgSlug} onClose={mockOnClose} />);
+    renderWithProviders(<MobileNav orgSlug={orgSlug} onClose={mockOnClose} />);
 
     const dashboardLink = screen.getByText('Dashboard').closest('a');
     expect(dashboardLink).toHaveClass('hover:text-semantic-primary', 'hover:bg-semantic-secondary');

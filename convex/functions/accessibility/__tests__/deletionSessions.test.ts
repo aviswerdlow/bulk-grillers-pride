@@ -1,4 +1,5 @@
-import { convexTest } from '../../../__tests__/test-helpers';
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import { t } from '../../../test.setup';
 import {
   createDeletionSessionHandler,
   updateSessionFocusHandler,
@@ -20,7 +21,8 @@ describe('Deletion Sessions', () => {
   let productIds: string[];
 
   beforeEach(async () => {
-    ctx = convexTest();
+    
+    ctx = await t.run(async (ctx) => ctx);
 
     // Create test organization
     organizationId = await ctx.db.insert('organizations', {
@@ -111,11 +113,11 @@ describe('Deletion Sessions', () => {
     }
 
     // Mock auth to return our test user
-    ctx.auth.getUserIdentity.mockResolvedValue({ subject: 'user_123' });
   });
 
   describe('createDeletionSession', () => {
     it('should create a new deletion session with security fields', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const result = await createDeletionSessionHandler(
         ctx,
         {
@@ -148,7 +150,7 @@ describe('Deletion Sessions', () => {
     });
 
     it('should throw error when not authenticated', async () => {
-      ctx.auth.getUserIdentity.mockResolvedValue(null);
+    const ctx = await t.mutation(async (ctx) => ctx);
       
       await expect(
         createDeletionSessionHandler(
@@ -162,6 +164,7 @@ describe('Deletion Sessions', () => {
     });
 
     it('should throw error when no products selected', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       await expect(
         createDeletionSessionHandler(
           ctx,
@@ -190,6 +193,7 @@ describe('Deletion Sessions', () => {
     });
 
     it('should update focus history', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const focusState = {
         elementId: 'delete-button',
         timestamp: Date.now(),
@@ -210,6 +214,7 @@ describe('Deletion Sessions', () => {
     });
 
     it('should update focus history with stepIndex', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const focusState = {
         elementId: 'confirm-button',
         timestamp: Date.now(),
@@ -232,6 +237,7 @@ describe('Deletion Sessions', () => {
     });
 
     it('should limit focus history to 10 entries', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       // Add 15 focus states
       for (let i = 0; i < 15; i++) {
         await updateSessionFocusHandler(
@@ -257,6 +263,7 @@ describe('Deletion Sessions', () => {
     });
 
     it('should throw error for non-existent session', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       await expect(
         updateSessionFocusHandler(
           ctx,
@@ -295,6 +302,7 @@ describe('Deletion Sessions', () => {
     });
 
     it('should validate type-to-confirm correctly', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const result = await validateConfirmationHandler(
         ctx,
         {
@@ -312,6 +320,7 @@ describe('Deletion Sessions', () => {
     });
 
     it('should accept type-to-confirm without spaces', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const result = await validateConfirmationHandler(
         ctx,
         {
@@ -329,6 +338,7 @@ describe('Deletion Sessions', () => {
     });
 
     it('should reject incorrect type-to-confirm text', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const result = await validateConfirmationHandler(
         ctx,
         {
@@ -347,6 +357,7 @@ describe('Deletion Sessions', () => {
     });
 
     it('should validate hold-to-confirm with sufficient duration', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const result = await validateConfirmationHandler(
         ctx,
         {
@@ -364,6 +375,7 @@ describe('Deletion Sessions', () => {
     });
 
     it('should reject hold-to-confirm with insufficient duration', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const result = await validateConfirmationHandler(
         ctx,
         {
@@ -382,6 +394,7 @@ describe('Deletion Sessions', () => {
     });
 
     it('should validate standard click confirmation', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const result = await validateConfirmationHandler(
         ctx,
         {
@@ -398,6 +411,7 @@ describe('Deletion Sessions', () => {
     });
 
     it('should throw error if not at confirm step', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       // Update to different step
       await updateSessionStepHandler(
         ctx,
@@ -435,6 +449,7 @@ describe('Deletion Sessions', () => {
     });
 
     it('should update session step', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       await updateSessionStepHandler(
         ctx,
         { sessionId, step: 'select_options' }
@@ -449,6 +464,7 @@ describe('Deletion Sessions', () => {
     });
 
     it('should complete session', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       await completeDeletionSessionHandler(
         ctx,
         { sessionId }
@@ -464,6 +480,7 @@ describe('Deletion Sessions', () => {
     });
 
     it('should cancel session', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       await cancelDeletionSessionHandler(
         ctx,
         { sessionId }
@@ -482,7 +499,7 @@ describe('Deletion Sessions', () => {
   describe('cleanupExpiredSessions', () => {
     it.skip('should cleanup expired sessions (skipped due to mock db filter limitations)', async () => {
       // Fresh context to avoid interference from other tests
-      const cleanCtx = convexTest();
+      const cleanCtx = t;
       
       // Create sessions with different activity times
       const now = Date.now();
@@ -580,6 +597,7 @@ describe('Deletion Sessions', () => {
 
     describe('Nonce Validation', () => {
       it('should reject invalid nonce', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
         await expect(
           validateConfirmationHandler(
             ctx,
@@ -596,6 +614,7 @@ describe('Deletion Sessions', () => {
       });
 
       it('should reject missing nonce', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
         await expect(
           validateConfirmationHandler(
             ctx,
@@ -612,6 +631,7 @@ describe('Deletion Sessions', () => {
       });
 
       it('should accept valid nonce and return new one', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
         const result = await validateConfirmationHandler(
           ctx,
           {
@@ -631,6 +651,7 @@ describe('Deletion Sessions', () => {
       });
 
       it('should prevent nonce reuse', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
         // First use should succeed
         await validateConfirmationHandler(
           ctx,
@@ -663,6 +684,7 @@ describe('Deletion Sessions', () => {
 
     describe('Rate Limiting', () => {
       it('should enforce rate limiting after max attempts', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
         // Get fresh nonces for each attempt
         const nonces: string[] = [nonce];
         
@@ -708,6 +730,7 @@ describe('Deletion Sessions', () => {
       });
 
       it('should track confirmation attempts', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
         // Make a failed attempt
         try {
           await validateConfirmationHandler(
@@ -741,6 +764,7 @@ describe('Deletion Sessions', () => {
 
     describe('Input Sanitization', () => {
       it('should sanitize type-to-confirm input', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
         // Create new nonce for this test
         const newNonceResult = await generateNewNonceHandler(ctx, { sessionId });
         
@@ -761,6 +785,7 @@ describe('Deletion Sessions', () => {
       });
 
       it('should handle extremely long input gracefully', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
         const newNonceResult = await generateNewNonceHandler(ctx, { sessionId });
         const longInput = 'DELETE 3' + 'x'.repeat(1000);
         
@@ -783,6 +808,7 @@ describe('Deletion Sessions', () => {
 
     describe('Hold Duration Validation', () => {
       it('should reject hold duration below minimum', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
         const result = await validateConfirmationHandler(
           ctx,
           {
@@ -801,6 +827,7 @@ describe('Deletion Sessions', () => {
       });
 
       it('should reject hold duration above maximum', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
         const newNonceResult = await generateNewNonceHandler(ctx, { sessionId });
         
         const result = await validateConfirmationHandler(
@@ -823,6 +850,7 @@ describe('Deletion Sessions', () => {
 
     describe('Maximum Attempts Protection', () => {
       it('should cancel session after max total attempts', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
         // Make 9 failed attempts (below rate limit per window)
         for (let i = 0; i < 9; i++) {
           const newNonceResult = await generateNewNonceHandler(ctx, { sessionId });
@@ -871,6 +899,7 @@ describe('Deletion Sessions', () => {
 
     describe('Audit Logging', () => {
       it('should create audit log with security metadata on success', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
         await validateConfirmationHandler(
           ctx,
           {
@@ -906,6 +935,7 @@ describe('Deletion Sessions', () => {
 
     describe('generateNewNonce', () => {
       it('should generate a new nonce for active session', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
         const result = await generateNewNonceHandler(ctx, { sessionId });
         
         expect(result.nonce).toBeTruthy();
@@ -920,6 +950,7 @@ describe('Deletion Sessions', () => {
       });
 
       it('should limit number of valid nonces', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
         // Generate 10 nonces
         for (let i = 0; i < 10; i++) {
           await generateNewNonceHandler(ctx, { sessionId });
@@ -967,6 +998,7 @@ describe('Deletion Sessions', () => {
 
     describe('getSessionFocusHistory', () => {
       it('should retrieve focus history with session context', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
         const result = await getSessionFocusHistoryHandler(ctx, { sessionId });
 
         expect(result).toBeTruthy();
@@ -981,6 +1013,7 @@ describe('Deletion Sessions', () => {
       });
 
       it('should return last focus element correctly', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
         const result = await getSessionFocusHistoryHandler(ctx, { sessionId });
 
         expect(result?.lastFocus).toBeTruthy();
@@ -989,6 +1022,7 @@ describe('Deletion Sessions', () => {
       });
 
       it('should return null for non-existent session', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
         const result = await getSessionFocusHistoryHandler(
           ctx,
           { sessionId: 'non-existent' }
@@ -998,6 +1032,7 @@ describe('Deletion Sessions', () => {
       });
 
       it('should handle empty focus history', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
         // Create session without focus history
         const newResult = await createDeletionSessionHandler(
           ctx,
@@ -1019,6 +1054,7 @@ describe('Deletion Sessions', () => {
 
     describe('clearSessionFocus', () => {
       it('should clear all focus history', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
         // Verify focus history exists
         let session = await getDeletionSessionHandler(ctx, { sessionId });
         expect(session?.focusHistory).toHaveLength(3);
@@ -1033,6 +1069,7 @@ describe('Deletion Sessions', () => {
       });
 
       it('should update lastActivityAt when clearing', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
         const beforeClear = Date.now();
         await clearSessionFocusHandler(ctx, { sessionId });
 
@@ -1041,6 +1078,7 @@ describe('Deletion Sessions', () => {
       });
 
       it('should throw error for non-existent session', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
         await expect(
           clearSessionFocusHandler(ctx, { sessionId: 'non-existent' })
         ).rejects.toThrow('Session not found');
@@ -1049,6 +1087,7 @@ describe('Deletion Sessions', () => {
 
     describe('Focus Recovery', () => {
       it('should support page reload recovery', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
         // Simulate adding focus before page "reload"
         await updateSessionFocusHandler(
           ctx,
@@ -1081,6 +1120,7 @@ describe('Deletion Sessions', () => {
       });
 
       it('should track focus across different contexts', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
         const focusSequence = [
           { elementId: 'modal-open', context: 'table' as const },
           { elementId: 'step-1-input', context: 'modal' as const },

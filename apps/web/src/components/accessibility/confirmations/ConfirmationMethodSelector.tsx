@@ -129,7 +129,7 @@ export function ConfirmationMethodSelector({
         'polite'
       );
     }
-  }, []);
+  }, [announce, methods, selectedMethod]);
 
   return (
     <div className={cn('space-y-4', className)}>

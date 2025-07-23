@@ -1,3 +1,5 @@
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import { t } from '../../test.setup';
 /**
  * Comprehensive tests for transactional cascade deletion
  * 
@@ -76,7 +78,7 @@ describe('Transactional Cascade Deletion', () => {
   describe('Single Product Deletion', () => {
     test('should create transaction record for deletion', async () => {
       // Delete product
-      const result = await t.mutation(api.functions.products.deletion.deleteProduct, {
+      const result = await t.mutation(api.products.deletion.deleteProduct, {
         productId,
         reason: 'Test deletion',
       });
@@ -85,7 +87,7 @@ describe('Transactional Cascade Deletion', () => {
       expect(result.trashId).toBeDefined();
       
       // Verify transaction was created
-      const transactions = await t.query(api.migrations.cascadeTransactions.list, {
+      const transactions = await t.query(internal.migrations.cascadeTransactions.list, {
         organizationId,
       });
       
@@ -107,7 +109,7 @@ describe('Transactional Cascade Deletion', () => {
       });
       
       // Delete product
-      await t.mutation(api.functions.products.deletion.deleteProduct, {
+      await t.mutation(api.products.deletion.deleteProduct, {
         productId,
         reason: 'Test deletion',
       });
@@ -130,7 +132,7 @@ describe('Transactional Cascade Deletion', () => {
       
       // Attempt deletion
       await expect(
-        t.mutation(api.functions.products.deletion.deleteProduct, {
+        t.mutation(api.products.deletion.deleteProduct, {
           productId,
           reason: 'Test rollback',
         })
@@ -175,7 +177,7 @@ describe('Transactional Cascade Deletion', () => {
     });
 
     test('should delete multiple products atomically', async () => {
-      const result = await t.mutation(api.functions.products.deletion.bulkDeleteProducts, {
+      const result = await t.mutation(api.products.deletion.bulkDeleteProducts, {
         productIds: [productId, productId2, productId3],
         reason: 'Bulk deletion test',
         confirmationText: 'DELETE 3',
@@ -199,7 +201,7 @@ describe('Transactional Cascade Deletion', () => {
 
     test('should use distributed locking for bulk operations', async () => {
       // Start bulk deletion
-      const deletionPromise = t.mutation(api.functions.products.deletion.bulkDeleteProducts, {
+      const deletionPromise = t.mutation(api.products.deletion.bulkDeleteProducts, {
         productIds: [productId, productId2],
         reason: 'Lock test',
         confirmationText: 'DELETE 2',
@@ -207,7 +209,7 @@ describe('Transactional Cascade Deletion', () => {
       
       // Attempt concurrent deletion (should fail due to lock)
       await expect(
-        t.mutation(api.functions.products.deletion.deleteProduct, {
+        t.mutation(api.products.deletion.deleteProduct, {
           productId,
           reason: 'Concurrent deletion',
         })
@@ -223,7 +225,7 @@ describe('Transactional Cascade Deletion', () => {
 
     beforeEach(async () => {
       // Delete product first
-      const result = await t.mutation(api.functions.products.deletion.deleteProduct, {
+      const result = await t.mutation(api.products.deletion.deleteProduct, {
         productId,
         reason: 'Test restoration',
       });
@@ -242,7 +244,7 @@ describe('Transactional Cascade Deletion', () => {
       });
       
       // Restore product
-      const result = await t.mutation(api.functions.products.deletion.restoreProducts, {
+      const result = await t.mutation(api.products.deletion.restoreProducts, {
         trashIds: [trashId],
       });
       
@@ -273,7 +275,7 @@ describe('Transactional Cascade Deletion', () => {
       });
       
       // Restore original product
-      const result = await t.mutation(api.functions.products.deletion.restoreProducts, {
+      const result = await t.mutation(api.products.deletion.restoreProducts, {
         trashIds: [trashId],
       });
       
@@ -302,7 +304,7 @@ describe('Transactional Cascade Deletion', () => {
       await t.mutation(api.categories.delete, { categoryId });
       
       // Restore product
-      const result = await t.mutation(api.functions.products.deletion.restoreProducts, {
+      const result = await t.mutation(api.products.deletion.restoreProducts, {
         trashIds: [trashId],
       });
       
@@ -395,7 +397,7 @@ describe('Transactional Cascade Deletion', () => {
       });
       
       // Delete product
-      await t.mutation(api.functions.products.deletion.deleteProduct, {
+      await t.mutation(api.products.deletion.deleteProduct, {
         productId,
         reason: 'Image cleanup test',
       });
@@ -432,7 +434,7 @@ describe('Transactional Cascade Deletion', () => {
       
       // Run consistency validation
       const issues = await t.query(
-        api.migrations.consistencyValidator.validateCategoryAssignmentsTrash,
+        internal.migrations.consistencyValidator.validateCategoryAssignmentsTrash,
         {}
       );
       
@@ -461,7 +463,7 @@ describe('Transactional Cascade Deletion', () => {
       
       // Run consistency validation with fix
       const result = await t.mutation(
-        api.migrations.consistencyValidator.runConsistencyValidation,
+        internal.migrations.consistencyValidator.runConsistencyValidation,
         { fix: true }
       );
       
@@ -476,7 +478,7 @@ describe('Transactional Cascade Deletion', () => {
   describe('Audit Logging', () => {
     test('should create comprehensive audit logs', async () => {
       // Delete product
-      await t.mutation(api.functions.products.deletion.deleteProduct, {
+      await t.mutation(api.products.deletion.deleteProduct, {
         productId,
         reason: 'Audit test',
       });
@@ -494,7 +496,7 @@ describe('Transactional Cascade Deletion', () => {
 
     test('should track SKU changes in restoration audit', async () => {
       // Delete product
-      const deleteResult = await t.mutation(api.functions.products.deletion.deleteProduct, {
+      const deleteResult = await t.mutation(api.products.deletion.deleteProduct, {
         productId,
         reason: 'SKU audit test',
       });
@@ -510,7 +512,7 @@ describe('Transactional Cascade Deletion', () => {
       });
       
       // Restore with SKU conflict
-      await t.mutation(api.functions.products.deletion.restoreProducts, {
+      await t.mutation(api.products.deletion.restoreProducts, {
         trashIds: [deleteResult.trashId],
       });
       

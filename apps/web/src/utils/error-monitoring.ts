@@ -99,7 +99,8 @@ export class Logger {
   /**
    * Report error to external service (placeholder for future implementation)
    */
-  private reportError(_message: string) {
+  private reportError(message: string) {
+    void message;
     // Future: Send to error monitoring service
     // For now, just ensure errors are logged
   }

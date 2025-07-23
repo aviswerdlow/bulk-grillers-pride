@@ -1,11 +1,14 @@
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+/**
+ * @jest-environment jsdom
+ */
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@/__tests__/test-utils';
-import userEvent from '@testing-library/user-event';
-import { CreateProductDialog } from '../create-product-dialog';
-import { setupTest, cleanupTest } from '@/__tests__/frontend-test-helpers';
-import { toast } from 'sonner';
-import { api } from '@convex/_generated/api';
 
+import userEvent from '@testing-library/user-event';
+import { cleanupTest, mockUseMutation, render, screen, setupTest, waitFor, renderWithProviders } from '@/__tests__/test-helpers';
+import { CreateProductDialog } from '../create-product-dialog';
+import { toast } from 'sonner';
+// import { api } from '@convex/_generated/api';
 // Mock dependencies
 jest.mock('sonner', () => ({
   toast: {
@@ -14,29 +17,28 @@ jest.mock('sonner', () => ({
   },
 }));
 
-jest.mock('convex/react', () => ({
-  ...jest.requireActual('convex/react'),
-  useMutation: jest.fn(() => jest.fn()),
-}));
-
 // Import after mocking
-import { useMutation } from 'convex/react';
+;
 
 describe('CreateProductDialog', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   const mockOnOpenChange = jest.fn();
   const mockCreateProduct = jest.fn();
   
   const defaultProps = {
     open: true,
     onOpenChange: mockOnOpenChange,
-    organizationId: 'org_123' as any,
-    projectId: 'project_123' as any,
+    organizationId: 'org_123' as unknown,
+    projectId: 'project_123' as unknown,
   };
 
   beforeEach(() => {
     setupTest();
     jest.clearAllMocks();
-    (useMutation as jest.Mock).mockReturnValue(mockCreateProduct);
+    mockUseMutation.mockReturnValue(mockCreateProduct);
   });
 
   afterEach(() => {
@@ -45,7 +47,7 @@ describe('CreateProductDialog', () => {
 
   describe('Rendering', () => {
     it('renders dialog with correct title and description', () => {
-      render(<CreateProductDialog {...defaultProps} />);
+      renderWithProviders(<CreateProductDialog {...defaultProps} />)
 
       expect(screen.getByRole('dialog')).toBeInTheDocument();
       expect(screen.getByText('Create New Product')).toBeInTheDocument();
@@ -53,7 +55,7 @@ describe('CreateProductDialog', () => {
     });
 
     it('renders all form fields', () => {
-      render(<CreateProductDialog {...defaultProps} />);
+      renderWithProviders(<CreateProductDialog {...defaultProps} />)
 
       // Required fields
       expect(screen.getByLabelText(/title \*/i)).toBeInTheDocument();
@@ -68,7 +70,7 @@ describe('CreateProductDialog', () => {
     });
 
     it('shows draft as default status', () => {
-      render(<CreateProductDialog {...defaultProps} />);
+      renderWithProviders(<CreateProductDialog {...defaultProps} />)
       
       const statusSelect = screen.getByRole('combobox');
       expect(statusSelect).toHaveTextContent('Draft');
@@ -78,7 +80,7 @@ describe('CreateProductDialog', () => {
   describe('Form Interactions', () => {
     it('auto-generates handle from title', async () => {
       const user = userEvent.setup();
-      render(<CreateProductDialog {...defaultProps} />);
+      renderWithProviders(<CreateProductDialog {...defaultProps} />)
 
       const titleInput = screen.getByLabelText(/title \*/i);
       const handleInput = screen.getByLabelText(/handle/i);
@@ -90,7 +92,7 @@ describe('CreateProductDialog', () => {
 
     it('validates required title field', async () => {
       const user = userEvent.setup();
-      render(<CreateProductDialog {...defaultProps} />);
+      renderWithProviders(<CreateProductDialog {...defaultProps} />)
 
       const submitButton = screen.getByRole('button', { name: /create product/i });
       
@@ -103,7 +105,7 @@ describe('CreateProductDialog', () => {
 
     it('handles tag addition and removal', async () => {
       const user = userEvent.setup();
-      render(<CreateProductDialog {...defaultProps} />);
+      renderWithProviders(<CreateProductDialog {...defaultProps} />)
 
       const tagInput = screen.getByPlaceholderText(/add a tag/i);
       const addButton = screen.getByRole('button', { name: /add tag/i });
@@ -130,7 +132,7 @@ describe('CreateProductDialog', () => {
 
     it('prevents duplicate tags', async () => {
       const user = userEvent.setup();
-      render(<CreateProductDialog {...defaultProps} />);
+      renderWithProviders(<CreateProductDialog {...defaultProps} />)
 
       const tagInput = screen.getByPlaceholderText(/add a tag/i);
       const addButton = screen.getByRole('button', { name: /add tag/i });
@@ -148,7 +150,7 @@ describe('CreateProductDialog', () => {
 
     it('changes status via select', async () => {
       const user = userEvent.setup();
-      render(<CreateProductDialog {...defaultProps} />);
+      renderWithProviders(<CreateProductDialog {...defaultProps} />)
 
       const statusSelect = screen.getByRole('combobox');
       
@@ -164,7 +166,7 @@ describe('CreateProductDialog', () => {
       const user = userEvent.setup();
       mockCreateProduct.mockResolvedValueOnce({});
       
-      render(<CreateProductDialog {...defaultProps} />);
+      renderWithProviders(<CreateProductDialog {...defaultProps} />)
 
       // Fill form
       await user.type(screen.getByLabelText(/title \*/i), 'Test Product');
@@ -211,7 +213,7 @@ describe('CreateProductDialog', () => {
       const user = userEvent.setup();
       mockCreateProduct.mockResolvedValueOnce({});
       
-      render(<CreateProductDialog {...defaultProps} />);
+      renderWithProviders(<CreateProductDialog {...defaultProps} />)
 
       await user.type(screen.getByLabelText(/title \*/i), 'Test Product');
       await user.click(screen.getByRole('button', { name: /create product/i }));
@@ -227,7 +229,7 @@ describe('CreateProductDialog', () => {
       const error = new Error('Creation failed');
       mockCreateProduct.mockRejectedValueOnce(error);
       
-      render(<CreateProductDialog {...defaultProps} />);
+      renderWithProviders(<CreateProductDialog {...defaultProps} />)
 
       await user.type(screen.getByLabelText(/title \*/i), 'Test Product');
       await user.click(screen.getByRole('button', { name: /create product/i }));
@@ -241,7 +243,7 @@ describe('CreateProductDialog', () => {
       const user = userEvent.setup();
       mockCreateProduct.mockImplementation(() => new Promise(resolve => setTimeout(resolve, 100)));
       
-      render(<CreateProductDialog {...defaultProps} />);
+      renderWithProviders(<CreateProductDialog {...defaultProps} />)
 
       await user.type(screen.getByLabelText(/title \*/i), 'Test Product');
       const submitButton = screen.getByRole('button', { name: /create product/i });
@@ -260,17 +262,17 @@ describe('CreateProductDialog', () => {
   describe('Dialog Management', () => {
     it('resets form when dialog closes', async () => {
       const user = userEvent.setup();
-      const { rerender } = render(<CreateProductDialog {...defaultProps} />);
+      const { rerender } = renderWithProviders(<CreateProductDialog {...defaultProps} />)
 
       // Fill some fields
       await user.type(screen.getByLabelText(/title \*/i), 'Test Product');
       await user.type(screen.getByLabelText(/description/i), 'Test description');
 
       // Close dialog
-      rerender(<CreateProductDialog {...defaultProps} open={false} />);
+      rerender(<CreateProductDialog {...defaultProps} open={false} />)
 
       // Reopen dialog
-      rerender(<CreateProductDialog {...defaultProps} open={true} />);
+      rerender(<CreateProductDialog {...defaultProps} open={true} />)
 
       // Fields should be empty
       expect(screen.getByLabelText(/title \*/i)).toHaveValue('');
@@ -279,7 +281,7 @@ describe('CreateProductDialog', () => {
 
     it('calls onOpenChange when cancel is clicked', async () => {
       const user = userEvent.setup();
-      render(<CreateProductDialog {...defaultProps} />);
+      renderWithProviders(<CreateProductDialog {...defaultProps} />)
 
       const cancelButton = screen.getByRole('button', { name: /cancel/i });
       await user.click(cancelButton);
@@ -291,7 +293,7 @@ describe('CreateProductDialog', () => {
   describe('SEO Fields', () => {
     it('expands SEO section and allows input', async () => {
       const user = userEvent.setup();
-      render(<CreateProductDialog {...defaultProps} />);
+      renderWithProviders(<CreateProductDialog {...defaultProps} />)
 
       // Click to expand SEO section
       const seoButton = screen.getByRole('button', { name: /seo settings/i });
@@ -315,14 +317,14 @@ describe('CreateProductDialog', () => {
 
   describe('Accessibility', () => {
     it('has proper ARIA labels', () => {
-      render(<CreateProductDialog {...defaultProps} />);
+      renderWithProviders(<CreateProductDialog {...defaultProps} />)
 
       expect(screen.getByRole('dialog')).toHaveAttribute('aria-labelledby');
       expect(screen.getByRole('dialog')).toHaveAttribute('aria-describedby');
     });
 
     it('focuses on first input when opened', async () => {
-      render(<CreateProductDialog {...defaultProps} />);
+      renderWithProviders(<CreateProductDialog {...defaultProps} />)
 
       await waitFor(() => {
         const titleInput = screen.getByLabelText(/title \*/i);
@@ -332,7 +334,7 @@ describe('CreateProductDialog', () => {
 
     it('traps focus within dialog', async () => {
       const user = userEvent.setup();
-      render(<CreateProductDialog {...defaultProps} />);
+      renderWithProviders(<CreateProductDialog {...defaultProps} />)
 
       // Tab through all focusable elements
       const focusableElements = screen.getAllByRole('textbox').length + 

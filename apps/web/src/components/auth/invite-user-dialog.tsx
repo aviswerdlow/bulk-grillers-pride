@@ -48,7 +48,7 @@ export function InviteUserDialog({ open, onOpenChange, organizationId }: InviteU
   const [isInviting, setIsInviting] = useState(false);
   const [error, setError] = useState('');
 
-  const inviteUser = useMutation(api.functions.auth.invitations.inviteToOrganization);
+  const inviteUser = useMutation((api as any).functions.auth.invitations.inviteToOrganization);
 
   const handleInvite = async () => {
     // Validate email

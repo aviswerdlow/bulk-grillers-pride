@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach } from '@jest/globals';
+import { t } from '../../../test.setup';
 import {
   createConvexTest,
   createMutationContext,
@@ -14,7 +15,7 @@ import {
   createMockProject,
   createMockCategory,
   createMockProduct,
-} from '../../../__tests__/test-helpers';
+} from 'convex-test';
 import { Id } from '../../../_generated/dataModel';
 import { generateHandle } from '../helpers';
 
@@ -26,7 +27,8 @@ describe('Category Integration Tests', () => {
   let membership: any;
 
   beforeEach(async () => {
-    test = createConvexTest();
+    
+    tes// t is already imported from test.setup
     
     // Set up common test data
     user = createMockUser({ _id: 'user_1' as Id<'users'> });
@@ -110,16 +112,16 @@ describe('Category Integration Tests', () => {
       });
 
       // Assert - Verify the entire subtree was moved correctly
-      const movedComputers = await test.db.get(computers);
+      const movedComputers = await t.db.get(computers);
       expect(movedComputers.parentId).toBe(techHome);
       expect(movedComputers.level).toBe(2);
       expect(movedComputers.path).toBe('/home-garden/smart-home-tech/computers');
 
-      const movedLaptops = await test.db.get(laptops);
+      const movedLaptops = await t.db.get(laptops);
       expect(movedLaptops.level).toBe(3);
       expect(movedLaptops.path).toBe('/home-garden/smart-home-tech/computers/laptops');
 
-      const movedGaming = await test.db.get(gaming);
+      const movedGaming = await t.db.get(gaming);
       expect(movedGaming.level).toBe(4);
       expect(movedGaming.path).toBe('/home-garden/smart-home-tech/computers/laptops/gaming-laptops');
     });
@@ -165,7 +167,7 @@ describe('Category Integration Tests', () => {
 
       // Create assignments
       for (const product of products) {
-        await test.db.insert('categoryProductAssignments', {
+        await t.db.insert('categoryProductAssignments', {
           organizationId: org._id,
           projectId: project._id,
           categoryId: toDelete,
@@ -179,7 +181,7 @@ describe('Category Integration Tests', () => {
       }
 
       // Act - Reassign all products to the replacement category
-      const assignments = await test.db
+      const assignments = await t.db
         .query('categoryProductAssignments')
         .withIndex('by_category', (q) => q.eq('categoryId', toDelete))
         .filter((q) => q.eq(q.field('status'), 'active'))
@@ -187,13 +189,13 @@ describe('Category Integration Tests', () => {
 
       for (const assignment of assignments) {
         // Mark old assignment as inactive
-        await test.db.patch(assignment._id, {
+        await t.db.patch(assignment._id, {
           status: 'rejected',
           updatedAt: Date.now(),
         });
 
         // Create new assignment
-        await test.db.insert('categoryProductAssignments', {
+        await t.db.insert('categoryProductAssignments', {
           organizationId: org._id,
           projectId: project._id,
           categoryId: replacement,
@@ -206,11 +208,11 @@ describe('Category Integration Tests', () => {
         });
 
         // Update product categories
-        const product = await test.db.get(assignment.productId);
+        const product = await t.db.get(assignment.productId);
         if (product) {
           const newCategories = product.categories.filter(c => c !== toDelete);
           newCategories.push(replacement);
-          await test.db.patch(product._id, {
+          await t.db.patch(product._id, {
             categories: newCategories,
             updatedAt: Date.now(),
             version: product.version + 1,
@@ -219,7 +221,7 @@ describe('Category Integration Tests', () => {
       }
 
       // Now delete the obsolete category
-      await test.db.patch(toDelete, {
+      await t.db.patch(toDelete, {
         status: 'archived',
         updatedAt: Date.now(),
         lastModifiedBy: user._id,
@@ -227,11 +229,11 @@ describe('Category Integration Tests', () => {
       });
 
       // Assert
-      const deletedCategory = await test.db.get(toDelete);
+      const deletedCategory = await t.db.get(toDelete);
       expect(deletedCategory.status).toBe('archived');
 
       // Verify all products are now in the replacement category
-      const newAssignments = await test.db
+      const newAssignments = await t.db
         .query('categoryProductAssignments')
         .withIndex('by_category', (q) => q.eq('categoryId', replacement))
         .filter((q) => q.eq(q.field('status'), 'active'))
@@ -240,7 +242,7 @@ describe('Category Integration Tests', () => {
       expect(newAssignments).toHaveLength(5);
 
       // Verify no active assignments remain for the deleted category
-      const oldAssignments = await test.db
+      const oldAssignments = await t.db
         .query('categoryProductAssignments')
         .withIndex('by_category', (q) => q.eq('categoryId', toDelete))
         .filter((q) => q.eq(q.field('status'), 'active'))
@@ -308,16 +310,16 @@ describe('Category Integration Tests', () => {
       });
 
       // Assert
-      const movedGaming = await test.db.get(gamingId);
+      const movedGaming = await t.db.get(gamingId);
       expect(movedGaming.parentId).toBe(gamingAccessories);
       expect(movedGaming.level).toBe(3);
       expect(movedGaming.path).toBe('/electronics/accessories/gaming-accessories/gaming');
 
       // Verify the import structure is preserved for other categories
-      const computers = await test.db.get(categoryMap.get('ext_2')!);
+      const computers = await t.db.get(categoryMap.get('ext_2')!);
       expect(computers.parentId).toBe(categoryMap.get('ext_1'));
       
-      const business = await test.db.get(categoryMap.get('ext_6')!);
+      const business = await t.db.get(categoryMap.get('ext_6')!);
       expect(business.parentId).toBe(categoryMap.get('ext_3'));
     });
 
@@ -386,14 +388,14 @@ describe('Category Integration Tests', () => {
 
       // Act - Multi-step migration
       // Step 1: Validate no circular dependencies
-      const pathBefore = (await test.db.get(computing)).path;
+      const pathBefore = (await t.db.get(computing)).path;
       expect(pathBefore).not.toContain(oldComputers);
 
       // Step 2: Migrate products
       for (const product of products) {
         const newCategories = product.categories.filter(c => c !== oldComputers);
         newCategories.push(computing);
-        await test.db.patch(product._id, {
+        await t.db.patch(product._id, {
           categories: newCategories,
           updatedAt: Date.now(),
           version: product.version + 1,
@@ -402,7 +404,7 @@ describe('Category Integration Tests', () => {
 
       // Step 3: Archive old categories
       for (const categoryId of [oldComputers, oldElectronics, oldStructure]) {
-        await test.db.patch(categoryId, {
+        await t.db.patch(categoryId, {
           status: 'archived',
           updatedAt: Date.now(),
           lastModifiedBy: user._id,
@@ -413,13 +415,13 @@ describe('Category Integration Tests', () => {
       // Assert
       // Verify products are in new structure
       for (const product of products) {
-        const updated = await test.db.get(product._id);
+        const updated = await t.db.get(product._id);
         expect(updated.categories).toContain(computing);
         expect(updated.categories).not.toContain(oldComputers);
       }
 
       // Verify old structure is archived
-      const archivedCategories = await test.db
+      const archivedCategories = await t.db
         .query('categories')
         .filter((q) => q.eq(q.field('status'), 'archived'))
         .collect();
@@ -430,7 +432,7 @@ describe('Category Integration Tests', () => {
       expect(archivedCategories.map(c => c._id)).toContain(oldComputers);
 
       // Verify new structure is intact
-      const activeCategories = await test.db
+      const activeCategories = await t.db
         .query('categories')
         .withIndex('by_organization_project', (q) =>
           q.eq('organizationId', org._id).eq('projectId', project._id)
@@ -458,7 +460,7 @@ describe('Category Integration Tests', () => {
       const updates = [];
 
       // User 1 updates name
-      updates.push(test.db.patch(category, {
+      updates.push(t.db.patch(category, {
         name: 'Updated by User 1',
         version: 2,
         updatedAt: Date.now(),
@@ -470,8 +472,8 @@ describe('Category Integration Tests', () => {
       await seedDatabase(test, { users: [otherUser] });
 
       // In a real scenario, this would check version and potentially retry
-      const currentCategory = await test.db.get(category);
-      updates.push(test.db.patch(category, {
+      const currentCategory = await t.db.get(category);
+      updates.push(t.db.patch(category, {
         metadata: { counter: 1, updatedBy: 'user_2' },
         version: currentCategory.version + 1,
         updatedAt: Date.now() + 100,
@@ -482,7 +484,7 @@ describe('Category Integration Tests', () => {
       await Promise.all(updates);
 
       // Assert - Both updates should be applied
-      const finalCategory = await test.db.get(category);
+      const finalCategory = await t.db.get(category);
       expect(finalCategory.name).toBe('Updated by User 1');
       expect(finalCategory.metadata.counter).toBe(1);
       expect(finalCategory.metadata.updatedBy).toBe('user_2');
@@ -504,10 +506,10 @@ async function createCategoryHelper(
   }
 ): Promise<Id<'categories'>> {
   const handle = generateHandle(data.name);
-  const parentPath = data.parentId ? (await test.db.get(data.parentId))?.path || '' : '';
+  const parentPath = data.parentId ? (await t.db.get(data.parentId))?.path || '' : '';
   const path = parentPath + `/${handle}`;
 
-  return await test.db.insert('categories', {
+  return await t.db.insert('categories', {
     organizationId: data.organizationId,
     projectId: data.projectId,
     name: data.name,
@@ -535,8 +537,8 @@ async function moveCategoryHelper(
     userId: Id<'users'>;
   }
 ): Promise<void> {
-  const category = await test.db.get(data.categoryId);
-  const newParent = await test.db.get(data.newParentId);
+  const category = await t.db.get(data.categoryId);
+  const newParent = await t.db.get(data.newParentId);
   
   if (!category || !newParent) return;
 
@@ -545,7 +547,7 @@ async function moveCategoryHelper(
   const newLevel = newParent.level + 1;
 
   // Update the category
-  await test.db.patch(data.categoryId, {
+  await t.db.patch(data.categoryId, {
     parentId: data.newParentId,
     path: newPath,
     level: newLevel,
@@ -565,7 +567,7 @@ async function updateDescendantPaths(
   newParentPath: string,
   parentLevel: number
 ): Promise<void> {
-  const children = await test.db
+  const children = await t.db
     .query('categories')
     .filter((q) => q.eq(q.field('parentId'), parentId))
     .collect();
@@ -574,7 +576,7 @@ async function updateDescendantPaths(
     const newPath = child.path.replace(oldParentPath, newParentPath);
     const newLevel = parentLevel + 1;
 
-    await test.db.patch(child._id, {
+    await t.db.patch(child._id, {
       path: newPath,
       level: newLevel,
       version: child.version + 1,

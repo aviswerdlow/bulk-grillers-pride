@@ -1,4 +1,5 @@
 import { Id } from '../../_generated/dataModel';
+import { t } from '../../test.setup';
 import { convexTest } from '../test-helpers';
 
 /**
@@ -93,7 +94,7 @@ export async function setupTestProductWithVariants(t: any, variantCount = 3) {
   
   const variantIds = await Promise.all(
     Array.from({ length: variantCount }, (_, i) => 
-      t.run(async (ctx) => {
+      t.run(async (ctx: any) => {
         return await ctx.db.insert('productVariants', {
           organizationId: product.organizationId,
           projectId: product.projectId,
@@ -125,7 +126,7 @@ export async function setupTestTrashEntry(
   overrides?: Partial<any>
 ) {
   const trashEntry = generateMockTrashEntry(productId, overrides);
-  const trashId = await t.run(async (ctx) => {
+  const trashId = await t.run(async (ctx: any) => {
     return await ctx.db.insert('productTrash', trashEntry);
   });
   return { trashId, trashEntry: { ...trashEntry, _id: trashId } };
@@ -244,7 +245,7 @@ export async function cleanupTestData(t: any, ids: {
   trashIds?: Id<'productTrash'>[];
   auditLogIds?: Id<'deletionAuditLogs'>[];
 }) {
-  await t.run(async (ctx) => {
+  await t.run(async (ctx: any) => {
     // Clean up products
     if (ids.productIds) {
       for (const id of ids.productIds) {

@@ -3,6 +3,7 @@
  */
 
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
+import { t } from '../../../../test.setup';
 import { ProviderRegistry } from '../registry';
 import { SelectionCriteria, ModelConfig } from '../types';
 

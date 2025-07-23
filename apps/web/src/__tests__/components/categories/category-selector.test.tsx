@@ -1,21 +1,19 @@
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+/**
+ * @jest-environment jsdom
+ */
 import React from 'react';
-import { screen, fireEvent, waitFor, within } from '@testing-library/react';
+import { fireEvent, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { mockUseQuery, render, renderWithProviders } from '@/__tests__/test-helpers';
 import { CategorySelector } from '@/components/categories/category-selector';
-import { render } from '../../test-utils';
-import { useQuery } from 'convex/react';
 import { Category } from '@/types/models';
-import { Id } from '@convex/_generated/dataModel';
-// Import will be automatically mocked by Jest moduleNameMapper
 import { api } from '@convex/_generated/api';
+import { Id } from '@convex/_generated/dataModel';
+;
+// Import will be automatically mocked by Jest moduleNameMapper
 
 // Mock the convex hooks
-jest.mock('convex/react', () => ({
-  useQuery: jest.fn(),
-}));
-
-const mockUseQuery = useQuery as jest.MockedFunction<typeof useQuery>;
-
 // Mock data
 const mockCategories: Category[] = [
   {
@@ -67,9 +65,9 @@ const mockCategories: Category[] = [
   },
 ];
 
-const mockLevelDefinitions = [
+const mockLevelDefinitions: any[] = [
   {
-    _id: 'level1' as Id<'categoryLevels'>,
+    _id: 'level1' as Id<'categoryLevelDefinitions'>,
     organizationId: 'org1' as Id<'organizations'>,
     projectId: 'proj1' as Id<'projects'>,
     level: 1,
@@ -78,7 +76,7 @@ const mockLevelDefinitions = [
     friendlyName: 'Department',
   },
   {
-    _id: 'level2' as Id<'categoryLevels'>,
+    _id: 'level2' as Id<'categoryLevelDefinitions'>,
     organizationId: 'org1' as Id<'organizations'>,
     projectId: 'proj1' as Id<'projects'>,
     level: 2,
@@ -87,7 +85,7 @@ const mockLevelDefinitions = [
     friendlyName: 'Category',
   },
   {
-    _id: 'level3' as Id<'categoryLevels'>,
+    _id: 'level3' as Id<'categoryLevelDefinitions'>,
     organizationId: 'org1' as Id<'organizations'>,
     projectId: 'proj1' as Id<'projects'>,
     level: 3,
@@ -129,45 +127,44 @@ describe('CategorySelector', () => {
     it('renders loading state when data is not loaded', () => {
       mockUseQuery.mockReturnValue(undefined);
 
-      render(<CategorySelector {...defaultProps} />);
+      renderWithProviders(<CategorySelector {...defaultProps} />);
 
       expect(screen.getByText('Loading categories...')).toBeInTheDocument();
     });
 
     it('renders with default placeholder', () => {
-      render(<CategorySelector {...defaultProps} />);
+      renderWithProviders(<CategorySelector {...defaultProps} />);
 
       expect(screen.getByText('Select categories...')).toBeInTheDocument();
     });
 
     it('renders with custom placeholder', () => {
-      render(<CategorySelector {...defaultProps} placeholder="Choose categories" />);
+      renderWithProviders(<CategorySelector {...defaultProps} placeholder="Choose categories" />);
 
       expect(screen.getByText('Choose categories')).toBeInTheDocument();
     });
 
     it('renders with custom className', () => {
-      const { container } = render(<CategorySelector {...defaultProps} className="custom-class" />);
+      const { container } = renderWithProviders(<CategorySelector {...defaultProps} className="custom-class" />);
 
       expect(container.firstChild).toHaveClass('custom-class');
     });
 
     it('displays category count', () => {
-      render(<CategorySelector {...defaultProps} />);
+      renderWithProviders(<CategorySelector {...defaultProps} />);
 
       expect(screen.getByText('5 categories available across 3 levels')).toBeInTheDocument();
     });
 
     it('displays selected categories count', () => {
-      render(
-        <CategorySelector {...defaultProps} selectedCategories={['cat1' as Id<'categories'>, 'cat2' as Id<'categories'>]} />
+      renderWithProviders(<CategorySelector {...defaultProps} selectedCategories={['cat1' as Id<'categories'>, 'cat2' as Id<'categories'>]} />
       );
 
       expect(screen.getByText('2 categories selected')).toBeInTheDocument();
     });
 
     it('displays single category count correctly', () => {
-      render(<CategorySelector {...defaultProps} selectedCategories={['cat1' as Id<'categories'>]} />);
+      renderWithProviders(<CategorySelector {...defaultProps} selectedCategories={['cat1' as Id<'categories'>]} />);
 
       expect(screen.getByText('1 category selected')).toBeInTheDocument();
     });
@@ -175,8 +172,7 @@ describe('CategorySelector', () => {
 
   describe('selected categories display', () => {
     it('shows selected category badges', () => {
-      render(
-        <CategorySelector {...defaultProps} selectedCategories={['cat1' as Id<'categories'>, 'cat4' as Id<'categories'>]} />
+      renderWithProviders(<CategorySelector {...defaultProps} selectedCategories={['cat1' as Id<'categories'>, 'cat4' as Id<'categories'>]} />
       );
 
       // Check that the badges container exists
@@ -196,8 +192,7 @@ describe('CategorySelector', () => {
 
     it('removes category when X is clicked', async () => {
       const onChange = jest.fn();
-      render(
-        <CategorySelector
+      renderWithProviders(<CategorySelector
           {...defaultProps}
           selectedCategories={['cat1' as Id<'categories'>, 'cat4' as Id<'categories'>]}
           onChange={onChange}
@@ -214,7 +209,7 @@ describe('CategorySelector', () => {
   describe('popover interactions', () => {
     it('opens popover when trigger is clicked', async () => {
       const user = userEvent.setup();
-      render(<CategorySelector {...defaultProps} />);
+      renderWithProviders(<CategorySelector {...defaultProps} />);
 
       const trigger = screen.getByRole('combobox');
       await user.click(trigger);
@@ -224,7 +219,7 @@ describe('CategorySelector', () => {
 
     it('closes popover when clicking outside', async () => {
       const user = userEvent.setup();
-      render(<CategorySelector {...defaultProps} />);
+      renderWithProviders(<CategorySelector {...defaultProps} />);
 
       const trigger = screen.getByRole('combobox');
       await user.click(trigger);
@@ -240,7 +235,7 @@ describe('CategorySelector', () => {
 
     it('shows all categories in popover', async () => {
       const user = userEvent.setup();
-      render(<CategorySelector {...defaultProps} />);
+      renderWithProviders(<CategorySelector {...defaultProps} />);
 
       const trigger = screen.getByRole('combobox');
       await user.click(trigger);
@@ -254,7 +249,7 @@ describe('CategorySelector', () => {
 
     it('shows category paths', async () => {
       const user = userEvent.setup();
-      render(<CategorySelector {...defaultProps} />);
+      renderWithProviders(<CategorySelector {...defaultProps} />);
 
       const trigger = screen.getByRole('combobox');
       await user.click(trigger);
@@ -265,7 +260,7 @@ describe('CategorySelector', () => {
 
     it('shows level badges for categories', async () => {
       const user = userEvent.setup();
-      render(<CategorySelector {...defaultProps} />);
+      renderWithProviders(<CategorySelector {...defaultProps} />);
 
       const trigger = screen.getByRole('combobox');
       await user.click(trigger);
@@ -283,7 +278,7 @@ describe('CategorySelector', () => {
   describe('search functionality', () => {
     it('filters categories by name', async () => {
       const user = userEvent.setup();
-      render(<CategorySelector {...defaultProps} />);
+      renderWithProviders(<CategorySelector {...defaultProps} />);
 
       const trigger = screen.getByRole('combobox');
       await user.click(trigger);
@@ -298,7 +293,7 @@ describe('CategorySelector', () => {
 
     it('filters categories by path', async () => {
       const user = userEvent.setup();
-      render(<CategorySelector {...defaultProps} />);
+      renderWithProviders(<CategorySelector {...defaultProps} />);
 
       const trigger = screen.getByRole('combobox');
       await user.click(trigger);
@@ -313,7 +308,7 @@ describe('CategorySelector', () => {
 
     it('shows empty state when no matches', async () => {
       const user = userEvent.setup();
-      render(<CategorySelector {...defaultProps} />);
+      renderWithProviders(<CategorySelector {...defaultProps} />);
 
       const trigger = screen.getByRole('combobox');
       await user.click(trigger);
@@ -326,7 +321,7 @@ describe('CategorySelector', () => {
 
     it('is case insensitive', async () => {
       const user = userEvent.setup();
-      render(<CategorySelector {...defaultProps} />);
+      renderWithProviders(<CategorySelector {...defaultProps} />);
 
       const trigger = screen.getByRole('combobox');
       await user.click(trigger);
@@ -343,7 +338,7 @@ describe('CategorySelector', () => {
       it('selects category when clicked', async () => {
         const onChange = jest.fn();
         const user = userEvent.setup();
-        render(<CategorySelector {...defaultProps} onChange={onChange} />);
+        renderWithProviders(<CategorySelector {...defaultProps} onChange={onChange} />);
 
         const trigger = screen.getByRole('combobox');
         await user.click(trigger);
@@ -359,8 +354,7 @@ describe('CategorySelector', () => {
       it('deselects category when clicked again', async () => {
         const onChange = jest.fn();
         const user = userEvent.setup();
-        render(
-          <CategorySelector
+        renderWithProviders(<CategorySelector
             {...defaultProps}
             selectedCategories={['cat1' as Id<'categories'>]}
             onChange={onChange}
@@ -380,8 +374,7 @@ describe('CategorySelector', () => {
 
       it('shows check marks for selected categories', async () => {
         const user = userEvent.setup();
-        render(
-          <CategorySelector {...defaultProps} selectedCategories={['cat1' as Id<'categories'>, 'cat4' as Id<'categories'>]} />
+        renderWithProviders(<CategorySelector {...defaultProps} selectedCategories={['cat1' as Id<'categories'>, 'cat4' as Id<'categories'>]} />
         );
 
         const trigger = screen.getByRole('combobox');
@@ -396,8 +389,7 @@ describe('CategorySelector', () => {
       it('maintains multiple selections', async () => {
         const onChange = jest.fn();
         const user = userEvent.setup();
-        render(
-          <CategorySelector
+        renderWithProviders(<CategorySelector
             {...defaultProps}
             selectedCategories={['cat1' as Id<'categories'>]}
             onChange={onChange}
@@ -420,8 +412,7 @@ describe('CategorySelector', () => {
       it('replaces selection when new category is clicked', async () => {
         const onChange = jest.fn();
         const user = userEvent.setup();
-        render(
-          <CategorySelector
+        renderWithProviders(<CategorySelector
             {...defaultProps}
             multiple={false}
             selectedCategories={['cat1' as Id<'categories'>]}
@@ -443,7 +434,7 @@ describe('CategorySelector', () => {
       it('closes popover after selection in single mode', async () => {
         const onChange = jest.fn();
         const user = userEvent.setup();
-        render(<CategorySelector {...defaultProps} multiple={false} onChange={onChange} />);
+        renderWithProviders(<CategorySelector {...defaultProps} multiple={false} onChange={onChange} />);
 
         const trigger = screen.getByRole('combobox');
         await user.click(trigger);
@@ -463,7 +454,7 @@ describe('CategorySelector', () => {
   describe('advanced assignment dialog', () => {
     it('opens dialog when Advanced Assignment is clicked', async () => {
       const user = userEvent.setup();
-      render(<CategorySelector {...defaultProps} />);
+      renderWithProviders(<CategorySelector {...defaultProps} />);
 
       const trigger = screen.getByRole('combobox');
       await user.click(trigger);
@@ -481,7 +472,7 @@ describe('CategorySelector', () => {
 
     it('shows categories grouped by level', async () => {
       const user = userEvent.setup();
-      render(<CategorySelector {...defaultProps} />);
+      renderWithProviders(<CategorySelector {...defaultProps} />);
 
       const trigger = screen.getByRole('combobox');
       await user.click(trigger);
@@ -497,7 +488,7 @@ describe('CategorySelector', () => {
 
     it('shows checkboxes for categories in dialog', async () => {
       const user = userEvent.setup();
-      render(<CategorySelector {...defaultProps} />);
+      renderWithProviders(<CategorySelector {...defaultProps} />);
 
       const trigger = screen.getByRole('combobox');
       await user.click(trigger);
@@ -511,8 +502,7 @@ describe('CategorySelector', () => {
 
     it('shows selected count per level', async () => {
       const user = userEvent.setup();
-      render(
-        <CategorySelector {...defaultProps} selectedCategories={['cat1' as Id<'categories'>, 'cat4' as Id<'categories'>]} />
+      renderWithProviders(<CategorySelector {...defaultProps} selectedCategories={['cat1' as Id<'categories'>, 'cat4' as Id<'categories'>]} />
       );
 
       const trigger = screen.getByRole('combobox');
@@ -528,7 +518,7 @@ describe('CategorySelector', () => {
     it('toggles selection from dialog checkboxes', async () => {
       const onChange = jest.fn();
       const user = userEvent.setup();
-      render(<CategorySelector {...defaultProps} onChange={onChange} />);
+      renderWithProviders(<CategorySelector {...defaultProps} onChange={onChange} />);
 
       const trigger = screen.getByRole('combobox');
       await user.click(trigger);
@@ -544,7 +534,7 @@ describe('CategorySelector', () => {
 
     it('closes dialog when Done is clicked', async () => {
       const user = userEvent.setup();
-      render(<CategorySelector {...defaultProps} />);
+      renderWithProviders(<CategorySelector {...defaultProps} />);
 
       const trigger = screen.getByRole('combobox');
       await user.click(trigger);
@@ -565,7 +555,7 @@ describe('CategorySelector', () => {
       const modifiedLevels = [
         ...mockLevelDefinitions,
         {
-          _id: 'level4' as Id<'categoryLevels'>,
+          _id: 'level4' as Id<'categoryLevelDefinitions'>,
           organizationId: 'org1' as Id<'organizations'>,
           projectId: 'proj1' as Id<'projects'>,
           level: 4,
@@ -589,7 +579,7 @@ describe('CategorySelector', () => {
       });
 
       const user = userEvent.setup();
-      render(<CategorySelector {...defaultProps} />);
+      renderWithProviders(<CategorySelector {...defaultProps} />);
 
       const trigger = screen.getByRole('combobox');
       await user.click(trigger);
@@ -603,7 +593,7 @@ describe('CategorySelector', () => {
 
   describe('accessibility', () => {
     it('has proper ARIA attributes', () => {
-      render(<CategorySelector {...defaultProps} />);
+      renderWithProviders(<CategorySelector {...defaultProps} />);
 
       const trigger = screen.getByRole('combobox');
       expect(trigger).toHaveAttribute('aria-expanded', 'false');
@@ -611,7 +601,7 @@ describe('CategorySelector', () => {
 
     it('updates aria-expanded when opened', async () => {
       const user = userEvent.setup();
-      render(<CategorySelector {...defaultProps} />);
+      renderWithProviders(<CategorySelector {...defaultProps} />);
 
       const trigger = screen.getByRole('combobox');
       await user.click(trigger);
@@ -620,7 +610,7 @@ describe('CategorySelector', () => {
     });
 
     it('has accessible labels for remove buttons', () => {
-      render(<CategorySelector {...defaultProps} selectedCategories={['cat1' as Id<'categories'>]} />);
+      renderWithProviders(<CategorySelector {...defaultProps} selectedCategories={['cat1' as Id<'categories'>]} />);
 
       // The X buttons should be accessible
       const removeButtons = screen
@@ -645,7 +635,7 @@ describe('CategorySelector', () => {
         return undefined;
       });
 
-      render(<CategorySelector {...defaultProps} />);
+      renderWithProviders(<CategorySelector {...defaultProps} />);
 
       expect(screen.getByText('0 categories available across 0 levels')).toBeInTheDocument();
     });
@@ -664,7 +654,7 @@ describe('CategorySelector', () => {
         return undefined;
       });
 
-      render(<CategorySelector {...defaultProps} />);
+      renderWithProviders(<CategorySelector {...defaultProps} />);
 
       // Should still render and use fallback level names
       expect(screen.getByText('Select categories...')).toBeInTheDocument();
@@ -685,7 +675,7 @@ describe('CategorySelector', () => {
       });
 
       const user = userEvent.setup();
-      render(<CategorySelector {...defaultProps} />);
+      renderWithProviders(<CategorySelector {...defaultProps} />);
 
       const trigger = screen.getByRole('combobox');
       await user.click(trigger);
@@ -696,7 +686,7 @@ describe('CategorySelector', () => {
     });
 
     it('handles selection of non-existent categories gracefully', () => {
-      render(<CategorySelector {...defaultProps} selectedCategories={['nonexistent' as Id<'categories'>]} />);
+      renderWithProviders(<CategorySelector {...defaultProps} selectedCategories={['nonexistent' as Id<'categories'>]} />);
 
       // Should not crash and show placeholder
       expect(screen.getByText('1 category selected')).toBeInTheDocument();

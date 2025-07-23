@@ -1,27 +1,25 @@
-import { render, screen } from '@/__tests__/test-utils';
-import SignUpPage from '../page';
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import React from 'react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { cleanupTest, mockUseQuery, mockUseMutation, renderWithProviders, setupTest } from '@/__tests__/test-helpers';
 import { SignUp } from '@clerk/nextjs';
+import SignUpPage from '../page';
 
-// Update the global mock for this test
+// Mock is already set up in __mocks__/@clerk/nextjs.tsx
 beforeEach(() => {
-  (SignUp as jest.Mock).mockImplementation(({ fallbackRedirectUrl, signInUrl }: any) => (
-    <div data-testid="sign-up-component">
-      <div data-testid="fallback-redirect-url">{fallbackRedirectUrl}</div>
-      <div data-testid="sign-in-url">{signInUrl}</div>
-    </div>
-  ));
+  jest.clearAllMocks();
 });
 
 describe('SignUpPage', () => {
   it('renders the sign up page with correct title and description', () => {
-    render(<SignUpPage />);
+    renderWithProviders(<SignUpPage />);
 
     expect(screen.getByRole('heading', { name: 'Get started with Bulk' })).toBeInTheDocument();
     expect(screen.getByText('Create your account and start managing products')).toBeInTheDocument();
   });
 
   it('renders the SignUp component with correct props', () => {
-    render(<SignUpPage />);
+    renderWithProviders(<SignUpPage />);
 
     const signUpComponent = screen.getByTestId('sign-up-component');
     expect(signUpComponent).toBeInTheDocument();
@@ -32,7 +30,7 @@ describe('SignUpPage', () => {
   });
 
   it('displays terms of service disclaimer', () => {
-    render(<SignUpPage />);
+    renderWithProviders(<SignUpPage />);
 
     expect(
       screen.getByText('By signing up, you agree to our Terms of Service and Privacy Policy')
@@ -40,7 +38,7 @@ describe('SignUpPage', () => {
   });
 
   it('has correct layout styling', () => {
-    const { container } = render(<SignUpPage />);
+    const { container } = renderWithProviders(<SignUpPage />);
 
     const pageContainer = container.firstChild;
     expect(pageContainer).toHaveClass('min-h-screen', 'flex', 'items-center', 'justify-center');
@@ -51,21 +49,21 @@ describe('SignUpPage', () => {
   });
 
   it('renders with correct gradient background', () => {
-    const { container } = render(<SignUpPage />);
+    const { container } = renderWithProviders(<SignUpPage />);
 
     const pageContainer = container.firstChild;
     expect(pageContainer).toHaveClass('bg-gradient-to-b', 'from-slate-50', 'to-white');
   });
 
   it('wraps SignUp component in Suspense with AuthLoading fallback', () => {
-    render(<SignUpPage />);
+    renderWithProviders(<SignUpPage />);
 
     // Since Suspense is resolved immediately in tests, we just verify the component renders
     expect(screen.getByTestId('sign-up-component')).toBeInTheDocument();
   });
 
   it('positions terms disclaimer below sign up form', () => {
-    const { container } = render(<SignUpPage />);
+    renderWithProviders(<SignUpPage />);
 
     const disclaimer = screen.getByText(
       'By signing up, you agree to our Terms of Service and Privacy Policy'

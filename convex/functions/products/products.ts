@@ -406,7 +406,7 @@ export const createProduct = mutation({
       const existingProductWithSku = await ctx.db
         .query('products')
         .withIndex('by_sku', (q) =>
-          q.eq('organizationId', args.organizationId).eq('sku', args.sku)
+          q.eq('organizationId', args.organizationId).eq('sku', args.sku!)
         )
         .first();
 
@@ -418,7 +418,7 @@ export const createProduct = mutation({
       const existingVariantWithSku = await ctx.db
         .query('productVariants')
         .withIndex('by_sku', (q) =>
-          q.eq('organizationId', args.organizationId).eq('sku', args.sku)
+          q.eq('organizationId', args.organizationId).eq('sku', args.sku!)
         )
         .first();
 
@@ -556,29 +556,30 @@ export const updateProduct = mutation({
     // Check SKU uniqueness if SKU is being changed
     if (args.sku !== undefined && args.sku !== product.sku) {
       if (args.sku) {
+        const sku = args.sku;
         // Check if another product has this SKU
         const existingProductWithSku = await ctx.db
           .query('products')
           .withIndex('by_sku', (q) =>
-            q.eq('organizationId', product.organizationId).eq('sku', args.sku)
+            q.eq('organizationId', product.organizationId).eq('sku', sku)
           )
           .filter((q) => q.neq(q.field('_id'), productId))
           .first();
 
         if (existingProductWithSku) {
-          throw new Error(`SKU "${args.sku}" already exists in this organization`);
+          throw new Error(`SKU "${sku}" already exists in this organization`);
         }
 
         // Also check if SKU exists in variants
         const existingVariantWithSku = await ctx.db
           .query('productVariants')
           .withIndex('by_sku', (q) =>
-            q.eq('organizationId', product.organizationId).eq('sku', args.sku)
+            q.eq('organizationId', product.organizationId).eq('sku', sku)
           )
           .first();
 
         if (existingVariantWithSku) {
-          throw new Error(`SKU "${args.sku}" already exists as a variant SKU in this organization`);
+          throw new Error(`SKU "${sku}" already exists as a variant SKU in this organization`);
         }
       }
     }

@@ -3,6 +3,7 @@
  */
 
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
+import { t } from '../../../../test.setup';
 import { MultiProviderManager } from '../manager';
 import { ProviderRequest, ProviderError, BudgetExceededError } from '../types';
 
@@ -106,7 +107,7 @@ describe('MultiProviderManager', () => {
       });
     });
 
-    it('should track budget status', () => {
+    it('should track budget status', async () => {
       const status = manager.getBudgetStatus();
       
       expect(status).toBeDefined();
@@ -116,7 +117,7 @@ describe('MultiProviderManager', () => {
       expect(status!.isOverLimit).toBe(false);
     });
 
-    it('should update budget configuration', () => {
+    it('should update budget configuration', async () => {
       manager.setBudgetConfig({
         dailyLimit: 50,
         monthlyLimit: 500,
@@ -136,12 +137,12 @@ describe('MultiProviderManager', () => {
       });
     });
 
-    it('should return empty metrics initially', () => {
+    it('should return empty metrics initially', async () => {
       const metrics = manager.getProviderMetrics();
       expect(metrics).toEqual([]);
     });
 
-    it('should return metrics for specific provider', () => {
+    it('should return metrics for specific provider', async () => {
       const metrics = manager.getProviderMetrics('openai');
       expect(Array.isArray(metrics)).toBe(true);
     });

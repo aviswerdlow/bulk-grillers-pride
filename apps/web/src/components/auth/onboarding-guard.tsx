@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import React, { useEffect } from 'react';
 import { useRouter } from "next/navigation";
 import { useQuery } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
@@ -16,7 +16,7 @@ export function OnboardingGuard({
   requiresOnboarding = false 
 }: OnboardingGuardProps) {
   const router = useRouter();
-  const userWithOrgs = useQuery(api.functions.auth.users.currentWithOrganizations);
+  const userWithOrgs = useQuery((api as any).functions.auth.users.currentWithOrganizations);
 
   useEffect(() => {
     if (userWithOrgs === undefined) return; // Still loading

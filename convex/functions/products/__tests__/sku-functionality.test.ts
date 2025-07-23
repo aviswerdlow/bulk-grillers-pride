@@ -1,5 +1,7 @@
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import { t } from '../../../test.setup';
 // Jest doesn't need explicit imports for describe, it, expect, beforeEach
-import { convexTest, extractHandler } from '../../../__tests__/test-helpers';
+import { convexTest, extractHandler } from 'convex-test';
 import { createProduct, updateProduct, getProductBySku, deleteProduct, searchProductsBySku } from '../products';
 
 // Extract handlers from Convex functions
@@ -17,7 +19,8 @@ describe('SKU Backend Functionality', () => {
   let testCounter = 0;
 
   beforeEach(async () => {
-    ctx = convexTest();
+    
+    ctx = await t.run(async (ctx) => ctx);
     testCounter++;
     
     // Create test user
@@ -68,13 +71,13 @@ describe('SKU Backend Functionality', () => {
     });
 
     // Setup auth
-    ctx.auth.getUserIdentity.mockResolvedValue({
       subject: 'user_test123',
     });
   });
 
   describe('Product Creation with SKU', () => {
     it('creates product with SKU when provided', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const productData = {
         organizationId,
         projectId,
@@ -96,6 +99,7 @@ describe('SKU Backend Functionality', () => {
     });
 
     it('creates product without SKU when not provided', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const productData = {
         organizationId,
         projectId,
@@ -115,6 +119,7 @@ describe('SKU Backend Functionality', () => {
     });
 
     it('validates SKU uniqueness within organization', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       // Create first product with SKU
       await createProductHandler(ctx, {
         organizationId,
@@ -141,6 +146,7 @@ describe('SKU Backend Functionality', () => {
     });
 
     it('allows same SKU in different organizations', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       // Create another organization
       const org2Id = await ctx.db.insert('organizations', {
         name: 'Second Org',
@@ -206,6 +212,7 @@ describe('SKU Backend Functionality', () => {
 
   describe('Product Update with SKU', () => {
     it('updates product by SKU successfully', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const productId = await createProductHandler(ctx, {
         organizationId,
         projectId,
@@ -229,6 +236,7 @@ describe('SKU Backend Functionality', () => {
     });
 
     it('throws error when updating non-existent product', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       // Test updating non-existent product ID instead
       const fakeId = 'j571234567890abcdef12345' as any;
       await expect(
@@ -265,6 +273,7 @@ describe('SKU Backend Functionality', () => {
     });
 
     it('gets product by SKU', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const result = await getProductBySkuHandler(ctx, {
         organizationId,
         sku: 'BEEF-001',
@@ -277,6 +286,7 @@ describe('SKU Backend Functionality', () => {
     });
 
     it('returns null when SKU not found', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const result = await getProductBySkuHandler(ctx, {
         organizationId,
         sku: 'NONEXISTENT-999',
@@ -288,6 +298,7 @@ describe('SKU Backend Functionality', () => {
 
   describe('SKU Availability Check', () => {
     it('returns null for available SKU', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       // Check availability by searching for the SKU
       const existingProduct = await getProductBySkuHandler(ctx, {
         organizationId,
@@ -298,6 +309,7 @@ describe('SKU Backend Functionality', () => {
     });
 
     it('returns product for existing SKU', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       // Create a product with SKU
       await createProductHandler(ctx, {
         organizationId,
@@ -321,6 +333,7 @@ describe('SKU Backend Functionality', () => {
 
   describe('Product Deletion by SKU', () => {
     it('deletes product by SKU successfully', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       // Create a product
       const productId = await createProductHandler(ctx, {
         organizationId,
@@ -344,6 +357,7 @@ describe('SKU Backend Functionality', () => {
     });
 
     it('throws error when deleting non-existent product', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const fakeId = 'j571234567890abcdef12345' as any;
       await expect(
         deleteProductHandler(ctx, {

@@ -22,9 +22,9 @@ export function usePattern(severity: SeverityLevel): PatternConfig {
   const { highContrast } = usePatternTheme();
 
   return useMemo(() => {
-    const pattern = getPattern(severity, highContrast);
-    const colors = getPatternColors(severity, highContrast);
-    const patternUrl = getPatternUrl(severity, highContrast);
+    const pattern = getPattern(severity);
+    const colors = getPatternColors(severity);
+    const patternUrl = getPatternUrl(severity);
 
     return {
       patternUrl,
@@ -44,9 +44,9 @@ export function usePatterns(severities: SeverityLevel[]): Record<SeverityLevel, 
     const configs: Partial<Record<SeverityLevel, PatternConfig>> = {};
     
     severities.forEach(severity => {
-      const pattern = getPattern(severity, highContrast);
-      const colors = getPatternColors(severity, highContrast);
-      const patternUrl = getPatternUrl(severity, highContrast);
+      const pattern = getPattern(severity);
+      const colors = getPatternColors(severity);
+      const patternUrl = getPatternUrl(severity);
 
       configs[severity] = {
         patternUrl,

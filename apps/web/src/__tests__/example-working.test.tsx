@@ -1,12 +1,14 @@
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import React from 'react';
 import { render, screen } from '@testing-library/react';
+import { renderWithProviders } from '@/__tests__/test-helpers';
 
 // This is a simple working test to verify your test setup
 describe('Basic Test Setup', () => {
   it('should render a simple component', () => {
     const TestComponent = () => <div>Hello Test</div>;
     
-    render(<TestComponent />);
+    renderWithProviders(<TestComponent />);
     
     expect(screen.getByText('Hello Test')).toBeInTheDocument();
   });
@@ -16,8 +18,7 @@ describe('Basic Test Setup', () => {
   });
 
   it('should work with React Testing Library', () => {
-    render(
-      <div>
+    renderWithProviders(<div>
         <button>Click me</button>
         <span>Test content</span>
       </div>
@@ -39,7 +40,7 @@ describe('Component with Mocks', () => {
       return <div>{data}</div>;
     };
 
-    render(<Component />);
+    renderWithProviders(<Component />);
     
     expect(screen.getByText('test data')).toBeInTheDocument();
     expect(useCustomHook).toHaveBeenCalled();

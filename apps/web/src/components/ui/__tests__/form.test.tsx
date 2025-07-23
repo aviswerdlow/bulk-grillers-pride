@@ -1,8 +1,90 @@
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import React from 'react';
-import { render, screen, waitFor } from '@/__tests__/test-utils';
-import userEvent from '@testing-library/user-event';
-import { setupTest, cleanupTest } from '@/__tests__/frontend-test-helpers';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { cleanupTest, mockUseQuery, mockUseMutation, renderWithProviders, setupTest } from '@/__tests__/test-helpers';
+import { Input } from '../input';
 import { useForm } from 'react-hook-form';
+// Mock react-hook-form
+let mockFormState = {
+  errors: {},
+  defaultValues: {},
+  values: {},
+};
+
+const mockSetValue = jest.fn((name, value) => {
+  mockFormState.values[name] = value;
+});
+
+const mockHandleSubmit = (fn) => (e) => {
+  e?.preventDefault?.();
+  // Pass the form values to the submit handler
+  return fn(mockFormState.values);
+};
+
+jest.mock('react-hook-form', () => ({
+  useForm: (options) => {
+    // Store default values
+    if (options?.defaultValues) {
+      mockFormState.defaultValues = options.defaultValues;
+      mockFormState.values = { ...options.defaultValues };
+    }
+    return {
+      control: {},
+      handleSubmit: mockHandleSubmit,
+      formState: mockFormState,
+      register: jest.fn(),
+      setValue: mockSetValue,
+      getValues: jest.fn(() => mockFormState.values),
+      watch: jest.fn((name) => mockFormState.values[name]),
+      reset: jest.fn(),
+    };
+  },
+  Controller: ({ render, name, defaultValue, rules }) => {
+    const value = mockFormState.values[name] || defaultValue || '';
+    return render({
+      field: {
+        onChange: (e) => {
+          const newValue = e?.target?.value !== undefined ? e.target.value : e;
+          mockFormState.values[name] = newValue;
+          // Simple validation
+          if (rules?.required && !newValue) {
+            mockFormState.errors[name] = { message: rules.required };
+          } else if (rules?.pattern && !rules.pattern.value.test(newValue)) {
+            mockFormState.errors[name] = { message: rules.pattern.message };
+          } else if (rules?.min && Number(newValue) < rules.min.value) {
+            mockFormState.errors[name] = { message: rules.min.message };
+          } else {
+            delete mockFormState.errors[name];
+          }
+        },
+        onBlur: jest.fn(),
+        value,
+        name,
+      },
+      fieldState: {
+        error: mockFormState.errors[name],
+      },
+    });
+  },
+  FormProvider: ({ children, ...props }) => children,
+  useFormContext: () => ({
+    control: {},
+    formState: mockFormState,
+    getFieldState: jest.fn((name) => ({ error: mockFormState.errors[name] })),
+    register: jest.fn(),
+  }),
+}));
+
+// Reset form state before each test
+beforeEach(() => {
+  mockFormState = {
+    errors: {},
+    defaultValues: {},
+    values: {},
+  };
+});
+
+import userEvent from '@testing-library/user-event';
 import {
   Form,
   FormControl,
@@ -12,7 +94,6 @@ import {
   FormLabel,
   FormMessage,
 } from '../form';
-import { Input } from '../input';
 
 interface TestFormData {
   username: string;
@@ -86,7 +167,7 @@ function TestForm({
                   type="number"
                   placeholder="Enter age"
                   {...field}
-                  onChange={(e) => field.onChange(parseInt(e.target.value, 10))}
+                  onChange={(e) => field.onChange(parseInt(e.target?.value, 10))}
                 />
               </FormControl>
               <FormDescription>You must be 18 or older.</FormDescription>
@@ -113,7 +194,7 @@ describe('Form', () => {
   describe('Basic Rendering', () => {
     it('renders form fields correctly', () => {
       const mockSubmit = jest.fn();
-      render(<TestForm onSubmit={mockSubmit} />);
+      renderWithProviders(<TestForm onSubmit={mockSubmit} />);
 
       expect(screen.getByLabelText('Username')).toBeInTheDocument();
       expect(screen.getByLabelText('Email')).toBeInTheDocument();
@@ -124,8 +205,7 @@ describe('Form', () => {
 
     it('renders with default values', () => {
       const mockSubmit = jest.fn();
-      render(
-        <TestForm
+      renderWithProviders(<TestForm
           onSubmit={mockSubmit}
           defaultValues={{
             username: 'johndoe',
@@ -145,7 +225,7 @@ describe('Form', () => {
     it('shows required field errors', async () => {
       const user = userEvent.setup();
       const mockSubmit = jest.fn();
-      render(<TestForm onSubmit={mockSubmit} />);
+      renderWithProviders(<TestForm onSubmit={mockSubmit} />);
 
       const submitButton = screen.getByRole('button', { name: 'Submit' });
       await user.click(submitButton);
@@ -162,7 +242,7 @@ describe('Form', () => {
     it('validates email format', async () => {
       const user = userEvent.setup();
       const mockSubmit = jest.fn();
-      render(<TestForm onSubmit={mockSubmit} />);
+      renderWithProviders(<TestForm onSubmit={mockSubmit} />);
 
       const emailInput = screen.getByLabelText('Email');
       await user.type(emailInput, 'invalid-email');
@@ -178,7 +258,7 @@ describe('Form', () => {
     it('validates minimum age', async () => {
       const user = userEvent.setup();
       const mockSubmit = jest.fn();
-      render(<TestForm onSubmit={mockSubmit} />);
+      renderWithProviders(<TestForm onSubmit={mockSubmit} />);
 
       const ageInput = screen.getByLabelText('Age');
       await user.type(ageInput, '15');
@@ -194,7 +274,7 @@ describe('Form', () => {
     it('clears errors when corrected', async () => {
       const user = userEvent.setup();
       const mockSubmit = jest.fn();
-      render(<TestForm onSubmit={mockSubmit} />);
+      renderWithProviders(<TestForm onSubmit={mockSubmit} />);
 
       // Submit to trigger errors
       await user.click(screen.getByRole('button', { name: 'Submit' }));
@@ -217,7 +297,7 @@ describe('Form', () => {
     it('submits valid form data', async () => {
       const user = userEvent.setup();
       const mockSubmit = jest.fn();
-      render(<TestForm onSubmit={mockSubmit} />);
+      renderWithProviders(<TestForm onSubmit={mockSubmit} />);
 
       await user.type(screen.getByLabelText('Username'), 'johndoe');
       await user.type(screen.getByLabelText('Email'), 'john@example.com');
@@ -239,7 +319,7 @@ describe('Form', () => {
     it('FormLabel applies error styles', async () => {
       const user = userEvent.setup();
       const mockSubmit = jest.fn();
-      render(<TestForm onSubmit={mockSubmit} />);
+      renderWithProviders(<TestForm onSubmit={mockSubmit} />);
 
       // Submit to trigger errors
       await user.click(screen.getByRole('button', { name: 'Submit' }));
@@ -254,7 +334,7 @@ describe('Form', () => {
     it('FormControl sets ARIA attributes', async () => {
       const user = userEvent.setup();
       const mockSubmit = jest.fn();
-      render(<TestForm onSubmit={mockSubmit} />);
+      renderWithProviders(<TestForm onSubmit={mockSubmit} />);
 
       const usernameInput = screen.getByLabelText('Username');
       const descriptionId = usernameInput.getAttribute('aria-describedby');
@@ -274,7 +354,7 @@ describe('Form', () => {
 
     it('FormDescription provides accessible descriptions', () => {
       const mockSubmit = jest.fn();
-      render(<TestForm onSubmit={mockSubmit} />);
+      renderWithProviders(<TestForm onSubmit={mockSubmit} />);
 
       const usernameInput = screen.getByLabelText('Username');
       const description = screen.getByText('This is your public display name.');
@@ -287,7 +367,7 @@ describe('Form', () => {
     it('FormMessage displays error messages', async () => {
       const user = userEvent.setup();
       const mockSubmit = jest.fn();
-      render(<TestForm onSubmit={mockSubmit} />);
+      renderWithProviders(<TestForm onSubmit={mockSubmit} />);
 
       await user.click(screen.getByRole('button', { name: 'Submit' }));
 
@@ -302,7 +382,7 @@ describe('Form', () => {
   describe('Accessibility', () => {
     it('associates labels with inputs', () => {
       const mockSubmit = jest.fn();
-      render(<TestForm onSubmit={mockSubmit} />);
+      renderWithProviders(<TestForm onSubmit={mockSubmit} />);
 
       const usernameInput = screen.getByLabelText('Username');
       const usernameLabel = screen.getByText('Username');
@@ -312,7 +392,7 @@ describe('Form', () => {
 
     it('provides proper ARIA relationships', () => {
       const mockSubmit = jest.fn();
-      render(<TestForm onSubmit={mockSubmit} />);
+      renderWithProviders(<TestForm onSubmit={mockSubmit} />);
 
       const ageInput = screen.getByLabelText('Age');
       const ageDescription = screen.getByText('You must be 18 or older.');
@@ -326,7 +406,7 @@ describe('Form', () => {
     it('announces errors to screen readers', async () => {
       const user = userEvent.setup();
       const mockSubmit = jest.fn();
-      render(<TestForm onSubmit={mockSubmit} />);
+      renderWithProviders(<TestForm onSubmit={mockSubmit} />);
 
       await user.click(screen.getByRole('button', { name: 'Submit' }));
 
@@ -374,7 +454,7 @@ describe('Form', () => {
         );
       }
 
-      render(<CustomForm />);
+      renderWithProviders(<CustomForm />);
 
       const select = screen.getByLabelText('Custom Field');
       expect(select).toBeInTheDocument();
@@ -427,7 +507,7 @@ describe('Form', () => {
         );
       }
 
-      render(<DynamicForm />);
+      renderWithProviders(<DynamicForm />);
 
       expect(screen.getByLabelText('Base Field')).toBeInTheDocument();
       expect(screen.queryByLabelText('Extra Field')).not.toBeInTheDocument();

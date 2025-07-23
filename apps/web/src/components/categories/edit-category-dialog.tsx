@@ -61,8 +61,6 @@ export function EditCategoryDialog({
 }: EditCategoryDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Note: Using (api as any) as a workaround until Convex dev server regenerates the API types
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const updateCategory = useMutation((api as any).functions.categories.categories.updateCategory);
 
   const {

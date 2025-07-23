@@ -1,8 +1,9 @@
-import { render, screen, fireEvent, waitFor, act } from '@/__tests__/test-utils';
-import OnboardingPage from '../page';
-import { mockUseQuery, mockUseMutation } from '@/__tests__/test-utils';
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import React from 'react';
+import { act, fireEvent, mockUseMutation, mockUseQuery, render, screen, waitFor, renderWithProviders } from '@/__tests__/test-helpers';
 import { useUser } from '@clerk/nextjs';
 import { toast } from 'sonner';
+import OnboardingPage from '../page';
 
 // Mock Next.js router
 const mockPush = jest.fn();
@@ -60,7 +61,7 @@ describe('OnboardingPage', () => {
     // Mock user with no organizations by default
     mockUseQuery.mockImplementation((query: any) => {
       const queryStr = query?.toString() || '';
-      const queryName = query?._functionName || query?.name || '';
+      const queryName = (query as any)?._functionName || (query as any)?.name || '';
       
       if (queryStr.includes('currentWithOrganizations') || queryName.includes('currentWithOrganizations')) {
         return {
@@ -68,6 +69,12 @@ describe('OnboardingPage', () => {
           name: 'Test User',
           email: 'test@example.com',
           organizations: [],
+          firstName: 'Test',
+          lastName: 'User',
+          clerkId: 'clerk_123',
+          status: 'active',
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
         };
       }
       return undefined;
@@ -84,14 +91,14 @@ describe('OnboardingPage', () => {
     // Override the default query mock for this test
     mockUseQuery.mockReturnValue(undefined);
 
-    render(<OnboardingPage />);
+    renderWithProviders(<OnboardingPage />);
 
     // The page shows a Loader2 icon when user is not loaded
     expect(screen.getByText('Loader2 Icon')).toBeInTheDocument();
   });
 
   it('renders onboarding form when user has no organizations', () => {
-    render(<OnboardingPage />);
+    renderWithProviders(<OnboardingPage />);
 
     expect(screen.getByRole('heading', { name: 'Welcome to Bulk!' })).toBeInTheDocument();
     expect(screen.getByText('Create Your Organization')).toBeInTheDocument();
@@ -106,9 +113,9 @@ describe('OnboardingPage', () => {
       name: 'Test User',
       email: 'test@example.com',
       organizations: [{ _id: 'org_123', name: 'Test Org', slug: 'test-org' }],
-    });
+    } as any);
 
-    render(<OnboardingPage />);
+    renderWithProviders(<OnboardingPage />);
 
     await waitFor(() => {
       expect(mockPush).toHaveBeenCalledWith('/test-org/dashboard');
@@ -116,36 +123,36 @@ describe('OnboardingPage', () => {
   });
 
   it('auto-generates slug from organization name', () => {
-    render(<OnboardingPage />);
+    renderWithProviders(<OnboardingPage />);
 
     const nameInput = screen.getByPlaceholderText('e.g., Acme Store');
     const slugInput = screen.getByPlaceholderText('e.g., acme-store');
 
-    fireEvent.change(nameInput, { target: { value: 'My Test Company' } });
+    fireEvent.change(nameInput, { target: { value: 'My Test Company'  } } as any);
 
     expect(slugInput).toHaveValue('my-test-company');
   });
 
   it('validates slug format and shows error for invalid slug', async () => {
-    render(<OnboardingPage />);
+    renderWithProviders(<OnboardingPage />);
 
     const slugInput = screen.getByPlaceholderText('e.g., acme-store');
     const nameInput = screen.getByPlaceholderText('e.g., Acme Store');
 
     // First add a name so the form can be submitted
-    fireEvent.change(nameInput, { target: { value: 'Test Org' } });
+    fireEvent.change(nameInput, { target: { value: 'Test Org'  } } as any);
     
     // The slug should auto-generate from the name
     expect(slugInput).toHaveValue('test-org');
     
     // Now change it to an invalid slug that contains uppercase
-    fireEvent.change(slugInput, { target: { value: 'Test-Invalid-Slug' } });
+    fireEvent.change(slugInput, { target: { value: 'Test-Invalid-Slug'  } } as any);
     
     // The component should convert to lowercase
     expect(slugInput).toHaveValue('test-invalid-slug');
     
     // Test truly invalid slug (starting with hyphen)
-    fireEvent.change(slugInput, { target: { value: '-invalid' } });
+    fireEvent.change(slugInput, { target: { value: '-invalid'  } } as any);
     
     // Component doesn't strip leading hyphens, just converts to lowercase
     expect(slugInput).toHaveValue('-invalid');
@@ -170,7 +177,7 @@ describe('OnboardingPage', () => {
       return jest.fn().mockResolvedValue({});
     });
 
-    render(<OnboardingPage />);
+    renderWithProviders(<OnboardingPage />);
 
     // Fill in the form
     const nameInput = screen.getByPlaceholderText('e.g., Acme Store');
@@ -178,14 +185,16 @@ describe('OnboardingPage', () => {
     const submitButton = screen.getByRole('button', { name: 'Create Organization' });
     
     // Change the name
-    fireEvent.change(nameInput, { target: { value: 'Test Organization' } });
+    fireEvent.change(nameInput, { target: { value: 'Test Organization'  } } as any);
     
     // The slug should auto-generate
     expect(slugInput).toHaveValue('test-organization');
     
     // Click the submit button
     await act(async () => {
-      fireEvent.click(submitButton);
+      if (submitButton) {
+      fireEvent.click(submitButton as HTMLElement);
+    }
     });
 
     // Wait for mutations to complete
@@ -214,15 +223,15 @@ describe('OnboardingPage', () => {
       .mockReturnValueOnce(mockStoreUserFn)
       .mockReturnValueOnce(mockCreateOrgFn);
 
-    render(<OnboardingPage />);
+    renderWithProviders(<OnboardingPage />);
 
     const nameInput = screen.getByPlaceholderText('e.g., Acme Store');
     const form = nameInput.closest('form');
 
     await act(async () => {
-      fireEvent.change(nameInput, { target: { value: 'Test Organization' } });
+      fireEvent.change(nameInput, { target: { value: 'Test Organization'  } } as any);
       if (form) {
-        fireEvent.submit(form);
+        fireEvent.submit(form as HTMLElement);
       }
     });
 
@@ -242,7 +251,7 @@ describe('OnboardingPage', () => {
     let mutationCallCount = 0;
     
     // Create a promise that we can control
-    let resolveStoreUser: (value: any) => void;
+    let resolveStoreUser: (value: unknown) => void;
     const storeUserPromise = new Promise((resolve) => {
       resolveStoreUser = resolve;
     });
@@ -252,20 +261,20 @@ describe('OnboardingPage', () => {
     mockUseMutation.mockImplementation(() => {
       mutationCallCount++;
       if (mutationCallCount === 1) {
-        return () => storeUserPromise;
+        return jest.fn(() => storeUserPromise);
       } else if (mutationCallCount === 2) {
         return mockCreateOrgFn;
       }
       return jest.fn().mockResolvedValue({});
     });
 
-    render(<OnboardingPage />);
+    renderWithProviders(<OnboardingPage />);
 
     const nameInput = screen.getByPlaceholderText('e.g., Acme Store');
     const submitButton = screen.getByRole('button', { name: 'Create Organization' });
 
-    fireEvent.change(nameInput, { target: { value: 'Test Organization' } });
-    fireEvent.click(submitButton);
+    fireEvent.change(nameInput, { target: { value: 'Test Organization'  } } as any);
+    fireEvent.click(submitButton as HTMLElement);
 
     // Use findByText for async content
     const loadingText = await screen.findByText('Creating Organization...', {}, { timeout: 1000 });
@@ -286,7 +295,7 @@ describe('OnboardingPage', () => {
     let mutationCallCount = 0;
     
     // Create a controlled promise
-    let resolveStoreUser: (value: any) => void;
+    let resolveStoreUser: (value: unknown) => void;
     const storeUserPromise = new Promise((resolve) => {
       resolveStoreUser = resolve;
     });
@@ -296,21 +305,21 @@ describe('OnboardingPage', () => {
     mockUseMutation.mockImplementation(() => {
       mutationCallCount++;
       if (mutationCallCount === 1) {
-        return () => storeUserPromise;
+        return jest.fn(() => storeUserPromise);
       } else if (mutationCallCount === 2) {
         return mockCreateOrgFn;
       }
       return jest.fn().mockResolvedValue({});
     });
 
-    render(<OnboardingPage />);
+    renderWithProviders(<OnboardingPage />);
 
     const nameInput = screen.getByPlaceholderText('e.g., Acme Store');
     const slugInput = screen.getByPlaceholderText('e.g., acme-store');
     const submitButton = screen.getByRole('button', { name: 'Create Organization' });
 
-    fireEvent.change(nameInput, { target: { value: 'Test Organization' } });
-    fireEvent.click(submitButton);
+    fireEvent.change(nameInput, { target: { value: 'Test Organization'  } } as any);
+    fireEvent.click(submitButton as HTMLElement);
 
     // All form elements should be disabled during creation
     await waitFor(
@@ -342,15 +351,15 @@ describe('OnboardingPage', () => {
       .mockReturnValueOnce(mockStoreUserFn)
       .mockReturnValueOnce(mockCreateOrgFn);
 
-    render(<OnboardingPage />);
+    renderWithProviders(<OnboardingPage />);
 
     const nameInput = screen.getByPlaceholderText('e.g., Acme Store');
     const form = nameInput.closest('form');
 
     await act(async () => {
-      fireEvent.change(nameInput, { target: { value: 'Test Organization' } });
+      fireEvent.change(nameInput, { target: { value: 'Test Organization'  } } as any);
       if (form) {
-        fireEvent.submit(form);
+        fireEvent.submit(form as HTMLElement);
       }
       // Give time for async operations
       await new Promise(resolve => setTimeout(resolve, 100));

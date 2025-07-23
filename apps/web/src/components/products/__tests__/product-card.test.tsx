@@ -1,19 +1,15 @@
-import { 
-  render, 
-  screen, 
-  fireEvent
-} from '@/__tests__/test-utils';
-import {
-  setupTest, 
-  cleanupTest,
-  createMockProduct,
-  seedMockData 
-} from '@/__tests__/frontend-test-helpers';
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import React from 'react';
+import { cleanupTest, setupTest, renderWithProviders, createMockProduct } from '@/__tests__/test-helpers';
+import { fireEvent, screen } from '@testing-library/react';
 import { ProductCard } from '../product-card';
 import { Product } from '@/types/models';
+import type { Doc } from '@/../../../convex/_generated/dataModel';
+
+
 
 // Use standardized mock product creation
-const mockProduct: Product = createMockProduct({
+const mockProduct = createMockProduct({
   handle: 'test-product',
   title: 'Test Product',
   description: 'A test product description',
@@ -24,7 +20,7 @@ const mockProduct: Product = createMockProduct({
   image: 'https://example.com/product.jpg',
   tags: [],
   importJobId: 'import_123' as any,
-}) as Product;
+}) as unknown as Doc<'products'>;
 
 describe('ProductCard', () => {
   const mockOnEdit = jest.fn();
@@ -40,7 +36,7 @@ describe('ProductCard', () => {
   });
 
   it('renders product information correctly', () => {
-    render(<ProductCard product={mockProduct} />);
+    renderWithProviders(<ProductCard product={mockProduct} />);
 
     expect(screen.getByText('Test Product')).toBeInTheDocument();
     expect(screen.getByText('test-product')).toBeInTheDocument();
@@ -49,7 +45,7 @@ describe('ProductCard', () => {
   });
 
   it('displays status badge with correct variant', () => {
-    const { rerender } = render(<ProductCard product={mockProduct} />);
+    const { rerender } = renderWithProviders(<ProductCard product={mockProduct} />);
 
     let badge = screen.getByText('active');
     expect(badge).toHaveClass('bg-primary'); // default variant
@@ -64,7 +60,7 @@ describe('ProductCard', () => {
   });
 
   it('shows product image when available', () => {
-    render(<ProductCard product={mockProduct} />);
+    renderWithProviders(<ProductCard product={mockProduct} />);
 
     const image = screen.getByAltText('Test Product');
     expect(image).toBeInTheDocument();
@@ -73,14 +69,14 @@ describe('ProductCard', () => {
 
   it('shows placeholder icon when no image', () => {
     const productWithoutImage = { ...mockProduct, image: null };
-    const { container } = render(<ProductCard product={productWithoutImage} />);
+    const { container } = renderWithProviders(<ProductCard product={productWithoutImage} />);
 
     const packageIcon = container.querySelector('svg.lucide-package');
     expect(packageIcon).toBeInTheDocument();
   });
 
   it('displays categories with limit of 3', () => {
-    render(<ProductCard product={mockProduct} />);
+    renderWithProviders(<ProductCard product={mockProduct} />);
 
     expect(screen.getByText('Category 1')).toBeInTheDocument();
     expect(screen.getByText('Category 2')).toBeInTheDocument();
@@ -95,7 +91,7 @@ describe('ProductCard', () => {
       updatedAt: fixedDate 
     }) as Product;
 
-    render(<ProductCard product={productWithDate} />);
+    renderWithProviders(<ProductCard product={productWithDate} />);
 
     // The date format depends on locale, so we check for the presence of "Updated" and the date parts
     const dateText = screen.getByText(/Updated/);
@@ -105,7 +101,7 @@ describe('ProductCard', () => {
   });
 
   it('shows actions menu on hover', async () => {
-    render(
+    renderWithProviders(
       <ProductCard
         product={mockProduct}
         onEdit={mockOnEdit}
@@ -119,7 +115,9 @@ describe('ProductCard', () => {
     expect(actionsButton).toBeInTheDocument();
 
     // Click to open dropdown
-    fireEvent.click(actionsButton);
+    if (actionsButton) {
+      fireEvent.click(actionsButton as HTMLElement);
+    }
 
     expect(screen.getByText('View Details')).toBeInTheDocument();
     expect(screen.getByText('Edit Product')).toBeInTheDocument();
@@ -127,7 +125,7 @@ describe('ProductCard', () => {
   });
 
   it('calls action handlers when menu items clicked', () => {
-    render(
+    renderWithProviders(
       <ProductCard
         product={mockProduct}
         onEdit={mockOnEdit}
@@ -137,22 +135,22 @@ describe('ProductCard', () => {
     );
 
     const actionsButton = screen.getByLabelText('More actions');
-    fireEvent.click(actionsButton);
+    fireEvent.click(actionsButton as HTMLElement);
 
     fireEvent.click(screen.getByText('View Details'));
     expect(mockOnView).toHaveBeenCalledWith(mockProduct);
 
-    fireEvent.click(actionsButton);
+    fireEvent.click(actionsButton as HTMLElement);
     fireEvent.click(screen.getByText('Edit Product'));
     expect(mockOnEdit).toHaveBeenCalledWith(mockProduct);
 
-    fireEvent.click(actionsButton);
+    fireEvent.click(actionsButton as HTMLElement);
     fireEvent.click(screen.getByText('Archive'));
     expect(mockOnArchive).toHaveBeenCalledWith(mockProduct);
   });
 
   it('only shows available actions', () => {
-    render(
+    renderWithProviders(
       <ProductCard
         product={mockProduct}
         onEdit={mockOnEdit}
@@ -161,7 +159,7 @@ describe('ProductCard', () => {
     );
 
     const actionsButton = screen.getByLabelText('More actions');
-    fireEvent.click(actionsButton);
+    fireEvent.click(actionsButton as HTMLElement);
 
     expect(screen.getByText('Edit Product')).toBeInTheDocument();
     expect(screen.queryByText('View Details')).not.toBeInTheDocument();
@@ -169,14 +167,14 @@ describe('ProductCard', () => {
   });
 
   it('applies custom className', () => {
-    const { container } = render(<ProductCard product={mockProduct} className="custom-class" />);
+    const { container } = renderWithProviders(<ProductCard product={mockProduct} className="custom-class" />);
 
     const card = container.firstChild;
     expect(card).toHaveClass('custom-class');
   });
 
   it('shows vendor with icon when available', () => {
-    render(<ProductCard product={mockProduct} />);
+    renderWithProviders(<ProductCard product={mockProduct} />);
 
     const vendorText = screen.getByText('Test Vendor');
     expect(vendorText).toBeInTheDocument();
@@ -188,7 +186,7 @@ describe('ProductCard', () => {
   });
 
   it('shows product type with icon when available', () => {
-    render(<ProductCard product={mockProduct} />);
+    renderWithProviders(<ProductCard product={mockProduct} />);
 
     const typeText = screen.getByText('Electronics');
     expect(typeText).toBeInTheDocument();
@@ -207,7 +205,7 @@ describe('ProductCard', () => {
       categories: [],
     };
 
-    render(<ProductCard product={minimalProduct} />);
+    renderWithProviders(<ProductCard product={minimalProduct} />);
 
     expect(screen.getByText('Test Product')).toBeInTheDocument();
     expect(screen.queryByText('Test Vendor')).not.toBeInTheDocument();

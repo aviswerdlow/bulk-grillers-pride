@@ -1,4 +1,6 @@
-import { convexTest } from '../test-helpers';
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import { t } from '../../test.setup';
+import { convexTest } from '../../test-helpers';
 
 describe('Products API', () => {
   let ctx: any;
@@ -7,7 +9,7 @@ describe('Products API', () => {
   let projectId: string;
 
   beforeEach(async () => {
-    ctx = convexTest();
+    ctx = await t.run(async (ctx) => ctx);
 
     // Create test user
     userId = await ctx.db.insert('users', {
@@ -87,6 +89,7 @@ describe('Products API', () => {
     });
 
     it('should return paginated products for organization', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const result = await ctx.runQuery('getProducts', {
         organizationId: orgId,
         limit: 10,
@@ -103,6 +106,7 @@ describe('Products API', () => {
     });
 
     it('should filter products by project', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       // Create another project with products
       const projectId2 = await ctx.db.insert('projects', {
         organizationId: orgId,
@@ -136,6 +140,7 @@ describe('Products API', () => {
     });
 
     it('should filter products by status', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const result = await ctx.runQuery('getProducts', {
         organizationId: orgId,
         status: 'draft',
@@ -146,6 +151,7 @@ describe('Products API', () => {
     });
 
     it('should search products by name/title', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const result = await ctx.runQuery('getProducts', {
         organizationId: orgId,
         search: 'Product 1',
@@ -159,6 +165,7 @@ describe('Products API', () => {
     });
 
     it('should handle pagination with cursor', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const firstPage = await ctx.runQuery('getProducts', {
         organizationId: orgId,
         limit: 5,
@@ -200,6 +207,7 @@ describe('Products API', () => {
     });
 
     it('should return product by ID', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const result = await ctx.runQuery('getProduct', { productId });
 
       expect(result).toBeDefined();
@@ -210,12 +218,14 @@ describe('Products API', () => {
     });
 
     it('should throw error for non-existent product', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       await expect(
         ctx.runQuery('getProduct', { productId: 'nonexistent' as any })
       ).rejects.toThrow();
     });
 
     it('should throw error when user not in organization', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       // Create product in different org
       const otherOrgId = await ctx.db.insert('organizations', {
         name: 'Other Org',
@@ -256,6 +266,7 @@ describe('Products API', () => {
 
   describe('createProduct', () => {
     it('should create new product with generated handle', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const productData = {
         organizationId: orgId,
         projectId,
@@ -279,6 +290,7 @@ describe('Products API', () => {
     });
 
     it('should use custom handle when provided', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const result = await ctx.runMutation('createProduct', {
         organizationId: orgId,
         projectId,
@@ -292,6 +304,7 @@ describe('Products API', () => {
     });
 
     it('should ensure unique handles within project', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       // Create first product
       await ctx.runMutation('createProduct', {
         organizationId: orgId,
@@ -316,6 +329,7 @@ describe('Products API', () => {
     });
 
     it('should create audit log entry', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const result = await ctx.runMutation('createProduct', {
         organizationId: orgId,
         projectId,
@@ -354,6 +368,7 @@ describe('Products API', () => {
     });
 
     it('should update product fields', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const updates = {
         productId,
         name: 'Updated Product',
@@ -376,6 +391,7 @@ describe('Products API', () => {
     });
 
     it('should update handle when explicitly provided', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const result = await ctx.runMutation('updateProduct', {
         productId,
         handle: 'new-handle',
@@ -385,6 +401,7 @@ describe('Products API', () => {
     });
 
     it('should create audit log for updates', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       await ctx.runMutation('updateProduct', {
         productId,
         status: 'active',
@@ -420,6 +437,7 @@ describe('Products API', () => {
     });
 
     it('should soft delete product', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       await ctx.runMutation('deleteProduct', { productId });
 
       const product = await ctx.db.get(productId);
@@ -428,6 +446,7 @@ describe('Products API', () => {
     });
 
     it('should create audit log for deletion', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       await ctx.runMutation('deleteProduct', { productId });
 
       const auditLogs = await ctx.db
@@ -440,6 +459,7 @@ describe('Products API', () => {
     });
 
     it('should not return deleted products in queries', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       await ctx.runMutation('deleteProduct', { productId });
 
       const result = await ctx.runQuery('getProducts', {
@@ -471,6 +491,7 @@ describe('Products API', () => {
     });
 
     it('should update multiple products at once', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const result = await ctx.runMutation('bulkUpdateProducts', {
         productIds,
         updates: {
@@ -490,6 +511,7 @@ describe('Products API', () => {
     });
 
     it('should create audit logs for bulk updates', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       await ctx.runMutation('bulkUpdateProducts', {
         productIds,
         updates: { status: 'archived' },

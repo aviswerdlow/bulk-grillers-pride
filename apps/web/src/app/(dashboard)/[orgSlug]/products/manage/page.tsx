@@ -1,10 +1,11 @@
 'use client';
 
-import { useQuery, useMutation } from 'convex/react';
+import { useQuery } from 'convex/react';
 import { api } from '@convex/_generated/api';
 import { useParams } from 'next/navigation';
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -41,8 +42,8 @@ import {
   Edit,
   Eye,
   MoreHorizontal,
-  CheckSquare,
-  Square,
+//   CheckSquare,
+//   Square,
   Package,
   ArrowLeft,
   ShieldAlert,
@@ -54,7 +55,7 @@ import { DeleteProductDialog } from '@/components/products/delete-product-dialog
 import { Loading } from '@/components/loading';
 import { toast } from 'sonner';
 import Link from 'next/link';
-import { Id, Doc } from '@convex/_generated/dataModel';
+import { Doc } from '@convex/_generated/dataModel';
 
 type BulkAction = 'archive' | 'delete' | 'activate' | 'deactivate' | 'export';
 
@@ -72,13 +73,13 @@ export default function ManageProductsPage() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   // Get organization
-  const organization = useQuery(api.functions.organizations.organizations.getOrganizationBySlug, {
+  const organization = useQuery((api as any).functions.organizations.organizations.getOrganizationBySlug, {
     slug: orgSlug,
   });
 
   // Get projects for this organization
   const projects = useQuery(
-    api.functions.projects.projects.getOrganizationProjects,
+    (api as any).functions.projects.projects.getOrganizationProjects,
     organization ? { organizationId: organization._id } : 'skip'
   );
 
@@ -87,7 +88,6 @@ export default function ManageProductsPage() {
 
   // Get products for the current project
   const productsResult = useQuery(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (api as any).functions.products.products.getProjectProducts,
     currentProject
       ? {
@@ -100,8 +100,8 @@ export default function ManageProductsPage() {
   );
 
   // TODO: Replace with actual mutations when backend implements them
-  const archiveProducts = useMutation(api.functions.products.products.createProduct);
-  const deleteProducts = useMutation(api.functions.products.products.createProduct);
+  // const _archiveProducts = useMutation((api as any).functions.products.products.createProduct);
+  // const _deleteProducts = useMutation((api as any).functions.products.products.createProduct);
 
   if (organization === undefined || projects === undefined) {
     return <Loading size="lg" text="Loading products..." />;
@@ -442,11 +442,14 @@ export default function ManageProductsPage() {
                     <TableCell>
                       <div className="flex items-center gap-3">
                         {product.images?.[0] && (
-                          <img
-                            src={product.images[0].url}
-                            alt={product.images[0].alt || product.title}
-                            className="h-10 w-10 rounded object-cover"
-                          />
+                          <div className="relative h-10 w-10">
+                            <Image
+                              src={product.images[0].url}
+                              alt={product.images[0].alt || product.title}
+                              fill
+                              className="rounded object-cover"
+                            />
+                          </div>
                         )}
                         <div>
                           <div className="font-medium">{product.title}</div>

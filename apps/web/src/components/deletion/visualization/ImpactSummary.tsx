@@ -27,11 +27,11 @@ const severityConfig = {
   critical: { label: 'Critical', color: 'bg-red-100 text-red-800', icon: AlertTriangle }
 };
 
-const impactTypeIcons = {
-  direct: Package,
-  cascade: Layers,
-  reference: AlertCircle
-};
+// const impactTypeIcons = {
+//   direct: Package,
+//   cascade: Layers,
+//   reference: AlertCircle
+// };
 
 export function ImpactSummary({ summary, className }: ImpactSummaryProps) {
   const {

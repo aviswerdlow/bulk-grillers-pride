@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback, useState } from 'react';
+import React, { useEffect, useRef, useCallback, useState } from 'react';
 import { useFocusManagement } from '@/contexts/accessibility';
 
 export interface UseFocusTrapOptions {
@@ -52,7 +52,7 @@ export function useFocusTrap(
     if (focusableElements.length === 0) return;
 
     const firstElement = focusableElements[0];
-    const lastElement = focusableElements[focusableElements.length - 1];
+//     const lastElement = focusableElements[focusableElements.length - 1];
     const target = e.target as HTMLElement;
 
     // Check if focus is outside container
@@ -160,7 +160,7 @@ export function useFocusTrap(
 
       // Restore focus
       if (restoreFocus && previousFocusRef.current) {
-        const focusState = popFocus();
+//         const focusState = popFocus();
         
         setTimeout(() => {
           if (previousFocusRef.current && document.body.contains(previousFocusRef.current)) {

@@ -1,11 +1,13 @@
-import { z } from 'zod';
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import { api } from '@convex/_generated/api';
+import { z } from 'zod';
+
 import {
   ContractTestConfig,
   validateContract,
-  commonSchemas,
+//   commonSchemas,
   expectResponseShape,
-  createMockContext,
+//   createMockContext,
 } from './contract-test-utils';
 import { 
   categoryFactory,
@@ -66,7 +68,7 @@ const categoryWithCountSchema = categorySchema.extend({
 const categoryContracts: ContractTestConfig[] = [
   // List Categories
   {
-    functionRef: api.functions.categories.list,
+    functionRef: (api as any).functions.categories.categories.list,
     name: 'categories.list',
     description: 'List categories with optional filtering',
     inputSchema: z.object({
@@ -113,7 +115,7 @@ const categoryContracts: ContractTestConfig[] = [
   
   // Get Category Tree
   {
-    functionRef: api.functions.categories.getTree,
+    functionRef: (api as any).functions.categories.categories.getTree,
     name: 'categories.getTree',
     description: 'Get hierarchical category tree',
     inputSchema: z.object({
@@ -149,7 +151,7 @@ const categoryContracts: ContractTestConfig[] = [
   
   // Create Category
   {
-    functionRef: api.functions.categories.create,
+    functionRef: (api as any).functions.categories.categories.create,
     name: 'categories.create',
     description: 'Create a new category',
     inputSchema: z.object({
@@ -228,7 +230,7 @@ const categoryContracts: ContractTestConfig[] = [
   
   // Update Category
   {
-    functionRef: api.functions.categories.update,
+    functionRef: (api as any).functions.categories.categories.update,
     name: 'categories.update',
     description: 'Update an existing category',
     inputSchema: z.object({
@@ -284,7 +286,7 @@ const categoryContracts: ContractTestConfig[] = [
   
   // Move Category
   {
-    functionRef: api.functions.categories.move,
+    functionRef: (api as any).functions.categories.categories.move,
     name: 'categories.move',
     description: 'Move a category to a different parent',
     inputSchema: z.object({
@@ -321,7 +323,7 @@ const categoryContracts: ContractTestConfig[] = [
   
   // Delete Category
   {
-    functionRef: api.functions.categories.deleteCategory,
+    functionRef: (api as any).functions.categories.categories.deleteCategory,
     name: 'categories.deleteCategory',
     description: 'Delete a category and optionally its children',
     inputSchema: z.object({
@@ -360,7 +362,7 @@ const categoryContracts: ContractTestConfig[] = [
   
   // Get Category Breadcrumb
   {
-    functionRef: api.functions.categories.getBreadcrumb,
+    functionRef: (api as any).functions.categories.categories.getBreadcrumb,
     name: 'categories.getBreadcrumb',
     description: 'Get category breadcrumb path',
     inputSchema: z.object({
@@ -431,7 +433,7 @@ describe('Category API Contracts', () => {
     it('should validate category tree response shape', () => {
       const mockTree = {
         category: categoryFactory.create(),
-        children: [],
+        children: [] as Category[],
         productCount: 10,
       };
       expectResponseShape(mockTree, categoryTreeSchema);

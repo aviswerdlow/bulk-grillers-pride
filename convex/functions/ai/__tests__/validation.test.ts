@@ -1,6 +1,6 @@
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import { t } from '../../../test.setup';
 // Jest doesn't need explicit imports for describe, it, expect, beforeEach
-import { convexTest } from '../../../__tests__/test-helpers';
-
 // Mock the langchain module
 jest.mock('../langchain', () => ({
   AIProvider: 'openai' as const,
@@ -40,11 +40,13 @@ describe('API Key Validation', () => {
   let ctx: any;
 
   beforeEach(() => {
-    ctx = convexTest();
+    
+    ctx = await t.run(async (ctx) => ctx);
   });
 
   describe('validateApiKeyConfiguration', () => {
     it('should detect missing API key', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const userId = await ctx.db.insert('users', {
         clerkId: 'user_test123',
         email: 'test@example.com',
@@ -83,8 +85,6 @@ describe('API Key Validation', () => {
         createdAt: Date.now(),
         updatedAt: Date.now(),
       });
-
-      ctx.auth.getUserIdentity.mockResolvedValue({
         subject: 'user_test123',
       });
 
@@ -99,6 +99,7 @@ describe('API Key Validation', () => {
     });
 
     it('should validate OpenAI API key format', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const userId = await ctx.db.insert('users', {
         clerkId: 'user_test123',
         email: 'test@example.com',
@@ -137,8 +138,6 @@ describe('API Key Validation', () => {
         createdAt: Date.now(),
         updatedAt: Date.now(),
       });
-
-      ctx.auth.getUserIdentity.mockResolvedValue({
         subject: 'user_test123',
       });
 
@@ -153,6 +152,7 @@ describe('API Key Validation', () => {
     });
 
     it('should validate valid OpenAI API key', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const userId = await ctx.db.insert('users', {
         clerkId: 'user_test123',
         email: 'test@example.com',
@@ -191,8 +191,6 @@ describe('API Key Validation', () => {
         createdAt: Date.now(),
         updatedAt: Date.now(),
       });
-
-      ctx.auth.getUserIdentity.mockResolvedValue({
         subject: 'user_test123',
       });
 
@@ -209,6 +207,7 @@ describe('API Key Validation', () => {
 
   describe('checkModelAvailability', () => {
     it('should validate available models', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const module = await import('../categorization');
       
       const result = await ctx.runQuery('checkModelAvailability', {
@@ -221,6 +220,7 @@ describe('API Key Validation', () => {
     });
 
     it('should detect deprecated models', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const module = await import('../categorization');
       
       const result = await ctx.runQuery('checkModelAvailability', {
@@ -234,6 +234,7 @@ describe('API Key Validation', () => {
     });
 
     it('should suggest corrections for misspelled models', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const module = await import('../categorization');
       
       const result = await ctx.runQuery('checkModelAvailability', {
@@ -247,6 +248,7 @@ describe('API Key Validation', () => {
     });
 
     it('should list available models for unknown model', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const module = await import('../categorization');
       
       const result = await ctx.runQuery('checkModelAvailability', {
@@ -263,6 +265,7 @@ describe('API Key Validation', () => {
 
   describe('createCategorizationJob with validation', () => {
     it('should reject job creation with missing API key', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const userId = await ctx.db.insert('users', {
         clerkId: 'user_test123',
         email: 'test@example.com',
@@ -311,8 +314,6 @@ describe('API Key Validation', () => {
         createdAt: Date.now(),
         updatedAt: Date.now(),
       });
-
-      ctx.auth.getUserIdentity.mockResolvedValue({
         subject: 'user_test123',
       });
 
@@ -337,6 +338,7 @@ describe('API Key Validation', () => {
     });
 
     it('should reject job creation with invalid model', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const userId = await ctx.db.insert('users', {
         clerkId: 'user_test123',
         email: 'test@example.com',
@@ -385,8 +387,6 @@ describe('API Key Validation', () => {
         createdAt: Date.now(),
         updatedAt: Date.now(),
       });
-
-      ctx.auth.getUserIdentity.mockResolvedValue({
         subject: 'user_test123',
       });
 

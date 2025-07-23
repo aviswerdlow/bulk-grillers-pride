@@ -1,3 +1,4 @@
+import { t } from '../../test.setup';
 import { describe, it, expect, beforeEach } from '@jest/globals';
 import {
   createConvexTest,
@@ -9,6 +10,7 @@ import {
   assertDocumentExists,
   assertDocumentNotExists,
   type ConvexTestContext,
+  convexTest
 } from '../convex-test-standard';
 import {
   createMockUser,
@@ -17,15 +19,12 @@ import {
   createMockProject,
   createMockProduct,
   createMockCategory,
-} from '../test-helpers';
-import { moveCategory } from '../functions/categories/hierarchy';
+} from '../../test-helpers';
+import { moveCategory } from '../../functions/categories/hierarchy';
 
 describe('hierarchy', () => {
-  let test: ConvexTestContext;
-
   beforeEach(() => {
-    test = createConvexTest();
-  });
+    });
 
   describe('moveCategory', () => {
     describe('Happy Path', () => {
@@ -39,14 +38,14 @@ describe('hierarchy', () => {
           role: 'owner',
         });
 
-        await seedDatabase(test, {
+        await seedDatabase(t, {
           users: [user],
           organizations: [org],
           organizationMemberships: [membership],
         });
 
-        setupAuth(test, { tokenIdentifier: user.clerkId });
-        const ctx = createMutationContext(test);
+        setupAuth(t, { tokenIdentifier: user.clerkId });
+        const ctx = createMutationContext(t);
 
         // Act
         const args = {
@@ -66,8 +65,8 @@ describe('hierarchy', () => {
     describe('Authorization', () => {
       it('should fail for unauthenticated user', async () => {
         // Arrange
-        setupAuth(test, null);
-        const ctx = createMutationContext(test);
+        setupAuth(t, null);
+        const ctx = createMutationContext(t);
 
         // Act & Assert
         await expect(moveCategory(ctx, {} as any)).rejects.toThrow();
@@ -79,13 +78,13 @@ describe('hierarchy', () => {
         const org = createMockOrganization();
         // Note: No membership created
 
-        await seedDatabase(test, {
+        await seedDatabase(t, {
           users: [user],
           organizations: [org],
         });
 
-        setupAuth(test, { tokenIdentifier: user.clerkId });
-        const ctx = createMutationContext(test);
+        setupAuth(t, { tokenIdentifier: user.clerkId });
+        const ctx = createMutationContext(t);
 
         // Act & Assert
         const args = {
@@ -98,8 +97,8 @@ describe('hierarchy', () => {
       it('should fail with invalid arguments', async () => {
         // Arrange
         const user = createMockUser();
-        setupAuth(test, { tokenIdentifier: user.clerkId });
-        const ctx = createMutationContext(test);
+        setupAuth(t, { tokenIdentifier: user.clerkId });
+        const ctx = createMutationContext(t);
 
         // Act & Assert
         await expect(moveCategory(ctx, {} as any)).rejects.toThrow();

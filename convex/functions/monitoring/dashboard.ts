@@ -1,3 +1,4 @@
+import { internal } from "@convex/_generated/api";
 import { v } from 'convex/values';
 import { query } from '../../_generated/server';
 import { getOrganizationId } from '../../lib/organizationUtils';
@@ -33,7 +34,7 @@ export const getPerformanceDashboard = query({
 
     const operationMetrics = await Promise.all(
       operations.map(async (operation) => {
-        const metrics = await getAggregatedMetrics(ctx, {
+        const metrics = await ctx.runQuery(internal.monitoring.performance.getAggregatedMetrics, {
           organizationId,
           operation,
           startDate: startDateStr,
@@ -96,7 +97,7 @@ export const getOperationDetails = query({
       new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
     // Get aggregated metrics
-    const aggregated = await getAggregatedMetrics(ctx, {
+    const aggregated = await ctx.runQuery(internal.monitoring.performance.getAggregatedMetrics, {
       organizationId,
       operation: args.operation,
       startDate,
@@ -160,7 +161,7 @@ export const getOperationComparison = query({
 
     const comparisons = await Promise.all(
       operations.map(async (operation) => {
-        const metrics = await getAggregatedMetrics(ctx, {
+        const metrics = await ctx.runQuery(internal.monitoring.performance.getAggregatedMetrics, {
           organizationId,
           operation,
           startDate,

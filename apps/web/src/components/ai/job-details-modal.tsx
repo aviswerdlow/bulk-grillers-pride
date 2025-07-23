@@ -19,10 +19,8 @@ import {
 } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Loading } from "@/components/loading";
 import { ProductResultsTable } from "./product-results-table";
@@ -34,15 +32,12 @@ import {
   AlertCircle,
   Clock,
   Zap,
-  DollarSign,
-  Package,
   Download,
   User,
   Calendar,
   Brain,
   Tag,
   Timer,
-  TrendingUp,
 } from "lucide-react";
 
 interface JobDetailsModalProps {
@@ -61,13 +56,13 @@ export function JobDetailsModal({
 
   // Query job details from backend
   const jobDetails = useQuery(
-    api.functions.ai.categorization.getJobDetails,
+    (api as any).functions.ai.categorization.getJobDetails,
     jobId ? { jobId: jobId as Id<"aiCategorizationJobs"> } : "skip"
   );
   
   // Mutations and actions
-  const applyCategorization = useMutation(api.functions.ai.categorization.applyCategorization);
-  const exportJobResults = useAction(api.functions.ai.categorization.exportJobResults);
+  const applyCategorization = useMutation((api as any).functions.ai.categorization.applyCategorization);
+  const exportJobResults = useAction((api as any).functions.ai.categorization.exportJobResults);
 
   const isLoading = jobDetails === undefined;
   const hasErrors = jobDetails && jobDetails.errors.length > 0;
@@ -364,7 +359,7 @@ export function JobDetailsModal({
                   ) : (
                     <div className="space-y-4">
                       <h3 className="text-lg font-medium">Error Details</h3>
-                      {jobDetails.errors.map((error, idx) => (
+                      {jobDetails.errors.map((error: any, idx: number) => (
                         <Card key={idx} className="border-destructive/20">
                           <CardContent className="pt-6">
                             <div className="space-y-2">

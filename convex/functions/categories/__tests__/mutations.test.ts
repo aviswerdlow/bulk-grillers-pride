@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach } from '@jest/globals';
+import { t } from '../../../test.setup';
 import {
   createConvexTest,
   createMutationContext,
@@ -15,7 +16,7 @@ import {
   createMockOrganizationMembership,
   createMockProject,
   createMockCategory,
-} from '../../../__tests__/test-helpers';
+} from 'convex-test';
 import { Id } from '../../../_generated/dataModel';
 import { getUserAndVerifyEditPermissions, generateHandle } from '../helpers';
 
@@ -27,7 +28,8 @@ describe('Category Mutations', () => {
   let membership: any;
 
   beforeEach(async () => {
-    test = createConvexTest();
+    
+    tes// t is already imported from test.setup
     
     // Set up common test data
     user = createMockUser({ _id: 'user_1' as Id<'users'> });
@@ -63,7 +65,7 @@ describe('Category Mutations', () => {
         const handle = generateHandle(name);
 
         // Act - Directly insert the category using database operations
-        const categoryId = await test.db.insert('categories', {
+        const categoryId = await t.db.insert('categories', {
           organizationId: org._id,
           projectId: project._id,
           name,
@@ -91,7 +93,7 @@ describe('Category Mutations', () => {
         expect(categoryId).toBeDefined();
         expect(categoryId).toMatch(/^categories_\d+$/);
 
-        const category = await test.db.get(categoryId);
+        const category = await t.db.get(categoryId);
         expect(category).toBeDefined();
         expect(category).toMatchObject({
           name: 'Electronics',
@@ -147,7 +149,7 @@ describe('Category Mutations', () => {
         const handle = generateHandle(name);
 
         // Act
-        const categoryId = await test.db.insert('categories', {
+        const categoryId = await t.db.insert('categories', {
           organizationId: org._id,
           projectId: project._id,
           name,
@@ -183,7 +185,7 @@ describe('Category Mutations', () => {
         const expectedHandle = generateHandle(name);
 
         // Act
-        const categoryId = await test.db.insert('categories', {
+        const categoryId = await t.db.insert('categories', {
           organizationId: org._id,
           projectId: project._id,
           name,
@@ -201,7 +203,7 @@ describe('Category Mutations', () => {
         });
 
         // Assert
-        const category = await test.db.get(categoryId);
+        const category = await t.db.get(categoryId);
         expect(category.handle).toBe('home-garden');
       });
 
@@ -223,7 +225,7 @@ describe('Category Mutations', () => {
         });
 
         // Act
-        const categoryId = await test.db.insert('categories', {
+        const categoryId = await t.db.insert('categories', {
           organizationId: org._id,
           projectId: project._id,
           name: 'New Category',
@@ -241,7 +243,7 @@ describe('Category Mutations', () => {
         });
 
         // Assert
-        const category = await test.db.get(categoryId);
+        const category = await t.db.get(categoryId);
         expect(category.sortOrder).toBe(21);
       });
     });
@@ -258,7 +260,7 @@ describe('Category Mutations', () => {
 
         // Act & Assert - In real mutation, this would throw
         // Here we just verify the handle exists
-        const existing = await test.db
+        const existing = await t.db
           .query('categories')
           .withIndex('by_handle', (q) =>
             q
@@ -290,7 +292,7 @@ describe('Category Mutations', () => {
         });
 
         // Act
-        const categoryId = await test.db.insert('categories', {
+        const categoryId = await t.db.insert('categories', {
           organizationId: org._id,
           projectId: project._id,
           name: 'Electronics',
@@ -316,7 +318,7 @@ describe('Category Mutations', () => {
         const nonExistentParentId = 'cat_nonexistent' as Id<'categories'>;
         
         // Act & Assert - Verify parent doesn't exist
-        const parent = await test.db.get(nonExistentParentId);
+        const parent = await t.db.get(nonExistentParentId);
         expect(parent).toBeNull();
       });
     });
@@ -328,7 +330,7 @@ describe('Category Mutations', () => {
         const handle = generateHandle(longName).substring(0, 50); // Truncate to reasonable length
 
         // Act
-        const categoryId = await test.db.insert('categories', {
+        const categoryId = await t.db.insert('categories', {
           organizationId: org._id,
           projectId: project._id,
           name: longName,
@@ -346,7 +348,7 @@ describe('Category Mutations', () => {
         });
 
         // Assert
-        const category = await test.db.get(categoryId);
+        const category = await t.db.get(categoryId);
         expect(category.handle.length).toBeLessThanOrEqual(50);
       });
 
@@ -361,7 +363,7 @@ describe('Category Mutations', () => {
           const handle = generateHandle(name);
           const path = parentPath + `/${handle}`;
           
-          const categoryId = await test.db.insert('categories', {
+          const categoryId = await t.db.insert('categories', {
             organizationId: org._id,
             projectId: project._id,
             name,
@@ -414,7 +416,7 @@ describe('Category Mutations', () => {
     describe('Happy Path', () => {
       it('should update category name and description', async () => {
         // Act
-        await test.db.patch(category._id, {
+        await t.db.patch(category._id, {
           name: 'Updated Name',
           description: 'Updated description',
           version: 2,
@@ -423,7 +425,7 @@ describe('Category Mutations', () => {
         });
 
         // Assert
-        const updated = await test.db.get(category._id);
+        const updated = await t.db.get(category._id);
         expect(updated).toMatchObject({
           name: 'Updated Name',
           description: 'Updated description',
@@ -457,7 +459,7 @@ describe('Category Mutations', () => {
 
         // Act - Update parent handle
         const newHandle = 'new-handle';
-        await test.db.patch(category._id, {
+        await t.db.patch(category._id, {
           handle: newHandle,
           path: `/${newHandle}`,
           version: 2,
@@ -466,14 +468,14 @@ describe('Category Mutations', () => {
         });
 
         // Update children paths
-        await test.db.patch(childCategory._id, {
+        await t.db.patch(childCategory._id, {
           path: `/${newHandle}/child`,
           version: 2,
           updatedAt: Date.now(),
           lastModifiedBy: user._id,
         });
 
-        await test.db.patch(grandchildCategory._id, {
+        await t.db.patch(grandchildCategory._id, {
           path: `/${newHandle}/child/grandchild`,
           version: 2,
           updatedAt: Date.now(),
@@ -481,9 +483,9 @@ describe('Category Mutations', () => {
         });
 
         // Assert
-        const updatedParent = await test.db.get(category._id);
-        const updatedChild = await test.db.get(childCategory._id);
-        const updatedGrandchild = await test.db.get(grandchildCategory._id);
+        const updatedParent = await t.db.get(category._id);
+        const updatedChild = await t.db.get(childCategory._id);
+        const updatedGrandchild = await t.db.get(grandchildCategory._id);
 
         expect(updatedParent.path).toBe('/new-handle');
         expect(updatedChild.path).toBe('/new-handle/child');
@@ -492,7 +494,7 @@ describe('Category Mutations', () => {
 
       it('should update metadata', async () => {
         // Act
-        await test.db.patch(category._id, {
+        await t.db.patch(category._id, {
           metadata: { updated: true, count: 42 },
           version: 2,
           updatedAt: Date.now(),
@@ -500,27 +502,27 @@ describe('Category Mutations', () => {
         });
 
         // Assert
-        const updated = await test.db.get(category._id);
+        const updated = await t.db.get(category._id);
         expect(updated.metadata).toEqual({ updated: true, count: 42 });
       });
 
       it('should not increment version if no changes', async () => {
         // Act - Try to update with same values
-        const originalCategory = await test.db.get(category._id);
+        const originalCategory = await t.db.get(category._id);
         
         // In a real mutation, this would check for changes and not update
         // Here we simulate that by not patching if no changes
         const hasChanges = false;
         
         if (hasChanges) {
-          await test.db.patch(category._id, {
+          await t.db.patch(category._id, {
             version: 2,
             updatedAt: Date.now(),
           });
         }
 
         // Assert
-        const notUpdated = await test.db.get(category._id);
+        const notUpdated = await t.db.get(category._id);
         expect(notUpdated.version).toBe(1);
       });
     });
@@ -537,7 +539,7 @@ describe('Category Mutations', () => {
         await seedDatabase(test, { categories: [otherCategory] });
 
         // Act & Assert - Check handle exists
-        const existing = await test.db
+        const existing = await t.db
           .query('categories')
           .withIndex('by_handle', (q) =>
             q
@@ -552,7 +554,7 @@ describe('Category Mutations', () => {
 
       it('should reject update of non-existent category', async () => {
         // Act & Assert
-        const nonExistent = await test.db.get('cat_nonexistent' as Id<'categories'>);
+        const nonExistent = await t.db.get('cat_nonexistent' as Id<'categories'>);
         expect(nonExistent).toBeNull();
       });
     });
@@ -560,7 +562,7 @@ describe('Category Mutations', () => {
     describe('Edge Cases', () => {
       it('should handle updating category with no children', async () => {
         // Act
-        await test.db.patch(category._id, {
+        await t.db.patch(category._id, {
           handle: 'new-handle',
           path: '/new-handle',
           version: 2,
@@ -569,14 +571,14 @@ describe('Category Mutations', () => {
         });
 
         // Assert
-        const updated = await test.db.get(category._id);
+        const updated = await t.db.get(category._id);
         expect(updated.handle).toBe('new-handle');
         expect(updated.path).toBe('/new-handle');
       });
 
       it('should preserve other fields when updating specific fields', async () => {
         // Act
-        await test.db.patch(category._id, {
+        await t.db.patch(category._id, {
           name: 'New Name Only',
           version: 2,
           updatedAt: Date.now(),
@@ -584,7 +586,7 @@ describe('Category Mutations', () => {
         });
 
         // Assert
-        const updated = await test.db.get(category._id);
+        const updated = await t.db.get(category._id);
         expect(updated.name).toBe('New Name Only');
         expect(updated.description).toBe('Original description'); // Preserved
         expect(updated.handle).toBe('original-handle'); // Preserved
@@ -612,7 +614,7 @@ describe('Category Mutations', () => {
     describe('Happy Path', () => {
       it('should soft delete category', async () => {
         // Act
-        await test.db.patch(category._id, {
+        await t.db.patch(category._id, {
           status: 'archived',
           version: 2,
           updatedAt: Date.now(),
@@ -620,7 +622,7 @@ describe('Category Mutations', () => {
         });
 
         // Assert
-        const deleted = await test.db.get(category._id);
+        const deleted = await t.db.get(category._id);
         expect(deleted).toBeDefined(); // Still exists
         expect(deleted.status).toBe('archived');
         expect(deleted.version).toBe(2);
@@ -640,7 +642,7 @@ describe('Category Mutations', () => {
         await seedDatabase(test, { categories: [childCategory] });
 
         // Act & Assert - Check for children
-        const children = await test.db
+        const children = await t.db
           .query('categories')
           .withIndex('by_parent', (q) =>
             q
@@ -673,7 +675,7 @@ describe('Category Mutations', () => {
         });
 
         // Act & Assert - Check for assignments
-        const assignments = await test.db
+        const assignments = await t.db
           .query('categoryProductAssignments')
           .withIndex('by_category', (q) => q.eq('categoryId', category._id))
           .filter((q) => q.eq(q.field('status'), 'active'))
@@ -684,7 +686,7 @@ describe('Category Mutations', () => {
 
       it('should reject deletion of non-existent category', async () => {
         // Act & Assert
-        const nonExistent = await test.db.get('cat_nonexistent' as Id<'categories'>);
+        const nonExistent = await t.db.get('cat_nonexistent' as Id<'categories'>);
         expect(nonExistent).toBeNull();
       });
     });
@@ -692,10 +694,10 @@ describe('Category Mutations', () => {
     describe('Edge Cases', () => {
       it('should allow deletion of already archived category', async () => {
         // Arrange
-        await test.db.patch(category._id, { status: 'archived' });
+        await t.db.patch(category._id, { status: 'archived' });
 
         // Act - Try to delete again (should be idempotent)
-        await test.db.patch(category._id, {
+        await t.db.patch(category._id, {
           status: 'archived',
           version: category.version + 1,
           updatedAt: Date.now(),
@@ -703,7 +705,7 @@ describe('Category Mutations', () => {
         });
 
         // Assert
-        const stillArchived = await test.db.get(category._id);
+        const stillArchived = await t.db.get(category._id);
         expect(stillArchived.status).toBe('archived');
       });
 
@@ -712,7 +714,7 @@ describe('Category Mutations', () => {
         const originalData = { ...category };
 
         // Act
-        await test.db.patch(category._id, {
+        await t.db.patch(category._id, {
           status: 'archived',
           version: 2,
           updatedAt: Date.now(),
@@ -720,7 +722,7 @@ describe('Category Mutations', () => {
         });
 
         // Assert
-        const archived = await test.db.get(category._id);
+        const archived = await t.db.get(category._id);
         expect(archived.name).toBe(originalData.name);
         expect(archived.handle).toBe(originalData.handle);
         expect(archived.description).toBe(originalData.description);

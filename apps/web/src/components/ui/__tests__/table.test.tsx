@@ -1,7 +1,8 @@
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import React from 'react';
-import { render, screen } from '@/__tests__/test-utils';
+
 import userEvent from '@testing-library/user-event';
-import { setupTest, cleanupTest } from '@/__tests__/frontend-test-helpers';
+import { cleanupTest, render, screen, setupTest, renderWithProviders } from '@/__tests__/test-helpers';
 import {
   Table,
   TableBody,
@@ -24,8 +25,7 @@ describe('Table', () => {
 
   describe('Basic Rendering', () => {
     it('renders a simple table', () => {
-      render(
-        <Table>
+      renderWithProviders(<Table>
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
@@ -57,8 +57,7 @@ describe('Table', () => {
     });
 
     it('renders with caption', () => {
-      render(
-        <Table>
+      renderWithProviders(<Table>
           <TableCaption>User information table</TableCaption>
           <TableHeader>
             <TableRow>
@@ -80,8 +79,7 @@ describe('Table', () => {
     });
 
     it('renders with footer', () => {
-      render(
-        <Table>
+      renderWithProviders(<Table>
           <TableHeader>
             <TableRow>
               <TableHead>Product</TableHead>
@@ -116,8 +114,7 @@ describe('Table', () => {
 
   describe('Table Components', () => {
     it('applies correct classes to TableHeader', () => {
-      const { container } = render(
-        <Table>
+      const { container } = renderWithProviders(<Table>
           <TableHeader className="custom-header">
             <TableRow>
               <TableHead>Header</TableHead>
@@ -131,8 +128,7 @@ describe('Table', () => {
     });
 
     it('applies correct classes to TableRow', () => {
-      render(
-        <Table>
+      renderWithProviders(<Table>
           <TableBody>
             <TableRow className="custom-row">
               <TableCell>Cell</TableCell>
@@ -152,8 +148,7 @@ describe('Table', () => {
     });
 
     it('applies correct classes to TableHead', () => {
-      render(
-        <Table>
+      renderWithProviders(<Table>
           <TableHeader>
             <TableRow>
               <TableHead className="custom-head">Column Header</TableHead>
@@ -176,8 +171,7 @@ describe('Table', () => {
     });
 
     it('applies correct classes to TableCell', () => {
-      render(
-        <Table>
+      renderWithProviders(<Table>
           <TableBody>
             <TableRow>
               <TableCell className="custom-cell">Cell Content</TableCell>
@@ -198,8 +192,7 @@ describe('Table', () => {
 
   describe('Responsive Behavior', () => {
     it('wraps table in scrollable container', () => {
-      const { container } = render(
-        <Table>
+      const { container } = renderWithProviders(<Table>
           <TableBody>
             <TableRow>
               <TableCell>Content</TableCell>
@@ -222,8 +215,7 @@ describe('Table', () => {
         { id: 3, name: 'Product C', price: 150, stock: 0 },
       ];
 
-      render(
-        <Table>
+      renderWithProviders(<Table>
           <TableHeader>
             <TableRow>
               <TableHead>ID</TableHead>
@@ -260,8 +252,7 @@ describe('Table', () => {
     });
 
     it('renders table with checkbox column', () => {
-      render(
-        <Table>
+      renderWithProviders(<Table>
           <TableHeader>
             <TableRow>
               <TableHead>
@@ -286,8 +277,7 @@ describe('Table', () => {
     });
 
     it('handles empty table state', () => {
-      render(
-        <Table>
+      renderWithProviders(<Table>
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
@@ -312,8 +302,7 @@ describe('Table', () => {
 
   describe('Row Selection', () => {
     it('highlights selected rows', () => {
-      render(
-        <Table>
+      renderWithProviders(<Table>
           <TableBody>
             <TableRow data-state="selected">
               <TableCell>Selected Row</TableCell>
@@ -336,8 +325,7 @@ describe('Table', () => {
       const user = userEvent.setup();
       const handleRowClick = jest.fn();
 
-      render(
-        <Table>
+      renderWithProviders(<Table>
           <TableBody>
             <TableRow onClick={() => handleRowClick(1)}>
               <TableCell>Clickable Row 1</TableCell>
@@ -359,8 +347,7 @@ describe('Table', () => {
 
   describe('Accessibility', () => {
     it('uses semantic table structure', () => {
-      render(
-        <Table>
+      renderWithProviders(<Table>
           <TableHeader>
             <TableRow>
               <TableHead>Header</TableHead>
@@ -382,8 +369,7 @@ describe('Table', () => {
     });
 
     it('supports scope attributes for headers', () => {
-      render(
-        <Table>
+      renderWithProviders(<Table>
           <TableHeader>
             <TableRow>
               <TableHead scope="col">Column Header</TableHead>
@@ -406,8 +392,7 @@ describe('Table', () => {
     });
 
     it('properly associates caption with table', () => {
-      render(
-        <Table>
+      renderWithProviders(<Table>
           <TableCaption>Accessible table caption</TableCaption>
           <TableBody>
             <TableRow>
@@ -426,8 +411,7 @@ describe('Table', () => {
 
   describe('Styling and Customization', () => {
     it('supports custom styling on all components', () => {
-      render(
-        <Table className="custom-table">
+      renderWithProviders(<Table className="custom-table">
           <TableCaption className="custom-caption">Caption</TableCaption>
           <TableHeader className="custom-header">
             <TableRow className="custom-header-row">
@@ -455,8 +439,7 @@ describe('Table', () => {
     });
 
     it('handles last row border correctly', () => {
-      const { container } = render(
-        <Table>
+      const { container } = renderWithProviders(<Table>
           <TableBody>
             <TableRow>
               <TableCell>First Row</TableCell>

@@ -42,10 +42,10 @@ export function OrganizationSwitcher({
 
   const [isSwitching, setIsSwitching] = useState(false);
 
-  const userWithOrgs = useQuery(api.functions.auth.users.currentWithOrganizations);
-  const switchOrganization = useMutation(api.functions.auth.sessions.switchOrganization);
+  const userWithOrgs = useQuery((api as any).functions.auth.users.currentWithOrganizations);
+  const switchOrganization = useMutation((api as any).functions.auth.sessions.switchOrganization);
   const currentOrg = useQuery(
-    api.functions.organizations.organizations.getOrganizationBySlug,
+    (api as any).functions.organizations.organizations.getOrganizationBySlug,
     currentOrgSlug ? { slug: currentOrgSlug } : 'skip'
   );
 
@@ -89,7 +89,7 @@ export function OrganizationSwitcher({
       <Select
         value={currentOrg._id}
         onValueChange={(value) => {
-          const org = organizations.find((o) => o._id === value);
+          const org = organizations.find((o: any) => o._id === value);
           if (org) handleSwitch(org._id, org.slug);
         }}
         disabled={isSwitching}
@@ -103,7 +103,7 @@ export function OrganizationSwitcher({
           </SelectValue>
         </SelectTrigger>
         <SelectContent>
-          {organizations.map((org) => (
+          {organizations.map((org: any) => (
             <SelectItem key={org._id} value={org._id}>
               <div className="flex items-center gap-2">
                 <span className="truncate">{org.name}</span>
@@ -147,7 +147,7 @@ export function OrganizationSwitcher({
         <DropdownMenuLabel>Organizations</DropdownMenuLabel>
         <DropdownMenuSeparator />
 
-        {organizations.map((org) => (
+        {organizations.map((org: any) => (
           <DropdownMenuItem
             key={org._id}
             onClick={() => handleSwitch(org._id, org.slug)}

@@ -1,12 +1,13 @@
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@/__tests__/test-utils';
+
 import userEvent from '@testing-library/user-event';
+import { cleanupTest, mockUseMutation, render, screen, setupTest, waitFor, renderWithProviders } from '@/__tests__/test-helpers';
 import { EditCategoryDialog } from '../edit-category-dialog';
-import { setupTest, cleanupTest } from '@/__tests__/frontend-test-helpers';
-import { toast } from 'sonner';
-import { useMutation } from 'convex/react';
 import { Category } from '@/types/models';
 import { Id } from '@convex/_generated/dataModel';
+import { toast } from 'sonner';
+;
 
 // Mock dependencies
 jest.mock('sonner', () => ({
@@ -16,12 +17,11 @@ jest.mock('sonner', () => ({
   },
 }));
 
-jest.mock('convex/react', () => ({
-  ...jest.requireActual('convex/react'),
-  useMutation: jest.fn(() => jest.fn()),
-}));
-
 describe('EditCategoryDialog', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   const mockOnOpenChange = jest.fn();
   const mockOnSuccess = jest.fn();
   const mockUpdateCategory = jest.fn();
@@ -35,8 +35,8 @@ describe('EditCategoryDialog', () => {
     handle: 'original-category',
     description: 'Original description',
     level: 0,
-    parentId: null,
-    path: [],
+    parentId: undefined,
+    path: '',
     properties: { color: 'red', size: 'large' },
     isActive: true,
     order: 0,
@@ -54,7 +54,7 @@ describe('EditCategoryDialog', () => {
   beforeEach(() => {
     setupTest();
     jest.clearAllMocks();
-    (useMutation as jest.Mock).mockReturnValue(mockUpdateCategory);
+    mockUseMutation.mockReturnValue(mockUpdateCategory);
   });
 
   afterEach(() => {
@@ -63,14 +63,14 @@ describe('EditCategoryDialog', () => {
 
   describe('Rendering', () => {
     it('renders dialog with correct title', () => {
-      render(<EditCategoryDialog {...defaultProps} />);
+      renderWithProviders(<EditCategoryDialog {...defaultProps} />);
 
       expect(screen.getByRole('dialog')).toBeInTheDocument();
       expect(screen.getByText('Edit Category')).toBeInTheDocument();
     });
 
     it('pre-fills form with category data', () => {
-      render(<EditCategoryDialog {...defaultProps} />);
+      renderWithProviders(<EditCategoryDialog {...defaultProps} />);
 
       expect(screen.getByLabelText(/name \*/i)).toHaveValue('Original Category');
       expect(screen.getByLabelText(/handle/i)).toHaveValue('original-category');
@@ -78,14 +78,14 @@ describe('EditCategoryDialog', () => {
     });
 
     it('shows active status toggle', () => {
-      render(<EditCategoryDialog {...defaultProps} />);
+      renderWithProviders(<EditCategoryDialog {...defaultProps} />);
 
       const activeToggle = screen.getByRole('checkbox', { name: /active/i });
       expect(activeToggle).toBeChecked();
     });
 
     it('displays existing custom properties', () => {
-      render(<EditCategoryDialog {...defaultProps} />);
+      renderWithProviders(<EditCategoryDialog {...defaultProps} />);
 
       // Expand properties section
       const propertiesSection = screen.getByText(/custom properties/i);
@@ -100,7 +100,7 @@ describe('EditCategoryDialog', () => {
 
     it('handles category without properties', () => {
       const categoryWithoutProps = { ...mockCategory, properties: {} };
-      render(<EditCategoryDialog {...defaultProps} category={categoryWithoutProps} />);
+      renderWithProviders(<EditCategoryDialog {...defaultProps} category={categoryWithoutProps} />);
 
       expect(screen.getByText(/no custom properties/i)).toBeInTheDocument();
     });
@@ -109,7 +109,7 @@ describe('EditCategoryDialog', () => {
   describe('Form Interactions', () => {
     it('updates handle when name changes and synchronized', async () => {
       const user = userEvent.setup();
-      render(<EditCategoryDialog {...defaultProps} />);
+      renderWithProviders(<EditCategoryDialog {...defaultProps} />);
 
       const nameInput = screen.getByLabelText(/name \*/i);
       const handleInput = screen.getByLabelText(/handle/i);
@@ -122,7 +122,7 @@ describe('EditCategoryDialog', () => {
 
     it('does not update handle if manually edited', async () => {
       const user = userEvent.setup();
-      render(<EditCategoryDialog {...defaultProps} />);
+      renderWithProviders(<EditCategoryDialog {...defaultProps} />);
 
       const handleInput = screen.getByLabelText(/handle/i);
       
@@ -141,7 +141,7 @@ describe('EditCategoryDialog', () => {
 
     it('toggles active status', async () => {
       const user = userEvent.setup();
-      render(<EditCategoryDialog {...defaultProps} />);
+      renderWithProviders(<EditCategoryDialog {...defaultProps} />);
 
       const activeToggle = screen.getByRole('checkbox', { name: /active/i });
       await user.click(activeToggle);
@@ -155,7 +155,7 @@ describe('EditCategoryDialog', () => {
       const user = userEvent.setup();
       mockUpdateCategory.mockResolvedValueOnce({});
       
-      render(<EditCategoryDialog {...defaultProps} />);
+      renderWithProviders(<EditCategoryDialog {...defaultProps} />);
 
       // Update fields
       const nameInput = screen.getByLabelText(/name \*/i);
@@ -188,7 +188,7 @@ describe('EditCategoryDialog', () => {
       const user = userEvent.setup();
       mockUpdateCategory.mockResolvedValueOnce({});
       
-      render(<EditCategoryDialog {...defaultProps} />);
+      renderWithProviders(<EditCategoryDialog {...defaultProps} />);
 
       const submitButton = screen.getByRole('button', { name: /update category/i });
       await user.click(submitButton);
@@ -204,7 +204,7 @@ describe('EditCategoryDialog', () => {
       const user = userEvent.setup();
       mockUpdateCategory.mockRejectedValueOnce(new Error('Update failed'));
       
-      render(<EditCategoryDialog {...defaultProps} />);
+      renderWithProviders(<EditCategoryDialog {...defaultProps} />);
 
       const submitButton = screen.getByRole('button', { name: /update category/i });
       await user.click(submitButton);
@@ -218,7 +218,7 @@ describe('EditCategoryDialog', () => {
       const user = userEvent.setup();
       mockUpdateCategory.mockImplementation(() => new Promise(resolve => setTimeout(resolve, 100)));
       
-      render(<EditCategoryDialog {...defaultProps} />);
+      renderWithProviders(<EditCategoryDialog {...defaultProps} />);
 
       const submitButton = screen.getByRole('button', { name: /update category/i });
       await user.click(submitButton);
@@ -231,7 +231,7 @@ describe('EditCategoryDialog', () => {
   describe('Custom Properties Management', () => {
     it('adds new properties', async () => {
       const user = userEvent.setup();
-      render(<EditCategoryDialog {...defaultProps} />);
+      renderWithProviders(<EditCategoryDialog {...defaultProps} />);
 
       // Expand properties if needed
       const propertiesButton = screen.getByRole('button', { name: /custom properties/i });
@@ -254,7 +254,7 @@ describe('EditCategoryDialog', () => {
 
     it('removes existing properties', async () => {
       const user = userEvent.setup();
-      render(<EditCategoryDialog {...defaultProps} />);
+      renderWithProviders(<EditCategoryDialog {...defaultProps} />);
 
       // Remove color property
       const removeButtons = screen.getAllByRole('button', { name: /remove/i });
@@ -268,7 +268,7 @@ describe('EditCategoryDialog', () => {
       const user = userEvent.setup();
       mockUpdateCategory.mockResolvedValueOnce({});
       
-      render(<EditCategoryDialog {...defaultProps} />);
+      renderWithProviders(<EditCategoryDialog {...defaultProps} />);
 
       // Remove one property and add another
       const removeButtons = screen.getAllByRole('button', { name: /remove/i });
@@ -296,7 +296,7 @@ describe('EditCategoryDialog', () => {
   describe('Validation', () => {
     it('validates required name field', async () => {
       const user = userEvent.setup();
-      render(<EditCategoryDialog {...defaultProps} />);
+      renderWithProviders(<EditCategoryDialog {...defaultProps} />);
 
       const nameInput = screen.getByLabelText(/name \*/i);
       await user.clear(nameInput);
@@ -313,7 +313,7 @@ describe('EditCategoryDialog', () => {
       const user = userEvent.setup();
       mockUpdateCategory.mockResolvedValueOnce({});
       
-      render(<EditCategoryDialog {...defaultProps} />);
+      renderWithProviders(<EditCategoryDialog {...defaultProps} />);
 
       const descriptionInput = screen.getByLabelText(/description/i);
       await user.clear(descriptionInput);
@@ -333,14 +333,14 @@ describe('EditCategoryDialog', () => {
 
   describe('Dialog Management', () => {
     it('handles null category gracefully', () => {
-      render(<EditCategoryDialog {...defaultProps} category={null} />);
+      renderWithProviders(<EditCategoryDialog {...defaultProps} category={null} />);
 
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
 
     it('resets form when dialog reopens', async () => {
       const user = userEvent.setup();
-      const { rerender } = render(<EditCategoryDialog {...defaultProps} />);
+      const { rerender } = renderWithProviders(<EditCategoryDialog {...defaultProps} />);
 
       // Make changes
       const nameInput = screen.getByLabelText(/name \*/i);
@@ -348,8 +348,8 @@ describe('EditCategoryDialog', () => {
       await user.type(nameInput, 'Changed Name');
 
       // Close and reopen
-      rerender(<EditCategoryDialog {...defaultProps} open={false} />);
-      rerender(<EditCategoryDialog {...defaultProps} open={true} />);
+      rerender(<EditCategoryDialog {...defaultProps} open={false} />)
+      rerender(<EditCategoryDialog {...defaultProps} open={true} />)
 
       // Original data should be restored
       expect(screen.getByLabelText(/name \*/i)).toHaveValue('Original Category');
@@ -358,7 +358,7 @@ describe('EditCategoryDialog', () => {
 
   describe('Accessibility', () => {
     it('has proper ARIA attributes', () => {
-      render(<EditCategoryDialog {...defaultProps} />);
+      renderWithProviders(<EditCategoryDialog {...defaultProps} />);
 
       const dialog = screen.getByRole('dialog');
       expect(dialog).toHaveAttribute('aria-labelledby');
@@ -366,7 +366,7 @@ describe('EditCategoryDialog', () => {
     });
 
     it('manages focus correctly', async () => {
-      render(<EditCategoryDialog {...defaultProps} />);
+      renderWithProviders(<EditCategoryDialog {...defaultProps} />);
 
       await waitFor(() => {
         const nameInput = screen.getByLabelText(/name \*/i);
@@ -376,7 +376,7 @@ describe('EditCategoryDialog', () => {
 
     it('announces form errors', async () => {
       const user = userEvent.setup();
-      render(<EditCategoryDialog {...defaultProps} />);
+      renderWithProviders(<EditCategoryDialog {...defaultProps} />);
 
       const nameInput = screen.getByLabelText(/name \*/i);
       await user.clear(nameInput);

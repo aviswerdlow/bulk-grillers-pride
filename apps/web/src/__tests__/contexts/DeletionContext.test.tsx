@@ -1,8 +1,9 @@
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import React from 'react';
-import { render, renderHook, act, waitFor } from '@testing-library/react';
-import { DeletionProvider, useDeletion } from '@/contexts/DeletionContext';
+import { renderHook } from '@/__tests__/test-helpers';
+import { act } from '@testing-library/react';
 import { DeletionImpactItem } from '@/components/deletion/visualization/types';
-
+import { DeletionProvider, useDeletion } from '@/contexts/DeletionContext';
 // Mock the IndexedDB storage
 jest.mock('@/lib/deletion-draft-storage', () => ({
   saveDeletionDraft: jest.fn().mockResolvedValue('draft-123'),
@@ -10,11 +11,11 @@ jest.mock('@/lib/deletion-draft-storage', () => ({
 }));
 
 // Mock Convex
-jest.mock('convex/react', () => ({
-  useMutation: jest.fn(() => jest.fn()),
-}));
-
 describe('DeletionContext', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   const wrapper = ({ children }: { children: React.ReactNode }) => (
     <DeletionProvider>{children}</DeletionProvider>
   );
@@ -41,7 +42,7 @@ describe('DeletionContext', () => {
     it('should have default options', () => {
       const { result } = renderHook(() => useDeletion(), { wrapper });
       
-      expect(result.current.context.options).toEqual({
+      expect(result.current?.context.options).toEqual({
         cascadeDeletes: true,
         preserveReferences: false,
         createBackup: true,
@@ -105,7 +106,7 @@ describe('DeletionContext', () => {
       });
       
       expect(result.current.selectedCount).toBe(1);
-      expect(result.current.context.selectedItems[0].id).toBe('2');
+      expect(result.current?.context.selectedItems?.[0]?.id).toBe('2');
     });
 
     it('should toggle item selection', () => {
@@ -119,7 +120,7 @@ describe('DeletionContext', () => {
       
       // Note: Toggle implementation needs the actual item lookup
       // This is a simplified test
-      expect(result.current.context.selectedItems).toBeDefined();
+      expect(result.current?.context.selectedItems).toBeDefined();
     });
   });
 
@@ -132,8 +133,8 @@ describe('DeletionContext', () => {
         result.current.updateOptions({ cascadeDeletes: false });
       });
       
-      expect(result.current.context.options.cascadeDeletes).toBe(false);
-      expect(result.current.context.options.createBackup).toBe(true); // Unchanged
+      expect(result.current?.context.options.cascadeDeletes).toBe(false);
+      expect(result.current?.context.options.createBackup).toBe(true); // Unchanged
     });
   });
 

@@ -1,7 +1,10 @@
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TypeToConfirmInput } from '../TypeToConfirmInput';
+
+import { renderWithProviders } from '@/__tests__/test-helpers';
 
 describe('TypeToConfirmInput', () => {
   const mockOnConfirm = jest.fn();
@@ -11,8 +14,7 @@ describe('TypeToConfirmInput', () => {
   });
 
   it('renders with initial empty state', () => {
-    render(
-      <TypeToConfirmInput confirmText="DELETE" onConfirm={mockOnConfirm} />
+    renderWithProviders(<TypeToConfirmInput confirmText="DELETE" onConfirm={mockOnConfirm} />
     );
 
     expect(screen.getByLabelText(/Type.*DELETE.*to confirm:/)).toBeInTheDocument();
@@ -22,8 +24,7 @@ describe('TypeToConfirmInput', () => {
 
   it('shows partial match state', async () => {
     const user = userEvent.setup();
-    render(
-      <TypeToConfirmInput confirmText="DELETE" onConfirm={mockOnConfirm} />
+    renderWithProviders(<TypeToConfirmInput confirmText="DELETE" onConfirm={mockOnConfirm} />
     );
 
     const input = screen.getByRole('textbox');
@@ -37,8 +38,7 @@ describe('TypeToConfirmInput', () => {
 
   it('shows complete match state', async () => {
     const user = userEvent.setup();
-    render(
-      <TypeToConfirmInput confirmText="DELETE" onConfirm={mockOnConfirm} />
+    renderWithProviders(<TypeToConfirmInput confirmText="DELETE" onConfirm={mockOnConfirm} />
     );
 
     const input = screen.getByRole('textbox');
@@ -50,8 +50,7 @@ describe('TypeToConfirmInput', () => {
 
   it('shows mismatch state', async () => {
     const user = userEvent.setup();
-    render(
-      <TypeToConfirmInput confirmText="DELETE" onConfirm={mockOnConfirm} />
+    renderWithProviders(<TypeToConfirmInput confirmText="DELETE" onConfirm={mockOnConfirm} />
     );
 
     const input = screen.getByRole('textbox');
@@ -63,8 +62,7 @@ describe('TypeToConfirmInput', () => {
 
   it('handles case-insensitive matching by default', async () => {
     const user = userEvent.setup();
-    render(
-      <TypeToConfirmInput confirmText="DELETE" onConfirm={mockOnConfirm} />
+    renderWithProviders(<TypeToConfirmInput confirmText="DELETE" onConfirm={mockOnConfirm} />
     );
 
     const input = screen.getByRole('textbox');
@@ -76,8 +74,7 @@ describe('TypeToConfirmInput', () => {
 
   it('handles case-sensitive matching when enabled', async () => {
     const user = userEvent.setup();
-    render(
-      <TypeToConfirmInput 
+    renderWithProviders(<TypeToConfirmInput 
         confirmText="DELETE" 
         onConfirm={mockOnConfirm}
         caseSensitive
@@ -92,8 +89,7 @@ describe('TypeToConfirmInput', () => {
   });
 
   it('respects disabled prop', () => {
-    render(
-      <TypeToConfirmInput 
+    renderWithProviders(<TypeToConfirmInput 
         confirmText="DELETE" 
         onConfirm={mockOnConfirm}
         disabled
@@ -105,8 +101,7 @@ describe('TypeToConfirmInput', () => {
   });
 
   it('uses custom placeholder when provided', () => {
-    render(
-      <TypeToConfirmInput 
+    renderWithProviders(<TypeToConfirmInput 
         confirmText="DELETE" 
         onConfirm={mockOnConfirm}
         placeholder="Type confirmation text"
@@ -118,8 +113,7 @@ describe('TypeToConfirmInput', () => {
 
   it('resets to empty state when cleared', async () => {
     const user = userEvent.setup();
-    render(
-      <TypeToConfirmInput confirmText="DELETE" onConfirm={mockOnConfirm} />
+    renderWithProviders(<TypeToConfirmInput confirmText="DELETE" onConfirm={mockOnConfirm} />
     );
 
     const input = screen.getByRole('textbox');
@@ -135,8 +129,7 @@ describe('TypeToConfirmInput', () => {
 
   it('shows correct character count for partial matches', async () => {
     const user = userEvent.setup();
-    render(
-      <TypeToConfirmInput confirmText="CONFIRM" onConfirm={mockOnConfirm} />
+    renderWithProviders(<TypeToConfirmInput confirmText="CONFIRM" onConfirm={mockOnConfirm} />
     );
 
     const input = screen.getByRole('textbox');
@@ -156,8 +149,7 @@ describe('TypeToConfirmInput', () => {
   });
 
   it('has proper ARIA attributes', () => {
-    render(
-      <TypeToConfirmInput confirmText="DELETE" onConfirm={mockOnConfirm} />
+    renderWithProviders(<TypeToConfirmInput confirmText="DELETE" onConfirm={mockOnConfirm} />
     );
 
     const input = screen.getByRole('textbox');
@@ -169,8 +161,7 @@ describe('TypeToConfirmInput', () => {
 
   it('sets aria-invalid on mismatch', async () => {
     const user = userEvent.setup();
-    render(
-      <TypeToConfirmInput confirmText="DELETE" onConfirm={mockOnConfirm} />
+    renderWithProviders(<TypeToConfirmInput confirmText="DELETE" onConfirm={mockOnConfirm} />
     );
 
     const input = screen.getByRole('textbox');

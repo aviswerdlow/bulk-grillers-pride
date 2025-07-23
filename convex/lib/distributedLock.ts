@@ -50,7 +50,7 @@ export const acquireLock = mutation({
     if (args.resourceType === 'product') {
       const product = await ctx.db.get(args.resourceId as any);
       if (product && 'organizationId' in product) {
-        organizationId = product.organizationId;
+        organizationId = (product as any).organizationId;
       }
     }
     
@@ -297,7 +297,7 @@ export async function withLock<T>(
   
   try {
     // Acquire lock
-    const lockResult = await acquireLock(ctx, {
+    const lockResult = await ctx.runMutation(acquireLock, {
       resourceType,
       resourceId,
       operation,
@@ -314,7 +314,7 @@ export async function withLock<T>(
     // Always release lock
     if (lockId) {
       try {
-        await releaseLock(ctx, { lockId });
+        await ctx.runMutation(releaseLock, { lockId });
       } catch (error) {
         console.error('Failed to release lock:', error);
       }

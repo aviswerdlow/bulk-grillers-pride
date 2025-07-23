@@ -1,17 +1,25 @@
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+/**
+ * @jest-environment jsdom
+ */
+import React from 'react';
+import { render, screen, waitFor } from '@testing-library/react';
+import { Id } from '@/../../../convex/_generated/dataModel';
+import { ProgressiveDeletion } from '@/components/deletion/progressive/ProgressiveDeletion';
+import { Product } from '@/types/models';
+
 /**
  * Performance tests for Progressive Deletion
  * Validates Core Web Vitals and bundle size targets
  */
 
-import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ProgressiveDeletion } from '@/components/deletion/progressive/ProgressiveDeletion';
-import { Product } from '@/types/models';
+import { renderWithProviders } from '@/__tests__/test-helpers';
 
 // Mock products
 const mockProducts: Product[] = [
   {
-    _id: 'test1',
+    _id: 'test1' as Id<'products'>,
     title: 'Test Product 1',
     handle: 'test-1',
     description: 'Test',
@@ -30,10 +38,16 @@ const mockProducts: Product[] = [
 
 // Mock performance observer
 const mockPerformanceObserver = jest.fn();
-global.PerformanceObserver = jest.fn().mockImplementation((callback) => ({
-  observe: mockPerformanceObserver,
-  disconnect: jest.fn()
-}));
+global.PerformanceObserver = jest.fn().mockImplementation((callback) => {
+  void callback;
+  return {
+    observe: mockPerformanceObserver,
+    disconnect: jest.fn()
+  };
+}) as any;
+
+// Add static property required by TypeScript
+(global.PerformanceObserver as any).supportedEntryTypes = ['measure', 'navigation'];
 
 describe('Progressive Deletion Performance', () => {
   beforeEach(() => {
@@ -44,8 +58,7 @@ describe('Progressive Deletion Performance', () => {
     it('should keep Core layer under 50KB', () => {
       // This would be validated in build process
       // Here we check component doesn't load heavy dependencies
-      const { container } = render(
-        <ProgressiveDeletion 
+      const { container } = renderWithProviders(<ProgressiveDeletion 
           items={mockProducts} 
           forceLayer="core"
         />
@@ -58,8 +71,7 @@ describe('Progressive Deletion Performance', () => {
     });
     
     it('should lazy load enhanced layer components', async () => {
-      const { container } = render(
-        <ProgressiveDeletion 
+      const { container } = renderWithProviders(<ProgressiveDeletion 
           items={mockProducts} 
           forceLayer="enhanced"
         />
@@ -79,8 +91,7 @@ describe('Progressive Deletion Performance', () => {
     it('should achieve LCP < 2.5s', async () => {
       const startTime = performance.now();
       
-      render(
-        <ProgressiveDeletion 
+      renderWithProviders(<ProgressiveDeletion 
           items={mockProducts} 
           forceLayer="core"
         />
@@ -100,8 +111,7 @@ describe('Progressive Deletion Performance', () => {
     it('should achieve FID < 100ms', async () => {
       const user = userEvent.setup();
       
-      render(
-        <ProgressiveDeletion 
+      renderWithProviders(<ProgressiveDeletion 
           items={mockProducts} 
           forceLayer="enhanced"
         />
@@ -127,8 +137,7 @@ describe('Progressive Deletion Performance', () => {
         { entryType: 'layout-shift', value: 0.05, hadRecentInput: false }
       ];
       
-      render(
-        <ProgressiveDeletion 
+      renderWithProviders(<ProgressiveDeletion 
           items={mockProducts} 
           forceLayer="optimal"
         />
@@ -137,7 +146,7 @@ describe('Progressive Deletion Performance', () => {
       // Simulate layout shifts
       mockEntries.forEach(entry => {
         if (!entry.hadRecentInput) {
-          layoutShifts += entry.value;
+          layoutShifts += entry?.value;
         }
       });
       
@@ -163,8 +172,7 @@ describe('Progressive Deletion Performance', () => {
         requestAnimationFrame(measureFPS);
       };
       
-      render(
-        <ProgressiveDeletion 
+      renderWithProviders(<ProgressiveDeletion 
           items={mockProducts} 
           forceLayer="enhanced"
         />
@@ -180,8 +188,7 @@ describe('Progressive Deletion Performance', () => {
     });
     
     it('should have touch targets >= 44px', () => {
-      const { container } = render(
-        <ProgressiveDeletion 
+      const { container } = renderWithProviders(<ProgressiveDeletion 
           items={mockProducts} 
           forceLayer="core"
         />
@@ -217,8 +224,7 @@ describe('Progressive Deletion Performance', () => {
         configurable: true
       });
       
-      const { container } = render(
-        <ProgressiveDeletion items={mockProducts} />
+      const { container } = renderWithProviders(<ProgressiveDeletion items={mockProducts} />
       );
       
       // Should select optimal layer for high-end device
@@ -239,8 +245,7 @@ describe('Progressive Deletion Performance', () => {
         configurable: true
       });
       
-      const { container } = render(
-        <ProgressiveDeletion items={mockProducts} />
+      const { container } = renderWithProviders(<ProgressiveDeletion items={mockProducts} />
       );
       
       // Should select core layer for low-end device

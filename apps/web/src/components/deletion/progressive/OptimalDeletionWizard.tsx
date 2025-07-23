@@ -18,11 +18,11 @@ const DeletionVisualization = lazy(() =>
   }))
 );
 
-const DeletionWizardSteps = lazy(() =>
-  import('../DeletionWizardExample').then(mod => ({
-    default: mod.default
-  }))
-);
+// const _DeletionWizardSteps = lazy(() =>
+//   import('../DeletionWizardExample').then(mod => ({
+//     default: mod.default
+//   }))
+// );
 
 interface OptimalDeletionWizardProps {
   product?: Product;
@@ -43,7 +43,7 @@ export function OptimalDeletionWizard({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(
     new Set((product ? [product] : items).map(item => item._id))
   );
-  const [impactAnalysis, setImpactAnalysis] = useState<any>(null);
+  const [impactAnalysis, setImpactAnalysis] = useState<unknown>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   
   // Preload visualization component when likely to be needed
@@ -205,7 +205,7 @@ export function OptimalDeletionWizard({
                       </div>
                     }>
                       <DeletionVisualization
-                        itemsToDelete={Array.from(selectedIds)}
+                        itemsToDelete={Array.from(selectedIds)} as any
                         viewMode="tree"
                       />
                     </Suspense>

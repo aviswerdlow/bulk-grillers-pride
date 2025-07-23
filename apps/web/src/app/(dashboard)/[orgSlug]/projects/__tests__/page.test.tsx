@@ -1,8 +1,10 @@
-import { render, screen } from '@/__tests__/test-utils';
-import ProjectsPage from '../page';
-import { mockUseQuery } from '@/__tests__/test-utils';
-import { useParams } from 'next/navigation';
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import React from 'react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { cleanupTest, mockUseQuery, mockUseMutation, renderWithProviders, setupTest } from '@/__tests__/test-helpers';
 import { formatDistanceToNow } from 'date-fns';
+import { useParams } from 'next/navigation';
+import ProjectsPage from '../page';
 
 // Mock Next.js router
 jest.mock('next/navigation', () => ({
@@ -34,18 +36,18 @@ jest.mock('lucide-react', () => ({
 
 describe('ProjectsPage', () => {
   const mockOrganization = {
-    _id: 'org_123' as any,
+    _id: 'org_123' as unknown,
     name: 'Test Organization',
     slug: 'test-org',
   };
 
   const mockProject = {
-    _id: 'proj_123' as any,
+    _id: 'proj_123' as unknown,
     name: 'Test Project',
     slug: 'test-project',
     description: 'A test project description',
     status: 'active',
-    organizationId: 'org_123' as any,
+    organizationId: 'org_123' as unknown,
     createdAt: Date.now(),
     updatedAt: Date.now(),
   };
@@ -69,29 +71,37 @@ describe('ProjectsPage', () => {
   it('renders loading state while fetching data', () => {
     mockUseQuery.mockReturnValue(undefined);
     
-    render(<ProjectsPage />);
+    renderWithProviders(<ProjectsPage />);
     
     expect(screen.getByText('Loading projects...')).toBeInTheDocument();
   });
 
   it('renders error when organization not found', () => {
-    mockUseQuery
-      .mockReturnValueOnce(null) // organization query
-      .mockReturnValueOnce([]); // projects query
+    let callCount = 0;
+    mockUseQuery.mockImplementation(((query: any, args: any) => {
+      callCount++;
+      if (callCount === 1) return null;
+      if (callCount === 2) return [];
+      return undefined;
+    }) as any); // projects query
     
-    render(<ProjectsPage />);
+    renderWithProviders(<ProjectsPage />);
     
     expect(screen.getByText('Organization not found')).toBeInTheDocument();
     expect(screen.getByText("The organization you're looking for doesn't exist.")).toBeInTheDocument();
   });
 
   it('renders projects page with empty state', () => {
-    mockUseQuery
-      .mockReturnValueOnce(mockOrganization) // organization query
-      .mockReturnValueOnce([]) // projects query
-      .mockReturnValueOnce(mockStats); // stats query
+    let callCount = 0;
+    mockUseQuery.mockImplementation(((query: any, args: any) => {
+      callCount++;
+      if (callCount === 1) return mockOrganization;
+      if (callCount === 2) return [];
+      if (callCount === 3) return mockStats;
+      return undefined;
+    }) as any); // stats query
     
-    render(<ProjectsPage />);
+    renderWithProviders(<ProjectsPage />);
     
     expect(screen.getByRole('heading', { name: 'Projects' })).toBeInTheDocument();
     expect(screen.getByText('No projects yet')).toBeInTheDocument();
@@ -100,12 +110,16 @@ describe('ProjectsPage', () => {
   });
 
   it('renders projects page with data', () => {
-    mockUseQuery
-      .mockReturnValueOnce(mockOrganization) // organization query
-      .mockReturnValueOnce([mockProject]) // projects query
-      .mockReturnValueOnce(mockStats); // stats query
+    let callCount = 0;
+    mockUseQuery.mockImplementation(((query: any, args: any) => {
+      callCount++;
+      if (callCount === 1) return mockOrganization;
+      if (callCount === 2) return [mockProject];
+      if (callCount === 3) return mockStats;
+      return undefined;
+    }) as any); // stats query
     
-    render(<ProjectsPage />);
+    renderWithProviders(<ProjectsPage />);
     
     // Check header
     expect(screen.getByRole('heading', { name: 'Projects' })).toBeInTheDocument();
@@ -121,24 +135,32 @@ describe('ProjectsPage', () => {
   });
 
   it('displays project stats correctly', () => {
-    mockUseQuery
-      .mockReturnValueOnce(mockOrganization)
-      .mockReturnValueOnce([mockProject])
-      .mockReturnValueOnce(mockStats);
+    let callCount = 0;
+    mockUseQuery.mockImplementation(((query: any, args: any) => {
+      callCount++;
+      if (callCount === 1) return mockOrganization;
+      if (callCount === 2) return [mockProject];
+      if (callCount === 3) return mockStats;
+      return undefined;
+    }) as any);
     
-    render(<ProjectsPage />);
+    renderWithProviders(<ProjectsPage />);
     
     expect(screen.getByText('42 products')).toBeInTheDocument();
     expect(screen.getByText('38 categorized')).toBeInTheDocument();
   });
 
   it('formats creation date correctly', () => {
-    mockUseQuery
-      .mockReturnValueOnce(mockOrganization)
-      .mockReturnValueOnce([mockProject])
-      .mockReturnValueOnce(mockStats);
+    let callCount = 0;
+    mockUseQuery.mockImplementation(((query: any, args: any) => {
+      callCount++;
+      if (callCount === 1) return mockOrganization;
+      if (callCount === 2) return [mockProject];
+      if (callCount === 3) return mockStats;
+      return undefined;
+    }) as any);
     
-    render(<ProjectsPage />);
+    renderWithProviders(<ProjectsPage />);
     
     expect(formatDistanceToNow).toHaveBeenCalledWith(
       new Date(mockProject.createdAt),
@@ -154,12 +176,16 @@ describe('ProjectsPage', () => {
       { ...mockProject, _id: 'proj_125', name: 'Third Project', slug: 'third-project', status: 'draft' },
     ];
     
-    mockUseQuery
-      .mockReturnValueOnce(mockOrganization)
-      .mockReturnValueOnce(projects)
-      .mockReturnValueOnce(mockStats);
+    let callCount = 0;
+    mockUseQuery.mockImplementation(((query: any, args: any) => {
+      callCount++;
+      if (callCount === 1) return mockOrganization;
+      if (callCount === 2) return projects;
+      if (callCount === 3) return mockStats;
+      return undefined;
+    }) as any);
     
-    render(<ProjectsPage />);
+    renderWithProviders(<ProjectsPage />);
     
     expect(screen.getByText('Test Project')).toBeInTheDocument();
     expect(screen.getByText('Second Project')).toBeInTheDocument();
@@ -168,12 +194,16 @@ describe('ProjectsPage', () => {
   });
 
   it('renders correct links for project actions', () => {
-    mockUseQuery
-      .mockReturnValueOnce(mockOrganization)
-      .mockReturnValueOnce([mockProject])
-      .mockReturnValueOnce(mockStats);
+    let callCount = 0;
+    mockUseQuery.mockImplementation(((query: any, args: any) => {
+      callCount++;
+      if (callCount === 1) return mockOrganization;
+      if (callCount === 2) return [mockProject];
+      if (callCount === 3) return mockStats;
+      return undefined;
+    }) as any);
     
-    render(<ProjectsPage />);
+    renderWithProviders(<ProjectsPage />);
     
     // Check settings link
     const settingsLink = screen.getByRole('link', { name: '' }).closest('a');
@@ -194,12 +224,16 @@ describe('ProjectsPage', () => {
       description: undefined,
     };
     
-    mockUseQuery
-      .mockReturnValueOnce(mockOrganization)
-      .mockReturnValueOnce([projectWithoutDesc])
-      .mockReturnValueOnce(mockStats);
+    let callCount = 0;
+    mockUseQuery.mockImplementation(((query: any, args: any) => {
+      callCount++;
+      if (callCount === 1) return mockOrganization;
+      if (callCount === 2) return [projectWithoutDesc];
+      if (callCount === 3) return mockStats;
+      return undefined;
+    }) as any);
     
-    render(<ProjectsPage />);
+    renderWithProviders(<ProjectsPage />);
     
     expect(screen.getByText('Test Project')).toBeInTheDocument();
     expect(screen.queryByText('A test project description')).not.toBeInTheDocument();
@@ -212,12 +246,16 @@ describe('ProjectsPage', () => {
       categorizedProducts: 0,
     };
     
-    mockUseQuery
-      .mockReturnValueOnce(mockOrganization)
-      .mockReturnValueOnce([mockProject])
-      .mockReturnValueOnce(emptyStats);
+    let callCount = 0;
+    mockUseQuery.mockImplementation(((query: any, args: any) => {
+      callCount++;
+      if (callCount === 1) return mockOrganization;
+      if (callCount === 2) return [mockProject];
+      if (callCount === 3) return emptyStats;
+      return undefined;
+    }) as any);
     
-    render(<ProjectsPage />);
+    renderWithProviders(<ProjectsPage />);
     
     expect(screen.getByText('0 products')).toBeInTheDocument();
     expect(screen.getByText('0 categorized')).toBeInTheDocument();
@@ -229,12 +267,16 @@ describe('ProjectsPage', () => {
       { ...mockProject, _id: 'proj_124', name: 'Draft Project', status: 'draft' },
     ];
     
-    mockUseQuery
-      .mockReturnValueOnce(mockOrganization)
-      .mockReturnValueOnce(projects)
-      .mockReturnValueOnce(mockStats);
+    let callCount = 0;
+    mockUseQuery.mockImplementation(((query: any, args: any) => {
+      callCount++;
+      if (callCount === 1) return mockOrganization;
+      if (callCount === 2) return projects;
+      if (callCount === 3) return mockStats;
+      return undefined;
+    }) as any);
     
-    const { container } = render(<ProjectsPage />);
+    renderWithProviders(<ProjectsPage />);
     
     const activeBadge = screen.getByText('active');
     expect(activeBadge).toHaveClass('bg-primary'); // default variant

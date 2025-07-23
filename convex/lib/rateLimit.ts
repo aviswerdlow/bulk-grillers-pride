@@ -152,10 +152,10 @@ async function getOrCreateRateLimit(
   
   const existing = await db
     .query('rateLimits')
-    .withIndex('by_identifier_resource', (q) =>
+    .withIndex('by_identifier_resource', (q: any) =>
       q.eq('identifier', options.identifier).eq('resource', options.resource)
     )
-    .filter((q) => q.eq(q.field('windowStart'), windowStart))
+    .filter((q: any) => q.eq(q.field('windowStart'), windowStart))
     .first();
     
   if (existing) {
@@ -193,7 +193,7 @@ export async function checkRateLimit(
   ctx: QueryCtx | MutationCtx | ActionCtx,
   options: RateLimitOptions
 ): Promise<RateLimitCheck> {
-  const { db } = ctx;
+  const db = 'db' in ctx ? ctx.db : (ctx as any).db;
   const now = Date.now();
   
   // Get organization to determine plan
@@ -294,7 +294,7 @@ export async function consumeRateLimit(
   ctx: MutationCtx | ActionCtx,
   options: RateLimitOptions
 ): Promise<void> {
-  const { db } = ctx;
+  const db = 'db' in ctx ? ctx.db : (ctx as any).db;
   const now = Date.now();
   
   // Get organization to determine plan
@@ -323,10 +323,10 @@ export async function consumeRateLimit(
   // Get existing rate limit record
   const existing = await db
     .query('rateLimits')
-    .withIndex('by_identifier_resource', (q) =>
+    .withIndex('by_identifier_resource', (q: any) =>
       q.eq('identifier', options.identifier).eq('resource', options.resource)
     )
-    .filter((q) => q.eq(q.field('windowStart'), windowStart))
+    .filter((q: any) => q.eq(q.field('windowStart'), windowStart))
     .first();
     
   if (existing) {
@@ -370,7 +370,7 @@ export async function recordViolation(
     ipAddress?: string;
   }
 ): Promise<void> {
-  const { db } = ctx;
+  const db = 'db' in ctx ? ctx.db : (ctx as any).db;
   const now = Date.now();
   
   // Calculate severity
@@ -390,7 +390,7 @@ export async function recordViolation(
   const dayAgo = now - (24 * 60 * 60 * 1000);
   const recentViolations = await db
     .query('rateLimitViolations')
-    .withIndex('by_identifier_time', (q) =>
+    .withIndex('by_identifier_time', (q: any) =>
       q.eq('identifier', options.identifier).gte('timestamp', dayAgo)
     )
     .collect();
@@ -422,7 +422,7 @@ export async function recordViolation(
   if (isRepeatOffender) {
     const rateLimit = await db
       .query('rateLimits')
-      .withIndex('by_identifier_resource', (q) =>
+      .withIndex('by_identifier_resource', (q: any) =>
         q.eq('identifier', options.identifier).eq('resource', options.resource)
       )
       .order('desc')
@@ -507,7 +507,7 @@ export async function getRateLimitStatus(
   usage: Record<string, number>;
   resetTimes: Record<string, number>;
 }> {
-  const { db } = ctx;
+  const db = 'db' in ctx ? ctx.db : (ctx as any).db;
   const now = Date.now();
   
   // Get organization plan
@@ -537,10 +537,10 @@ export async function getRateLimitStatus(
     
     const rateLimit = await db
       .query('rateLimits')
-      .withIndex('by_identifier_resource', (q) =>
+      .withIndex('by_identifier_resource', (q: any) =>
         q.eq('identifier', userId).eq('resource', resource)
       )
-      .filter((q) => q.gte(q.field('windowStart'), windowStart - duration * 1000))
+      .filter((q: any) => q.gte(q.field('windowStart'), windowStart - duration * 1000))
       .order('desc')
       .first();
       

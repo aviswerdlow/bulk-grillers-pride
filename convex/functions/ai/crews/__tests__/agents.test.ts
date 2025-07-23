@@ -3,7 +3,7 @@
  */
 
 import { describe, expect, test, jest, beforeEach } from '@jest/globals';
-import { convexTest } from 'convex-test';
+import { t } from '../../../../test.setup';
 import {
   ProductAnalyzerAgent,
   CategoryMatcherAgent,
@@ -16,13 +16,11 @@ describe('CrewAI Agents', () => {
   let ctx: any;
   
   beforeEach(async () => {
-    ctx = await convexTest({
-      modules: {},
-    });
+    ctx = await t.mutation(async (ctx) => ctx);
   });
   
-  afterEach(async () => {
-    await ctx.close();
+  afterEach(() => {
+    jest.clearAllMocks();
   });
   
   describe('ProductAnalyzerAgent', () => {

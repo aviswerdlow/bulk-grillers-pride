@@ -82,5 +82,7 @@ module.exports = {
     // '^@/components/ui/(.*)$': '<rootDir>/apps/web/src/__tests__/__mocks__/ui-components.tsx',
     // Mock loading component
     '^@/components/loading$': '<rootDir>/apps/web/src/__tests__/__mocks__/loading.tsx',
+    // Mock accessibility context
+    '^@/contexts/accessibility/AccessibilityContext$': '<rootDir>/apps/web/src/__tests__/__mocks__/contexts/accessibility/AccessibilityContext.tsx',
   },
 };

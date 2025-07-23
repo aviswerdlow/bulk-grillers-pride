@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+// import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Select,
@@ -13,8 +13,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
-  LineChart,
-  Line,
+//   LineChart,
+//   Line,
   BarChart,
   Bar,
   PieChart,
@@ -32,9 +32,9 @@ import {
 import {
   Activity,
   TrendingUp,
-  TrendingDown,
+//   TrendingDown,
   Users,
-  Package,
+//   Package,
   Trash2,
   Edit,
   Plus,
@@ -55,7 +55,7 @@ interface ActivityEvent {
   resource: 'product' | 'category' | 'user' | 'import';
   resourceId: string;
   resourceName: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 interface ActivityLogVisualizationProps {
@@ -65,8 +65,8 @@ interface ActivityLogVisualizationProps {
 }
 
 export function ActivityLogVisualization({
-  organizationId,
-  projectId,
+//   organizationId,
+//   projectId,
   timeRange = 7,
 }: ActivityLogVisualizationProps) {
   const [selectedTimeRange, setSelectedTimeRange] = useState(timeRange.toString());

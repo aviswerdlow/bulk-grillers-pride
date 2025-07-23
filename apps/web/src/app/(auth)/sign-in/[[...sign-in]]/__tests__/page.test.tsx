@@ -1,6 +1,9 @@
-import { render, screen } from '@/__tests__/test-utils';
-import SignInPage from '../page';
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import React from 'react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { cleanupTest, mockUseQuery, mockUseMutation, renderWithProviders, setupTest } from '@/__tests__/test-helpers';
 import { SignIn } from '@clerk/nextjs';
+import SignInPage from '../page';
 
 // Update the global mock for this test
 beforeEach(() => {
@@ -14,14 +17,14 @@ beforeEach(() => {
 
 describe('SignInPage', () => {
   it('renders the sign in page with correct title and description', () => {
-    render(<SignInPage />);
+    renderWithProviders(<SignInPage />);
 
     expect(screen.getByRole('heading', { name: 'Welcome back' })).toBeInTheDocument();
     expect(screen.getByText('Sign in to your Bulk account')).toBeInTheDocument();
   });
 
   it('renders the SignIn component with correct props', () => {
-    render(<SignInPage />);
+    renderWithProviders(<SignInPage />);
 
     const signInComponent = screen.getByTestId('sign-in-component');
     expect(signInComponent).toBeInTheDocument();
@@ -32,7 +35,7 @@ describe('SignInPage', () => {
   });
 
   it('has correct layout styling', () => {
-    const { container } = render(<SignInPage />);
+    const { container } = renderWithProviders(<SignInPage />);
 
     const pageContainer = container.firstChild;
     expect(pageContainer).toHaveClass('min-h-screen', 'flex', 'items-center', 'justify-center');
@@ -43,14 +46,14 @@ describe('SignInPage', () => {
   });
 
   it('renders with correct gradient background', () => {
-    const { container } = render(<SignInPage />);
+    const { container } = renderWithProviders(<SignInPage />);
 
     const pageContainer = container.firstChild;
     expect(pageContainer).toHaveClass('bg-gradient-to-b', 'from-slate-50', 'to-white');
   });
 
   it('wraps SignIn component in Suspense with AuthLoading fallback', () => {
-    render(<SignInPage />);
+    renderWithProviders(<SignInPage />);
 
     // Since Suspense is resolved immediately in tests, we just verify the component renders
     expect(screen.getByTestId('sign-in-component')).toBeInTheDocument();

@@ -1,5 +1,9 @@
-import { 
-  render, 
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import React from 'react';
+import { fireEvent, within } from '@testing-library/react';
+import { cleanupTest, mockUseQuery, mockUseMutation, renderWithProviders, setupTest } from '@/__tests__/test-helpers';
+import { useParams } from 'next/navigation';
+import { render, 
   screen, 
   waitFor, 
   setupTest, 
@@ -8,11 +12,9 @@ import {
   seedMockData,
   createMockOrganization,
   createMockProject
-} from '@/__tests__/frontend-test-helpers';
-import { useParams } from 'next/navigation';
-import { useQuery } from 'convex/react';
+, renderWithProviders } from '@/__tests__/test-helpers';
 import OrganizationDashboard from '../page';
-import { formatDistanceToNow } from 'date-fns';
+// import { formatDistanceToNow } from 'date-fns';
 
 // Mock dependencies
 jest.mock('next/navigation', () => ({
@@ -84,6 +86,8 @@ describe('OrganizationDashboard', () => {
   ];
 
   const mockDashboardStats = {
+    _id: 'stats_1',
+    _creationTime: Date.now(),
     projectsCount: 5,
     productsCount: 100,
     activeAiJobsCount: 2,
@@ -113,6 +117,7 @@ describe('OrganizationDashboard', () => {
   const mockRecentActivity = [
     {
       _id: 'activity1',
+      _creationTime: Date.now(),
       timestamp: new Date().getTime(),
       eventType: 'CREATE',
       entityType: 'products',
@@ -127,6 +132,7 @@ describe('OrganizationDashboard', () => {
     },
     {
       _id: 'activity2',
+      _creationTime: Date.now(),
       timestamp: new Date().getTime() - 3600000,
       eventType: 'UPDATE',
       entityType: 'categories',
@@ -165,7 +171,7 @@ describe('OrganizationDashboard', () => {
     it('should show loading state when organization is undefined', () => {
       mockUseQuery.mockReturnValue(undefined);
 
-      render(<OrganizationDashboard />);
+      renderWithProviders(<OrganizationDashboard />);
 
       expect(screen.getByText('Loading organization...')).toBeInTheDocument();
     });
@@ -173,24 +179,25 @@ describe('OrganizationDashboard', () => {
     it('should handle missing getDashboardStats function gracefully', async () => {
       // Mock the queries to simulate missing function
       mockUseQuery.mockImplementation((query, args) => {
-        if (query.toString().includes('getOrganizationBySlug')) {
+        void args;
+        if (query?.toString?.().includes('getOrganizationBySlug')) {
           return mockOrganization;
         }
-        if (query.toString().includes('getOrganizationProjects')) {
+        if (query?.toString?.().includes('getOrganizationProjects')) {
           return mockProjects;
         }
-        if (query.toString().includes('getDashboardStats')) {
+        if (query?.toString?.().includes('getDashboardStats')) {
           // Simulate missing function error
           console.error('Function functions.dashboard.getDashboardStats not found');
           return undefined;
         }
-        if (query.toString().includes('getRecentActivity')) {
+        if (query?.toString?.().includes('getRecentActivity')) {
           return mockRecentActivity;
         }
         return undefined;
       });
 
-      render(<OrganizationDashboard />);
+      renderWithProviders(<OrganizationDashboard />);
 
       // Component should still render with fallback values
       await waitFor(() => {
@@ -210,13 +217,13 @@ describe('OrganizationDashboard', () => {
   describe('Organization Not Found', () => {
     it('should show not found message when organization is null', () => {
       mockUseQuery.mockImplementation((query) => {
-        if (query.toString().includes('getOrganizationBySlug')) {
+        if (query?.toString?.().includes('getOrganizationBySlug')) {
           return null;
         }
-        return 'skip';
+        return undefined;
       });
 
-      render(<OrganizationDashboard />);
+      renderWithProviders(<OrganizationDashboard />);
 
       expect(screen.getByText('Organization not found')).toBeInTheDocument();
       expect(
@@ -228,16 +235,17 @@ describe('OrganizationDashboard', () => {
   describe('Dashboard Content', () => {
     beforeEach(() => {
       mockUseQuery.mockImplementation((query, args) => {
-        if (query.toString().includes('getOrganizationBySlug')) {
+        void args;
+        if (query?.toString?.().includes('getOrganizationBySlug')) {
           return mockOrganization;
         }
-        if (query.toString().includes('getOrganizationProjects')) {
+        if (query?.toString?.().includes('getOrganizationProjects')) {
           return mockProjects;
         }
-        if (query.toString().includes('getDashboardStats')) {
+        if (query?.toString?.().includes('getDashboardStats')) {
           return mockDashboardStats;
         }
-        if (query.toString().includes('getRecentActivity')) {
+        if (query?.toString?.().includes('getRecentActivity')) {
           return mockRecentActivity;
         }
         return undefined;
@@ -245,7 +253,7 @@ describe('OrganizationDashboard', () => {
     });
 
     it('should render dashboard header correctly', () => {
-      render(<OrganizationDashboard />);
+      renderWithProviders(<OrganizationDashboard />);
 
       expect(screen.getByText('Dashboard')).toBeInTheDocument();
       expect(
@@ -255,7 +263,7 @@ describe('OrganizationDashboard', () => {
     });
 
     it('should render quick stats cards', () => {
-      render(<OrganizationDashboard />);
+      renderWithProviders(<OrganizationDashboard />);
 
       // Project count
       expect(screen.getByText('Total Projects')).toBeInTheDocument();
@@ -276,7 +284,7 @@ describe('OrganizationDashboard', () => {
     });
 
     it('should render projects section', () => {
-      render(<OrganizationDashboard />);
+      renderWithProviders(<OrganizationDashboard />);
 
       expect(screen.getByText('Project 1')).toBeInTheDocument();
       expect(screen.getByText('First test project')).toBeInTheDocument();
@@ -284,7 +292,7 @@ describe('OrganizationDashboard', () => {
     });
 
     it('should render categorization progress', () => {
-      render(<OrganizationDashboard />);
+      renderWithProviders(<OrganizationDashboard />);
 
       expect(screen.getByText('Categorization Progress')).toBeInTheDocument();
       expect(screen.getByText('75')).toBeInTheDocument(); // Categorized count
@@ -292,7 +300,7 @@ describe('OrganizationDashboard', () => {
     });
 
     it('should render quick actions', () => {
-      render(<OrganizationDashboard />);
+      renderWithProviders(<OrganizationDashboard />);
 
       expect(screen.getByText('Quick Actions')).toBeInTheDocument();
       expect(screen.getByText('Import Products')).toBeInTheDocument();
@@ -301,7 +309,7 @@ describe('OrganizationDashboard', () => {
     });
 
     it('should render recent activity', () => {
-      render(<OrganizationDashboard />);
+      renderWithProviders(<OrganizationDashboard />);
 
       expect(screen.getByText('Recent Activity')).toBeInTheDocument();
       expect(screen.getByText(/Test User created a product/)).toBeInTheDocument();
@@ -309,7 +317,7 @@ describe('OrganizationDashboard', () => {
     });
 
     it('should render recent imports', () => {
-      render(<OrganizationDashboard />);
+      renderWithProviders(<OrganizationDashboard />);
 
       expect(screen.getByText('Recent Imports')).toBeInTheDocument();
       expect(screen.getByText('products.csv')).toBeInTheDocument();
@@ -323,6 +331,7 @@ describe('OrganizationDashboard', () => {
     it('should show empty state for projects', () => {
       const mockUseQuery = useQuery as jest.Mock;
       mockUseQuery.mockImplementation((query, args) => {
+        void args;
         if (query.toString().includes('getOrganizationBySlug')) {
           return mockOrganization;
         }
@@ -338,7 +347,7 @@ describe('OrganizationDashboard', () => {
         return undefined;
       });
 
-      render(<OrganizationDashboard />);
+      renderWithProviders(<OrganizationDashboard />);
 
       expect(screen.getByText('No projects yet')).toBeInTheDocument();
       expect(
@@ -349,6 +358,7 @@ describe('OrganizationDashboard', () => {
     it('should show empty state for recent activity', () => {
       const mockUseQuery = useQuery as jest.Mock;
       mockUseQuery.mockImplementation((query, args) => {
+        void args;
         if (query.toString().includes('getOrganizationBySlug')) {
           return mockOrganization;
         }
@@ -364,7 +374,7 @@ describe('OrganizationDashboard', () => {
         return undefined;
       });
 
-      render(<OrganizationDashboard />);
+      renderWithProviders(<OrganizationDashboard />);
 
       expect(screen.getByText('No recent activity')).toBeInTheDocument();
       expect(
@@ -386,12 +396,13 @@ describe('OrganizationDashboard', () => {
       });
 
       // Component will throw error when useQuery throws
-      expect(() => render(<OrganizationDashboard />)).toThrow('Convex query failed');
+      expect(() => renderWithProviders(<OrganizationDashboard />)).toThrow('Convex query failed');
     });
 
     it('should handle missing data gracefully', () => {
       const mockUseQuery = useQuery as jest.Mock;
       mockUseQuery.mockImplementation((query, args) => {
+        void args;
         if (query.toString().includes('getOrganizationBySlug')) {
           return mockOrganization;
         }
@@ -399,7 +410,7 @@ describe('OrganizationDashboard', () => {
         return undefined;
       });
 
-      render(<OrganizationDashboard />);
+      renderWithProviders(<OrganizationDashboard />);
 
       // Should render with fallback values
       expect(screen.getByText('Dashboard')).toBeInTheDocument();

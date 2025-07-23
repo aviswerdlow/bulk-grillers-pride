@@ -1,18 +1,21 @@
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import React from 'react';
-import { render, screen } from '@/__tests__/test-utils';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { cleanupTest, mockUseQuery, mockUseMutation, renderWithProviders, setupTest, createMockProduct } from '@/__tests__/test-helpers';
 import { ProductCardMini } from '../product-card-mini';
 import { ProductCardSkeleton } from '../product-card-skeleton';
-import { setupTest, cleanupTest, createMockProduct } from '@/__tests__/frontend-test-helpers';
 import { Product } from '@/types/models';
+import type { Doc } from '@/../../../convex/_generated/dataModel';
 
 describe('ProductCardMini', () => {
-  const mockProduct: Product = createMockProduct({
+  const mockProduct = createMockProduct({
     _id: 'product_123',
     title: 'Mini Product',
     handle: 'mini-product',
     image: 'https://example.com/mini.jpg',
     productType: 'Electronics',
     vendor: 'Test Vendor',
+  }) as unknown as Doc<'products'>;
   }) as Product;
 
   beforeEach(() => {
@@ -25,14 +28,14 @@ describe('ProductCardMini', () => {
 
   describe('Rendering', () => {
     it('renders product title and handle', () => {
-      render(<ProductCardMini product={mockProduct} />);
+      renderWithProviders(<ProductCardMini product={mockProduct} />);
 
       expect(screen.getByText('Mini Product')).toBeInTheDocument();
       expect(screen.getByText('mini-product')).toBeInTheDocument();
     });
 
     it('renders product image when available', () => {
-      render(<ProductCardMini product={mockProduct} />);
+      renderWithProviders(<ProductCardMini product={mockProduct} />);
 
       const image = screen.getByAltText('Mini Product');
       expect(image).toBeInTheDocument();
@@ -41,22 +44,21 @@ describe('ProductCardMini', () => {
 
     it('renders placeholder icon when no image', () => {
       const productWithoutImage = { ...mockProduct, image: null };
-      const { container } = render(<ProductCardMini product={productWithoutImage} />);
+      const { container } = renderWithProviders(<ProductCardMini product={productWithoutImage} />);
 
       const packageIcon = container.querySelector('svg.lucide-package');
       expect(packageIcon).toBeInTheDocument();
     });
 
     it('applies custom className', () => {
-      const { container } = render(
-        <ProductCardMini product={mockProduct} className="custom-mini-class" />
+      const { container } = renderWithProviders(<ProductCardMini product={mockProduct} className="custom-mini-class" />
       );
 
       expect(container.firstChild).toHaveClass('custom-mini-class');
     });
 
     it('renders in compact format', () => {
-      const { container } = render(<ProductCardMini product={mockProduct} />);
+      const { container } = renderWithProviders(<ProductCardMini product={mockProduct} />);
 
       // Should have smaller dimensions than regular card
       const card = container.firstChild as HTMLElement;
@@ -66,7 +68,7 @@ describe('ProductCardMini', () => {
 
   describe('Hover Effects', () => {
     it('applies hover styles', () => {
-      const { container } = render(<ProductCardMini product={mockProduct} />);
+      const { container } = renderWithProviders(<ProductCardMini product={mockProduct} />);
 
       const card = container.firstChild;
       expect(card).toHaveClass('hover:shadow-md');
@@ -81,14 +83,14 @@ describe('ProductCardMini', () => {
         title: 'This is a very long product title that should be truncated in the mini card view',
       };
       
-      render(<ProductCardMini product={longTitleProduct} />);
+      renderWithProviders(<ProductCardMini product={longTitleProduct} />);
 
       const titleElement = screen.getByText(/This is a very long product title/);
       expect(titleElement).toHaveClass('line-clamp-1');
     });
 
     it('shows product type if available', () => {
-      render(<ProductCardMini product={mockProduct} />);
+      renderWithProviders(<ProductCardMini product={mockProduct} />);
 
       expect(screen.getByText('Electronics')).toBeInTheDocument();
     });
@@ -100,7 +102,7 @@ describe('ProductCardMini', () => {
         vendor: null,
       };
 
-      render(<ProductCardMini product={minimalProduct} />);
+      renderWithProviders(<ProductCardMini product={minimalProduct} />);
 
       expect(screen.queryByText('Electronics')).not.toBeInTheDocument();
       expect(screen.queryByText('Test Vendor')).not.toBeInTheDocument();
@@ -109,14 +111,14 @@ describe('ProductCardMini', () => {
 
   describe('Accessibility', () => {
     it('has appropriate ARIA attributes', () => {
-      render(<ProductCardMini product={mockProduct} />);
+      renderWithProviders(<ProductCardMini product={mockProduct} />);
 
       const card = screen.getByRole('article');
       expect(card).toHaveAttribute('aria-label', expect.stringContaining('Mini Product'));
     });
 
     it('provides alternative text for images', () => {
-      render(<ProductCardMini product={mockProduct} />);
+      renderWithProviders(<ProductCardMini product={mockProduct} />);
 
       const image = screen.getByRole('img');
       expect(image).toHaveAttribute('alt', 'Mini Product');
@@ -134,7 +136,7 @@ describe('ProductCardSkeleton', () => {
   });
 
   it('renders loading skeleton', () => {
-    const { container } = render(<ProductCardSkeleton />);
+    const { container } = renderWithProviders(<ProductCardSkeleton />);
 
     // Check for skeleton elements
     const skeletons = container.querySelectorAll('.animate-pulse');
@@ -142,9 +144,8 @@ describe('ProductCardSkeleton', () => {
   });
 
   it('matches dimensions of ProductCardMini', () => {
-    const { container: skeletonContainer } = render(<ProductCardSkeleton />);
-    const { container: miniContainer } = render(
-      <ProductCardMini 
+    const { container: skeletonContainer } = renderWithProviders(<ProductCardSkeleton />);
+    const { container: miniContainer } = renderWithProviders(<ProductCardMini 
         product={createMockProduct({ title: 'Test' }) as Product} 
       />
     );
@@ -158,7 +159,7 @@ describe('ProductCardSkeleton', () => {
   });
 
   it('shows placeholder for image area', () => {
-    const { container } = render(<ProductCardSkeleton />);
+    const { container } = renderWithProviders(<ProductCardSkeleton />);
 
     const imagePlaceholder = container.querySelector('.aspect-square');
     expect(imagePlaceholder).toBeInTheDocument();
@@ -166,7 +167,7 @@ describe('ProductCardSkeleton', () => {
   });
 
   it('shows placeholder for text content', () => {
-    const { container } = render(<ProductCardSkeleton />);
+    const { container } = renderWithProviders(<ProductCardSkeleton />);
 
     // Should have placeholders for title and handle
     const textPlaceholders = container.querySelectorAll('.h-4.bg-gray-200');
@@ -174,14 +175,14 @@ describe('ProductCardSkeleton', () => {
   });
 
   it('applies skeleton animation', () => {
-    const { container } = render(<ProductCardSkeleton />);
+    const { container } = renderWithProviders(<ProductCardSkeleton />);
 
     const animatedElements = container.querySelectorAll('.animate-pulse');
     expect(animatedElements.length).toBeGreaterThan(0);
   });
 
   it('supports custom className', () => {
-    const { container } = render(<ProductCardSkeleton className="custom-skeleton" />);
+    const { container } = renderWithProviders(<ProductCardSkeleton className="custom-skeleton" />);
 
     expect(container.firstChild).toHaveClass('custom-skeleton');
   });

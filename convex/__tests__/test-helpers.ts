@@ -1,3 +1,5 @@
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import { t } from '../../test.setup';
 // Mock convex test helper since convex-test is not installed
 
 import { Id } from '../_generated/dataModel';

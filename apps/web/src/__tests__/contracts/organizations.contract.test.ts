@@ -1,14 +1,16 @@
-import { z } from 'zod';
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import { api } from '@convex/_generated/api';
+import { z } from 'zod';
+
 import {
   ContractTestConfig,
   validateContract,
-  commonSchemas,
+//   commonSchemas,
   expectResponseShape,
 } from './contract-test-utils';
 import { 
   organizationFactory,
-  userFactory,
+//   userFactory,
   createMockId,
 } from '@bulk-grillers-pride/test-factories';
 
@@ -80,7 +82,7 @@ const apiKeySchema = z.object({
 const organizationContracts: ContractTestConfig[] = [
   // Get Current Organization
   {
-    functionRef: api.functions.organizations.getCurrent,
+    functionRef: (api as any).functions.organizations.organizations.getCurrent,
     name: 'organizations.getCurrent',
     description: 'Get the current user\'s organization',
     inputSchema: z.object({
@@ -102,7 +104,7 @@ const organizationContracts: ContractTestConfig[] = [
   
   // Update Organization
   {
-    functionRef: api.functions.organizations.update,
+    functionRef: (api as any).functions.organizations.organizations.update,
     name: 'organizations.update',
     description: 'Update organization settings',
     inputSchema: z.object({
@@ -169,7 +171,7 @@ const organizationContracts: ContractTestConfig[] = [
   
   // List Organization Members
   {
-    functionRef: api.functions.organizations.listMembers,
+    functionRef: (api as any).functions.organizations.organizations.listMembers,
     name: 'organizations.listMembers',
     description: 'List all members of an organization',
     inputSchema: z.object({
@@ -211,7 +213,7 @@ const organizationContracts: ContractTestConfig[] = [
   
   // Invite Member
   {
-    functionRef: api.functions.organizations.inviteMember,
+    functionRef: (api as any).functions.organizations.organizations.inviteMember,
     name: 'organizations.inviteMember',
     description: 'Invite a new member to the organization',
     inputSchema: z.object({
@@ -258,7 +260,7 @@ const organizationContracts: ContractTestConfig[] = [
   
   // Update Member Role
   {
-    functionRef: api.functions.organizations.updateMemberRole,
+    functionRef: (api as any).functions.organizations.organizations.updateMemberRole,
     name: 'organizations.updateMemberRole',
     description: 'Update a member\'s role and permissions',
     inputSchema: z.object({
@@ -295,7 +297,7 @@ const organizationContracts: ContractTestConfig[] = [
   
   // Remove Member
   {
-    functionRef: api.functions.organizations.removeMember,
+    functionRef: (api as any).functions.organizations.organizations.removeMember,
     name: 'organizations.removeMember',
     description: 'Remove a member from the organization',
     inputSchema: z.object({
@@ -320,7 +322,7 @@ const organizationContracts: ContractTestConfig[] = [
   
   // API Key Management
   {
-    functionRef: api.functions.organizations.apiKeys.getMaskedApiKeys,
+    functionRef: (api as any).functions.organizations.apiKeys.getMaskedApiKeys,
     name: 'organizations.apiKeys.getMaskedApiKeys',
     description: 'Get masked API keys for the organization',
     inputSchema: z.object({
@@ -340,7 +342,7 @@ const organizationContracts: ContractTestConfig[] = [
   },
   
   {
-    functionRef: api.functions.organizations.apiKeys.updateApiKeys,
+    functionRef: (api as any).functions.organizations.apiKeys.updateApiKeys,
     name: 'organizations.apiKeys.updateApiKeys',
     description: 'Update organization API keys',
     inputSchema: z.object({
@@ -441,7 +443,7 @@ describe('Organization API Contracts', () => {
       const invalidInput = {
         organizationId: createMockId('organizations'),
         email: 'user@example.com',
-        role: 'owner' as any,
+        role: 'owner' as unknown,
       };
       
       const result = inviteContract!.inputSchema.safeParse(invalidInput);
@@ -454,7 +456,7 @@ describe('Organization API Contracts', () => {
       
       const invalidInput = {
         membershipId: createMockId('organizationMemberships'),
-        role: 'owner' as any,
+        role: 'owner' as unknown,
       };
       
       const result = updateContract!.inputSchema.safeParse(invalidInput);
@@ -472,7 +474,7 @@ describe('Organization API Contracts', () => {
         const input = {
           organizationId: createMockId('organizations'),
           settings: {
-            aiProvider: provider as any,
+            aiProvider: provider as unknown,
           },
         };
         

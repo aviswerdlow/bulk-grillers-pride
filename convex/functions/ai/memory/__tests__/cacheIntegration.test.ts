@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
-import { createConvexTest } from '../../../../__tests__/convex-test-standard';
+import { t } from '../../../../test.setup';
 import { Id } from '../../../../_generated/dataModel';
 import { internal } from '../../../../_generated/api';
 
@@ -14,7 +14,7 @@ describe('CacheIntegration', () => {
   let organizationId: Id<'organizations'>;
 
   beforeEach(async () => {
-    test = createConvexTest();
+    test = t;
     // Create test organization
     organizationId = await test.mutation(async (ctx) => {
       return await ctx.db.insert('organizations', {
@@ -54,6 +54,7 @@ describe('CacheIntegration', () => {
 
   describe('Basic Cache Operations', () => {
     it('should write and read from cache', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const testData = { value: 'test data', timestamp: Date.now() };
       
       await test.mutation(async (ctx) => {
@@ -77,6 +78,7 @@ describe('CacheIntegration', () => {
     });
 
     it('should update hits on read', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       await test.mutation(async (ctx) => {
         await ctx.runMutation(internal.ai.memory.cacheIntegration.writeToCache, {
           key: 'hit-test',
@@ -105,6 +107,7 @@ describe('CacheIntegration', () => {
     });
 
     it('should handle cache expiration', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       await test.mutation(async (ctx) => {
         await ctx.runMutation(internal.ai.memory.cacheIntegration.writeToCache, {
           key: 'expire-test',
@@ -137,6 +140,7 @@ describe('CacheIntegration', () => {
 
   describe('Memory Cache Operations', () => {
     it('should cache memory lookups', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const memoryData = {
         content: { data: 'test memory' },
         importance: 0.8,
@@ -162,6 +166,7 @@ describe('CacheIntegration', () => {
     });
 
     it('should cache analysis results', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const analysis = {
         features: ['durable', 'waterproof'],
         quality: 0.85,
@@ -189,6 +194,7 @@ describe('CacheIntegration', () => {
     });
 
     it('should cache category matches', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const categoryMatch = {
         categoryId: 'cat456',
         confidence: 0.9,
@@ -216,6 +222,7 @@ describe('CacheIntegration', () => {
     });
 
     it('should cache validation results', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const validation = {
         isValid: true,
         issues: [],
@@ -243,6 +250,7 @@ describe('CacheIntegration', () => {
     });
 
     it('should cache memory statistics', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const stats = {
         totalMemories: 100,
         totalSizeBytes: 1024000,
@@ -270,6 +278,7 @@ describe('CacheIntegration', () => {
 
   describe('Batch Operations', () => {
     it('should batch write multiple cache entries', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const entries = [
         { key: 'batch1', value: { data: 1 }, dataType: 'test' },
         { key: 'batch2', value: { data: 2 }, dataType: 'test' },
@@ -299,6 +308,7 @@ describe('CacheIntegration', () => {
     });
 
     it('should batch read multiple cache entries', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       // Write test data
       await test.mutation(async (ctx) => {
         await ctx.runMutation(internal.ai.memory.cacheIntegration.batchCacheWrite, {
@@ -326,6 +336,7 @@ describe('CacheIntegration', () => {
 
   describe('Cache Cleanup', () => {
     it('should clear expired cache entries', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       // Create entries with short TTL
       await test.mutation(async (ctx) => {
         await ctx.runMutation(internal.ai.memory.cacheIntegration.batchCacheWrite, {
@@ -361,6 +372,7 @@ describe('CacheIntegration', () => {
 
   describe('Cache Statistics', () => {
     it('should collect cache statistics', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       // Create diverse cache entries
       await test.mutation(async (ctx) => {
         await ctx.runMutation(internal.ai.memory.cacheIntegration.batchCacheWrite, {
@@ -399,6 +411,7 @@ describe('CacheIntegration', () => {
     });
 
     it('should filter statistics by data type', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       await test.mutation(async (ctx) => {
         await ctx.runMutation(internal.ai.memory.cacheIntegration.batchCacheWrite, {
           entries: [

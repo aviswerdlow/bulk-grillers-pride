@@ -1,10 +1,11 @@
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import React from 'react';
-import { render, screen } from '../../test-utils';
-import { Loading, PageLoading, InlineLoading } from '@/components/loading';
-
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { cleanupTest, mockUseQuery, mockUseMutation, renderWithProviders, setupTest } from '@/__tests__/test-helpers';
+import { InlineLoading, Loading, PageLoading } from '@/components/loading';
 // Mock lucide-react
 jest.mock('lucide-react', () => ({
-  Loader2: ({ className, ...props }: any) => (
+  Loader2: ({ className, ...props }: React.SVGProps<SVGSVGElement>) => (
     <svg 
       data-testid="loader-icon" 
       className={className} 
@@ -16,7 +17,7 @@ jest.mock('lucide-react', () => ({
 describe('Loading Components', () => {
   describe('Loading Component', () => {
     it('renders with default size', () => {
-      render(<Loading />);
+      renderWithProviders(<Loading />);
       const loader = screen.getByTestId('loader-icon');
       expect(loader).toBeInTheDocument();
       expect(loader).toHaveClass('h-6');
@@ -24,28 +25,28 @@ describe('Loading Components', () => {
     });
 
     it('renders with small size', () => {
-      render(<Loading size="sm" />);
+      renderWithProviders(<Loading size="sm" />);
       const loader = screen.getByTestId('loader-icon');
       expect(loader).toHaveClass('h-4');
       expect(loader).toHaveClass('w-4');
     });
 
     it('renders with medium size', () => {
-      render(<Loading size="md" />);
+      renderWithProviders(<Loading size="md" />);
       const loader = screen.getByTestId('loader-icon');
       expect(loader).toHaveClass('h-6');
       expect(loader).toHaveClass('w-6');
     });
 
     it('renders with large size', () => {
-      render(<Loading size="lg" />);
+      renderWithProviders(<Loading size="lg" />);
       const loader = screen.getByTestId('loader-icon');
       expect(loader).toHaveClass('h-8');
       expect(loader).toHaveClass('w-8');
     });
 
     it('renders with text', () => {
-      render(<Loading text="Loading data..." />);
+      renderWithProviders(<Loading text="Loading data..." />);
       expect(screen.getByText('Loading data...')).toBeInTheDocument();
       const text = screen.getByText('Loading data...');
       expect(text).toHaveClass('mt-2');
@@ -54,18 +55,18 @@ describe('Loading Components', () => {
     });
 
     it('renders without text when not provided', () => {
-      render(<Loading />);
+      renderWithProviders(<Loading />);
       expect(screen.queryByText(/./)).not.toBeInTheDocument();
     });
 
     it('applies custom className', () => {
-      render(<Loading className="custom-loading" />);
+      renderWithProviders(<Loading className="custom-loading" />);
       const container = screen.getByTestId('loader-icon').parentElement;
       expect(container).toHaveClass('custom-loading');
     });
 
     it('applies default container styles', () => {
-      render(<Loading />);
+      renderWithProviders(<Loading />);
       const container = screen.getByTestId('loader-icon').parentElement;
       expect(container?.className).toContain('flex');
       expect(container?.className).toContain('flex-col');
@@ -75,14 +76,14 @@ describe('Loading Components', () => {
     });
 
     it('applies animation and color styles to loader', () => {
-      render(<Loading />);
+      renderWithProviders(<Loading />);
       const loader = screen.getByTestId('loader-icon');
       expect(loader).toHaveClass('animate-spin');
       expect(loader).toHaveClass('text-semantic-info');
     });
 
     it('combines size and text props correctly', () => {
-      render(<Loading size="lg" text="Please wait..." />);
+      renderWithProviders(<Loading size="lg" text="Please wait..." />);
       const loader = screen.getByTestId('loader-icon');
       const text = screen.getByText('Please wait...');
       
@@ -92,7 +93,7 @@ describe('Loading Components', () => {
     });
 
     it('overrides default padding with custom className', () => {
-      render(<Loading className="p-4" />);
+      renderWithProviders(<Loading className="p-4" />);
       const container = screen.getByTestId('loader-icon').parentElement;
       expect(container?.className).toContain('p-4');
     });
@@ -100,24 +101,24 @@ describe('Loading Components', () => {
 
   describe('PageLoading Component', () => {
     it('renders with default text', () => {
-      render(<PageLoading />);
+      renderWithProviders(<PageLoading />);
       expect(screen.getByText('Loading...')).toBeInTheDocument();
     });
 
     it('renders with custom text', () => {
-      render(<PageLoading text="Fetching your data..." />);
+      renderWithProviders(<PageLoading text="Fetching your data..." />);
       expect(screen.getByText('Fetching your data...')).toBeInTheDocument();
     });
 
     it('uses large size loader', () => {
-      render(<PageLoading />);
+      renderWithProviders(<PageLoading />);
       const loader = screen.getByTestId('loader-icon');
       expect(loader).toHaveClass('h-8');
       expect(loader).toHaveClass('w-8');
     });
 
     it('applies min-height container styles', () => {
-      render(<PageLoading />);
+      renderWithProviders(<PageLoading />);
       const container = screen.getByTestId('loader-icon').parentElement?.parentElement;
       expect(container?.className).toContain('min-h-[400px]');
       expect(container?.className).toContain('flex');
@@ -126,7 +127,7 @@ describe('Loading Components', () => {
     });
 
     it('renders Loading component inside with correct props', () => {
-      render(<PageLoading text="Custom loading..." />);
+      renderWithProviders(<PageLoading text="Custom loading..." />);
       const loader = screen.getByTestId('loader-icon');
       const text = screen.getByText('Custom loading...');
       
@@ -139,30 +140,30 @@ describe('Loading Components', () => {
 
   describe('InlineLoading Component', () => {
     it('renders with small size loader', () => {
-      render(<InlineLoading />);
+      renderWithProviders(<InlineLoading />);
       const loader = screen.getByTestId('loader-icon');
       expect(loader).toHaveClass('h-4');
       expect(loader).toHaveClass('w-4');
     });
 
     it('renders without text by default', () => {
-      render(<InlineLoading />);
+      renderWithProviders(<InlineLoading />);
       expect(screen.queryByText(/./)).not.toBeInTheDocument();
     });
 
     it('renders with custom text', () => {
-      render(<InlineLoading text="Saving..." />);
+      renderWithProviders(<InlineLoading text="Saving..." />);
       expect(screen.getByText('Saving...')).toBeInTheDocument();
     });
 
     it('applies reduced padding', () => {
-      render(<InlineLoading />);
+      renderWithProviders(<InlineLoading />);
       const container = screen.getByTestId('loader-icon').parentElement;
       expect(container?.className).toContain('p-4');
     });
 
     it('renders Loading component with correct props', () => {
-      render(<InlineLoading text="Processing..." />);
+      renderWithProviders(<InlineLoading text="Processing..." />);
       const loader = screen.getByTestId('loader-icon');
       const text = screen.getByText('Processing...');
       
@@ -175,8 +176,7 @@ describe('Loading Components', () => {
 
   describe('Integration Scenarios', () => {
     it('renders multiple loading components simultaneously', () => {
-      render(
-        <div>
+      renderWithProviders(<div>
           <Loading size="sm" text="Small loading" />
           <PageLoading text="Page loading" />
           <InlineLoading text="Inline loading" />
@@ -208,7 +208,7 @@ describe('Loading Components', () => {
         </div>
       );
 
-      const { rerender } = render(<Card isLoading={true} />);
+      const { rerender } = renderWithProviders(<Card isLoading={true} />);
       expect(screen.getByText('Loading card content...')).toBeInTheDocument();
 
       rerender(<Card isLoading={false} />);
@@ -219,21 +219,20 @@ describe('Loading Components', () => {
 
   describe('Accessibility', () => {
     it('loader icon is not focusable', () => {
-      render(<Loading />);
+      renderWithProviders(<Loading />);
       const loader = screen.getByTestId('loader-icon');
       expect(loader).not.toHaveAttribute('tabindex');
     });
 
     it('provides loading context with text', () => {
-      render(<Loading text="Please wait while we load your data" />);
+      renderWithProviders(<Loading text="Please wait while we load your data" />);
       const text = screen.getByText('Please wait while we load your data');
       expect(text).toBeInTheDocument();
       expect(text.tagName).toBe('P');
     });
 
     it('can be wrapped with aria-live region', () => {
-      render(
-        <div aria-live="polite" aria-busy="true">
+      renderWithProviders(<div aria-live="polite" aria-busy="true">
           <Loading text="Loading..." />
         </div>
       );
@@ -245,7 +244,7 @@ describe('Loading Components', () => {
 
   describe('Edge Cases', () => {
     it('handles empty string text', () => {
-      render(<Loading text="" />);
+      renderWithProviders(<Loading text="" />);
       // Text element should not be rendered for empty string
       const container = screen.getByTestId('loader-icon').parentElement;
       const paragraphs = container?.querySelectorAll('p');
@@ -254,12 +253,12 @@ describe('Loading Components', () => {
 
     it('handles very long text', () => {
       const longText = 'This is a very long loading message that might wrap to multiple lines in a narrow container';
-      render(<Loading text={longText} />);
+      renderWithProviders(<Loading text={longText} />);
       expect(screen.getByText(longText)).toBeInTheDocument();
     });
 
     it('maintains consistent spacing with different sizes', () => {
-      const { rerender } = render(<Loading size="sm" text="Loading..." />);
+      const { rerender } = renderWithProviders(<Loading size="sm" text="Loading..." />);
       let text = screen.getByText('Loading...');
       expect(text).toHaveClass('mt-2');
 

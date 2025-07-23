@@ -12,7 +12,7 @@ export function createMockMutation<T extends FunctionReference<'mutation'>>(
   const mutation = mockFn as any;
   
   // Add the required withOptimisticUpdate method
-  mutation.withOptimisticUpdate = jest.fn().mockReturnValue(mutation);
+  (mutation as any).withOptimisticUpdate = jest.fn().mockReturnValue(mutation);
   
   return mutation as ReactMutation<T>;
 }
@@ -38,7 +38,7 @@ export function createMockQueryWithStates<T>(states: { loading?: boolean; data?:
 }
 
 // Helper to create a mock action
-export function createMockAction<T extends FunctionReference<'action'>>(
+export function createMockAction(
   mockFn = jest.fn()
 ) {
   return mockFn;

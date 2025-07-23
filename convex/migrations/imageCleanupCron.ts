@@ -1,4 +1,3 @@
-import { cronJobs } from 'convex/server';
 import { internalMutation } from '../_generated/server';
 import { v } from 'convex/values';
 import { CASCADE_DELETION_FLAGS, MIGRATION_CONFIG } from './001_cascade_deletion_schema';
@@ -321,22 +320,4 @@ export const getQueueStats = internalMutation({
   },
 });
 
-// Register cron jobs
-const imageCleanup = cronJobs.interval(
-  'imageCleanup',
-  { minutes: 5 }, // Run every 5 minutes
-  processImageCleanupQueue,
-  { batchSize: 100 } // Process up to 100 images per run
-);
-
-const queueMaintenance = cronJobs.daily(
-  'imageCleanupQueueMaintenance',
-  { hourUTC: 3, minuteUTC: 0 }, // Run at 3:00 AM UTC
-  cleanupQueueHistory,
-  { daysToKeep: 30 }
-);
-
-export default {
-  imageCleanup,
-  queueMaintenance,
-};
+// Note: Cron jobs are registered in convex/crons.ts

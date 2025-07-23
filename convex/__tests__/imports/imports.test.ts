@@ -1,4 +1,6 @@
-import { convexTest } from '../test-helpers';
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import { t } from '../../test.setup';
+import { convexTest } from '../../test-helpers';
 
 describe('Imports API', () => {
   let ctx: any;
@@ -7,7 +9,7 @@ describe('Imports API', () => {
   let projectId: string;
 
   beforeEach(async () => {
-    ctx = convexTest();
+    ctx = await t.run(async (ctx) => ctx);
 
     // Create test user
     userId = await ctx.db.insert('users', {
@@ -114,6 +116,7 @@ describe('Imports API', () => {
     });
 
     it('should return all import jobs for organization', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const result = await ctx.runQuery('getImportJobs', {
         organizationId: orgId,
       });
@@ -124,6 +127,7 @@ describe('Imports API', () => {
     });
 
     it('should filter by project', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       // Create another project with import
       const projectId2 = await ctx.db.insert('projects', {
         organizationId: orgId,
@@ -159,6 +163,7 @@ describe('Imports API', () => {
     });
 
     it('should filter by status', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const result = await ctx.runQuery('getImportJobs', {
         organizationId: orgId,
         status: 'completed',
@@ -170,6 +175,7 @@ describe('Imports API', () => {
     });
 
     it('should filter by job type', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const result = await ctx.runQuery('getImportJobs', {
         organizationId: orgId,
         jobType: 'products',
@@ -180,6 +186,7 @@ describe('Imports API', () => {
     });
 
     it('should include user information', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const result = await ctx.runQuery('getImportJobs', {
         organizationId: orgId,
       });
@@ -239,6 +246,7 @@ describe('Imports API', () => {
     });
 
     it('should return detailed import job information', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const result = await ctx.runQuery('getImportJob', { jobId });
 
       expect(result).toBeDefined();
@@ -252,12 +260,14 @@ describe('Imports API', () => {
     });
 
     it('should throw error for non-existent job', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       await expect(
         ctx.runQuery('getImportJob', { jobId: 'nonexistent' as any })
       ).rejects.toThrow();
     });
 
     it('should throw error when user not in organization', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       // Create job in different org
       const otherOrgId = await ctx.db.insert('organizations', {
         name: 'Other Org',
@@ -291,6 +301,7 @@ describe('Imports API', () => {
 
   describe('createImportJob', () => {
     it('should create new import job', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const importData = {
         organizationId: orgId,
         projectId,
@@ -325,6 +336,7 @@ describe('Imports API', () => {
     });
 
     it('should validate required fields', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       await expect(
         ctx.runMutation('createImportJob', {
           organizationId: orgId,
@@ -342,6 +354,7 @@ describe('Imports API', () => {
     });
 
     it('should create audit log entry', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const result = await ctx.runMutation('createImportJob', {
         organizationId: orgId,
         projectId,
@@ -394,6 +407,7 @@ describe('Imports API', () => {
     });
 
     it('should update progress incrementally', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const updates = {
         jobId,
         progress: {
@@ -415,6 +429,7 @@ describe('Imports API', () => {
     });
 
     it('should auto-complete when all processed', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const result = await ctx.runMutation('updateImportJobProgress', {
         jobId,
         progress: {
@@ -430,6 +445,7 @@ describe('Imports API', () => {
     });
 
     it('should handle errors during processing', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const result = await ctx.runMutation('updateImportJobProgress', {
         jobId,
         progress: {
@@ -474,6 +490,7 @@ describe('Imports API', () => {
     });
 
     it('should cancel processing job', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const result = await ctx.runMutation('cancelImportJob', { jobId });
 
       expect(result.status).toBe('cancelled');
@@ -482,6 +499,7 @@ describe('Imports API', () => {
     });
 
     it('should not cancel completed job', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       // Update job to completed
       await ctx.db.patch(jobId, {
         status: 'completed',
@@ -494,6 +512,7 @@ describe('Imports API', () => {
     });
 
     it('should create audit log for cancellation', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       await ctx.runMutation('cancelImportJob', { jobId });
 
       const auditLogs = await ctx.db
@@ -537,6 +556,7 @@ describe('Imports API', () => {
     });
 
     it('should create new import job from failed job', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const result = await ctx.runMutation('retryImportJob', { jobId: failedJobId });
 
       expect(result).toBeDefined();
@@ -549,6 +569,7 @@ describe('Imports API', () => {
     });
 
     it('should only retry failed or cancelled jobs', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const completedJobId = await ctx.db.insert('importJobs', {
         organizationId: orgId,
         projectId,

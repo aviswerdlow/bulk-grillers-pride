@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import Image from 'next/image';
 import {
   Table,
   TableBody,
@@ -10,9 +11,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
+//   Collapsible,
+//   CollapsibleContent,
+//   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -73,7 +74,7 @@ interface ProductResultsTableProps {
   isLoading?: boolean;
 }
 
-export function ProductResultsTable({ results, onApplyCategory, isLoading }: ProductResultsTableProps) {
+export function ProductResultsTable({ results, onApplyCategory }: ProductResultsTableProps) {
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -238,11 +239,14 @@ export function ProductResultsTable({ results, onApplyCategory, isLoading }: Pro
                       <TableCell>
                         <div className="flex items-start gap-3">
                           {result.imageUrl && (
-                            <img
-                              src={result.imageUrl}
-                              alt={result.title}
-                              className="h-12 w-12 rounded object-cover"
-                            />
+                            <div className="relative h-12 w-12">
+                              <Image
+                                src={result.imageUrl}
+                                alt={result.title}
+                                fill
+                                className="rounded object-cover"
+                              />
+                            </div>
                           )}
                           <div>
                             <div className="font-medium">{result.title}</div>

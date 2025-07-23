@@ -31,7 +31,7 @@ export function DeletionWizardExample() {
     confirmDeletion,
     retry,
     isLoading,
-    hasError,
+//     hasError,
     error,
   } = useDeletion();
 

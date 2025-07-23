@@ -1,5 +1,7 @@
-import { z } from 'zod';
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import { api } from '@convex/_generated/api';
+import { z } from 'zod';
+
 import {
   ContractTestConfig,
   validateContract,
@@ -27,7 +29,7 @@ const aiJobSchema = z.object({
   
   // Target Products
   productIds: z.array(z.string()),
-  categoryContext: z.any(), // JSON of available categories
+  categoryContext: z.unknown(), // JSON of available categories
   
   // Job Status
   status: z.enum(['pending', 'running', 'completed', 'failed', 'cancelled']),
@@ -86,7 +88,7 @@ const aiJobSchema = z.object({
   createdBy: z.string(),
   
   // Cost Tracking
-  metadata: z.any(), // Contains cost info among other things
+  metadata: z.unknown(), // Contains cost info among other things
 });
 
 const createJobResponseSchema = z.string(); // The mutation returns just the job ID
@@ -97,7 +99,7 @@ const createJobResponseSchema = z.string(); // The mutation returns just the job
 const aiCategorizationContracts: ContractTestConfig[] = [
   // Create Categorization Job
   {
-    functionRef: api.functions.ai.categorization.createCategorizationJob,
+    functionRef: (api as any).functions.ai.categorization.createCategorizationJob,
     name: 'ai.categorization.createCategorizationJob',
     description: 'Create a new AI categorization job',
     inputSchema: z.object({
@@ -166,7 +168,7 @@ const aiCategorizationContracts: ContractTestConfig[] = [
   
   // Get Categorization Job
   {
-    functionRef: api.functions.ai.categorization.getCategorizationJob,
+    functionRef: (api as any).functions.ai.categorization.getCategorizationJob,
     name: 'ai.categorization.getCategorizationJob',
     description: 'Get details of a categorization job',
     inputSchema: z.object({
@@ -188,7 +190,7 @@ const aiCategorizationContracts: ContractTestConfig[] = [
   
   // Get Categorization Jobs
   {
-    functionRef: api.functions.ai.categorization.getCategorizationJobs,
+    functionRef: (api as any).functions.ai.categorization.getCategorizationJobs,
     name: 'ai.categorization.getCategorizationJobs',
     description: 'Get AI categorization jobs with filtering',
     inputSchema: z.object({
@@ -215,7 +217,7 @@ const aiCategorizationContracts: ContractTestConfig[] = [
       {}, // Missing organizationId
       {
         organizationId: createMockId('organizations'),
-        status: 'invalid' as any, // Invalid status
+        status: 'invalid' as unknown, // Invalid status
       },
       {
         organizationId: createMockId('organizations'),
@@ -230,7 +232,7 @@ const aiCategorizationContracts: ContractTestConfig[] = [
   
   // Cancel Categorization Job
   {
-    functionRef: api.functions.ai.categorization.cancelCategorizationJob,
+    functionRef: (api as any).functions.ai.categorization.cancelCategorizationJob,
     name: 'ai.categorization.cancelCategorizationJob',
     description: 'Cancel a running or pending categorization job',
     inputSchema: z.object({
@@ -263,7 +265,7 @@ const aiCategorizationContracts: ContractTestConfig[] = [
   
   // Apply Categorization Results
   {
-    functionRef: api.functions.ai.categorization.applyCategorization,
+    functionRef: (api as any).functions.ai.categorization.applyCategorization,
     name: 'ai.categorization.applyCategorization',
     description: 'Apply AI categorization results to products',
     inputSchema: z.object({
@@ -309,7 +311,7 @@ const aiCategorizationContracts: ContractTestConfig[] = [
   
   // Get Job Details
   {
-    functionRef: api.functions.ai.categorization.getJobDetails,
+    functionRef: (api as any).functions.ai.categorization.getJobDetails,
     name: 'ai.categorization.getJobDetails',
     description: 'Get detailed information about a categorization job',
     inputSchema: z.object({
@@ -364,7 +366,7 @@ const aiCategorizationContracts: ContractTestConfig[] = [
   
   // Export Job Results
   {
-    functionRef: api.functions.ai.categorization.exportJobResults,
+    functionRef: (api as any).functions.ai.categorization.exportJobResults,
     name: 'ai.categorization.exportJobResults',
     description: 'Export categorization job results as CSV',
     inputSchema: z.object({
@@ -448,7 +450,7 @@ describe('AI Categorization API Contracts', () => {
         const input = {
           organizationId: createMockId('organizations'),
           projectId: createMockId('projects'),
-          aiProvider: provider as any,
+          aiProvider: provider as unknown,
         };
         
         const result = createContract!.inputSchema.safeParse(input);
@@ -494,7 +496,7 @@ describe('AI Categorization API Contracts', () => {
       
       statuses.forEach(status => {
         const mockJob = aiCategorizationJobFactory.create({
-          overrides: { status: status as any }
+          overrides: { status: status as unknown }
         });
         
         const result = aiJobSchema.safeParse(mockJob);

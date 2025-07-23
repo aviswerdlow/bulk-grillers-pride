@@ -1,3 +1,4 @@
+import { t } from '../../test.setup';
 import { describe, it, expect, beforeEach } from '@jest/globals';
 import {
   createConvexTest,
@@ -9,6 +10,7 @@ import {
   assertDocumentExists,
   assertDocumentNotExists,
   type ConvexTestContext,
+  convexTest
 } from '../convex-test-standard';
 import {
   createMockUser,
@@ -17,15 +19,12 @@ import {
   createMockProject,
   createMockProduct,
   createMockCategory,
-} from '../test-helpers';
-import { getProjectCategories, getCategoryTree, getCategory } from '../functions/categories/queries';
+} from '../../test-helpers';
+import { getProjectCategories, getCategoryTree, getCategory } from '../../functions/categories/queries';
 
 describe('queries', () => {
-  let test: ConvexTestContext;
-
   beforeEach(() => {
-    test = createConvexTest();
-  });
+    });
 
   describe('getProjectCategories', () => {
     describe('Happy Path', () => {
@@ -39,14 +38,14 @@ describe('queries', () => {
           role: 'owner',
         });
 
-        await seedDatabase(test, {
+        await seedDatabase(t, {
           users: [user],
           organizations: [org],
           organizationMemberships: [membership],
         });
 
-        setupAuth(test, { tokenIdentifier: user.clerkId });
-        const ctx = createQueryContext(test);
+        setupAuth(t, { tokenIdentifier: user.clerkId });
+        const ctx = createQueryContext(t);
 
         // Act
         const args = {
@@ -67,8 +66,8 @@ describe('queries', () => {
     describe('Authorization', () => {
       it('should fail for unauthenticated user', async () => {
         // Arrange
-        setupAuth(test, null);
-        const ctx = createQueryContext(test);
+        setupAuth(t, null);
+        const ctx = createQueryContext(t);
 
         // Act & Assert
         await expect(getProjectCategories(ctx, {} as any)).rejects.toThrow();
@@ -80,13 +79,13 @@ describe('queries', () => {
         const org = createMockOrganization();
         // Note: No membership created
 
-        await seedDatabase(test, {
+        await seedDatabase(t, {
           users: [user],
           organizations: [org],
         });
 
-        setupAuth(test, { tokenIdentifier: user.clerkId });
-        const ctx = createQueryContext(test);
+        setupAuth(t, { tokenIdentifier: user.clerkId });
+        const ctx = createQueryContext(t);
 
         // Act & Assert
         const args = {
@@ -100,8 +99,8 @@ describe('queries', () => {
       it('should fail with invalid arguments', async () => {
         // Arrange
         const user = createMockUser();
-        setupAuth(test, { tokenIdentifier: user.clerkId });
-        const ctx = createQueryContext(test);
+        setupAuth(t, { tokenIdentifier: user.clerkId });
+        const ctx = createQueryContext(t);
 
         // Act & Assert
         await expect(getProjectCategories(ctx, {} as any)).rejects.toThrow();
@@ -127,14 +126,14 @@ describe('queries', () => {
           role: 'owner',
         });
 
-        await seedDatabase(test, {
+        await seedDatabase(t, {
           users: [user],
           organizations: [org],
           organizationMemberships: [membership],
         });
 
-        setupAuth(test, { tokenIdentifier: user.clerkId });
-        const ctx = createQueryContext(test);
+        setupAuth(t, { tokenIdentifier: user.clerkId });
+        const ctx = createQueryContext(t);
 
         // Act
         const args = {
@@ -154,8 +153,8 @@ describe('queries', () => {
     describe('Authorization', () => {
       it('should fail for unauthenticated user', async () => {
         // Arrange
-        setupAuth(test, null);
-        const ctx = createQueryContext(test);
+        setupAuth(t, null);
+        const ctx = createQueryContext(t);
 
         // Act & Assert
         await expect(getCategoryTree(ctx, {} as any)).rejects.toThrow();
@@ -167,13 +166,13 @@ describe('queries', () => {
         const org = createMockOrganization();
         // Note: No membership created
 
-        await seedDatabase(test, {
+        await seedDatabase(t, {
           users: [user],
           organizations: [org],
         });
 
-        setupAuth(test, { tokenIdentifier: user.clerkId });
-        const ctx = createQueryContext(test);
+        setupAuth(t, { tokenIdentifier: user.clerkId });
+        const ctx = createQueryContext(t);
 
         // Act & Assert
         const args = {
@@ -187,8 +186,8 @@ describe('queries', () => {
       it('should fail with invalid arguments', async () => {
         // Arrange
         const user = createMockUser();
-        setupAuth(test, { tokenIdentifier: user.clerkId });
-        const ctx = createQueryContext(test);
+        setupAuth(t, { tokenIdentifier: user.clerkId });
+        const ctx = createQueryContext(t);
 
         // Act & Assert
         await expect(getCategoryTree(ctx, {} as any)).rejects.toThrow();
@@ -214,14 +213,14 @@ describe('queries', () => {
           role: 'owner',
         });
 
-        await seedDatabase(test, {
+        await seedDatabase(t, {
           users: [user],
           organizations: [org],
           organizationMemberships: [membership],
         });
 
-        setupAuth(test, { tokenIdentifier: user.clerkId });
-        const ctx = createQueryContext(test);
+        setupAuth(t, { tokenIdentifier: user.clerkId });
+        const ctx = createQueryContext(t);
 
         // Act
         const args = {
@@ -240,8 +239,8 @@ describe('queries', () => {
     describe('Authorization', () => {
       it('should fail for unauthenticated user', async () => {
         // Arrange
-        setupAuth(test, null);
-        const ctx = createQueryContext(test);
+        setupAuth(t, null);
+        const ctx = createQueryContext(t);
 
         // Act & Assert
         await expect(getCategory(ctx, {} as any)).rejects.toThrow();
@@ -253,13 +252,13 @@ describe('queries', () => {
         const org = createMockOrganization();
         // Note: No membership created
 
-        await seedDatabase(test, {
+        await seedDatabase(t, {
           users: [user],
           organizations: [org],
         });
 
-        setupAuth(test, { tokenIdentifier: user.clerkId });
-        const ctx = createQueryContext(test);
+        setupAuth(t, { tokenIdentifier: user.clerkId });
+        const ctx = createQueryContext(t);
 
         // Act & Assert
         const args = {
@@ -272,8 +271,8 @@ describe('queries', () => {
       it('should fail with invalid arguments', async () => {
         // Arrange
         const user = createMockUser();
-        setupAuth(test, { tokenIdentifier: user.clerkId });
-        const ctx = createQueryContext(test);
+        setupAuth(t, { tokenIdentifier: user.clerkId });
+        const ctx = createQueryContext(t);
 
         // Act & Assert
         await expect(getCategory(ctx, {} as any)).rejects.toThrow();

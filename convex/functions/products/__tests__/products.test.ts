@@ -1,22 +1,23 @@
 import { describe, it, expect, beforeEach } from '@jest/globals';
-import { convexTest } from '../../../__tests__/test-helpers';
+import { t } from '../../../test.setup';
 import { api } from '../../../_generated/api';
 import { Id } from '../../../_generated/dataModel';
 
+import { createProduct, updateProduct, deleteProduct } from '../products';
+
 describe('Products Functions', () => {
-  let test: ReturnType<typeof convexTest>;
   let userId: Id<'users'>;
   let orgId: Id<'organizations'>;
   let projectId: Id<'projects'>;
 
   beforeEach(() => {
-    test = convexTest();
+    // t is already imported from test.setup
     userId = 'user123' as Id<'users'>;
     orgId = 'org123' as Id<'organizations'>;
     projectId = 'project123' as Id<'projects'>;
 
     // Set up test data
-    test.db.insert('users', {
+    t.db.insert('users', {
       _id: userId,
       _creationTime: Date.now(),
       email: 'test@example.com',
@@ -25,7 +26,7 @@ describe('Products Functions', () => {
       role: 'admin' as const,
     });
 
-    test.db.insert('organizations', {
+    t.db.insert('organizations', {
       _id: orgId,
       _creationTime: Date.now(),
       name: 'Test Organization',
@@ -40,7 +41,7 @@ describe('Products Functions', () => {
       enforceUniqueSku: false,
     });
 
-    test.db.insert('organizationMembers', {
+    t.db.insert('organizationMembers', {
       _id: 'member123' as Id<'organizationMembers'>,
       _creationTime: Date.now(),
       userId,
@@ -49,7 +50,7 @@ describe('Products Functions', () => {
       joinedAt: Date.now(),
     });
 
-    test.db.insert('projects', {
+    t.db.insert('projects', {
       _id: projectId,
       _creationTime: Date.now(),
       name: 'Test Project',
@@ -114,11 +115,11 @@ describe('Products Functions', () => {
 
     it('should reject duplicate SKU when enforceUniqueSku is true', async () => {
       // Update organization to enforce unique SKU
-      test.db.patch(orgId, { enforceUniqueSku: true });
+      t.db.patch(orgId, { enforceUniqueSku: true });
 
       // Create first product
       const productId = 'product1' as Id<'products'>;
-      test.db.insert('products', {
+      t.db.insert('products', {
         _id: productId,
         _creationTime: Date.now(),
         title: 'Existing Product',
@@ -150,7 +151,7 @@ describe('Products Functions', () => {
     it('should allow duplicate SKU when enforceUniqueSku is false', async () => {
       // Create first product
       const productId = 'product1' as Id<'products'>;
-      test.db.insert('products', {
+      t.db.insert('products', {
         _id: productId,
         _creationTime: Date.now(),
         title: 'Existing Product',
@@ -181,7 +182,7 @@ describe('Products Functions', () => {
 
     it('should reject creation without proper permissions', async () => {
       const otherUserId = 'other123' as Id<'users'>;
-      test.db.insert('users', {
+      t.db.insert('users', {
         _id: otherUserId,
         _creationTime: Date.now(),
         email: 'other@example.com',
@@ -209,7 +210,7 @@ describe('Products Functions', () => {
 
     beforeEach(() => {
       productId = 'product123' as Id<'products'>;
-      test.db.insert('products', {
+      t.db.insert('products', {
         _id: productId,
         _creationTime: Date.now(),
         title: 'Original Product',
@@ -260,11 +261,11 @@ describe('Products Functions', () => {
 
     it('should reject SKU update to existing SKU when enforceUniqueSku', async () => {
       // Update organization to enforce unique SKU
-      test.db.patch(orgId, { enforceUniqueSku: true });
+      t.db.patch(orgId, { enforceUniqueSku: true });
 
       // Create another product
       const otherProductId = 'product456' as Id<'products'>;
-      test.db.insert('products', {
+      t.db.insert('products', {
         _id: otherProductId,
         _creationTime: Date.now(),
         title: 'Other Product',
@@ -289,7 +290,7 @@ describe('Products Functions', () => {
 
     it('should reject update without permissions', async () => {
       const otherUserId = 'other123' as Id<'users'>;
-      test.db.insert('users', {
+      t.db.insert('users', {
         _id: otherUserId,
         _creationTime: Date.now(),
         email: 'other@example.com',
@@ -339,7 +340,7 @@ describe('Products Functions', () => {
       ];
 
       products.forEach(product => {
-        test.db.insert('products', {
+        t.db.insert('products', {
           ...product,
           _creationTime: Date.now(),
           organizationId: orgId,
@@ -422,7 +423,7 @@ describe('Products Functions', () => {
 
     beforeEach(() => {
       productId = 'product123' as Id<'products'>;
-      test.db.insert('products', {
+      t.db.insert('products', {
         _id: productId,
         _creationTime: Date.now(),
         title: 'Test Product',
@@ -467,7 +468,7 @@ describe('Products Functions', () => {
 
     it('should reject access without permissions', async () => {
       const otherUserId = 'other123' as Id<'users'>;
-      test.db.insert('users', {
+      t.db.insert('users', {
         _id: otherUserId,
         _creationTime: Date.now(),
         email: 'other@example.com',
@@ -514,11 +515,11 @@ describe('Products Functions', () => {
 
     it('should ensure generated SKU is unique in organization', async () => {
       // Update org to enforce unique SKU
-      test.db.patch(orgId, { enforceUniqueSku: true });
+      t.db.patch(orgId, { enforceUniqueSku: true });
 
       // Create a product with a specific SKU
       const existingSku = 'SKU-EXISTING1';
-      test.db.insert('products', {
+      t.db.insert('products', {
         _id: 'product1' as Id<'products'>,
         _creationTime: Date.now(),
         title: 'Existing Product',

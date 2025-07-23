@@ -1,9 +1,11 @@
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { useRouter, useParams } from 'next/navigation';
-import { useQuery } from 'convex/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { cleanupTest, mockUseQuery, mockUseMutation, renderWithProviders, setupTest } from '@/__tests__/test-helpers';
 import { api } from '@convex/_generated/api';
+import { useParams, useRouter } from 'next/navigation';
+// import userEvent from '@testing-library/user-event';
+;
 import OrganizationDashboard from '../page';
 // Mock data
 const mockOrganization = {
@@ -72,10 +74,6 @@ jest.mock('next/link', () => {
 });
 
 // Mock Convex
-jest.mock('convex/react', () => ({
-  useQuery: jest.fn(),
-}));
-
 // Mock the Convex API paths
 jest.mock('@convex/_generated/api', () => ({
   api: {
@@ -130,7 +128,7 @@ jest.mock('date-fns', () => ({
 
 describe('Dashboard Navigation Tests', () => {
   const mockPush = jest.fn();
-  const user = userEvent.setup();
+//   const user = userEvent.setup();
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -146,21 +144,22 @@ describe('Dashboard Navigation Tests', () => {
 
   describe('Quick Actions Navigation', () => {
     beforeEach(() => {
-      (useQuery as jest.Mock).mockImplementation((query: any, args: any) => {
+      mockUseQuery.mockImplementation((query: unknown, args: unknown) => {
+        void args;
         // Check if it's the getOrganizationBySlug query
-        if (query === api.functions.organizations.organizations.getOrganizationBySlug) {
+        if (query === (api as any).functions.organizations.organizations.getOrganizationBySlug) {
           return mockOrganization;
         }
         // Check if it's the getOrganizationProjects query
-        if (query === api.functions.projects.projects.getOrganizationProjects) {
+        if (query === (api as any).functions?.projects.projects.getOrganizationProjects) {
           return mockProjects;
         }
         // Check if it's the getDashboardStats query
-        if (query === api.functions.dashboard.getDashboardStats) {
+        if (query === (api as any).functions.dashboard.getDashboardStats) {
           return mockDashboardStats;
         }
         // Check if it's the getRecentActivity query
-        if (query === api.functions.dashboard.getRecentActivity) {
+        if (query === (api as any).functions.dashboard.getRecentActivity) {
           return mockRecentActivity;
         }
         return undefined;
@@ -168,7 +167,7 @@ describe('Dashboard Navigation Tests', () => {
     });
 
     it('should have correct href for Import Products button', async () => {
-      render(<OrganizationDashboard />);
+      renderWithProviders(<OrganizationDashboard />);
 
       await waitFor(() => {
         expect(screen.getByText('Dashboard')).toBeInTheDocument();
@@ -181,7 +180,7 @@ describe('Dashboard Navigation Tests', () => {
     });
 
     it('should have correct href for AI Categorization button', async () => {
-      render(<OrganizationDashboard />);
+      renderWithProviders(<OrganizationDashboard />);
 
       await waitFor(() => {
         expect(screen.getByText('Dashboard')).toBeInTheDocument();
@@ -194,7 +193,7 @@ describe('Dashboard Navigation Tests', () => {
     });
 
     it('should have correct href for View Analytics button', async () => {
-      render(<OrganizationDashboard />);
+      renderWithProviders(<OrganizationDashboard />);
 
       await waitFor(() => {
         expect(screen.getByText('Dashboard')).toBeInTheDocument();
@@ -209,17 +208,18 @@ describe('Dashboard Navigation Tests', () => {
 
   describe('Projects Section Navigation', () => {
     it('should have correct href for View All Projects link', async () => {
-      (useQuery as jest.Mock).mockImplementation((query: any, args: any) => {
-        if (query === api.functions.organizations.organizations.getOrganizationBySlug) {
+      mockUseQuery.mockImplementation((query: unknown, args: unknown) => {
+        void args;
+        if (query === (api as any).functions.organizations.organizations.getOrganizationBySlug) {
           return mockOrganization;
         }
-        if (query === api.functions.projects.projects.getOrganizationProjects) {
+        if (query === (api as any).functions?.projects.projects.getOrganizationProjects) {
           return mockProjects;
         }
         return undefined;
       });
 
-      render(<OrganizationDashboard />);
+      renderWithProviders(<OrganizationDashboard />);
 
       await waitFor(() => {
         expect(screen.getByText('Dashboard')).toBeInTheDocument();
@@ -232,17 +232,18 @@ describe('Dashboard Navigation Tests', () => {
     });
 
     it('should have correct href for individual project links', async () => {
-      (useQuery as jest.Mock).mockImplementation((query: any, args: any) => {
-        if (query === api.functions.organizations.organizations.getOrganizationBySlug) {
+      mockUseQuery.mockImplementation((query: unknown, args: unknown) => {
+        void args;
+        if (query === (api as any).functions.organizations.organizations.getOrganizationBySlug) {
           return mockOrganization;
         }
-        if (query === api.functions.projects.projects.getOrganizationProjects) {
+        if (query === (api as any).functions?.projects.projects.getOrganizationProjects) {
           return mockProjects;
         }
         return undefined;
       });
 
-      render(<OrganizationDashboard />);
+      renderWithProviders(<OrganizationDashboard />);
 
       await waitFor(() => {
         expect(screen.getByText('Dashboard')).toBeInTheDocument();
@@ -254,17 +255,18 @@ describe('Dashboard Navigation Tests', () => {
     });
 
     it('should show Create Project link when no projects exist', async () => {
-      (useQuery as jest.Mock).mockImplementation((query: any, args: any) => {
-        if (query === api.functions.organizations.organizations.getOrganizationBySlug) {
+      mockUseQuery.mockImplementation((query: unknown, args: unknown) => {
+        void args;
+        if (query === (api as any).functions.organizations.organizations.getOrganizationBySlug) {
           return mockOrganization;
         }
-        if (query === api.functions.projects.projects.getOrganizationProjects) {
+        if (query === (api as any).functions?.projects.projects.getOrganizationProjects) {
           return []; // No projects
         }
         return undefined;
       });
 
-      render(<OrganizationDashboard />);
+      renderWithProviders(<OrganizationDashboard />);
 
       await waitFor(() => {
         expect(screen.getByText('No projects yet')).toBeInTheDocument();
@@ -278,14 +280,14 @@ describe('Dashboard Navigation Tests', () => {
 
   describe('Header Navigation', () => {
     it('should have correct href for New Project button in header', async () => {
-      (useQuery as jest.Mock).mockImplementation((query: any) => {
-        if (query === api.functions.organizations.organizations.getOrganizationBySlug) {
+      mockUseQuery.mockImplementation((query: unknown) => {
+        if (query === (api as any).functions.organizations.organizations.getOrganizationBySlug) {
           return mockOrganization;
         }
         return undefined;
       });
 
-      render(<OrganizationDashboard />);
+      renderWithProviders(<OrganizationDashboard />);
 
       await waitFor(() => {
         expect(screen.getByText('Dashboard')).toBeInTheDocument();
@@ -300,17 +302,17 @@ describe('Dashboard Navigation Tests', () => {
 
   describe('Recent Activity Navigation', () => {
     it('should have correct href for View All Activity link', async () => {
-      (useQuery as jest.Mock).mockImplementation((query: any) => {
-        if (query === api.functions.organizations.organizations.getOrganizationBySlug) {
+      mockUseQuery.mockImplementation((query: unknown) => {
+        if (query === (api as any).functions.organizations.organizations.getOrganizationBySlug) {
           return mockOrganization;
         }
-        if (query === api.functions.dashboard.getRecentActivity) {
+        if (query === (api as any).functions.dashboard.getRecentActivity) {
           return mockRecentActivity;
         }
         return undefined;
       });
 
-      render(<OrganizationDashboard />);
+      renderWithProviders(<OrganizationDashboard />);
 
       await waitFor(() => {
         expect(screen.getByText('Recent Activity')).toBeInTheDocument();
@@ -325,23 +327,23 @@ describe('Dashboard Navigation Tests', () => {
 
   describe('All Navigation Links Summary', () => {
     it('should have all expected navigation links with correct hrefs', async () => {
-      (useQuery as jest.Mock).mockImplementation((query: any) => {
-        if (query === api.functions.organizations.organizations.getOrganizationBySlug) {
+      mockUseQuery.mockImplementation((query: unknown) => {
+        if (query === (api as any).functions.organizations.organizations.getOrganizationBySlug) {
           return mockOrganization;
         }
-        if (query === api.functions.projects.projects.getOrganizationProjects) {
+        if (query === (api as any).functions?.projects.projects.getOrganizationProjects) {
           return mockProjects;
         }
-        if (query === api.functions.dashboard.getDashboardStats) {
+        if (query === (api as any).functions.dashboard.getDashboardStats) {
           return mockDashboardStats;
         }
-        if (query === api.functions.dashboard.getRecentActivity) {
+        if (query === (api as any).functions.dashboard.getRecentActivity) {
           return mockRecentActivity;
         }
         return undefined;
       });
 
-      render(<OrganizationDashboard />);
+      renderWithProviders(<OrganizationDashboard />);
 
       await waitFor(() => {
         expect(screen.getByText('Dashboard')).toBeInTheDocument();

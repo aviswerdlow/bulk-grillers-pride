@@ -1,9 +1,14 @@
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+/**
+ * @jest-environment jsdom
+ */
 import React from 'react';
-import { render, screen, waitFor } from '@/__tests__/test-utils';
+
 import userEvent from '@testing-library/user-event';
-import { setupTest, cleanupTest } from '@/__tests__/frontend-test-helpers';
+import { cleanupTest, render, screen, setupTest, renderWithProviders } from '@/__tests__/test-helpers';
 import { DeleteProductDialog } from '../delete-product-dialog';
 import { Product } from '@/types/models';
+import type { Doc } from '@/../../../convex/_generated/dataModel';
 import {
   expectNoA11yViolations,
   expectFocusable,
@@ -16,14 +21,14 @@ import {
 
 // Mock product data
 const mockProduct: Product = {
-  _id: 'test-id' as any,
+  _id: 'test-id' as unknown as any,
   _creationTime: Date.now(),
   sku: 'TEST-SKU-001',
   name: 'Test Product',
   description: 'A test product for accessibility testing',
   price: 99.99,
   imageUrl: 'https://example.com/image.jpg',
-  organizationId: 'org-123' as any,
+  organizationId: 'org-123' as unknown,
   isDeleted: false,
   categoryProductAssignments: [],
 };
@@ -42,8 +47,7 @@ describe('DeleteProductDialog Accessibility', () => {
   });
 
   it('should have no accessibility violations', async () => {
-    const { container } = render(
-      <DeleteProductDialog
+    renderWithProviders(<DeleteProductDialog
         open={true}
         onOpenChange={jest.fn()}
         products={mockProduct}
@@ -59,8 +63,7 @@ describe('DeleteProductDialog Accessibility', () => {
   });
 
   it('should support keyboard navigation through all interactive elements', async () => {
-    render(
-      <DeleteProductDialog
+    renderWithProviders(<DeleteProductDialog
         open={true}
         onOpenChange={jest.fn()}
         products={mockProduct}
@@ -68,7 +71,7 @@ describe('DeleteProductDialog Accessibility', () => {
       />
     );
 
-    const dialog = await screen.findByRole('dialog');
+//     const dialog = await screen.findByRole('dialog');
 
     // Test keyboard navigation
     await simulateKeyboardNavigation([
@@ -85,8 +88,7 @@ describe('DeleteProductDialog Accessibility', () => {
   });
 
   it('should trap focus within the dialog when open', async () => {
-    const { container } = render(
-      <DeleteProductDialog
+    renderWithProviders(<DeleteProductDialog
         open={true}
         onOpenChange={jest.fn()}
         products={mockProduct}
@@ -101,8 +103,7 @@ describe('DeleteProductDialog Accessibility', () => {
   });
 
   it('should announce important changes to screen readers', async () => {
-    const { rerender } = render(
-      <DeleteProductDialog
+    const { rerender } = renderWithProviders(<DeleteProductDialog
         open={false}
         onOpenChange={jest.fn()}
         products={mockProduct}
@@ -125,8 +126,7 @@ describe('DeleteProductDialog Accessibility', () => {
   });
 
   it('should have proper ARIA labels and descriptions', async () => {
-    render(
-      <DeleteProductDialog
+    renderWithProviders(<DeleteProductDialog
         open={true}
         onOpenChange={jest.fn()}
         products={mockProduct}
@@ -159,8 +159,7 @@ describe('DeleteProductDialog Accessibility', () => {
   });
 
   it('should have logical heading hierarchy', async () => {
-    const { container } = render(
-      <DeleteProductDialog
+    renderWithProviders(<DeleteProductDialog
         open={true}
         onOpenChange={jest.fn()}
         products={mockProduct}
@@ -178,8 +177,7 @@ describe('DeleteProductDialog Accessibility', () => {
     const onOpenChange = jest.fn();
     const user = userEvent.setup();
 
-    render(
-      <DeleteProductDialog
+    renderWithProviders(<DeleteProductDialog
         open={true}
         onOpenChange={onOpenChange}
         products={mockProduct}
@@ -197,8 +195,7 @@ describe('DeleteProductDialog Accessibility', () => {
   it('should announce errors and warnings appropriately', async () => {
     const user = userEvent.setup();
     
-    render(
-      <DeleteProductDialog
+    renderWithProviders(<DeleteProductDialog
         open={true}
         onOpenChange={jest.fn()}
         products={mockProduct}
@@ -206,7 +203,7 @@ describe('DeleteProductDialog Accessibility', () => {
       />
     );
 
-    const dialog = await screen.findByRole('dialog');
+//     const dialog = await screen.findByRole('dialog');
 
     // Find and click delete button without checking consequences
     const deleteButton = screen.getByRole('button', { name: /delete/i });
@@ -220,8 +217,7 @@ describe('DeleteProductDialog Accessibility', () => {
   });
 
   it('should support high contrast mode', async () => {
-    const { container } = render(
-      <DeleteProductDialog
+    renderWithProviders(<DeleteProductDialog
         open={true}
         onOpenChange={jest.fn()}
         products={mockProduct}
@@ -233,7 +229,7 @@ describe('DeleteProductDialog Accessibility', () => {
 
     // Check that important UI elements use semantic colors that work in high contrast
     const alerts = container.querySelectorAll('[role="alert"]');
-    alerts.forEach(alert => {
+    alerts.forEach((alert: any) => {
       const styles = window.getComputedStyle(alert);
       // Verify borders or other visual indicators exist beyond just color
       expect(
@@ -245,18 +241,17 @@ describe('DeleteProductDialog Accessibility', () => {
   });
 
   it('should handle multiple product deletion accessibility', async () => {
-    const multipleProducts = [mockProduct, { ...mockProduct, _id: 'test-id-2' as any }];
+    const multipleProducts = [mockProduct, { ...mockProduct, _id: 'test-id-2' as unknown }];
     
-    render(
-      <DeleteProductDialog
+    renderWithProviders(<DeleteProductDialog
         open={true}
         onOpenChange={jest.fn()}
-        products={multipleProducts}
+        products={multipleProducts} as any
         onDelete={mockOnDelete}
       />
     );
 
-    const dialog = await screen.findByRole('dialog');
+//     const dialog = await screen.findByRole('dialog');
 
     // Check for plural form in announcements
     await expectAnnouncement(

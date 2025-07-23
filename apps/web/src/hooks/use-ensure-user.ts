@@ -12,7 +12,7 @@ const logger = createLogger('useEnsureUser');
  */
 export function useEnsureUser() {
   const { isSignedIn, isLoaded } = useAuth();
-  const ensureUser = useMutation(api.functions.auth.users.ensureUser);
+  const ensureUser = useMutation((api as any).functions.auth.users.ensureUser);
 
   useEffect(() => {
     logger.debug('Auth state:', { isLoaded, isSignedIn });

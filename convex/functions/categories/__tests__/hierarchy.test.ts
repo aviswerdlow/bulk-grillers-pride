@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach } from '@jest/globals';
+import { t } from '../../../test.setup';
 import {
   createConvexTest,
   createMutationContext,
@@ -13,12 +14,12 @@ import {
   createMockOrganizationMembership,
   createMockProject,
   createMockCategory,
-} from '../../../__tests__/test-helpers';
+} from 'convex-test';
 // Import the mutation object to access its handler
 import { moveCategory as moveCategoryMutation } from '../hierarchy';
 
 // Extract the handler for use in tests
-const moveCategory = moveCategoryMutation.handler;
+const moveCategory = (ctx: any, args: any) => moveCategoryMutation.handler(ctx, args);
 import { Id } from '../../../_generated/dataModel';
 
 describe('Category Hierarchy Operations', () => {
@@ -29,7 +30,8 @@ describe('Category Hierarchy Operations', () => {
   let membership: any;
 
   beforeEach(async () => {
-    test = createConvexTest();
+    
+    tes// t is already imported from test.setup
     
     // Set up common test data
     user = createMockUser({ _id: 'user_1' as Id<'users'> });
@@ -140,7 +142,7 @@ describe('Category Hierarchy Operations', () => {
         // Assert
         expect(result).toBe(childCategory._id);
         
-        const movedCategory = await test.db.get(childCategory._id);
+        const movedCategory = await t.db.get(childCategory._id);
         expect(movedCategory).toMatchObject({
           parentId: otherRootCategory._id,
           level: 1,
@@ -149,7 +151,7 @@ describe('Category Hierarchy Operations', () => {
         });
 
         // Check that grandchild was also updated
-        const updatedGrandchild = await test.db.get(grandchildCategory._id);
+        const updatedGrandchild = await t.db.get(grandchildCategory._id);
         expect(updatedGrandchild).toMatchObject({
           level: 2,
           path: '/home-garden/computers/laptops',
@@ -181,7 +183,7 @@ describe('Category Hierarchy Operations', () => {
         });
 
         // Assert
-        const movedCategory = await test.db.get(grandchildCategory._id);
+        const movedCategory = await t.db.get(grandchildCategory._id);
         expect(movedCategory).toMatchObject({
           parentId: undefined,
           level: 0,
@@ -201,7 +203,7 @@ describe('Category Hierarchy Operations', () => {
         });
 
         // Assert
-        const updated = await test.db.get(childCategory._id);
+        const updated = await t.db.get(childCategory._id);
         expect(updated.sortOrder).toBe(5);
       });
 
@@ -234,7 +236,7 @@ describe('Category Hierarchy Operations', () => {
         });
 
         // Assert
-        const moved = await test.db.get(childCategory._id);
+        const moved = await t.db.get(childCategory._id);
         expect(moved.sortOrder).toBe(21); // Max + 1
       });
 
@@ -272,13 +274,13 @@ describe('Category Hierarchy Operations', () => {
         });
 
         // Assert - All descendants should be updated
-        const updatedGGC = await test.db.get(greatGrandchild._id);
+        const updatedGGC = await t.db.get(greatGrandchild._id);
         expect(updatedGGC).toMatchObject({
           level: 3,
           path: '/home-garden/computers/laptops/gaming',
         });
         
-        const updatedSibling = await test.db.get(sibling._id);
+        const updatedSibling = await t.db.get(sibling._id);
         expect(updatedSibling).toMatchObject({
           level: 2,
           path: '/home-garden/computers/desktops',
@@ -302,7 +304,7 @@ describe('Category Hierarchy Operations', () => {
       it('should fail for viewer role', async () => {
         // Arrange
         membership.role = 'viewer';
-        await test.db.patch(membership._id, { role: 'viewer' });
+        await t.db.patch(membership._id, { role: 'viewer' });
         
         const ctx = createMutationContext(test);
 
@@ -373,7 +375,7 @@ describe('Category Hierarchy Operations', () => {
         });
 
         // Assert
-        const updated = await test.db.get(childCategory._id);
+        const updated = await t.db.get(childCategory._id);
         expect(updated.parentId).toBe(rootCategory._id); // Same parent
         expect(updated.sortOrder).toBe(10); // New sort order
         expect(updated.path).toBe('/electronics/computers'); // Same path
@@ -403,7 +405,7 @@ describe('Category Hierarchy Operations', () => {
         });
 
         // Assert
-        const moved = await test.db.get(specialCategory._id);
+        const moved = await t.db.get(specialCategory._id);
         expect(moved.path).toBe('/electronics/special-category');
       });
 
@@ -440,12 +442,12 @@ describe('Category Hierarchy Operations', () => {
         });
 
         // Assert - All categories should be properly updated
-        const updatedRoot = await test.db.get(rootCategory._id);
+        const updatedRoot = await t.db.get(rootCategory._id);
         expect(updatedRoot.level).toBe(1);
         expect(updatedRoot.path).toBe('/home-garden/electronics');
         
         // Check deepest category
-        const deepest = await test.db.get('cat_deep_4');
+        const deepest = await t.db.get('cat_deep_4');
         expect(deepest.level).toBe(6);
         expect(deepest.path).toBe('/home-garden/electronics/level-0/level-1/level-2/level-3/level-4');
       });

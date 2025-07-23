@@ -5,7 +5,7 @@ import { useQuery } from 'convex/react';
 import { api } from '@convex/_generated/api';
 import { ActivityLogVisualization } from '@/components/activity/activity-log-visualization';
 import { Loading } from '@/components/loading';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+// import { CardContentHeaderTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Download, RefreshCw } from 'lucide-react';
 
@@ -14,13 +14,13 @@ export default function AnalyticsPage() {
   const orgSlug = params.orgSlug as string;
 
   // Get organization
-  const organization = useQuery(api.functions.organizations.organizations.getOrganizationBySlug, {
+  const organization = useQuery((api as any).functions.organizations.organizations.getOrganizationBySlug, {
     slug: orgSlug,
   });
 
   // Get projects for this organization
   const projects = useQuery(
-    api.functions.projects.projects.getOrganizationProjects,
+    (api as any).functions.projects.projects.getOrganizationProjects,
     organization ? { organizationId: organization._id } : 'skip'
   );
 

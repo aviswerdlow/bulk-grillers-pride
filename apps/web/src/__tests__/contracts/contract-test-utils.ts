@@ -2,13 +2,39 @@ import { z } from 'zod';
 import type { FunctionReference } from 'convex/server';
 
 /**
+ * Mock Convex context type
+ */
+interface MockContext {
+  auth: {
+    getUserIdentity: jest.Mock;
+  };
+  db: {
+    query: jest.Mock;
+    insert: jest.Mock;
+    patch: jest.Mock;
+    replace: jest.Mock;
+    delete: jest.Mock;
+    get: jest.Mock;
+  };
+  scheduler: {
+    runAfter: jest.Mock;
+    runAt: jest.Mock;
+  };
+  storage: {
+    generateUploadUrl: jest.Mock;
+    getUrl: jest.Mock;
+    delete: jest.Mock;
+  };
+}
+
+/**
  * Base contract test configuration
  */
-export interface ContractTestConfig<Args = any, Return = any> {
+export interface ContractTestConfig<Args = unknown, Return = unknown> {
   /**
    * The Convex function reference being tested
    */
-  functionRef: FunctionReference<any, 'public'>;
+  functionRef: FunctionReference<'query' | 'mutation' | 'action', 'public'>;
   
   /**
    * Display name for the test
@@ -38,7 +64,7 @@ export interface ContractTestConfig<Args = any, Return = any> {
   /**
    * Example invalid inputs that should be rejected
    */
-  invalidInputs?: any[];
+  invalidInputs?: unknown[];
   
   /**
    * Expected error patterns for invalid inputs
@@ -109,7 +135,7 @@ export function validateContract<Args, Return>(
 /**
  * Create a mock Convex context for testing
  */
-export function createMockContext(overrides?: any) {
+export function createMockContext(overrides?: Partial<MockContext>) {
   return {
     auth: {
       getUserIdentity: jest.fn().mockResolvedValue({
@@ -143,17 +169,18 @@ export function createMockContext(overrides?: any) {
  * Assert that a function throws with expected error
  */
 export async function expectError(
-  fn: () => Promise<any>,
+  fn: () => Promise<unknown>,
   expectedError: string | RegExp
 ): Promise<void> {
   try {
     await fn();
     throw new Error('Expected function to throw');
-  } catch (error: any) {
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     if (typeof expectedError === 'string') {
-      expect(error.message).toContain(expectedError);
+      expect(errorMessage).toContain(expectedError);
     } else {
-      expect(error.message).toMatch(expectedError);
+      expect(errorMessage).toMatch(expectedError);
     }
   }
 }
@@ -162,7 +189,7 @@ export async function expectError(
  * Test helper to verify response shape matches schema
  */
 export function expectResponseShape<T>(
-  response: any,
+  response: unknown,
   schema: z.ZodSchema<T>
 ): void {
   const result = schema.safeParse(response);
@@ -176,7 +203,7 @@ export function expectResponseShape<T>(
  */
 export const commonSchemas = {
   // ID schemas
-  convexId: <T extends string>() => z.string() as z.ZodSchema<any>,
+  convexId: () => z.string() as z.ZodSchema<string>,
   
   // Timestamp schemas
   timestamp: z.number().positive(),
@@ -200,21 +227,21 @@ export const commonSchemas = {
   errorResponse: z.object({
     error: z.string(),
     code: z.string().optional(),
-    details: z.any().optional(),
+    details: z.unknown().optional(),
   }),
   
   // Success response schemas
   successResponse: z.object({
     success: z.boolean(),
     message: z.string().optional(),
-    data: z.any().optional(),
+    data: z.unknown().optional(),
   }),
 };
 
 /**
  * Generate test cases for pagination
  */
-export function generatePaginationTests(baseInput: any) {
+export function generatePaginationTests(baseInput: Record<string, unknown>) {
   return [
     { ...baseInput, limit: 1 },
     { ...baseInput, limit: 10 },
@@ -227,7 +254,7 @@ export function generatePaginationTests(baseInput: any) {
 /**
  * Generate test cases for filtering
  */
-export function generateFilterTests(baseInput: any, filterField: string, values: any[]) {
+export function generateFilterTests(baseInput: Record<string, unknown>, filterField: string, values: unknown[]) {
   return values.map(value => ({
     ...baseInput,
     [filterField]: value,

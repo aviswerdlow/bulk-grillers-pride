@@ -5,7 +5,7 @@
  * are working correctly and meet the expected thresholds.
  */
 
-import { convexTest } from 'convex-test';
+import { t } from '../../test.setup';
 import { describe, expect, test } from '@jest/globals';
 import schema from '../../schema';
 import { api } from '../../_generated/api';

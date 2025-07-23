@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useQuery } from 'convex/react';
 import { api } from '@convex/_generated/api';
 import { Id } from '@convex/_generated/dataModel';
@@ -28,7 +28,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Check, ChevronDown, FolderTree, Plus, Tag, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Category, CategoryLevel } from '@/types/models';
+import { Category } from '@/types/models';
 
 interface CategorySelectorProps {
   organizationId: Id<'organizations'>;
@@ -54,14 +54,13 @@ export function CategorySelector({
   const [showAssignmentDialog, setShowAssignmentDialog] = useState(false);
 
   // Get category tree
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const categoryTree = useQuery((api as any).functions.categories.categories.getCategoryTree, {
     organizationId,
     projectId,
   });
 
   // Get level definitions for friendly names
-  const levelDefinitions = useQuery(api.functions.categories.categoryLevels.getCategoryLevels, {
+  const levelDefinitions = useQuery((api as any).functions.categories.categoryLevels.getCategoryLevels, {
     organizationId,
     projectId,
   });
@@ -106,7 +105,7 @@ export function CategorySelector({
   );
 
   const getLevelName = (level: number) => {
-    const levelDef = levelDefinitions?.find((l) => l.level === level);
+    const levelDef = levelDefinitions?.find((l: any) => l.level === level);
     return levelDef?.name || `Level ${level}`;
   };
 
@@ -254,7 +253,7 @@ export function CategorySelector({
           </DialogHeader>
 
           <div className="space-y-4">
-            {levelDefinitions.map((levelDef) => {
+            {levelDefinitions.map((levelDef: any) => {
               const levelCategories = allCategories.filter((c) => c.level === levelDef.level);
               const selectedInLevel = selectedCategories.filter(
                 (id) => allCategories.find((c) => c._id === id)?.level === levelDef.level

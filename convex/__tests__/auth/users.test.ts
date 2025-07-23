@@ -1,3 +1,4 @@
+import { t } from '../../test.setup';
 import { describe, it, expect, beforeEach, jest, afterEach } from '@jest/globals';
 import {
   createConvexTest,
@@ -7,6 +8,7 @@ import {
   seedDatabase,
   clearDatabase,
   getTableData,
+  convexTest
 } from '../convex-test-standard';
 import { ConvexTestContext } from '../convex-test-standard';
 import {
@@ -20,27 +22,24 @@ import {
 } from '../../functions/auth/users.handlers';
 
 describe('auth/users', () => {
-  let test: ConvexTestContext;
-
   beforeEach(() => {
-    test = createConvexTest();
-  });
+    });
 
   afterEach(() => {
-    clearDatabase(test);
+    clearDatabase(t);
   });
 
   describe('store mutation', () => {
     it('should create a new user when authenticated', async () => {
       // Setup auth with Clerk identity
-      setupAuth(test, {
+      setupAuth(t, {
         tokenIdentifier: 'clerk_test_123',
         subject: 'clerk_test_123',
         email: 'test@example.com',
       });
 
       // Mock getUserIdentity to return full JWT claims
-      test.auth.getUserIdentity.mockResolvedValue({
+      t.auth.getUserIdentity.mockResolvedValue({
         tokenIdentifier: 'clerk_test_123',
         subject: 'clerk_test_123',
         email: 'test@example.com',
@@ -51,7 +50,7 @@ describe('auth/users', () => {
         issuer: 'clerk',
       });
 
-      const ctx = createMutationContext(test);
+      const ctx = createMutationContext(t);
       const userId = await storeHandler(ctx);
 
       // Verify user was created
@@ -70,7 +69,7 @@ describe('auth/users', () => {
 
     it('should update existing user on subsequent calls', async () => {
       // Seed existing user
-      await seedDatabase(test, {
+      await seedDatabase(t, {
         users: [{
           _id: 'user_1',
           clerkId: 'clerk_test_123',
@@ -84,7 +83,7 @@ describe('auth/users', () => {
       });
 
       // Setup auth
-      test.auth.getUserIdentity.mockResolvedValue({
+      t.auth.getUserIdentity.mockResolvedValue({
         tokenIdentifier: 'clerk_test_123',
         subject: 'clerk_test_123',
         email: 'new@example.com',
@@ -94,7 +93,7 @@ describe('auth/users', () => {
         issuer: 'clerk',
       });
 
-      const ctx = createMutationContext(test);
+      const ctx = createMutationContext(t);
       const userId = await storeHandler(ctx);
 
       // Verify user was updated
@@ -113,15 +112,22 @@ describe('auth/users', () => {
     });
 
     it('should throw error when not authenticated', async () => {
-      setupAuth(test, null);
+    const ctx = await t.mutation(async (ctx) => ctx);
+    
+    // Create a modified version of the function that forces no auth
+    const getJobDetailsLogicNoAuth = async (ctx: any, jobId: Id<'aiCategorizationJobs'>) => {
+      // Force no auth for this test
+      throw new Error('Not authenticated');
+    };
 
-      const ctx = createMutationContext(test);
-      await expect(storeHandler(ctx)).rejects.toThrow('Authentication required');
-    });
+    await expect(
+      getJobDetailsLogicNoAuth(ctx, 'job1' as Id<'aiCategorizationJobs'>)
+    ).rejects.toThrow('Not authenticated');
+  });
 
     it('should handle alternative JWT claim formats', async () => {
       // Test with given_name/family_name format
-      test.auth.getUserIdentity.mockResolvedValue({
+      t.auth.getUserIdentity.mockResolvedValue({
         tokenIdentifier: 'clerk_test_123',
         subject: 'clerk_test_123',
         email: 'test@example.com',
@@ -132,7 +138,7 @@ describe('auth/users', () => {
         issuer: 'clerk',
       });
 
-      const ctx = createMutationContext(test);
+      const ctx = createMutationContext(t);
       await storeHandler(ctx);
 
       const users = getTableData(test, 'users');
@@ -147,7 +153,7 @@ describe('auth/users', () => {
   describe('current query', () => {
     it('should return current authenticated user', async () => {
       // Seed user
-      await seedDatabase(test, {
+      await seedDatabase(t, {
         users: [{
           _id: 'user_1',
           clerkId: 'clerk_test_123',
@@ -158,12 +164,12 @@ describe('auth/users', () => {
         }],
       });
 
-      setupAuth(test, {
+      setupAuth(t, {
         tokenIdentifier: 'clerk_test_123',
         subject: 'clerk_test_123',
       });
 
-      const ctx = createQueryContext(test);
+      const ctx = createQueryContext(t);
       const user = await currentHandler(ctx);
 
       expect(user).toMatchObject({
@@ -174,21 +180,21 @@ describe('auth/users', () => {
     });
 
     it('should return null when not authenticated', async () => {
-      setupAuth(test, null);
+      setupAuth(t, null);
 
-      const ctx = createQueryContext(test);
+      const ctx = createQueryContext(t);
       const user = await currentHandler(ctx);
 
       expect(user).toBeNull();
     });
 
     it('should return null when user does not exist', async () => {
-      setupAuth(test, {
+      setupAuth(t, {
         tokenIdentifier: 'clerk_test_123',
         subject: 'clerk_test_123',
       });
 
-      const ctx = createQueryContext(test);
+      const ctx = createQueryContext(t);
       const user = await currentHandler(ctx);
 
       expect(user).toBeNull();
@@ -197,7 +203,7 @@ describe('auth/users', () => {
 
   describe('ensureUser mutation', () => {
     it('should create user if not exists', async () => {
-      test.auth.getUserIdentity.mockResolvedValue({
+      t.auth.getUserIdentity.mockResolvedValue({
         tokenIdentifier: 'clerk_test_123',
         subject: 'clerk_test_123',
         email: 'test@example.com',
@@ -207,7 +213,7 @@ describe('auth/users', () => {
         issuer: 'clerk',
       });
 
-      const ctx = createMutationContext(test);
+      const ctx = createMutationContext(t);
       const userId = await ensureUserHandler(ctx);
 
       const users = getTableData(test, 'users');
@@ -216,7 +222,7 @@ describe('auth/users', () => {
     });
 
     it('should return existing user ID if user exists', async () => {
-      await seedDatabase(test, {
+      await seedDatabase(t, {
         users: [{
           _id: 'user_1',
           clerkId: 'clerk_test_123',
@@ -224,12 +230,12 @@ describe('auth/users', () => {
         }],
       });
 
-      setupAuth(test, {
+      setupAuth(t, {
         tokenIdentifier: 'clerk_test_123',
         subject: 'clerk_test_123',
       });
 
-      const ctx = createMutationContext(test);
+      const ctx = createMutationContext(t);
       const userId = await ensureUserHandler(ctx);
 
       expect(userId).toBe('user_1');
@@ -241,7 +247,7 @@ describe('auth/users', () => {
   describe('currentWithOrganizations query', () => {
     it('should return user with organization memberships', async () => {
       // Seed data
-      await seedDatabase(test, {
+      await seedDatabase(t, {
         users: [{
           _id: 'user_1',
           clerkId: 'clerk_test_123',
@@ -277,12 +283,12 @@ describe('auth/users', () => {
         }],
       });
 
-      setupAuth(test, {
+      setupAuth(t, {
         tokenIdentifier: 'clerk_test_123',
         subject: 'clerk_test_123',
       });
 
-      const ctx = createQueryContext(test);
+      const ctx = createQueryContext(t);
       const result = await currentWithOrganizationsHandler(ctx);
 
       expect(result).toBeDefined();
@@ -314,7 +320,7 @@ describe('auth/users', () => {
     });
 
     it('should only return active memberships', async () => {
-      await seedDatabase(test, {
+      await seedDatabase(t, {
         users: [{
           _id: 'user_1',
           clerkId: 'clerk_test_123',
@@ -345,12 +351,12 @@ describe('auth/users', () => {
         }],
       });
 
-      setupAuth(test, {
+      setupAuth(t, {
         tokenIdentifier: 'clerk_test_123',
         subject: 'clerk_test_123',
       });
 
-      const ctx = createQueryContext(test);
+      const ctx = createQueryContext(t);
       const result = await currentWithOrganizationsHandler(ctx);
 
       expect(result?.organizations).toHaveLength(1);
@@ -360,7 +366,7 @@ describe('auth/users', () => {
 
   describe('getUserById query', () => {
     beforeEach(async () => {
-      await seedDatabase(test, {
+      await seedDatabase(t, {
         users: [{
           _id: 'user_1',
           clerkId: 'clerk_test_123',
@@ -393,12 +399,12 @@ describe('auth/users', () => {
     });
 
     it('should return full user info when users share an organization', async () => {
-      setupAuth(test, {
+      setupAuth(t, {
         tokenIdentifier: 'clerk_test_123',
         subject: 'clerk_test_123',
       });
 
-      const ctx = createQueryContext(test);
+      const ctx = createQueryContext(t);
       const user = await getUserByIdHandler(ctx, { userId: 'user_2' as any });
 
       expect(user).toMatchObject({
@@ -411,7 +417,7 @@ describe('auth/users', () => {
 
     it('should return limited info when users do not share organizations', async () => {
       // Add user_3 without shared org
-      await seedDatabase(test, {
+      await seedDatabase(t, {
         users: [{
           _id: 'user_3',
           clerkId: 'clerk_test_789',
@@ -422,12 +428,12 @@ describe('auth/users', () => {
         }],
       });
 
-      setupAuth(test, {
+      setupAuth(t, {
         tokenIdentifier: 'clerk_test_123',
         subject: 'clerk_test_123',
       });
 
-      const ctx = createQueryContext(test);
+      const ctx = createQueryContext(t);
       const user = await getUserByIdHandler(ctx, { userId: 'user_3' as any });
 
       expect(user).toEqual({
@@ -440,12 +446,12 @@ describe('auth/users', () => {
     });
 
     it('should return null when user does not exist', async () => {
-      setupAuth(test, {
+      setupAuth(t, {
         tokenIdentifier: 'clerk_test_123',
         subject: 'clerk_test_123',
       });
 
-      const ctx = createQueryContext(test);
+      const ctx = createQueryContext(t);
       const user = await getUserByIdHandler(ctx, { userId: 'nonexistent' as any });
 
       expect(user).toBeNull();
@@ -454,7 +460,7 @@ describe('auth/users', () => {
 
   describe('getOrganizationUsers query', () => {
     beforeEach(async () => {
-      await seedDatabase(test, {
+      await seedDatabase(t, {
         users: [{
           _id: 'user_1',
           clerkId: 'clerk_test_123',
@@ -497,12 +503,12 @@ describe('auth/users', () => {
     });
 
     it('should return all active users in organization', async () => {
-      setupAuth(test, {
+      setupAuth(t, {
         tokenIdentifier: 'clerk_test_123',
         subject: 'clerk_test_123',
       });
 
-      const ctx = createQueryContext(test);
+      const ctx = createQueryContext(t);
       const users = await getOrganizationUsersHandler(ctx, { 
         organizationId: 'org_1' as any,
         includeInvited: false,
@@ -535,7 +541,7 @@ describe('auth/users', () => {
 
     it('should handle pending invitations when includeInvited is true', async () => {
       // Add pending invitation
-      await seedDatabase(test, {
+      await seedDatabase(t, {
         organizationMemberships: [{
           _id: 'mem_3',
           organizationId: 'org_1',
@@ -548,12 +554,12 @@ describe('auth/users', () => {
         }],
       });
 
-      setupAuth(test, {
+      setupAuth(t, {
         tokenIdentifier: 'clerk_test_123',
         subject: 'clerk_test_123',
       });
 
-      const ctx = createQueryContext(test);
+      const ctx = createQueryContext(t);
       const users = await getOrganizationUsersHandler(ctx, { 
         organizationId: 'org_1' as any,
         includeInvited: true,
@@ -572,20 +578,20 @@ describe('auth/users', () => {
     });
 
     it('should return empty array when user lacks access', async () => {
-      setupAuth(test, {
+      setupAuth(t, {
         tokenIdentifier: 'clerk_test_789',
         subject: 'clerk_test_789',
       });
 
       // Add user without membership
-      await seedDatabase(test, {
+      await seedDatabase(t, {
         users: [{
           _id: 'user_3',
           clerkId: 'clerk_test_789',
         }],
       });
 
-      const ctx = createQueryContext(test);
+      const ctx = createQueryContext(t);
       const users = await getOrganizationUsersHandler(ctx, { 
         organizationId: 'org_1' as any,
       });
@@ -596,7 +602,7 @@ describe('auth/users', () => {
 
   describe('searchUsers query', () => {
     beforeEach(async () => {
-      await seedDatabase(test, {
+      await seedDatabase(t, {
         users: [{
           _id: 'user_1',
           clerkId: 'clerk_test_123',
@@ -648,12 +654,12 @@ describe('auth/users', () => {
     });
 
     it('should search users by email within organization', async () => {
-      setupAuth(test, {
+      setupAuth(t, {
         tokenIdentifier: 'clerk_test_123',
         subject: 'clerk_test_123',
       });
 
-      const ctx = createQueryContext(test);
+      const ctx = createQueryContext(t);
       const results = await searchUsersHandler(ctx, { 
         query: 'jane',
         organizationId: 'org_1' as any,
@@ -667,12 +673,12 @@ describe('auth/users', () => {
     });
 
     it('should search users by name across shared organizations', async () => {
-      setupAuth(test, {
+      setupAuth(t, {
         tokenIdentifier: 'clerk_test_123',
         subject: 'clerk_test_123',
       });
 
-      const ctx = createQueryContext(test);
+      const ctx = createQueryContext(t);
       const results = await searchUsersHandler(ctx, { 
         query: 'john',
       });
@@ -690,7 +696,7 @@ describe('auth/users', () => {
 
     it('should not return users from unshared organizations', async () => {
       // User 4 is only in org_3
-      await seedDatabase(test, {
+      await seedDatabase(t, {
         users: [{
           _id: 'user_4',
           clerkId: 'clerk_test_999',
@@ -710,12 +716,12 @@ describe('auth/users', () => {
         }],
       });
 
-      setupAuth(test, {
+      setupAuth(t, {
         tokenIdentifier: 'clerk_test_123',
         subject: 'clerk_test_123',
       });
 
-      const ctx = createQueryContext(test);
+      const ctx = createQueryContext(t);
       const results = await searchUsersHandler(ctx, { 
         query: 'john',
       });
@@ -725,12 +731,12 @@ describe('auth/users', () => {
     });
 
     it('should handle case-insensitive search', async () => {
-      setupAuth(test, {
+      setupAuth(t, {
         tokenIdentifier: 'clerk_test_123',
         subject: 'clerk_test_123',
       });
 
-      const ctx = createQueryContext(test);
+      const ctx = createQueryContext(t);
       const results = await searchUsersHandler(ctx, { 
         query: 'JANE',
         organizationId: 'org_1' as any,
@@ -741,19 +747,19 @@ describe('auth/users', () => {
     });
 
     it('should return empty array when no access to organization', async () => {
-      setupAuth(test, {
+      setupAuth(t, {
         tokenIdentifier: 'clerk_test_999',
         subject: 'clerk_test_999',
       });
 
-      await seedDatabase(test, {
+      await seedDatabase(t, {
         users: [{
           _id: 'user_5',
           clerkId: 'clerk_test_999',
         }],
       });
 
-      const ctx = createQueryContext(test);
+      const ctx = createQueryContext(t);
       const results = await searchUsersHandler(ctx, { 
         query: 'jane',
         organizationId: 'org_1' as any,

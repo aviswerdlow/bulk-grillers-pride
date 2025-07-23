@@ -124,7 +124,7 @@ export const recordMetrics = internalMutation({
     const benchmark = await ctx.db.get(benchmarkId);
     if (benchmark) {
       await ctx.db.patch(benchmarkId, {
-        results: [...(benchmark.results || []), metricId],
+        results: [...(benchmark.results || []), metricId] as any,
         updatedAt: Date.now(),
       });
     }

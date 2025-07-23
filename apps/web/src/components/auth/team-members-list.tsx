@@ -44,7 +44,7 @@ import {
 import { MoreVertical, Shield, UserX, Search, Loader2, UserPlus, Clock, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 import { InviteUserDialog } from './invite-user-dialog';
-import { UserRole, roleConfig, TeamMember } from '@/types/models';
+import { UserRole, roleConfig } from '@/types/models';
 import { Id } from '@/../../../convex/_generated/dataModel';
 
 interface TeamMembersListProps {
@@ -58,19 +58,19 @@ export function TeamMembersList({ organizationId, currentUserRole }: TeamMembers
   const [userToRemove, setUserToRemove] = useState<{ id: string; name: string } | null>(null);
   const [updatingRole, setUpdatingRole] = useState<string | null>(null);
 
-  const members = useQuery(api.functions.auth.users.getOrganizationUsers, { organizationId });
+  const members = useQuery((api as any).functions.auth.users.getOrganizationUsers, { organizationId });
 
   const activeSessions = useQuery(
-    api.functions.auth.sessions.getActiveSessions,
+    (api as any).functions.auth.sessions.getActiveSessions,
     currentUserRole === 'owner' || currentUserRole === 'admin' ? { organizationId } : 'skip'
   );
 
-  const updateUserRole = useMutation(api.functions.auth.permissions.updateUserRole);
-  const removeUser = useMutation(api.functions.auth.permissions.removeUserFromOrganization);
+  const updateUserRole = useMutation((api as any).functions.auth.permissions.updateUserRole);
+  const removeUser = useMutation((api as any).functions.auth.permissions.removeUserFromOrganization);
 
   const filteredMembers =
     members?.filter(
-      (member) =>
+      (member: any) =>
         member.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
         member.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         member.lastName?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -121,7 +121,7 @@ export function TeamMembersList({ organizationId, currentUserRole }: TeamMembers
   };
 
   const isUserActive = (userId: string) => {
-    return activeSessions?.some((session) => session.userId === userId);
+    return activeSessions?.some((session: any) => session.userId === userId);
   };
 
   if (!members) {
@@ -184,7 +184,7 @@ export function TeamMembersList({ organizationId, currentUserRole }: TeamMembers
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredMembers.map((member) => (
+                {filteredMembers.map((member: any) => (
                   <TableRow key={member._id}>
                     <TableCell>
                       <div className="flex items-center gap-3">

@@ -41,7 +41,7 @@ export function FocusManagementDemo() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [wizardOpen, setWizardOpen] = useState(false);
   const [currentWizardStep, setCurrentWizardStep] = useState(0);
-  const [toolbarActiveIndex, setToolbarActiveIndex] = useState(0);
+  const [toolbarActiveIndex] = useState(0);
   
   // Ref for toolbar items
   const toolbarItemsRef = useRef<HTMLButtonElement[]>([]);

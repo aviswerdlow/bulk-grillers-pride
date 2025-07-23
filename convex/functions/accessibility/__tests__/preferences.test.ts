@@ -1,4 +1,5 @@
-import { convexTest } from '../../../__tests__/test-helpers';
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import { t } from '../../../test.setup';
 import {
   getAccessibilityPreferencesHandler,
   updateAccessibilityPreferencesHandler,
@@ -10,7 +11,8 @@ describe('Accessibility Preferences', () => {
   let userId: string;
 
   beforeEach(async () => {
-    ctx = convexTest();
+    
+    ctx = await t.run(async (ctx) => ctx);
 
     // Create test user
     userId = await ctx.db.insert('users', {
@@ -26,14 +28,14 @@ describe('Accessibility Preferences', () => {
 
   describe('getAccessibilityPreferences', () => {
     it('should return null when not authenticated', async () => {
-      ctx.auth.getUserIdentity.mockResolvedValue(null);
+    const ctx = await t.mutation(async (ctx) => ctx);
       const result = await getAccessibilityPreferencesHandler(ctx);
 
       expect(result).toBeNull();
     });
 
     it('should return default preferences when user has no saved preferences', async () => {
-      ctx.auth.getUserIdentity.mockResolvedValue({ subject: 'user_123' });
+    const ctx = await t.mutation(async (ctx) => ctx);
       const result = await getAccessibilityPreferencesHandler(ctx);
 
       expect(result).toMatchObject({
@@ -51,6 +53,7 @@ describe('Accessibility Preferences', () => {
     });
 
     it('should return saved preferences when they exist', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       // Create preferences
       await ctx.db.insert('accessibilityPreferences', {
         userId,
@@ -66,8 +69,6 @@ describe('Accessibility Preferences', () => {
         createdAt: Date.now(),
         updatedAt: Date.now(),
       });
-
-      ctx.auth.getUserIdentity.mockResolvedValue({ subject: 'user_123' });
       const result = await getAccessibilityPreferencesHandler(ctx);
 
       expect(result?.preferences).toMatchObject({
@@ -84,7 +85,7 @@ describe('Accessibility Preferences', () => {
 
   describe('updateAccessibilityPreferences', () => {
     it('should throw error when not authenticated', async () => {
-      ctx.auth.getUserIdentity.mockResolvedValue(null);
+    const ctx = await t.mutation(async (ctx) => ctx);
       await expect(
         updateAccessibilityPreferencesHandler(
           ctx,
@@ -104,7 +105,7 @@ describe('Accessibility Preferences', () => {
     });
 
     it('should validate confirmation method', async () => {
-      ctx.auth.getUserIdentity.mockResolvedValue({ subject: 'user_123' });
+    const ctx = await t.mutation(async (ctx) => ctx);
       await expect(
         updateAccessibilityPreferencesHandler(
           ctx,
@@ -124,7 +125,7 @@ describe('Accessibility Preferences', () => {
     });
 
     it('should create new preferences when none exist', async () => {
-      ctx.auth.getUserIdentity.mockResolvedValue({ subject: 'user_123' });
+    const ctx = await t.mutation(async (ctx) => ctx);
       const preferenceId = await updateAccessibilityPreferencesHandler(
         ctx,
         {
@@ -156,6 +157,7 @@ describe('Accessibility Preferences', () => {
     });
 
     it('should update existing preferences', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       // Create initial preferences
       const preferenceId = await ctx.db.insert('accessibilityPreferences', {
         userId,
@@ -173,7 +175,6 @@ describe('Accessibility Preferences', () => {
       });
 
       // Update preferences
-      ctx.auth.getUserIdentity.mockResolvedValue({ subject: 'user_123' });
       await updateAccessibilityPreferencesHandler(
         ctx,
         {
@@ -204,6 +205,7 @@ describe('Accessibility Preferences', () => {
 
   describe('getPreferencesByUserId', () => {
     it('should return default preferences when user has no saved preferences', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const result = await getPreferencesByUserIdHandler(
         ctx,
         { userId }
@@ -224,6 +226,7 @@ describe('Accessibility Preferences', () => {
     });
 
     it('should return saved preferences when they exist', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       // Create preferences
       await ctx.db.insert('accessibilityPreferences', {
         userId,

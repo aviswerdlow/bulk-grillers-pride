@@ -75,6 +75,24 @@ module.exports = {
         delete: 'products.products.delete',
       },
     },
+    projects: {
+      projects: {
+        getOrganizationProjects: 'projects.projects.getOrganizationProjects',
+        createProject: 'projects.projects.createProject',
+        updateProject: 'projects.projects.updateProject',
+        deleteProject: 'projects.projects.deleteProject',
+        getProject: 'projects.projects.getProject',
+      },
+    },
+    dashboard: {
+      getDashboardStats: 'dashboard.getDashboardStats',
+    },
+    accessibility: {
+      preferences: {
+        getAccessibilityPreferences: 'accessibility.preferences.getAccessibilityPreferences',
+        updateAccessibilityPreferences: 'accessibility.preferences.updateAccessibilityPreferences',
+      },
+    },
   },
   },
 };

@@ -1,4 +1,6 @@
-import { convexTest } from '../test-helpers';
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import { t } from '../../test.setup';
+import { convexTest } from '../../test-helpers';
 
 describe('Product Deletion', () => {
   beforeEach(() => {
@@ -7,7 +9,7 @@ describe('Product Deletion', () => {
 
   describe('deleteProduct', () => {
     it('should soft delete a product and create trash entry', async () => {
-      const ctx = convexTest();
+      const ctx = await t.run(async (ctx) => ctx);
       
       // Setup test data
       const userId = await ctx.db.insert('users', {
@@ -125,7 +127,7 @@ describe('Product Deletion', () => {
 
   describe('bulkDeleteProducts', () => {
     it('should require correct confirmation text', async () => {
-      const ctx = convexTest();
+      const ctx = await t.run(async (ctx) => ctx);
       
       await expect(
         ctx.runMutation('bulkDeleteProducts', {
@@ -138,7 +140,7 @@ describe('Product Deletion', () => {
 
   describe('getTrashItems', () => {
     it('should return paginated trash items', async () => {
-      const ctx = convexTest();
+      const ctx = await t.run(async (ctx) => ctx);
       
       const result = await ctx.runQuery('getTrashItems', {
           organizationId: '123' as any,

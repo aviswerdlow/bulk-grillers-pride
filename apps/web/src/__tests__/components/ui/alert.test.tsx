@@ -1,11 +1,15 @@
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+/**
+ * @jest-environment jsdom
+ */
 import React from 'react';
-import { render, screen } from '../../test-utils';
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { cleanupTest, mockUseQuery, mockUseMutation, renderWithProviders, setupTest } from '@/__tests__/test-helpers';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 describe('Alert Components', () => {
   describe('Alert Component', () => {
     it('renders with default variant', () => {
-      render(<Alert>Default alert</Alert>);
+      renderWithProviders(<Alert>Default alert</Alert>);
       const alert = screen.getByRole('alert');
       expect(alert).toBeInTheDocument();
       expect(alert.className).toContain('bg-background');
@@ -13,7 +17,7 @@ describe('Alert Components', () => {
     });
 
     it('renders with destructive variant', () => {
-      render(<Alert variant="destructive">Error alert</Alert>);
+      renderWithProviders(<Alert variant="destructive">Error alert</Alert>);
       const alert = screen.getByRole('alert');
       expect(alert.className).toContain('border-destructive/50');
       expect(alert.className).toContain('text-destructive');
@@ -21,20 +25,20 @@ describe('Alert Components', () => {
     });
 
     it('applies custom className', () => {
-      render(<Alert className="custom-alert">Custom alert</Alert>);
+      renderWithProviders(<Alert className="custom-alert">Custom alert</Alert>);
       const alert = screen.getByRole('alert');
       expect(alert).toHaveClass('custom-alert');
     });
 
     it('forwards ref correctly', () => {
       const ref = React.createRef<HTMLDivElement>();
-      render(<Alert ref={ref}>Ref alert</Alert>);
+      renderWithProviders(<Alert ref={ref}>Ref alert</Alert>);
       expect(ref.current).toBeInstanceOf(HTMLDivElement);
       expect(ref.current?.textContent).toBe('Ref alert');
     });
 
     it('applies base styles correctly', () => {
-      render(<Alert>Styled alert</Alert>);
+      renderWithProviders(<Alert>Styled alert</Alert>);
       const alert = screen.getByRole('alert');
       expect(alert.className).toContain('relative');
       expect(alert.className).toContain('w-full');
@@ -44,7 +48,7 @@ describe('Alert Components', () => {
     });
 
     it('applies icon-related styles', () => {
-      render(<Alert>Icon alert</Alert>);
+      renderWithProviders(<Alert>Icon alert</Alert>);
       const alert = screen.getByRole('alert');
       expect(alert.className).toContain('[&>svg~*]:pl-7');
       expect(alert.className).toContain('[&>svg+div]:translate-y-[-3px]');
@@ -55,8 +59,7 @@ describe('Alert Components', () => {
     });
 
     it('renders with icon and applies correct styles to icon', () => {
-      render(
-        <Alert>
+      renderWithProviders(<Alert>
           <svg data-testid="alert-icon" />
           Alert with icon
         </Alert>
@@ -68,8 +71,7 @@ describe('Alert Components', () => {
     });
 
     it('renders with destructive variant and icon', () => {
-      render(
-        <Alert variant="destructive">
+      renderWithProviders(<Alert variant="destructive">
           <svg data-testid="alert-icon" />
           Destructive alert with icon
         </Alert>
@@ -79,8 +81,7 @@ describe('Alert Components', () => {
     });
 
     it('forwards HTML div props', () => {
-      render(
-        <Alert
+      renderWithProviders(<Alert
           id="test-alert"
           data-testid="alert-test"
           aria-label="Test alert"
@@ -97,20 +98,20 @@ describe('Alert Components', () => {
 
   describe('AlertTitle Component', () => {
     it('renders as h5 element', () => {
-      render(<AlertTitle>Alert Title</AlertTitle>);
+      renderWithProviders(<AlertTitle>Alert Title</AlertTitle>);
       const title = screen.getByText('Alert Title');
       expect(title).toBeInTheDocument();
       expect(title.tagName).toBe('H5');
     });
 
     it('applies custom className', () => {
-      render(<AlertTitle className="custom-title">Custom Title</AlertTitle>);
+      renderWithProviders(<AlertTitle className="custom-title">Custom Title</AlertTitle>);
       const title = screen.getByText('Custom Title');
       expect(title).toHaveClass('custom-title');
     });
 
     it('applies base styles correctly', () => {
-      render(<AlertTitle>Styled Title</AlertTitle>);
+      renderWithProviders(<AlertTitle>Styled Title</AlertTitle>);
       const title = screen.getByText('Styled Title');
       expect(title.className).toContain('mb-1');
       expect(title.className).toContain('font-medium');
@@ -120,14 +121,13 @@ describe('Alert Components', () => {
 
     it('forwards ref correctly', () => {
       const ref = React.createRef<HTMLParagraphElement>();
-      render(<AlertTitle ref={ref}>Ref Title</AlertTitle>);
+      renderWithProviders(<AlertTitle ref={ref}>Ref Title</AlertTitle>);
       expect(ref.current).toBeInstanceOf(HTMLHeadingElement);
       expect(ref.current?.textContent).toBe('Ref Title');
     });
 
     it('forwards HTML heading props', () => {
-      render(
-        <AlertTitle
+      renderWithProviders(<AlertTitle
           id="alert-title"
           data-testid="title-test"
           aria-level={3}
@@ -144,15 +144,14 @@ describe('Alert Components', () => {
 
   describe('AlertDescription Component', () => {
     it('renders as div element', () => {
-      render(<AlertDescription>Alert Description</AlertDescription>);
+      renderWithProviders(<AlertDescription>Alert Description</AlertDescription>);
       const description = screen.getByText('Alert Description');
       expect(description).toBeInTheDocument();
       expect(description.tagName).toBe('DIV');
     });
 
     it('applies custom className', () => {
-      render(
-        <AlertDescription className="custom-description">
+      renderWithProviders(<AlertDescription className="custom-description">
           Custom Description
         </AlertDescription>
       );
@@ -161,7 +160,7 @@ describe('Alert Components', () => {
     });
 
     it('applies base styles correctly', () => {
-      render(<AlertDescription>Styled Description</AlertDescription>);
+      renderWithProviders(<AlertDescription>Styled Description</AlertDescription>);
       const description = screen.getByText('Styled Description');
       expect(description.className).toContain('text-sm');
       expect(description.className).toContain('[&_p]:leading-relaxed');
@@ -169,14 +168,13 @@ describe('Alert Components', () => {
 
     it('forwards ref correctly', () => {
       const ref = React.createRef<HTMLParagraphElement>();
-      render(<AlertDescription ref={ref}>Ref Description</AlertDescription>);
+      renderWithProviders(<AlertDescription ref={ref}>Ref Description</AlertDescription>);
       expect(ref.current).toBeInstanceOf(HTMLDivElement);
       expect(ref.current?.textContent).toBe('Ref Description');
     });
 
     it('forwards HTML div props', () => {
-      render(
-        <AlertDescription
+      renderWithProviders(<AlertDescription
           id="alert-desc"
           data-testid="desc-test"
           role="status"
@@ -191,8 +189,7 @@ describe('Alert Components', () => {
     });
 
     it('applies styles to nested paragraphs', () => {
-      render(
-        <AlertDescription>
+      renderWithProviders(<AlertDescription>
           <p>Paragraph in description</p>
         </AlertDescription>
       );
@@ -203,8 +200,7 @@ describe('Alert Components', () => {
 
   describe('Combined Usage', () => {
     it('renders Alert with AlertTitle and AlertDescription', () => {
-      render(
-        <Alert>
+      renderWithProviders(<Alert>
           <AlertTitle>Warning</AlertTitle>
           <AlertDescription>
             This is a warning message with important information.
@@ -224,8 +220,7 @@ describe('Alert Components', () => {
     });
 
     it('renders destructive Alert with icon, title, and description', () => {
-      render(
-        <Alert variant="destructive">
+      renderWithProviders(<Alert variant="destructive">
           <svg data-testid="error-icon" />
           <AlertTitle>Error</AlertTitle>
           <AlertDescription>
@@ -247,8 +242,7 @@ describe('Alert Components', () => {
     });
 
     it('renders multiple alerts with different variants', () => {
-      render(
-        <div>
+      renderWithProviders(<div>
           <Alert>
             <AlertTitle>Info</AlertTitle>
             <AlertDescription>This is an informational message.</AlertDescription>
@@ -262,21 +256,20 @@ describe('Alert Components', () => {
 
       const alerts = screen.getAllByRole('alert');
       expect(alerts).toHaveLength(2);
-      expect(alerts[0].className).toContain('bg-background');
-      expect(alerts[1].className).toContain('border-destructive/50');
+      expect(alerts[0]?.className).toContain('bg-background');
+      expect(alerts[1]?.className).toContain('border-destructive/50');
     });
   });
 
   describe('Accessibility', () => {
     it('has correct role attribute', () => {
-      render(<Alert>Accessible alert</Alert>);
+      renderWithProviders(<Alert>Accessible alert</Alert>);
       const alert = screen.getByRole('alert');
       expect(alert).toHaveAttribute('role', 'alert');
     });
 
     it('can be found by role with custom content', () => {
-      render(
-        <Alert>
+      renderWithProviders(<Alert>
           <AlertTitle>Accessible Title</AlertTitle>
           <AlertDescription>Accessible description content</AlertDescription>
         </Alert>
@@ -289,29 +282,28 @@ describe('Alert Components', () => {
 
   describe('Edge Cases', () => {
     it('renders Alert without children', () => {
-      const { container } = render(<Alert />);
+      const { container } = renderWithProviders(<Alert />);
       const alert = container.querySelector('[role="alert"]');
       expect(alert).toBeInTheDocument();
       expect(alert?.textContent).toBe('');
     });
 
     it('renders AlertTitle without children', () => {
-      render(<AlertTitle />);
+      renderWithProviders(<AlertTitle />);
       const title = document.querySelector('h5');
       expect(title).toBeInTheDocument();
       expect(title?.textContent).toBe('');
     });
 
     it('renders AlertDescription without children', () => {
-      const { container } = render(<AlertDescription />);
+      const { container } = renderWithProviders(<AlertDescription />);
       const description = container.firstChild;
       expect(description).toBeInTheDocument();
       expect(description?.textContent).toBe('');
     });
 
     it('handles multiple classNames correctly', () => {
-      render(
-        <Alert className="mt-4 mb-2 custom-alert">
+      renderWithProviders(<Alert className="mt-4 mb-2 custom-alert">
           <AlertTitle className="text-lg custom-title">Title</AlertTitle>
           <AlertDescription className="text-xs custom-desc">
             Description

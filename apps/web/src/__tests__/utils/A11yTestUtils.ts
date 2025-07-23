@@ -9,7 +9,7 @@
  * - Color contrast
  */
 
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { render, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ReactElement } from 'react';
 
@@ -45,6 +45,22 @@ export interface ColorContrastOptions {
 }
 
 export class A11yTestUtils {
+  // Helper to convert selector format
+  private static convertSelector(selector: string): string {
+    // Convert Playwright-style selectors to standard CSS
+    if (selector.includes(':has-text(')) {
+      // Extract the text content
+      const match = selector.match(/:has-text\("([^"]+)"\)/);
+      if (match) {
+        const text = match[1];
+        const baseSelector = selector.split(':has-text')[0];
+        // Use aria-label as fallback
+        return `${baseSelector}[aria-label="${text}"]`;
+      }
+    }
+    return selector;
+  }
+
   /**
    * Test keyboard navigation flow through interactive elements
    */
@@ -57,7 +73,7 @@ export class A11yTestUtils {
     
     // Handle initial focus
     if (options.initialFocus) {
-      const initialElement = container.querySelector(options.initialFocus) as HTMLElement;
+      const initialElement = container.querySelector(A11yTestUtils.convertSelector(options.initialFocus)) as HTMLElement;
       if (initialElement) {
         initialElement.focus();
       }
@@ -121,7 +137,7 @@ export class A11yTestUtils {
     expectedAnnouncement: string | RegExp,
     options: AnnouncementOptions = {}
   ): Promise<void> {
-    const { timeout = 1000, region = 'polite', exact = false } = options;
+    const { timeout = 2000, region = 'polite', exact = false } = options;
     
     // Create live region if it doesn't exist
     let liveRegion = document.querySelector(`[aria-live="${region}"]`);
@@ -135,6 +151,9 @@ export class A11yTestUtils {
     
     // Execute action
     await action();
+      
+      // Wait a bit for announcements to propagate
+      await new Promise(resolve => setTimeout(resolve, 100));
     
     // Wait for announcement
     await waitFor(() => {
@@ -209,7 +228,7 @@ export class A11yTestUtils {
     }
     
     // Focus first element
-    focusableElements[0].focus();
+    focusableElements[0]!.focus();
     expect(document.activeElement).toBe(focusableElements[0]);
     
     // Tab through all elements
@@ -359,16 +378,16 @@ export class A11yTestUtils {
     const rgbMatch = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
     if (rgbMatch) {
       return [
-        parseInt(rgbMatch[1], 10),
-        parseInt(rgbMatch[2], 10),
-        parseInt(rgbMatch[3], 10)
+        parseInt(rgbMatch[1]!, 10),
+        parseInt(rgbMatch[2]!, 10),
+        parseInt(rgbMatch[3]!, 10)
       ];
     }
     
     // Handle hex format
     const hexMatch = color.match(/^#([0-9a-f]{6})$/i);
     if (hexMatch) {
-      const hex = hexMatch[1];
+      const hex = hexMatch[1]!;
       return [
         parseInt(hex.substring(0, 2), 16),
         parseInt(hex.substring(2, 4), 16),

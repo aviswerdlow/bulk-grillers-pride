@@ -20,7 +20,7 @@ import {
   Activity,
   Package,
   FileText,
-  CheckCircle,
+//   CheckCircle,
   AlertCircle,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -31,22 +31,22 @@ export default function OrganizationDashboard() {
   const params = useParams();
   const orgSlug = params.orgSlug as string;
 
-  const organization = useQuery(api.functions.organizations.organizations.getOrganizationBySlug, {
+  const organization = useQuery((api as any).functions.organizations.organizations.getOrganizationBySlug, {
     slug: orgSlug,
   });
 
   const projects = useQuery(
-    api.functions.projects.projects.getOrganizationProjects,
+    (api as any).functions.projects.projects.getOrganizationProjects,
     organization ? { organizationId: organization._id } : 'skip'
   );
 
   const dashboardStats = useQuery(
-    api.functions.dashboard.getDashboardStats,
+    (api as any).functions.dashboard.getDashboardStats,
     organization ? { organizationId: organization._id } : 'skip'
   );
 
   const recentActivity = useQuery(
-    api.functions.dashboard.getRecentActivity,
+    (api as any).functions.dashboard.getRecentActivity,
     organization ? { organizationId: organization._id, limit: 5 } : 'skip'
   );
 

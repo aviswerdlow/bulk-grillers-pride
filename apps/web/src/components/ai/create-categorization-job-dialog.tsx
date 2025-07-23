@@ -59,14 +59,12 @@ export function CreateCategorizationJobDialog({
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
 
   // Get organization to access AI settings
-  // const organization = useQuery(api.functions.organizations.organizations.getOrganizationBySlug, {
+  // const organization = useQuery((api as any).functions.organizations.organizations.getOrganizationBySlug, {
   //   slug: "placeholder", // This would need to be passed in properly
   // });
 
   // Get products for selection
-  // Note: Using (api as any) as a workaround until Convex dev server regenerates the API types
   const productsResult = useQuery(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (api as any).functions.products.products.getProjectProducts,
     {
       organizationId,
@@ -76,8 +74,6 @@ export function CreateCategorizationJobDialog({
     }
   );
 
-  // Note: Using (api as any) as a workaround until Convex dev server regenerates the API types
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const createJob = useMutation((api as any).functions.ai.categorization.createCategorizationJob);
 
   const {

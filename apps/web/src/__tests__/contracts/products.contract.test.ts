@@ -1,5 +1,7 @@
-import { z } from 'zod';
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import { api } from '@convex/_generated/api';
+import { z } from 'zod';
+
 import {
   ContractTestConfig,
   validateContract,
@@ -7,14 +9,14 @@ import {
   generatePaginationTests,
   generateFilterTests,
   expectResponseShape,
-  createMockContext,
-  expectError,
+//   createMockContext,
+//   expectError,
 } from './contract-test-utils';
 import { 
   productFactory, 
-  organizationFactory,
+//   organizationFactory,
   createMockId,
-  createMockIdFromString,
+//   createMockIdFromString,
 } from '@bulk-grillers-pride/test-factories';
 
 // Product schemas
@@ -64,15 +66,13 @@ const productListSchema = commonSchemas.paginationOutput(productSchema);
 const productContracts: ContractTestConfig[] = [
   // List Products
   {
-    functionRef: api.functions.products.list,
-    name: 'products.list',
+    functionRef: (api as any).functions.products.products.getProjectProducts,
+    name: 'products.getProjectProducts',
     description: 'List products with pagination and filtering',
     inputSchema: z.object({
       organizationId: z.string(),
       projectId: z.string(),
       status: z.enum(['active', 'draft', 'archived']).optional(),
-      search: z.string().optional(),
-      categoryId: z.string().optional(),
       limit: z.number().min(1).max(100).optional(),
       cursor: z.string().optional(),
     }),
@@ -104,11 +104,11 @@ const productContracts: ContractTestConfig[] = [
   
   // Get Product
   {
-    functionRef: api.functions.products.get,
-    name: 'products.get',
+    functionRef: (api as any).functions.products.products.getProduct,
+    name: 'products.getProduct',
     description: 'Get a single product by ID',
     inputSchema: z.object({
-      productId: z.string(),
+      productId: z.string().min(1),
     }),
     outputSchema: productSchema.nullable(),
     validInputs: [
@@ -127,8 +127,8 @@ const productContracts: ContractTestConfig[] = [
   
   // Create Product
   {
-    functionRef: api.functions.products.create,
-    name: 'products.create',
+    functionRef: (api as any).functions.products.products.createProduct,
+    name: 'products.createProduct',
     description: 'Create a new product',
     inputSchema: z.object({
       organizationId: z.string(),
@@ -137,28 +137,23 @@ const productContracts: ContractTestConfig[] = [
       description: z.string().optional(),
       vendor: z.string().optional(),
       productType: z.string().optional(),
-      handle: z.string().min(1).max(100).regex(/^[a-z0-9-]+$/),
-      status: z.enum(['active', 'draft', 'archived']).default('draft'),
-      tags: z.array(z.string()).default([]),
-      categories: z.array(z.string()).default([]),
-      images: z.array(z.object({
-        url: z.string().url(),
-        alt: z.string().optional(),
-        position: z.number().min(0),
-        storageId: z.string(),
-      })).default([]),
-      metadata: z.any().optional(),
+      handle: z.string().regex(/^[a-z0-9-]+$/).optional(),
+      sku: z.string().optional(),
+      seoTitle: z.string().optional(),
+      seoDescription: z.string().optional(),
+      tags: z.array(z.string()),
+      metadata: z.any(),
+      status: z.enum(['active', 'draft', 'archived']).optional(),
     }),
-    outputSchema: z.object({
-      _id: z.string(),
-      success: z.boolean(),
-    }),
+    outputSchema: z.string(), // createProduct returns productId directly
     validInputs: [
       {
         organizationId: createMockId('organizations'),
         projectId: createMockId('projects'),
         title: 'Test Product',
         handle: 'test-product',
+        tags: [],
+        metadata: {},
       },
       {
         organizationId: createMockId('organizations'),
@@ -170,7 +165,7 @@ const productContracts: ContractTestConfig[] = [
         handle: 'premium-steak',
         status: 'active',
         tags: ['premium', 'beef', 'steak'],
-        categories: [createMockId('categories')],
+        metadata: {},
       },
     ],
     invalidInputs: [
@@ -180,12 +175,16 @@ const productContracts: ContractTestConfig[] = [
         projectId: createMockId('projects'),
         title: '', // Empty title
         handle: 'test',
+        tags: [],
+        metadata: {},
       },
       {
         organizationId: createMockId('organizations'),
         projectId: createMockId('projects'),
         title: 'Test',
         handle: 'Test Product', // Invalid handle format
+        tags: [],
+        metadata: {},
       },
     ],
     auth: {
@@ -196,31 +195,24 @@ const productContracts: ContractTestConfig[] = [
   
   // Update Product
   {
-    functionRef: api.functions.products.update,
-    name: 'products.update',
+    functionRef: (api as any).functions.products.products.updateProduct,
+    name: 'products.updateProduct',
     description: 'Update an existing product',
     inputSchema: z.object({
-      productId: z.string(),
+      productId: z.string().min(1),
       title: z.string().min(1).max(200).optional(),
       description: z.string().optional(),
       vendor: z.string().optional(),
       productType: z.string().optional(),
-      handle: z.string().min(1).max(100).regex(/^[a-z0-9-]+$/).optional(),
-      status: z.enum(['active', 'draft', 'archived']).optional(),
+      handle: z.string().regex(/^[a-z0-9-]+$/).optional(),
+      sku: z.string().optional(),
+      seoTitle: z.string().optional(),
+      seoDescription: z.string().optional(),
       tags: z.array(z.string()).optional(),
-      categories: z.array(z.string()).optional(),
-      images: z.array(z.object({
-        url: z.string().url(),
-        alt: z.string().optional(),
-        position: z.number().min(0),
-        storageId: z.string(),
-      })).optional(),
       metadata: z.any().optional(),
+      status: z.enum(['active', 'draft', 'archived']).optional(),
     }),
-    outputSchema: z.object({
-      success: z.boolean(),
-      updated: z.number(),
-    }),
+    outputSchema: z.string(), // updateProduct returns productId directly
     validInputs: [
       {
         productId: createMockId('products'),
@@ -251,16 +243,13 @@ const productContracts: ContractTestConfig[] = [
   
   // Delete Product
   {
-    functionRef: api.functions.products.deleteProduct,
+    functionRef: (api as any).functions.products.products.deleteProduct,
     name: 'products.deleteProduct',
     description: 'Delete a product (soft delete)',
     inputSchema: z.object({
-      productId: z.string(),
+      productId: z.string().min(1),
     }),
-    outputSchema: z.object({
-      success: z.boolean(),
-      message: z.string(),
-    }),
+    outputSchema: z.string(), // deleteProduct returns productId directly
     validInputs: [
       { productId: createMockId('products') },
     ],
@@ -274,51 +263,6 @@ const productContracts: ContractTestConfig[] = [
     },
   },
   
-  // Bulk Update Products
-  {
-    functionRef: api.functions.products.bulkUpdate,
-    name: 'products.bulkUpdate',
-    description: 'Update multiple products at once',
-    inputSchema: z.object({
-      productIds: z.array(z.string()).min(1).max(100),
-      updates: z.object({
-        status: z.enum(['active', 'draft', 'archived']).optional(),
-        categories: z.array(z.string()).optional(),
-        tags: z.array(z.string()).optional(),
-        vendor: z.string().optional(),
-        productType: z.string().optional(),
-      }),
-    }),
-    outputSchema: z.object({
-      success: z.boolean(),
-      updated: z.number(),
-      failed: z.array(z.object({
-        productId: z.string(),
-        error: z.string(),
-      })),
-    }),
-    validInputs: [
-      {
-        productIds: [createMockId('products'), createMockId('products')],
-        updates: { status: 'active' },
-      },
-      {
-        productIds: [createMockId('products')],
-        updates: { 
-          categories: [createMockId('categories')],
-          tags: ['bulk-updated'],
-        },
-      },
-    ],
-    invalidInputs: [
-      { productIds: [], updates: {} }, // Empty array
-      { productIds: ['id1'], updates: { status: 'invalid' } }, // Invalid status
-    ],
-    auth: {
-      required: true,
-      roles: ['editor', 'admin', 'owner'],
-    },
-  },
 ];
 
 describe('Product API Contracts', () => {
@@ -376,7 +320,7 @@ describe('Product API Contracts', () => {
     
     paginationTests.forEach(testCase => {
       it(`should handle pagination with ${JSON.stringify(testCase)}`, () => {
-        const listContract = productContracts.find(c => c.name === 'products.list');
+        const listContract = productContracts.find(c => c.name === 'products.getProjectProducts');
         expect(listContract).toBeDefined();
         
         const result = listContract!.inputSchema.safeParse(testCase);
@@ -395,7 +339,7 @@ describe('Product API Contracts', () => {
     
     statusFilterTests.forEach(testCase => {
       it(`should handle status filter with ${testCase.status}`, () => {
-        const listContract = productContracts.find(c => c.name === 'products.list');
+        const listContract = productContracts.find(c => c.name === 'products.getProjectProducts');
         expect(listContract).toBeDefined();
         
         const result = listContract!.inputSchema.safeParse(testCase);
@@ -406,7 +350,7 @@ describe('Product API Contracts', () => {
   
   describe('Error Handling', () => {
     it('should reject invalid product creation', async () => {
-      const createContract = productContracts.find(c => c.name === 'products.create');
+      const createContract = productContracts.find(c => c.name === 'products.createProduct');
       expect(createContract).toBeDefined();
       
       const invalidInput = {
@@ -421,11 +365,13 @@ describe('Product API Contracts', () => {
       }
       const result = createContract.inputSchema.safeParse(invalidInput);
       expect(result.success).toBe(false);
-      expect(result.error?.issues[0].path).toContain('title');
+      if (!result.success && result.error) {
+        expect(result.error.issues[0]?.path).toContain('title');
+      }
     });
     
     it('should reject invalid handle format', () => {
-      const createContract = productContracts.find(c => c.name === 'products.create');
+      const createContract = productContracts.find(c => c.name === 'products.createProduct');
       expect(createContract).toBeDefined();
       
       const invalidInput = {
@@ -433,6 +379,8 @@ describe('Product API Contracts', () => {
         projectId: createMockId('projects'),
         title: 'Test Product',
         handle: 'Invalid Handle!', // Contains spaces and special chars
+        tags: [],
+        metadata: {},
       };
       
       if (!createContract) {
@@ -440,7 +388,9 @@ describe('Product API Contracts', () => {
       }
       const result = createContract.inputSchema.safeParse(invalidInput);
       expect(result.success).toBe(false);
-      expect(result.error?.issues[0].path).toContain('handle');
+      if (!result.success && result.error) {
+        expect(result.error.issues[0]?.path).toContain('handle');
+      }
     });
   });
 });

@@ -146,6 +146,7 @@ export function HoldToConfirmButton({
     if (distance > cancelThreshold) {
       handleCancel();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isHolding, isDone, cancelThreshold]);
 
   // Cancel holding
@@ -201,7 +202,7 @@ export function HoldToConfirmButton({
       e.preventDefault();
       // For keyboard, immediately show confirmation dialog or alternative
       announce('Press and hold Enter or Space to confirm', 'polite');
-      handleStart(e as any);
+      handleStart(e as unknown as TouchEvent | PointerEvent);
     }
   }, [disabled, isDone, announce, handleStart]);
 

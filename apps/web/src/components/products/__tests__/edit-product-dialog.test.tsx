@@ -1,11 +1,12 @@
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@/__tests__/test-utils';
-import userEvent from '@testing-library/user-event';
-import { EditProductDialog } from '../edit-product-dialog';
-import { setupTest, cleanupTest, createMockProduct } from '@/__tests__/frontend-test-helpers';
-import { toast } from 'sonner';
-import { Product } from '@/types/models';
 
+import userEvent from '@testing-library/user-event';
+import { cleanupTest, createMockProduct, mockUseMutation, render, screen, setupTest, waitFor, renderWithProviders } from '@/__tests__/test-helpers';
+import { EditProductDialog } from '../edit-product-dialog';
+import { Product } from '@/types/models';
+import type { Doc } from '@/../../../convex/_generated/dataModel';
+import { toast } from 'sonner';
 // Mock dependencies
 jest.mock('sonner', () => ({
   toast: {
@@ -14,15 +15,14 @@ jest.mock('sonner', () => ({
   },
 }));
 
-jest.mock('convex/react', () => ({
-  ...jest.requireActual('convex/react'),
-  useMutation: jest.fn(() => jest.fn()),
-}));
-
 // Import after mocking
-import { useMutation } from 'convex/react';
+;
 
 describe('EditProductDialog', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   const mockOnOpenChange = jest.fn();
   const mockOnSuccess = jest.fn();
   const mockUpdateProduct = jest.fn();
@@ -39,7 +39,7 @@ describe('EditProductDialog', () => {
     tags: ['tag1', 'tag2'],
     seoTitle: 'SEO Title',
     seoDescription: 'SEO Description',
-  }) as Product;
+  }) as unknown as Doc<'products'>;
 
   const defaultProps = {
     open: true,
@@ -51,7 +51,7 @@ describe('EditProductDialog', () => {
   beforeEach(() => {
     setupTest();
     jest.clearAllMocks();
-    (useMutation as jest.Mock).mockReturnValue(mockUpdateProduct);
+    mockUseMutation.mockReturnValue(mockUpdateProduct);
   });
 
   afterEach(() => {
@@ -60,7 +60,7 @@ describe('EditProductDialog', () => {
 
   describe('Rendering', () => {
     it('renders dialog with correct title', () => {
-      render(<EditProductDialog {...defaultProps} />);
+      renderWithProviders(<EditProductDialog {...defaultProps} />)
 
       expect(screen.getByRole('dialog')).toBeInTheDocument();
       expect(screen.getByText('Edit Product')).toBeInTheDocument();
@@ -68,7 +68,7 @@ describe('EditProductDialog', () => {
     });
 
     it('pre-fills form with existing product data', () => {
-      render(<EditProductDialog {...defaultProps} />);
+      renderWithProviders(<EditProductDialog {...defaultProps} />)
 
       expect(screen.getByLabelText(/title \*/i)).toHaveValue('Original Product');
       expect(screen.getByLabelText(/handle/i)).toHaveValue('original-product');
@@ -88,7 +88,7 @@ describe('EditProductDialog', () => {
 
     it('renders SEO fields with existing data', async () => {
       const user = userEvent.setup();
-      render(<EditProductDialog {...defaultProps} />);
+      renderWithProviders(<EditProductDialog {...defaultProps} />)
 
       // Expand SEO section
       const seoButton = screen.getByRole('button', { name: /seo settings/i });
@@ -102,7 +102,7 @@ describe('EditProductDialog', () => {
   describe('Form Interactions', () => {
     it('updates handle when title changes and handle is synchronized', async () => {
       const user = userEvent.setup();
-      render(<EditProductDialog {...defaultProps} />);
+      renderWithProviders(<EditProductDialog {...defaultProps} />)
 
       const titleInput = screen.getByLabelText(/title \*/i);
       const handleInput = screen.getByLabelText(/handle/i);
@@ -117,7 +117,7 @@ describe('EditProductDialog', () => {
 
     it('does not update handle if manually edited', async () => {
       const user = userEvent.setup();
-      render(<EditProductDialog {...defaultProps} />);
+      renderWithProviders(<EditProductDialog {...defaultProps} />)
 
       const titleInput = screen.getByLabelText(/title \*/i);
       const handleInput = screen.getByLabelText(/handle/i);
@@ -136,7 +136,7 @@ describe('EditProductDialog', () => {
 
     it('manages tags correctly', async () => {
       const user = userEvent.setup();
-      render(<EditProductDialog {...defaultProps} />);
+      renderWithProviders(<EditProductDialog {...defaultProps} />)
 
       // Remove existing tag
       const removeButtons = screen.getAllByRole('button', { name: /remove/i });
@@ -159,7 +159,7 @@ describe('EditProductDialog', () => {
       const user = userEvent.setup();
       mockUpdateProduct.mockResolvedValueOnce({});
       
-      render(<EditProductDialog {...defaultProps} />);
+      renderWithProviders(<EditProductDialog {...defaultProps} />)
 
       // Update some fields
       const titleInput = screen.getByLabelText(/title \*/i);
@@ -202,7 +202,7 @@ describe('EditProductDialog', () => {
       const user = userEvent.setup();
       mockUpdateProduct.mockResolvedValueOnce({});
       
-      render(<EditProductDialog {...defaultProps} />);
+      renderWithProviders(<EditProductDialog {...defaultProps} />)
 
       const submitButton = screen.getByRole('button', { name: /update product/i });
       await user.click(submitButton);
@@ -219,7 +219,7 @@ describe('EditProductDialog', () => {
       const error = new Error('Update failed');
       mockUpdateProduct.mockRejectedValueOnce(error);
       
-      render(<EditProductDialog {...defaultProps} />);
+      renderWithProviders(<EditProductDialog {...defaultProps} />)
 
       const submitButton = screen.getByRole('button', { name: /update product/i });
       await user.click(submitButton);
@@ -234,7 +234,7 @@ describe('EditProductDialog', () => {
       const user = userEvent.setup();
       mockUpdateProduct.mockImplementation(() => new Promise(resolve => setTimeout(resolve, 100)));
       
-      render(<EditProductDialog {...defaultProps} />);
+      renderWithProviders(<EditProductDialog {...defaultProps} />)
 
       const submitButton = screen.getByRole('button', { name: /update product/i });
       await user.click(submitButton);
@@ -251,7 +251,7 @@ describe('EditProductDialog', () => {
   describe('Dialog Management', () => {
     it('does not reset form when closing without submission', async () => {
       const user = userEvent.setup();
-      const { rerender } = render(<EditProductDialog {...defaultProps} />);
+      const { rerender } = renderWithProviders(<EditProductDialog {...defaultProps} />)
 
       // Make some changes
       const titleInput = screen.getByLabelText(/title \*/i);
@@ -259,15 +259,15 @@ describe('EditProductDialog', () => {
       await user.type(titleInput, 'Changed Title');
 
       // Close and reopen
-      rerender(<EditProductDialog {...defaultProps} open={false} />);
-      rerender(<EditProductDialog {...defaultProps} open={true} />);
+      rerender(<EditProductDialog {...defaultProps} open={false} />)
+      rerender(<EditProductDialog {...defaultProps} open={true} />)
 
       // Original data should be restored
       expect(screen.getByLabelText(/title \*/i)).toHaveValue('Original Product');
     });
 
     it('handles null product gracefully', () => {
-      render(<EditProductDialog {...defaultProps} product={null} />);
+      renderWithProviders(<EditProductDialog {...defaultProps} product={null} />);
 
       // Should not render dialog content
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
@@ -277,7 +277,7 @@ describe('EditProductDialog', () => {
   describe('Validation', () => {
     it('validates required title field', async () => {
       const user = userEvent.setup();
-      render(<EditProductDialog {...defaultProps} />);
+      renderWithProviders(<EditProductDialog {...defaultProps} />)
 
       const titleInput = screen.getByLabelText(/title \*/i);
       await user.clear(titleInput);
@@ -294,7 +294,7 @@ describe('EditProductDialog', () => {
       const user = userEvent.setup();
       mockUpdateProduct.mockResolvedValueOnce({});
       
-      render(<EditProductDialog {...defaultProps} />);
+      renderWithProviders(<EditProductDialog {...defaultProps} />)
 
       // Clear optional fields
       await user.clear(screen.getByLabelText(/description/i));
@@ -318,7 +318,7 @@ describe('EditProductDialog', () => {
 
   describe('Accessibility', () => {
     it('has proper ARIA labels and descriptions', () => {
-      render(<EditProductDialog {...defaultProps} />);
+      renderWithProviders(<EditProductDialog {...defaultProps} />)
 
       const dialog = screen.getByRole('dialog');
       expect(dialog).toHaveAttribute('aria-labelledby');
@@ -326,7 +326,7 @@ describe('EditProductDialog', () => {
     });
 
     it('manages focus correctly', async () => {
-      render(<EditProductDialog {...defaultProps} />);
+      renderWithProviders(<EditProductDialog {...defaultProps} />)
 
       await waitFor(() => {
         const titleInput = screen.getByLabelText(/title \*/i);
@@ -336,7 +336,7 @@ describe('EditProductDialog', () => {
 
     it('announces form errors to screen readers', async () => {
       const user = userEvent.setup();
-      render(<EditProductDialog {...defaultProps} />);
+      renderWithProviders(<EditProductDialog {...defaultProps} />)
 
       const titleInput = screen.getByLabelText(/title \*/i);
       await user.clear(titleInput);

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useUser, UserButton } from '@clerk/nextjs';
 import { useQuery } from 'convex/react';
@@ -52,7 +52,7 @@ export default function OrganizationLayout({ children }: { children: React.React
     };
   }, [mobileMenuOpen]);
 
-  const organization = useQuery(api.functions.organizations.organizations.getOrganizationBySlug, {
+  const organization = useQuery((api as any).functions.organizations.organizations.getOrganizationBySlug, {
     slug: orgSlug,
   });
 

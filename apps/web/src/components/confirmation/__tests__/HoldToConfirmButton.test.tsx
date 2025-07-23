@@ -1,8 +1,10 @@
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import React from 'react';
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { HoldToConfirmButton } from '../HoldToConfirmButton';
 
+// import userEvent from '@testing-library/user-event';
+import { renderWithProviders } from '@/__tests__/test-helpers';
 describe('HoldToConfirmButton', () => {
   const mockOnConfirm = jest.fn();
 
@@ -19,8 +21,7 @@ describe('HoldToConfirmButton', () => {
   });
 
   it('renders with initial state', () => {
-    render(
-      <HoldToConfirmButton onConfirm={mockOnConfirm}>
+    renderWithProviders(<HoldToConfirmButton onConfirm={mockOnConfirm}>
         Hold to Delete
       </HoldToConfirmButton>
     );
@@ -32,8 +33,7 @@ describe('HoldToConfirmButton', () => {
   });
 
   it('shows progress when mouse is held down', () => {
-    render(
-      <HoldToConfirmButton onConfirm={mockOnConfirm} duration={1000}>
+    renderWithProviders(<HoldToConfirmButton onConfirm={mockOnConfirm} duration={1000}>
         Hold to Delete
       </HoldToConfirmButton>
     );
@@ -54,8 +54,7 @@ describe('HoldToConfirmButton', () => {
   });
 
   it('cancels when mouse is released early', async () => {
-    render(
-      <HoldToConfirmButton onConfirm={mockOnConfirm} duration={1000}>
+    renderWithProviders(<HoldToConfirmButton onConfirm={mockOnConfirm} duration={1000}>
         Hold to Delete
       </HoldToConfirmButton>
     );
@@ -75,8 +74,7 @@ describe('HoldToConfirmButton', () => {
   });
 
   it('confirms action when held for full duration', async () => {
-    render(
-      <HoldToConfirmButton onConfirm={mockOnConfirm} duration={1000}>
+    renderWithProviders(<HoldToConfirmButton onConfirm={mockOnConfirm} duration={1000}>
         Hold to Delete
       </HoldToConfirmButton>
     );
@@ -95,8 +93,7 @@ describe('HoldToConfirmButton', () => {
   });
 
   it('works with keyboard interactions', async () => {
-    render(
-      <HoldToConfirmButton onConfirm={mockOnConfirm} duration={1000}>
+    renderWithProviders(<HoldToConfirmButton onConfirm={mockOnConfirm} duration={1000}>
         Hold to Delete
       </HoldToConfirmButton>
     );
@@ -105,7 +102,7 @@ describe('HoldToConfirmButton', () => {
     button.focus();
     
     // Press and hold Space
-    fireEvent.keyDown(button, { key: ' ' });
+    fireEvent.keyDown(button, { key: ' ' } as HTMLElement);
     expect(screen.getByText('Keep Holding...')).toBeInTheDocument();
     
     act(() => {
@@ -119,8 +116,7 @@ describe('HoldToConfirmButton', () => {
   });
 
   it('cancels on keyboard release', async () => {
-    render(
-      <HoldToConfirmButton onConfirm={mockOnConfirm} duration={1000}>
+    renderWithProviders(<HoldToConfirmButton onConfirm={mockOnConfirm} duration={1000}>
         Hold to Delete
       </HoldToConfirmButton>
     );
@@ -128,11 +124,11 @@ describe('HoldToConfirmButton', () => {
     const button = screen.getByRole('button');
     button.focus();
     
-    fireEvent.keyDown(button, { key: 'Enter' });
+    fireEvent.keyDown(button, { key: 'Enter' } as HTMLElement);
     act(() => {
       jest.advanceTimersByTime(500);
     });
-    fireEvent.keyUp(button, { key: 'Enter' });
+    fireEvent.keyUp(button, { key: 'Enter' } as HTMLElement);
     
     await waitFor(() => {
       expect(screen.getByText('✗ Cancelled')).toBeInTheDocument();
@@ -141,8 +137,7 @@ describe('HoldToConfirmButton', () => {
   });
 
   it('works with touch events', async () => {
-    render(
-      <HoldToConfirmButton onConfirm={mockOnConfirm} duration={1000}>
+    renderWithProviders(<HoldToConfirmButton onConfirm={mockOnConfirm} duration={1000}>
         Hold to Delete
       </HoldToConfirmButton>
     );
@@ -163,8 +158,7 @@ describe('HoldToConfirmButton', () => {
   });
 
   it('cancels when mouse leaves button', async () => {
-    render(
-      <HoldToConfirmButton onConfirm={mockOnConfirm} duration={1000}>
+    renderWithProviders(<HoldToConfirmButton onConfirm={mockOnConfirm} duration={1000}>
         Hold to Delete
       </HoldToConfirmButton>
     );
@@ -184,8 +178,7 @@ describe('HoldToConfirmButton', () => {
   });
 
   it('respects disabled prop', () => {
-    render(
-      <HoldToConfirmButton onConfirm={mockOnConfirm} disabled>
+    renderWithProviders(<HoldToConfirmButton onConfirm={mockOnConfirm} disabled>
         Hold to Delete
       </HoldToConfirmButton>
     );
@@ -199,8 +192,7 @@ describe('HoldToConfirmButton', () => {
   });
 
   it('shows correct helper text during progress', async () => {
-    render(
-      <HoldToConfirmButton onConfirm={mockOnConfirm} duration={3000}>
+    renderWithProviders(<HoldToConfirmButton onConfirm={mockOnConfirm} duration={3000}>
         Hold to Delete
       </HoldToConfirmButton>
     );
@@ -228,8 +220,7 @@ describe('HoldToConfirmButton', () => {
   });
 
   it('has proper ARIA attributes', () => {
-    render(
-      <HoldToConfirmButton onConfirm={mockOnConfirm}>
+    renderWithProviders(<HoldToConfirmButton onConfirm={mockOnConfirm}>
         Hold to Delete
       </HoldToConfirmButton>
     );

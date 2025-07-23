@@ -161,8 +161,8 @@ export function ProgressiveDeletion({
       {process.env.NODE_ENV === 'development' && isClient && (
         <div className="mt-4 p-2 bg-gray-100 rounded text-xs text-gray-600">
           Layer: {layer} | 
-          Memory: {(navigator as any).deviceMemory || 'unknown'}GB | 
-          Connection: {(navigator as any).connection?.effectiveType || 'unknown'}
+          Memory: {(navigator as unknown).deviceMemory || 'unknown'}GB | 
+          Connection: {(navigator as unknown).connection?.effectiveType || 'unknown'}
         </div>
       )}
     </div>

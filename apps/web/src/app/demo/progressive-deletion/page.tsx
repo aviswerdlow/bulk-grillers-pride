@@ -9,6 +9,7 @@ import { useState } from 'react';
 import { ProgressiveDeletion } from '@/components/deletion/progressive/ProgressiveDeletion';
 import { PerformanceMonitor } from '@/components/deletion/progressive/PerformanceMonitor';
 import { Product } from '@/types/models';
+import { Id } from '@convex/_generated/dataModel';
 import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -19,7 +20,7 @@ import { Info, Smartphone, Zap, Sparkles } from 'lucide-react';
 // Mock products for demo
 const mockProducts: Product[] = [
   {
-    _id: 'prod1',
+    _id: 'prod1' as Id<'products'>,
     title: 'Grilled Burger Deluxe',
     handle: 'grilled-burger-deluxe',
     description: 'Premium beef burger with special sauce',
@@ -35,7 +36,7 @@ const mockProducts: Product[] = [
     updatedAt: Date.now()
   },
   {
-    _id: 'prod2',
+    _id: 'prod2' as Id<'products'>,
     title: 'BBQ Chicken Wings',
     handle: 'bbq-chicken-wings',
     description: 'Smoky BBQ glazed chicken wings',
@@ -51,7 +52,7 @@ const mockProducts: Product[] = [
     updatedAt: Date.now()
   },
   {
-    _id: 'prod3',
+    _id: 'prod3' as Id<'products'>,
     title: 'Veggie Skewers',
     handle: 'veggie-skewers',
     description: 'Grilled vegetable skewers',

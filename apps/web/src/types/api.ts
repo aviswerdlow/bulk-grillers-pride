@@ -155,7 +155,7 @@ export interface WebSocketMessage<T = unknown> {
 export interface SubscriptionConfig {
   channel: string;
   events: string[];
-  filters?: Record<string, any>;
+  filters?: Record<string, unknown>;
   onMessage: (message: WebSocketMessage) => void;
   onError?: (error: ApiError) => void;
   onConnect?: () => void;
@@ -168,7 +168,7 @@ export interface SubscriptionConfig {
 export interface ApiRequestConfig {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
   headers?: Record<string, string>;
-  body?: any;
+  body?: unknown;
   params?: QueryParams;
   timeout?: number;
   retry?: {
@@ -217,7 +217,7 @@ export interface ImportJobResult {
 export interface ImportError {
   row: number;
   field?: string;
-  value?: any;
+  value?: unknown;
   message: string;
   code?: string;
 }

@@ -1,11 +1,15 @@
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+/**
+ * @jest-environment jsdom
+ */
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@/__tests__/test-utils';
-import userEvent from '@testing-library/user-event';
-import { DeleteProductDialog } from '../delete-product-dialog';
-import { setupTest, cleanupTest, createMockProduct } from '@/__tests__/frontend-test-helpers';
-import { toast } from 'sonner';
-import { Product } from '@/types/models';
 
+import userEvent from '@testing-library/user-event';
+import { cleanupTest, createMockProduct, mockUseMutation, render, screen, setupTest, waitFor, renderWithProviders } from '@/__tests__/test-helpers';
+import { DeleteProductDialog } from '../delete-product-dialog';
+import { Product } from '@/types/models';
+import type { Doc } from '@/../../../convex/_generated/dataModel';
+import { toast } from 'sonner';
 // Mock dependencies
 jest.mock('sonner', () => ({
   toast: {
@@ -14,15 +18,14 @@ jest.mock('sonner', () => ({
   },
 }));
 
-jest.mock('convex/react', () => ({
-  ...jest.requireActual('convex/react'),
-  useMutation: jest.fn(() => jest.fn()),
-}));
-
 // Import after mocking
-import { useMutation } from 'convex/react';
+;
 
 describe('DeleteProductDialog', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   const mockOnOpenChange = jest.fn();
   const mockOnSuccess = jest.fn();
   const mockDeleteProduct = jest.fn();
@@ -32,7 +35,7 @@ describe('DeleteProductDialog', () => {
     title: 'Product to Delete',
     handle: 'product-to-delete',
     sku: 'DEL-123',
-  }) as Product;
+  }) as unknown as Doc<'products'>;
 
   const defaultProps = {
     open: true,
@@ -44,7 +47,7 @@ describe('DeleteProductDialog', () => {
   beforeEach(() => {
     setupTest();
     jest.clearAllMocks();
-    (useMutation as jest.Mock).mockReturnValue(mockDeleteProduct);
+    mockUseMutation.mockReturnValue(mockDeleteProduct);
   });
 
   afterEach(() => {
@@ -53,7 +56,7 @@ describe('DeleteProductDialog', () => {
 
   describe('Rendering', () => {
     it('renders confirmation dialog with product information', () => {
-      render(<DeleteProductDialog {...defaultProps} />);
+      renderWithProviders(<DeleteProductDialog {...defaultProps} />);
 
       expect(screen.getByRole('dialog')).toBeInTheDocument();
       expect(screen.getByText('Delete Product')).toBeInTheDocument();
@@ -62,27 +65,27 @@ describe('DeleteProductDialog', () => {
     });
 
     it('shows warning message about permanent deletion', () => {
-      render(<DeleteProductDialog {...defaultProps} />);
+      renderWithProviders(<DeleteProductDialog {...defaultProps} />);
 
       expect(screen.getByText(/This action cannot be undone/)).toBeInTheDocument();
       expect(screen.getByText(/permanently deleted/)).toBeInTheDocument();
     });
 
     it('displays product SKU if available', () => {
-      render(<DeleteProductDialog {...defaultProps} />);
+      renderWithProviders(<DeleteProductDialog {...defaultProps} />);
 
       expect(screen.getByText('SKU: DEL-123')).toBeInTheDocument();
     });
 
     it('handles product without SKU', () => {
       const productWithoutSku = { ...mockProduct, sku: null };
-      render(<DeleteProductDialog {...defaultProps} product={productWithoutSku} />);
+      renderWithProviders(<DeleteProductDialog {...defaultProps} product={productWithoutSku} />)
 
       expect(screen.queryByText(/SKU:/)).not.toBeInTheDocument();
     });
 
     it('renders cancel and delete buttons', () => {
-      render(<DeleteProductDialog {...defaultProps} />);
+      renderWithProviders(<DeleteProductDialog {...defaultProps} />);
 
       expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
@@ -92,7 +95,7 @@ describe('DeleteProductDialog', () => {
   describe('User Interactions', () => {
     it('closes dialog when cancel is clicked', async () => {
       const user = userEvent.setup();
-      render(<DeleteProductDialog {...defaultProps} />);
+      renderWithProviders(<DeleteProductDialog {...defaultProps} />);
 
       const cancelButton = screen.getByRole('button', { name: /cancel/i });
       await user.click(cancelButton);
@@ -102,7 +105,7 @@ describe('DeleteProductDialog', () => {
 
     it('shows confirmation step when delete is clicked', async () => {
       const user = userEvent.setup();
-      render(<DeleteProductDialog {...defaultProps} />);
+      renderWithProviders(<DeleteProductDialog {...defaultProps} />);
 
       const deleteButton = screen.getByRole('button', { name: /delete/i });
       await user.click(deleteButton);
@@ -115,7 +118,7 @@ describe('DeleteProductDialog', () => {
 
     it('returns to initial state when "No, keep it" is clicked', async () => {
       const user = userEvent.setup();
-      render(<DeleteProductDialog {...defaultProps} />);
+      renderWithProviders(<DeleteProductDialog {...defaultProps} />);
 
       // Go to confirmation step
       await user.click(screen.getByRole('button', { name: /delete/i }));
@@ -134,7 +137,7 @@ describe('DeleteProductDialog', () => {
       const user = userEvent.setup();
       mockDeleteProduct.mockResolvedValueOnce({});
       
-      render(<DeleteProductDialog {...defaultProps} />);
+      renderWithProviders(<DeleteProductDialog {...defaultProps} />);
 
       // Click delete
       await user.click(screen.getByRole('button', { name: /delete/i }));
@@ -153,7 +156,7 @@ describe('DeleteProductDialog', () => {
       const user = userEvent.setup();
       mockDeleteProduct.mockResolvedValueOnce({});
       
-      render(<DeleteProductDialog {...defaultProps} />);
+      renderWithProviders(<DeleteProductDialog {...defaultProps} />);
 
       await user.click(screen.getByRole('button', { name: /delete/i }));
       await user.click(screen.getByRole('button', { name: /yes, delete permanently/i }));
@@ -170,7 +173,7 @@ describe('DeleteProductDialog', () => {
       const error = new Error('Deletion failed');
       mockDeleteProduct.mockRejectedValueOnce(error);
       
-      render(<DeleteProductDialog {...defaultProps} />);
+      renderWithProviders(<DeleteProductDialog {...defaultProps} />);
 
       await user.click(screen.getByRole('button', { name: /delete/i }));
       await user.click(screen.getByRole('button', { name: /yes, delete permanently/i }));
@@ -185,7 +188,7 @@ describe('DeleteProductDialog', () => {
       const user = userEvent.setup();
       mockDeleteProduct.mockImplementation(() => new Promise(resolve => setTimeout(resolve, 100)));
       
-      render(<DeleteProductDialog {...defaultProps} />);
+      renderWithProviders(<DeleteProductDialog {...defaultProps} />);
 
       await user.click(screen.getByRole('button', { name: /delete/i }));
       const confirmButton = screen.getByRole('button', { name: /yes, delete permanently/i });
@@ -203,14 +206,14 @@ describe('DeleteProductDialog', () => {
 
   describe('Edge Cases', () => {
     it('handles null product gracefully', () => {
-      render(<DeleteProductDialog {...defaultProps} product={null} />);
+      renderWithProviders(<DeleteProductDialog {...defaultProps} product={null} />)
 
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
 
     it('resets confirmation state when dialog reopens', async () => {
       const user = userEvent.setup();
-      const { rerender } = render(<DeleteProductDialog {...defaultProps} />);
+      const { rerender } = renderWithProviders(<DeleteProductDialog {...defaultProps} />);
 
       // Go to confirmation step
       await user.click(screen.getByRole('button', { name: /delete/i }));
@@ -230,7 +233,7 @@ describe('DeleteProductDialog', () => {
 
   describe('Accessibility', () => {
     it('has proper ARIA attributes', () => {
-      render(<DeleteProductDialog {...defaultProps} />);
+      renderWithProviders(<DeleteProductDialog {...defaultProps} />);
 
       const dialog = screen.getByRole('dialog');
       expect(dialog).toHaveAttribute('aria-labelledby');
@@ -238,7 +241,7 @@ describe('DeleteProductDialog', () => {
     });
 
     it('focuses on cancel button when opened', async () => {
-      render(<DeleteProductDialog {...defaultProps} />);
+      renderWithProviders(<DeleteProductDialog {...defaultProps} />);
 
       await waitFor(() => {
         const cancelButton = screen.getByRole('button', { name: /cancel/i });
@@ -247,7 +250,7 @@ describe('DeleteProductDialog', () => {
     });
 
     it('uses destructive variant for delete button', () => {
-      render(<DeleteProductDialog {...defaultProps} />);
+      renderWithProviders(<DeleteProductDialog {...defaultProps} />);
 
       const deleteButton = screen.getByRole('button', { name: /delete/i });
       expect(deleteButton).toHaveClass('destructive');
@@ -257,7 +260,7 @@ describe('DeleteProductDialog', () => {
       const user = userEvent.setup();
       mockDeleteProduct.mockResolvedValueOnce({});
       
-      render(<DeleteProductDialog {...defaultProps} />);
+      renderWithProviders(<DeleteProductDialog {...defaultProps} />);
 
       await user.click(screen.getByRole('button', { name: /delete/i }));
       await user.click(screen.getByRole('button', { name: /yes, delete permanently/i }));
@@ -271,7 +274,7 @@ describe('DeleteProductDialog', () => {
 
     it('supports keyboard navigation', async () => {
       const user = userEvent.setup();
-      render(<DeleteProductDialog {...defaultProps} />);
+      renderWithProviders(<DeleteProductDialog {...defaultProps} />);
 
       // Tab through buttons
       await user.tab();

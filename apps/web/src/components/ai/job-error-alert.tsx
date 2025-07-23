@@ -40,7 +40,7 @@ interface JobErrorAlertProps {
 }
 
 export function JobErrorAlert({
-  jobId,
+//   jobId,
   status,
   errors,
   orgSlug,

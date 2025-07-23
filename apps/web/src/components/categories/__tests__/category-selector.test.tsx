@@ -1,11 +1,11 @@
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import React from 'react';
-import { render, screen, fireEvent, waitFor, within, mockUseQuery } from '@/__tests__/test-utils';
+import { within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { cleanupTest, fireEvent, mockUseQuery, render, screen, setupTest, waitFor, within, renderWithProviders } from '@/__tests__/test-helpers';
 import { CategorySelector } from '../category-selector';
-import { setupTest, cleanupTest } from '@/__tests__/frontend-test-helpers';
 import { Category } from '@/types/models';
 import { Id } from '@convex/_generated/dataModel';
-
 const mockCategories: Category[] = [
   {
     _id: 'cat_1' as Id<'categories'>,
@@ -16,7 +16,7 @@ const mockCategories: Category[] = [
     handle: 'electronics',
     level: 0,
     parentId: null,
-    path: [],
+    path: '',
     description: 'Electronic products',
     properties: {},
     isActive: true,
@@ -33,14 +33,14 @@ const mockCategories: Category[] = [
         handle: 'computers',
         level: 1,
         parentId: 'cat_1' as Id<'categories'>,
-        path: ['cat_1'],
+        path: 'electronics',
         description: 'Computer products',
         properties: {},
         isActive: true,
         order: 0,
         createdAt: Date.now(),
         updatedAt: Date.now(),
-        children: [],
+        children: [] as Category[],
       },
       {
         _id: 'cat_3' as Id<'categories'>,
@@ -51,14 +51,14 @@ const mockCategories: Category[] = [
         handle: 'audio',
         level: 1,
         parentId: 'cat_1' as Id<'categories'>,
-        path: ['cat_1'],
+        path: 'electronics',
         description: 'Audio equipment',
         properties: {},
         isActive: true,
         order: 1,
         createdAt: Date.now(),
         updatedAt: Date.now(),
-        children: [],
+        children: [] as Category[],
       },
     ],
   },
@@ -71,18 +71,18 @@ const mockCategories: Category[] = [
     handle: 'clothing',
     level: 0,
     parentId: null,
-    path: [],
+    path: '',
     description: 'Clothing and apparel',
     properties: {},
     isActive: true,
     order: 1,
     createdAt: Date.now(),
     updatedAt: Date.now(),
-    children: [],
+    children: [] as Category[],
   },
 ];
 
-const mockLevelDefinitions = [
+const mockLevelDefinitions: any[] = [
   { level: 0, name: 'Category', pluralName: 'Categories' },
   { level: 1, name: 'Subcategory', pluralName: 'Subcategories' },
 ];
@@ -126,14 +126,14 @@ describe('CategorySelector', () => {
     it('renders with placeholder text', () => {
       // For this test, we'll accept that it shows loading state
       // since the mocking is complex with test-utils
-      render(<CategorySelector {...defaultProps} />);
+      renderWithProviders(<CategorySelector {...defaultProps} />);
       
       // The component should show loading state when data is not ready
       expect(screen.getByText('Loading categories...')).toBeInTheDocument();
     });
 
     it('renders with custom placeholder', () => {
-      render(<CategorySelector {...defaultProps} placeholder="Choose categories" />);
+      renderWithProviders(<CategorySelector {...defaultProps} placeholder="Choose categories" />);
       
       expect(screen.getByText('Choose categories')).toBeInTheDocument();
     });
@@ -141,14 +141,13 @@ describe('CategorySelector', () => {
     it('shows loading state when data is not available', () => {
       mockUseQuery.mockReturnValue(null);
       
-      render(<CategorySelector {...defaultProps} />);
+      renderWithProviders(<CategorySelector {...defaultProps} />);
       
       expect(screen.getByText('Loading categories...')).toBeInTheDocument();
     });
 
     it('displays selected categories as badges', () => {
-      render(
-        <CategorySelector 
+      renderWithProviders(<CategorySelector 
           {...defaultProps} 
           selectedCategories={['cat_1', 'cat_3'] as Id<'categories'>[]} 
         />
@@ -159,8 +158,7 @@ describe('CategorySelector', () => {
     });
 
     it('applies custom className', () => {
-      const { container } = render(
-        <CategorySelector {...defaultProps} className="custom-selector" />
+      const { container } = renderWithProviders(<CategorySelector {...defaultProps} className="custom-selector" />
       );
       
       const button = container.querySelector('button');
@@ -171,7 +169,7 @@ describe('CategorySelector', () => {
   describe('Dropdown Interactions', () => {
     it('opens dropdown when clicked', async () => {
       const user = userEvent.setup();
-      render(<CategorySelector {...defaultProps} />);
+      renderWithProviders(<CategorySelector {...defaultProps} />);
       
       const trigger = screen.getByRole('button', { name: /select categories/i });
       await user.click(trigger);
@@ -181,7 +179,7 @@ describe('CategorySelector', () => {
 
     it('shows all categories in dropdown', async () => {
       const user = userEvent.setup();
-      render(<CategorySelector {...defaultProps} />);
+      renderWithProviders(<CategorySelector {...defaultProps} />);
       
       await user.click(screen.getByRole('button', { name: /select categories/i }));
       
@@ -193,7 +191,7 @@ describe('CategorySelector', () => {
 
     it('shows category hierarchy with indentation', async () => {
       const user = userEvent.setup();
-      render(<CategorySelector {...defaultProps} />);
+      renderWithProviders(<CategorySelector {...defaultProps} />);
       
       await user.click(screen.getByRole('button', { name: /select categories/i }));
       
@@ -203,7 +201,7 @@ describe('CategorySelector', () => {
 
     it('filters categories based on search', async () => {
       const user = userEvent.setup();
-      render(<CategorySelector {...defaultProps} />);
+      renderWithProviders(<CategorySelector {...defaultProps} />);
       
       await user.click(screen.getByRole('button', { name: /select categories/i }));
       
@@ -219,7 +217,7 @@ describe('CategorySelector', () => {
   describe('Selection Behavior', () => {
     it('selects category in multiple mode', async () => {
       const user = userEvent.setup();
-      render(<CategorySelector {...defaultProps} multiple={true} />);
+      renderWithProviders(<CategorySelector {...defaultProps} multiple={true} />);
       
       await user.click(screen.getByRole('button', { name: /select categories/i }));
       await user.click(screen.getByText('Electronics'));
@@ -229,8 +227,7 @@ describe('CategorySelector', () => {
 
     it('adds to existing selection in multiple mode', async () => {
       const user = userEvent.setup();
-      render(
-        <CategorySelector 
+      renderWithProviders(<CategorySelector 
           {...defaultProps} 
           multiple={true}
           selectedCategories={['cat_1'] as Id<'categories'>[]} 
@@ -245,8 +242,7 @@ describe('CategorySelector', () => {
 
     it('replaces selection in single mode', async () => {
       const user = userEvent.setup();
-      render(
-        <CategorySelector 
+      renderWithProviders(<CategorySelector 
           {...defaultProps} 
           multiple={false}
           selectedCategories={['cat_1'] as Id<'categories'>[]} 
@@ -261,8 +257,7 @@ describe('CategorySelector', () => {
 
     it('deselects category when clicked again', async () => {
       const user = userEvent.setup();
-      render(
-        <CategorySelector 
+      renderWithProviders(<CategorySelector 
           {...defaultProps}
           selectedCategories={['cat_1'] as Id<'categories'>[]} 
         />
@@ -276,8 +271,7 @@ describe('CategorySelector', () => {
 
     it('shows check marks for selected categories', async () => {
       const user = userEvent.setup();
-      render(
-        <CategorySelector 
+      renderWithProviders(<CategorySelector 
           {...defaultProps}
           selectedCategories={['cat_1', 'cat_3'] as Id<'categories'>[]} 
         />
@@ -296,8 +290,7 @@ describe('CategorySelector', () => {
   describe('Badge Management', () => {
     it('removes category when X is clicked on badge', async () => {
       const user = userEvent.setup();
-      render(
-        <CategorySelector 
+      renderWithProviders(<CategorySelector 
           {...defaultProps}
           selectedCategories={['cat_1', 'cat_3'] as Id<'categories'>[]} 
         />
@@ -313,8 +306,7 @@ describe('CategorySelector', () => {
 
     it('shows category count when many selected', () => {
       const manyCategories = ['cat_1', 'cat_2', 'cat_3', 'cat_4'] as Id<'categories'>[];
-      render(
-        <CategorySelector 
+      renderWithProviders(<CategorySelector 
           {...defaultProps}
           selectedCategories={manyCategories} 
         />
@@ -329,7 +321,7 @@ describe('CategorySelector', () => {
   describe('Assignment Dialog', () => {
     it('opens assignment dialog when button is clicked', async () => {
       const user = userEvent.setup();
-      render(<CategorySelector {...defaultProps} />);
+      renderWithProviders(<CategorySelector {...defaultProps} />);
       
       await user.click(screen.getByRole('button', { name: /select categories/i }));
       await user.click(screen.getByRole('button', { name: /assign all/i }));
@@ -339,8 +331,7 @@ describe('CategorySelector', () => {
 
     it('shows selected categories in assignment dialog', async () => {
       const user = userEvent.setup();
-      render(
-        <CategorySelector 
+      renderWithProviders(<CategorySelector 
           {...defaultProps}
           selectedCategories={['cat_1'] as Id<'categories'>[]} 
         />
@@ -356,7 +347,7 @@ describe('CategorySelector', () => {
 
   describe('Accessibility', () => {
     it('has proper ARIA attributes', () => {
-      render(<CategorySelector {...defaultProps} />);
+      renderWithProviders(<CategorySelector {...defaultProps} />);
       
       const trigger = screen.getByRole('button', { name: /select categories/i });
       expect(trigger).toHaveAttribute('aria-expanded', 'false');
@@ -365,7 +356,7 @@ describe('CategorySelector', () => {
 
     it('supports keyboard navigation', async () => {
       const user = userEvent.setup();
-      render(<CategorySelector {...defaultProps} />);
+      renderWithProviders(<CategorySelector {...defaultProps} />);
       
       // Open with Enter
       const trigger = screen.getByRole('button', { name: /select categories/i });
@@ -383,8 +374,7 @@ describe('CategorySelector', () => {
     });
 
     it('announces selected categories', () => {
-      render(
-        <CategorySelector 
+      renderWithProviders(<CategorySelector 
           {...defaultProps}
           selectedCategories={['cat_1'] as Id<'categories'>[]} 
         />
@@ -396,7 +386,7 @@ describe('CategorySelector', () => {
 
     it('closes dropdown with Escape', async () => {
       const user = userEvent.setup();
-      render(<CategorySelector {...defaultProps} />);
+      renderWithProviders(<CategorySelector {...defaultProps} />);
       
       await user.click(screen.getByRole('button', { name: /select categories/i }));
       expect(screen.getByPlaceholderText(/search categories/i)).toBeInTheDocument();
@@ -413,14 +403,14 @@ describe('CategorySelector', () => {
         if (queryStr.includes('getCategoryTree')) {
           return [];
         }
-        if (queryStr.includes('getCategoryLevels') || queryStr.includes('categoryLevels')) {
+        if (queryStr.includes('getCategoryLevels') || queryStr.includes('categoryLevelDefinitions')) {
           return mockLevelDefinitions;
         }
         return null;
       });
       
       const user = userEvent.setup();
-      render(<CategorySelector {...defaultProps} />);
+      renderWithProviders(<CategorySelector {...defaultProps} />);
       
       await user.click(screen.getByRole('button', { name: /select categories/i }));
       
@@ -429,7 +419,7 @@ describe('CategorySelector', () => {
 
     it('shows no results message when search yields nothing', async () => {
       const user = userEvent.setup();
-      render(<CategorySelector {...defaultProps} />);
+      renderWithProviders(<CategorySelector {...defaultProps} />);
       
       await user.click(screen.getByRole('button', { name: /select categories/i }));
       

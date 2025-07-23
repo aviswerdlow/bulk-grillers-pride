@@ -1,7 +1,10 @@
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ConfirmationMethodSelector, type ConfirmationMethod } from '../ConfirmationMethodSelector';
+
+import { renderWithProviders } from '@/__tests__/test-helpers';
 
 describe('ConfirmationMethodSelector', () => {
   const mockOnChange = jest.fn();
@@ -11,8 +14,7 @@ describe('ConfirmationMethodSelector', () => {
   });
 
   it('renders all confirmation methods', () => {
-    render(
-      <ConfirmationMethodSelector value="click" onChange={mockOnChange} />
+    renderWithProviders(<ConfirmationMethodSelector value="click" onChange={mockOnChange} />
     );
 
     expect(screen.getByText('Choose confirmation method:')).toBeInTheDocument();
@@ -22,8 +24,7 @@ describe('ConfirmationMethodSelector', () => {
   });
 
   it('shows recommended badge when specified', () => {
-    render(
-      <ConfirmationMethodSelector 
+    renderWithProviders(<ConfirmationMethodSelector 
         value="click" 
         onChange={mockOnChange}
         recommendedMethod="hold"
@@ -35,8 +36,7 @@ describe('ConfirmationMethodSelector', () => {
   });
 
   it('selects default method on mount when no value provided', () => {
-    render(
-      <ConfirmationMethodSelector 
+    renderWithProviders(<ConfirmationMethodSelector 
         value={'' as ConfirmationMethod}
         onChange={mockOnChange}
         defaultMethod="type"
@@ -48,8 +48,7 @@ describe('ConfirmationMethodSelector', () => {
 
   it('handles method selection', async () => {
     const user = userEvent.setup();
-    render(
-      <ConfirmationMethodSelector value="click" onChange={mockOnChange} />
+    renderWithProviders(<ConfirmationMethodSelector value="click" onChange={mockOnChange} />
     );
 
     const holdOption = screen.getByLabelText(/Hold to Confirm/);
@@ -59,15 +58,14 @@ describe('ConfirmationMethodSelector', () => {
   });
 
   it('handles keyboard navigation with arrow keys', () => {
-    const { rerender } = render(
-      <ConfirmationMethodSelector value="click" onChange={mockOnChange} />
+    const { rerender } = renderWithProviders(<ConfirmationMethodSelector value="click" onChange={mockOnChange} />
     );
 
     const clickRadio = screen.getByLabelText(/Standard Click/);
     clickRadio.focus();
     
     // Arrow down should select next option
-    fireEvent.keyDown(clickRadio.parentElement!.parentElement!, { key: 'ArrowDown' });
+    fireEvent.keyDown(clickRadio.parentElement!.parentElement!, { key: 'ArrowDown' } as HTMLElement);
     expect(mockOnChange).toHaveBeenCalledWith('hold');
     
     // Update the value prop and refocus
@@ -76,46 +74,43 @@ describe('ConfirmationMethodSelector', () => {
     holdRadio.focus();
     
     // Arrow up should select previous option
-    fireEvent.keyDown(holdRadio.parentElement!.parentElement!, { key: 'ArrowUp' });
+    fireEvent.keyDown(holdRadio.parentElement!.parentElement!, { key: 'ArrowUp' } as HTMLElement);
     expect(mockOnChange).toHaveBeenCalledWith('click');
   });
 
   it('handles Home and End keys', () => {
-    const { rerender } = render(
-      <ConfirmationMethodSelector value="hold" onChange={mockOnChange} />
+    renderWithProviders(<ConfirmationMethodSelector value="hold" onChange={mockOnChange} />
     );
 
     const container = screen.getByRole('radiogroup');
     
     // Home should select first option
-    fireEvent.keyDown(container, { key: 'Home' });
+    fireEvent.keyDown(container, { key: 'Home' } as HTMLElement);
     expect(mockOnChange).toHaveBeenCalledWith('click');
     
     // End should select last option
-    fireEvent.keyDown(container, { key: 'End' });
+    fireEvent.keyDown(container, { key: 'End' } as HTMLElement);
     expect(mockOnChange).toHaveBeenCalledWith('type');
   });
 
   it('wraps around when navigating past boundaries', () => {
-    const { rerender } = render(
-      <ConfirmationMethodSelector value="type" onChange={mockOnChange} />
+    const { rerender } = renderWithProviders(<ConfirmationMethodSelector value="type" onChange={mockOnChange} />
     );
 
     const container = screen.getByRole('radiogroup');
     
     // Arrow down from last should go to first
-    fireEvent.keyDown(container, { key: 'ArrowDown' });
+    fireEvent.keyDown(container, { key: 'ArrowDown' } as HTMLElement);
     expect(mockOnChange).toHaveBeenCalledWith('click');
     
     // Update and test wrap from first to last
     rerender(<ConfirmationMethodSelector value="click" onChange={mockOnChange} />);
-    fireEvent.keyDown(container, { key: 'ArrowUp' });
+    fireEvent.keyDown(container, { key: 'ArrowUp' } as HTMLElement);
     expect(mockOnChange).toHaveBeenCalledWith('type');
   });
 
   it('respects disabled prop', () => {
-    render(
-      <ConfirmationMethodSelector 
+    renderWithProviders(<ConfirmationMethodSelector 
         value="click" 
         onChange={mockOnChange}
         disabled
@@ -129,13 +124,12 @@ describe('ConfirmationMethodSelector', () => {
     
     // Keyboard navigation should not work when disabled
     const container = screen.getByRole('radiogroup');
-    fireEvent.keyDown(container, { key: 'ArrowDown' });
+    fireEvent.keyDown(container, { key: 'ArrowDown' } as HTMLElement);
     expect(mockOnChange).not.toHaveBeenCalled();
   });
 
   it('shows correct descriptions for each method', () => {
-    render(
-      <ConfirmationMethodSelector value="click" onChange={mockOnChange} />
+    renderWithProviders(<ConfirmationMethodSelector value="click" onChange={mockOnChange} />
     );
 
     expect(screen.getByText('Quick confirmation for non-critical actions')).toBeInTheDocument();
@@ -144,8 +138,7 @@ describe('ConfirmationMethodSelector', () => {
   });
 
   it('highlights selected option', () => {
-    const { rerender } = render(
-      <ConfirmationMethodSelector value="click" onChange={mockOnChange} />
+    const { rerender } = renderWithProviders(<ConfirmationMethodSelector value="click" onChange={mockOnChange} />
     );
 
     const clickRadio = screen.getByLabelText(/Standard Click/);
@@ -162,8 +155,7 @@ describe('ConfirmationMethodSelector', () => {
   });
 
   it('has proper ARIA attributes', () => {
-    render(
-      <ConfirmationMethodSelector value="click" onChange={mockOnChange} />
+    renderWithProviders(<ConfirmationMethodSelector value="click" onChange={mockOnChange} />
     );
 
     const radioGroup = screen.getByRole('radiogroup');

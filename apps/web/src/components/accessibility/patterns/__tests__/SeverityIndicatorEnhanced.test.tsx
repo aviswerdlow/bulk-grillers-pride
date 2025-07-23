@@ -1,9 +1,15 @@
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+/**
+ * @jest-environment jsdom
+ */
 import React from 'react';
 import { render, screen } from '@testing-library/react';
+import { CriticalIndicator, DangerIndicator, InfoIndicator, SeverityIndicatorEnhanced, WarningIndicator } from '../SeverityIndicatorEnhanced';
 import { axe, toHaveNoViolations } from 'jest-axe';
-import { SeverityIndicatorEnhanced, InfoIndicator, WarningIndicator, DangerIndicator, CriticalIndicator } from '../SeverityIndicatorEnhanced';
-import '@testing-library/jest-dom';
 
+import { renderWithProviders } from '@/__tests__/test-helpers';
+
+import '@testing-library/jest-dom';
 expect.extend(toHaveNoViolations);
 
 // Mock window.matchMedia
@@ -26,15 +32,14 @@ beforeAll(() => {
 describe('SeverityIndicatorEnhanced', () => {
   describe('Basic Rendering', () => {
     it('renders with required props', () => {
-      render(<SeverityIndicatorEnhanced severity="warning" />);
+      renderWithProviders(<SeverityIndicatorEnhanced severity="warning" />);
       const indicator = screen.getByRole('status');
       expect(indicator).toBeInTheDocument();
       expect(indicator).toHaveTextContent('Warning');
     });
 
     it('renders with custom label', () => {
-      render(
-        <SeverityIndicatorEnhanced 
+      renderWithProviders(<SeverityIndicatorEnhanced 
           severity="danger" 
           label="Product References" 
         />
@@ -43,8 +48,7 @@ describe('SeverityIndicatorEnhanced', () => {
     });
 
     it('renders with message', () => {
-      render(
-        <SeverityIndicatorEnhanced 
+      renderWithProviders(<SeverityIndicatorEnhanced 
           severity="warning" 
           label="External Links"
           message="Some links will break" 
@@ -55,8 +59,7 @@ describe('SeverityIndicatorEnhanced', () => {
     });
 
     it('renders without pattern when pattern prop is false', () => {
-      const { container } = render(
-        <SeverityIndicatorEnhanced severity="info" pattern={false} />
+      const { container } = renderWithProviders(<SeverityIndicatorEnhanced severity="info" pattern={false} />
       );
       expect(container.querySelector('.severity-pattern')).not.toBeInTheDocument();
     });
@@ -72,7 +75,7 @@ describe('SeverityIndicatorEnhanced', () => {
 
     severities.forEach(({ severity, label }) => {
       it(`renders ${severity} severity correctly`, () => {
-        render(<SeverityIndicatorEnhanced severity={severity} />);
+        renderWithProviders(<SeverityIndicatorEnhanced severity={severity} />);
         const indicator = screen.getByRole('status');
         expect(indicator).toHaveTextContent(label);
       });
@@ -84,7 +87,7 @@ describe('SeverityIndicatorEnhanced', () => {
 
     sizes.forEach(size => {
       it(`renders ${size} size correctly`, () => {
-        render(<SeverityIndicatorEnhanced severity="info" size={size} />);
+        renderWithProviders(<SeverityIndicatorEnhanced severity="info" size={size} />);
         const indicator = screen.getByRole('status');
         expect(indicator).toBeInTheDocument();
       });
@@ -96,7 +99,7 @@ describe('SeverityIndicatorEnhanced', () => {
 
     variants.forEach(variant => {
       it(`renders ${variant} variant correctly`, () => {
-        render(<SeverityIndicatorEnhanced severity="warning" variant={variant} />);
+        renderWithProviders(<SeverityIndicatorEnhanced severity="warning" variant={variant} />);
         const indicator = screen.getByRole('status');
         expect(indicator).toBeInTheDocument();
       });
@@ -105,14 +108,13 @@ describe('SeverityIndicatorEnhanced', () => {
 
   describe('Icons', () => {
     it('renders icon by default', () => {
-      const { container } = render(<SeverityIndicatorEnhanced severity="warning" />);
+      const { container } = renderWithProviders(<SeverityIndicatorEnhanced severity="warning" />);
       const icon = container.querySelector('svg');
       expect(icon).toBeInTheDocument();
     });
 
     it('hides icon when showIcon is false', () => {
-      const { container } = render(
-        <SeverityIndicatorEnhanced severity="warning" showIcon={false} />
+      const { container } = renderWithProviders(<SeverityIndicatorEnhanced severity="warning" showIcon={false} />
       );
       const icon = container.querySelector('svg:not([width="0"])');
       expect(icon).not.toBeInTheDocument();
@@ -121,8 +123,7 @@ describe('SeverityIndicatorEnhanced', () => {
 
   describe('Accessibility', () => {
     it('has no accessibility violations', async () => {
-      const { container } = render(
-        <SeverityIndicatorEnhanced 
+      const { container } = renderWithProviders(<SeverityIndicatorEnhanced 
           severity="warning" 
           label="Product References"
           message="External links will break"
@@ -133,8 +134,7 @@ describe('SeverityIndicatorEnhanced', () => {
     });
 
     it('has proper ARIA attributes', () => {
-      render(
-        <SeverityIndicatorEnhanced 
+      renderWithProviders(<SeverityIndicatorEnhanced 
           severity="danger" 
           label="Delete Product"
           message="This action cannot be undone"
@@ -148,8 +148,7 @@ describe('SeverityIndicatorEnhanced', () => {
     });
 
     it('uses custom aria-label when provided', () => {
-      render(
-        <SeverityIndicatorEnhanced 
+      renderWithProviders(<SeverityIndicatorEnhanced 
           severity="critical" 
           ariaLabel="Critical warning: System failure imminent"
         />
@@ -159,16 +158,14 @@ describe('SeverityIndicatorEnhanced', () => {
     });
 
     it('pattern is marked as decorative', () => {
-      const { container } = render(
-        <SeverityIndicatorEnhanced severity="warning" />
+      const { container } = renderWithProviders(<SeverityIndicatorEnhanced severity="warning" />
       );
       const pattern = container.querySelector('.severity-pattern');
       expect(pattern).toHaveAttribute('aria-hidden', 'true');
     });
 
     it('icons are marked as decorative', () => {
-      const { container } = render(
-        <SeverityIndicatorEnhanced severity="info" />
+      const { container } = renderWithProviders(<SeverityIndicatorEnhanced severity="info" />
       );
       const icon = container.querySelector('svg:not([width="0"])');
       expect(icon).toHaveAttribute('aria-hidden', 'true');
@@ -177,28 +174,28 @@ describe('SeverityIndicatorEnhanced', () => {
 
   describe('Convenience Components', () => {
     it('InfoIndicator renders with info severity', () => {
-      render(<InfoIndicator label="Information" />);
+      renderWithProviders(<InfoIndicator label="Information" />);
       const indicator = screen.getByRole('status');
       expect(indicator).toHaveTextContent('Information');
       expect(indicator.getAttribute('aria-label')).toContain('info severity');
     });
 
     it('WarningIndicator renders with warning severity', () => {
-      render(<WarningIndicator label="Warning" />);
+      renderWithProviders(<WarningIndicator label="Warning" />);
       const indicator = screen.getByRole('status');
       expect(indicator).toHaveTextContent('Warning');
       expect(indicator.getAttribute('aria-label')).toContain('warning severity');
     });
 
     it('DangerIndicator renders with danger severity', () => {
-      render(<DangerIndicator label="Danger" />);
+      renderWithProviders(<DangerIndicator label="Danger" />);
       const indicator = screen.getByRole('status');
       expect(indicator).toHaveTextContent('Danger');
       expect(indicator.getAttribute('aria-label')).toContain('danger severity');
     });
 
     it('CriticalIndicator renders with critical severity', () => {
-      render(<CriticalIndicator label="Critical" />);
+      renderWithProviders(<CriticalIndicator label="Critical" />);
       const indicator = screen.getByRole('status');
       expect(indicator).toHaveTextContent('Critical');
       expect(indicator.getAttribute('aria-label')).toContain('critical severity');
@@ -207,8 +204,7 @@ describe('SeverityIndicatorEnhanced', () => {
 
   describe('Pattern SVG', () => {
     it('includes pattern definitions in the DOM', () => {
-      const { container } = render(
-        <SeverityIndicatorEnhanced severity="warning" />
+      const { container } = renderWithProviders(<SeverityIndicatorEnhanced severity="warning" />
       );
       const svg = container.querySelector('svg[width="0"][height="0"]');
       expect(svg).toBeInTheDocument();
@@ -221,8 +217,7 @@ describe('SeverityIndicatorEnhanced', () => {
 
   describe('Complex Scenarios', () => {
     it('renders multiple indicators correctly', () => {
-      render(
-        <div>
+      renderWithProviders(<div>
           <SeverityIndicatorEnhanced severity="info" label="Info 1" />
           <SeverityIndicatorEnhanced severity="warning" label="Warning 1" />
           <SeverityIndicatorEnhanced severity="danger" label="Danger 1" />
@@ -238,8 +233,7 @@ describe('SeverityIndicatorEnhanced', () => {
 
     it('handles long messages gracefully', () => {
       const longMessage = 'This is a very long message that might wrap to multiple lines and should still be displayed correctly within the component';
-      render(
-        <SeverityIndicatorEnhanced 
+      renderWithProviders(<SeverityIndicatorEnhanced 
           severity="warning" 
           label="Long Message Test"
           message={longMessage}

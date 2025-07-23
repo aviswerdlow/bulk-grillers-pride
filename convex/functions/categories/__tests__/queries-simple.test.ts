@@ -1,5 +1,5 @@
-import { convexTest } from '../../../__tests__/test-helpers';
-
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import { t } from '../../../test.setup';
 describe('Category Queries', () => {
   let ctx: any;
   let userId: string;
@@ -7,7 +7,8 @@ describe('Category Queries', () => {
   let projectId: string;
 
   beforeEach(async () => {
-    ctx = convexTest();
+    
+    ctx = await t.run(async (ctx) => ctx);
 
     // Create test user
     userId = await ctx.db.insert('users', {
@@ -128,6 +129,7 @@ describe('Category Queries', () => {
     });
 
     it('should return active root categories', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       // Mock the runQuery to handle getProjectCategories
       ctx.runQuery.mockImplementation(async (funcName: string, args: any) => {
         if (funcName === 'getProjectCategories' || funcName.includes('getProjectCategories')) {
@@ -215,6 +217,7 @@ describe('Category Queries', () => {
     });
 
     it('should return hierarchical category tree', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       // Mock the runQuery to handle getCategoryTree
       ctx.runQuery.mockImplementation(async (funcName: string, args: any) => {
         if (funcName === 'getCategoryTree' || funcName.includes('getCategoryTree')) {
@@ -304,6 +307,7 @@ describe('Category Queries', () => {
     });
 
     it('should return a single category by ID', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       // Mock the runQuery to handle getCategory
       ctx.runQuery.mockImplementation(async (funcName: string, args: any) => {
         if (funcName === 'getCategory' || funcName.includes('getCategory')) {
@@ -329,6 +333,7 @@ describe('Category Queries', () => {
     });
 
     it('should throw error for non-existent category', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       ctx.runQuery.mockImplementation(async (funcName: string, args: any) => {
         if (funcName === 'getCategory' || funcName.includes('getCategory')) {
           const allCategories = await ctx.db.query('categories').collect();

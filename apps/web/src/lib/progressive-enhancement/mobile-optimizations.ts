@@ -3,6 +3,17 @@
  * Ensures 60fps performance on mid-range devices
  */
 
+interface NavigatorWithBattery extends Navigator {
+  getBattery(): Promise<{
+    level: number;
+    charging: boolean;
+  }>;
+}
+
+interface WindowWithGtag extends Window {
+  gtag: (...args: unknown[]) => void;
+}
+
 /**
  * Touch gesture utilities
  */
@@ -166,12 +177,12 @@ export function createLazyLoader(
 export async function getBatteryStatus() {
   if ('getBattery' in navigator) {
     try {
-      const battery = await (navigator as any).getBattery();
+      const battery = await (navigator as NavigatorWithBattery).getBattery();
       return {
         level: battery.level,
         charging: battery.charging
       };
-    } catch (e) {
+    } catch {
       // Battery API not supported
     }
   }
@@ -233,8 +244,8 @@ export class PerformanceMonitor {
     const duration = this.measure(operation);
     
     // Log to analytics if available
-    if (typeof window !== 'undefined' && (window as any).gtag) {
-      (window as any).gtag('event', 'performance', {
+    if (typeof window !== 'undefined' && 'gtag' in window && (window as WindowWithGtag).gtag) {
+      (window as WindowWithGtag).gtag('event', 'performance', {
         event_category: 'deletion_flow',
         event_label: operation,
         value: Math.round(duration)

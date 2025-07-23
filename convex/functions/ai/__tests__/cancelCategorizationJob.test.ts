@@ -1,6 +1,6 @@
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import { t } from '../../../test.setup';
 import { cancelCategorizationJob } from '../categorization';
-import { convexTest } from '../../../__tests__/test-helpers';
-
 describe('cancelCategorizationJob', () => {
   let ctx: any;
   let jobId: string;
@@ -8,7 +8,8 @@ describe('cancelCategorizationJob', () => {
   let orgId: string;
 
   beforeEach(async () => {
-    ctx = convexTest();
+    
+    ctx = await t.run(async (ctx) => ctx);
     
     // Create mock user
     userId = await ctx.db.insert('users', {
@@ -74,7 +75,6 @@ describe('cancelCategorizationJob', () => {
     });
 
     // Setup auth
-    ctx.auth.getUserIdentity.mockResolvedValue({
       subject: 'user_test123',
     });
 
@@ -113,6 +113,7 @@ describe('cancelCategorizationJob', () => {
   });
 
   it('should successfully cancel a running job', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
     const result = await cancelCategorizationJob(ctx, { jobId });
 
     expect(result).toEqual({
@@ -140,6 +141,7 @@ describe('cancelCategorizationJob', () => {
   });
 
   it('should successfully cancel a pending job', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
     // Update job status to pending
     await ctx.db.patch(jobId, {
       status: 'pending',
@@ -164,6 +166,7 @@ describe('cancelCategorizationJob', () => {
   });
 
   it('should throw error when job is not found', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
     const nonExistentJobId = 'nonexistent';
     ctx.db.get.mockResolvedValue(null);
 
@@ -173,12 +176,13 @@ describe('cancelCategorizationJob', () => {
   });
 
   it('should throw error when user is not authenticated', async () => {
-    ctx.auth.getUserIdentity.mockResolvedValue(null);
+    const ctx = await t.mutation(async (ctx) => ctx);
 
     await expect(cancelCategorizationJob(ctx, { jobId })).rejects.toThrow('Not authenticated');
   });
 
   it('should throw error when job is already completed', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
     await ctx.db.patch(jobId, { status: 'completed' });
 
     await expect(cancelCategorizationJob(ctx, { jobId })).rejects.toThrow(
@@ -187,6 +191,7 @@ describe('cancelCategorizationJob', () => {
   });
 
   it('should throw error when job has failed', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
     await ctx.db.patch(jobId, { status: 'failed' });
 
     await expect(cancelCategorizationJob(ctx, { jobId })).rejects.toThrow(
@@ -195,6 +200,7 @@ describe('cancelCategorizationJob', () => {
   });
 
   it('should throw error when job is already cancelled', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
     await ctx.db.patch(jobId, { status: 'cancelled' });
 
     await expect(cancelCategorizationJob(ctx, { jobId })).rejects.toThrow(
@@ -203,6 +209,7 @@ describe('cancelCategorizationJob', () => {
   });
 
   it('should throw error when user does not have permission', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
     // Override query to return no membership
     ctx.db.query.mockImplementation((table: string) => {
       const queryBuilder = {
@@ -229,6 +236,7 @@ describe('cancelCategorizationJob', () => {
   });
 
   it('should throw error for unknown job status', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
     await ctx.db.patch(jobId, { status: 'processing' as any }); // Invalid status
 
     await expect(cancelCategorizationJob(ctx, { jobId })).rejects.toThrow(

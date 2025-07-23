@@ -11,6 +11,24 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Activity, Zap, Eye, MousePointer } from 'lucide-react';
 
+// Performance API type definitions
+interface PerformanceEventTiming extends PerformanceEntry {
+  processingStart: number;
+}
+
+interface LayoutShift extends PerformanceEntry {
+  hadRecentInput: boolean;
+  value: number;
+}
+
+interface ExtendedPerformance extends Performance {
+  memory?: {
+    usedJSHeapSize: number;
+    totalJSHeapSize: number;
+    jsHeapSizeLimit: number;
+  };
+}
+
 interface WebVitals {
   lcp?: number; // Largest Contentful Paint
   fid?: number; // First Input Delay
@@ -42,13 +60,13 @@ export function PerformanceMonitor() {
           setMetrics(prev => ({ ...prev, lcp: Math.round(entry.startTime) }));
         }
         if (entry.entryType === 'first-input' && 'processingStart' in entry) {
-          const fid = Math.round((entry as any).processingStart - entry.startTime);
+          const fid = Math.round((entry as PerformanceEventTiming).processingStart - entry.startTime);
           setMetrics(prev => ({ ...prev, fid }));
         }
-        if (entry.entryType === 'layout-shift' && !(entry as any).hadRecentInput) {
+        if (entry.entryType === 'layout-shift' && !(entry as LayoutShift).hadRecentInput) {
           setMetrics(prev => ({ 
             ...prev, 
-            cls: (prev.cls || 0) + (entry as any).value 
+            cls: (prev.cls || 0) + (entry as LayoutShift).value 
           }));
         }
       });
@@ -57,14 +75,14 @@ export function PerformanceMonitor() {
     // Observe Web Vitals
     try {
       observer.observe({ entryTypes: ['largest-contentful-paint', 'first-input', 'layout-shift'] });
-    } catch (e) {
+    } catch {
       console.warn('Performance monitoring not fully supported');
     }
     
     // Monitor memory usage
     const memoryInterval = setInterval(() => {
-      if ((performance as any).memory) {
-        const memoryMB = Math.round((performance as any).memory.usedJSHeapSize / 1024 / 1024);
+      if ('memory' in performance && (performance as ExtendedPerformance).memory) {
+        const memoryMB = Math.round((performance as ExtendedPerformance).memory!.usedJSHeapSize / 1024 / 1024);
         setMetrics(prev => ({ ...prev, memory: memoryMB }));
       }
     }, 1000);

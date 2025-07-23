@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useMutation } from 'convex/react';
 import { api } from '@convex/_generated/api';
 import { Doc } from '@convex/_generated/dataModel';
@@ -57,7 +57,7 @@ export function EditProductDialog({ open, onOpenChange, product }: EditProductDi
   const [currentTag, setCurrentTag] = useState('');
   const [tags, setTags] = useState<string[]>(product.tags || []);
 
-  const updateProduct = useMutation(api.functions.products.products.updateProduct);
+  const updateProduct = useMutation((api as any).functions.products.products.updateProduct);
 
   const {
     register,

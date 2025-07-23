@@ -4,10 +4,10 @@
  */
 
 import type { Product, Category, User, Organization } from '@/types/models';
-import type { Id } from '@convex/_generated/dataModel';
+import type { Id, TableNames } from '@convex/_generated/dataModel';
 
 // Helper to create mock IDs
-export function createMockId<T extends string>(table: T): Id<T> {
+export function createMockId<T extends TableNames>(table: T): Id<T> {
   return `test_${table}_${Math.random().toString(36).substr(2, 9)}` as Id<T>;
 }
 

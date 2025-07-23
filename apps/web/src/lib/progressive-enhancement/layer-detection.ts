@@ -17,8 +17,17 @@ export interface DeviceCapabilities {
 /**
  * Detect device capabilities
  */
+interface NavigatorWithExtensions extends Navigator {
+  deviceMemory?: number;
+  connection?: {
+    effectiveType?: 'slow-2g' | '2g' | '3g' | '4g';
+    saveData?: boolean;
+  };
+  maxTouchPoints?: number;
+}
+
 export function detectCapabilities(): DeviceCapabilities {
-  const nav = navigator as any;
+  const nav = navigator as NavigatorWithExtensions;
   
   return {
     touch: 'ontouchstart' in window || nav.maxTouchPoints > 0,
@@ -125,7 +134,7 @@ const LAYER_PREFERENCE_KEY = 'bgp_enhancement_layer';
 export function saveLayerPreference(layer: EnhancementLayer): void {
   try {
     localStorage.setItem(LAYER_PREFERENCE_KEY, layer);
-  } catch (e) {
+  } catch {
     // Ignore storage errors
   }
 }
@@ -136,7 +145,7 @@ export function saveLayerPreference(layer: EnhancementLayer): void {
 export function getLayerPreference(): EnhancementLayer | null {
   try {
     return localStorage.getItem(LAYER_PREFERENCE_KEY) as EnhancementLayer;
-  } catch (e) {
+  } catch {
     return null;
   }
 }

@@ -1,18 +1,22 @@
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+/**
+ * @jest-environment jsdom
+ */
 import React from 'react';
-import { render, screen } from '../../test-utils';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { cleanupTest, mockUseQuery, mockUseMutation, renderWithProviders, setupTest } from '@/__tests__/test-helpers';
 import { Skeleton } from '@/components/ui/skeleton';
-
 describe('Skeleton Component', () => {
   describe('Rendering', () => {
     it('renders as a div element', () => {
-      const { container } = render(<Skeleton />);
+      const { container } = renderWithProviders(<Skeleton />);
       const skeleton = container.firstChild;
       expect(skeleton).toBeInTheDocument();
       expect(skeleton?.nodeName).toBe('DIV');
     });
 
     it('applies base animation and styling classes', () => {
-      const { container } = render(<Skeleton />);
+      const { container } = renderWithProviders(<Skeleton />);
       const skeleton = container.firstChild as HTMLElement;
       expect(skeleton.className).toContain('animate-pulse');
       expect(skeleton.className).toContain('rounded-md');
@@ -20,7 +24,7 @@ describe('Skeleton Component', () => {
     });
 
     it('applies custom className', () => {
-      const { container } = render(<Skeleton className="custom-skeleton" />);
+      const { container } = renderWithProviders(<Skeleton className="custom-skeleton" />);
       const skeleton = container.firstChild as HTMLElement;
       expect(skeleton).toHaveClass('custom-skeleton');
       expect(skeleton).toHaveClass('animate-pulse'); // Still has base classes
@@ -29,8 +33,7 @@ describe('Skeleton Component', () => {
     });
 
     it('forwards HTML div props', () => {
-      const { container } = render(
-        <Skeleton
+      const { container } = renderWithProviders(<Skeleton
           id="skeleton-loader"
           data-testid="skeleton-test"
           aria-label="Loading content"
@@ -47,28 +50,28 @@ describe('Skeleton Component', () => {
 
   describe('Styling Variations', () => {
     it('can override rounded corners with custom className', () => {
-      const { container } = render(<Skeleton className="rounded-full" />);
+      const { container } = renderWithProviders(<Skeleton className="rounded-full" />);
       const skeleton = container.firstChild as HTMLElement;
       expect(skeleton).toHaveClass('rounded-full');
       // Note: rounded-full will override the base rounded-md class
     });
 
     it('can set custom dimensions', () => {
-      const { container } = render(<Skeleton className="h-12 w-48" />);
+      const { container } = renderWithProviders(<Skeleton className="h-12 w-48" />);
       const skeleton = container.firstChild as HTMLElement;
       expect(skeleton).toHaveClass('h-12');
       expect(skeleton).toHaveClass('w-48');
     });
 
     it('can override background color', () => {
-      const { container } = render(<Skeleton className="bg-gray-300" />);
+      const { container } = renderWithProviders(<Skeleton className="bg-gray-300" />);
       const skeleton = container.firstChild as HTMLElement;
       expect(skeleton).toHaveClass('bg-gray-300');
       // Note: bg-gray-300 will override the base bg-muted class
     });
 
     it('can disable animation', () => {
-      const { container } = render(<Skeleton className="animate-none" />);
+      const { container } = renderWithProviders(<Skeleton className="animate-none" />);
       const skeleton = container.firstChild as HTMLElement;
       expect(skeleton).toHaveClass('animate-none');
       // Note: animate-none will override animate-pulse effect
@@ -77,14 +80,14 @@ describe('Skeleton Component', () => {
 
   describe('Common Use Cases', () => {
     it('renders as a text skeleton', () => {
-      const { container } = render(<Skeleton className="h-4 w-[250px]" />);
+      const { container } = renderWithProviders(<Skeleton className="h-4 w-[250px]" />);
       const skeleton = container.firstChild as HTMLElement;
       expect(skeleton).toHaveClass('h-4');
       expect(skeleton).toHaveClass('w-[250px]');
     });
 
     it('renders as a card skeleton', () => {
-      const { container } = render(<Skeleton className="h-[125px] w-full rounded-xl" />);
+      const { container } = renderWithProviders(<Skeleton className="h-[125px] w-full rounded-xl" />);
       const skeleton = container.firstChild as HTMLElement;
       expect(skeleton).toHaveClass('h-[125px]');
       expect(skeleton).toHaveClass('w-full');
@@ -92,7 +95,7 @@ describe('Skeleton Component', () => {
     });
 
     it('renders as an avatar skeleton', () => {
-      const { container } = render(<Skeleton className="h-12 w-12 rounded-full" />);
+      const { container } = renderWithProviders(<Skeleton className="h-12 w-12 rounded-full" />);
       const skeleton = container.firstChild as HTMLElement;
       expect(skeleton).toHaveClass('h-12');
       expect(skeleton).toHaveClass('w-12');
@@ -100,8 +103,7 @@ describe('Skeleton Component', () => {
     });
 
     it('renders multiple skeletons for list loading', () => {
-      render(
-        <div>
+      renderWithProviders(<div>
           <Skeleton className="h-4 w-full mb-2" />
           <Skeleton className="h-4 w-full mb-2" />
           <Skeleton className="h-4 w-3/4" />
@@ -114,8 +116,7 @@ describe('Skeleton Component', () => {
 
   describe('Accessibility', () => {
     it('can have accessible loading text with screen reader only class', () => {
-      render(
-        <Skeleton role="status">
+      renderWithProviders(<Skeleton role="status">
           <span className="sr-only">Loading...</span>
         </Skeleton>
       );
@@ -125,8 +126,7 @@ describe('Skeleton Component', () => {
     });
 
     it('works with aria-busy on parent', () => {
-      render(
-        <div aria-busy="true">
+      renderWithProviders(<div aria-busy="true">
           <Skeleton className="h-4 w-full" />
         </div>
       );
@@ -136,8 +136,7 @@ describe('Skeleton Component', () => {
     });
 
     it('can be labeled for specific content', () => {
-      const { container } = render(
-        <Skeleton 
+      const { container } = renderWithProviders(<Skeleton 
           aria-label="Loading user profile" 
           role="progressbar"
           aria-valuemin={0}
@@ -152,8 +151,7 @@ describe('Skeleton Component', () => {
 
   describe('Complex Layouts', () => {
     it('renders a card skeleton with multiple elements', () => {
-      render(
-        <div className="card">
+      renderWithProviders(<div className="card">
           <Skeleton className="h-48 w-full mb-4" /> {/* Image */}
           <Skeleton className="h-6 w-3/4 mb-2" /> {/* Title */}
           <Skeleton className="h-4 w-full mb-1" /> {/* Description line 1 */}
@@ -170,8 +168,7 @@ describe('Skeleton Component', () => {
     });
 
     it('renders a table skeleton', () => {
-      render(
-        <table>
+      renderWithProviders(<table>
           <tbody>
             {[1, 2, 3].map((i) => (
               <tr key={i}>
@@ -191,16 +188,14 @@ describe('Skeleton Component', () => {
 
   describe('Edge Cases', () => {
     it('handles multiple classNames correctly', () => {
-      const { container } = render(
-        <Skeleton className="h-4 w-full mt-2 mb-4 rounded-lg bg-gray-200" />
+      const { container } = renderWithProviders(<Skeleton className="h-4 w-full mt-2 mb-4 rounded-lg bg-gray-200" />
       );
       const skeleton = container.firstChild as HTMLElement;
       expect(skeleton).toHaveClass('h-4', 'w-full', 'mt-2', 'mb-4', 'rounded-lg', 'bg-gray-200');
     });
 
     it('renders with style prop', () => {
-      const { container } = render(
-        <Skeleton style={{ width: '200px', height: '20px' }} />
+      const { container } = renderWithProviders(<Skeleton style={{ width: '200px', height: '20px' }} />
       );
       const skeleton = container.firstChild as HTMLElement;
       expect(skeleton.style.width).toBe('200px');
@@ -208,8 +203,7 @@ describe('Skeleton Component', () => {
     });
 
     it('can be used as a child of flex container', () => {
-      render(
-        <div className="flex gap-4">
+      renderWithProviders(<div className="flex gap-4">
           <Skeleton className="h-10 w-10 rounded-full" />
           <div className="flex-1">
             <Skeleton className="h-4 w-32 mb-2" />
@@ -223,8 +217,7 @@ describe('Skeleton Component', () => {
     });
 
     it('maintains animation when nested', () => {
-      render(
-        <Skeleton className="p-4">
+      renderWithProviders(<Skeleton className="p-4">
           <div className="space-y-2">
             <div className="h-4 bg-white rounded" />
             <div className="h-4 bg-white rounded w-3/4" />
@@ -241,8 +234,7 @@ describe('Skeleton Component', () => {
   describe('Performance Considerations', () => {
     it('renders efficiently in large lists', () => {
       const items = Array.from({ length: 50 }, (_, i) => i);
-      render(
-        <div>
+      renderWithProviders(<div>
           {items.map((i) => (
             <Skeleton key={i} className="h-4 w-full mb-1" />
           ))}

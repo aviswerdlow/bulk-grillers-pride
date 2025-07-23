@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import React, { useEffect } from 'react';
 import { useUser } from "@clerk/nextjs";
 import { useMutation } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
@@ -14,7 +14,7 @@ interface AuthProviderProps {
 
 export function AuthProvider({ children }: AuthProviderProps) {
   const { isSignedIn, user } = useUser();
-  const storeUser = useMutation(api.functions.auth.users.store);
+  const storeUser = useMutation((api as any).functions.auth.users.store);
 
   useEffect(() => {
     // Automatically store user in Convex when they're authenticated

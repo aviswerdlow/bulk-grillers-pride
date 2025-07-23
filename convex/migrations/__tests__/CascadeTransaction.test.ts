@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
+import { t } from '../../test.setup';
 import { CascadeTransaction, withTransaction } from '../CascadeTransaction';
 import { GenericMutationCtx } from 'convex/server';
 import { DataModel, Id } from '../../_generated/dataModel';
@@ -54,7 +55,7 @@ describe('CascadeTransaction', () => {
   });
 
   describe('Transaction Initialization', () => {
-    it('should generate unique transaction ID', () => {
+    it('should generate unique transaction ID', async () => {
       const txn1 = new CascadeTransaction(mockCtx, mockOrganizationId, mockUserId, 'single_delete');
       const txn2 = new CascadeTransaction(mockCtx, mockOrganizationId, mockUserId, 'single_delete');
       

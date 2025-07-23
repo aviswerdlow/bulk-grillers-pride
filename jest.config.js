@@ -13,7 +13,8 @@ module.exports = {
           'ts-jest',
           {
             tsconfig: {
-              jsx: 'react',
+              jsx: 'react-jsx',
+              jsxImportSource: 'react',
             },
           },
         ],
@@ -21,7 +22,18 @@ module.exports = {
           'ts-jest',
           {
             tsconfig: {
-              jsx: 'react',
+              jsx: 'react-jsx',
+              jsxImportSource: 'react',
+              allowJs: true,
+            },
+          },
+        ],
+        '^.+\\.(mjs|cjs)$': [
+          'ts-jest',
+          {
+            tsconfig: {
+              jsx: 'react-jsx',
+              jsxImportSource: 'react',
               allowJs: true,
             },
           },
@@ -38,17 +50,18 @@ module.exports = {
         '^convex/_generated/api$': '<rootDir>/__mocks__/convex/_generated/api.js',
         '^.*/convex/_generated/dataModel$': '<rootDir>/__mocks__/convex/_generated/dataModel.js',
         '^convex/_generated/dataModel$': '<rootDir>/__mocks__/convex/_generated/dataModel.js',
-        '^convex/react$': '<rootDir>/__mocks__/convex/react.js',
-        '^lucide-react$': '<rootDir>/apps/web/src/__tests__/__mocks__/lucide-react.js',
+        '^convex/react$': '<rootDir>/__mocks__/convex/react.jsx',
+        '^lucide-react$': '<rootDir>/apps/web/src/__tests__/__mocks__/lucide-react.jsx',
+        '^@radix-ui/react-dialog$': '<rootDir>/apps/web/src/__tests__/__mocks__/@radix-ui/react-dialog.tsx',
         // Generic @convex mapping last
         '^@convex/(.*)$': '<rootDir>/convex/$1',
       },
       moduleDirectories: ['node_modules', '<rootDir>'],
       testPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/apps/web/.next/'],
       transformIgnorePatterns: [
-        'node_modules/(?!(convex|@radix-ui|cmdk)/)',
-        '!convex/_generated/',
+        'node_modules/(?!(convex|@radix-ui.*|cmdk)/)',
       ],
+      moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
     },
     {
       displayName: 'convex',
@@ -70,7 +83,7 @@ module.exports = {
         '^@/(.*)$': '<rootDir>/convex/$1',
       },
       transformIgnorePatterns: [
-        'node_modules/(?!(convex)/)',
+        'node_modules/(?!(convex|convex-test)/)',
       ],
       testPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/convex/_generated/'],
       extensionsToTreatAsEsm: [],

@@ -726,6 +726,5 @@ For reference, each agent's CLAUDE.md file is located at:
 - **Migration Agent**: `CLAUDE-migration.md` (root)  
 - **UI/UX Design Agent**: `CLAUDE-design.md` (root)  
 - **Systems Design Agent**: `CLAUDE-systems-design.md` (root)  
-- **AI Agent**: `CLAUDE-ai.md` (root)
 - **Orchestrator**: `ORCHESTRATOR.md` (root)
 

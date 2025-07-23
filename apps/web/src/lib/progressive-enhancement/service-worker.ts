@@ -3,6 +3,12 @@
  * For offline deletion support
  */
 
+interface ServiceWorkerRegistrationWithSync extends ServiceWorkerRegistration {
+  sync: {
+    register(tag: string): Promise<void>;
+  };
+}
+
 export class ServiceWorkerManager {
   private registration: ServiceWorkerRegistration | null = null;
   private messageHandlers = new Map<string, (data: unknown) => void>();
@@ -74,7 +80,7 @@ export class ServiceWorkerManager {
     try {
       const response = await this.sendMessage('check-queue');
       return response;
-    } catch (error) {
+    } catch {
       return { count: 0 };
     }
   }
@@ -82,7 +88,7 @@ export class ServiceWorkerManager {
   async requestBackgroundSync() {
     if ('sync' in this.registration!) {
       try {
-        await (this.registration as any).sync.register('sync-deletions');
+        await (this.registration as ServiceWorkerRegistrationWithSync).sync.register('sync-deletions');
         console.log('Background sync registered');
       } catch (error) {
         console.error('Background sync registration failed:', error);

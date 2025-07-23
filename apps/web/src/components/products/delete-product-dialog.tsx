@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -29,7 +29,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Product } from '@/types/models';
-import { Id } from '@convex/_generated/dataModel';
+// import { Id } from '@convex/_generated/dataModel';
 
 interface DeleteProductDialogProps {
   open: boolean;
@@ -154,7 +154,7 @@ export function DeleteProductDialog({
         } product(s)`
       );
       onOpenChange(false);
-    } catch (error) {
+//     } catch (error) {
       toast.error('Failed to delete products. Please try again.');
     } finally {
       setIsDeleting(false);

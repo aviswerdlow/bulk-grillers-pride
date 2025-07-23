@@ -1,3 +1,4 @@
+import { internal } from "@convex/_generated/api";
 /**
  * Cache invalidation rules and event handlers
  * Automatically invalidates cache entries based on mutation events

@@ -1,12 +1,13 @@
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+/**
+ * @jest-environment jsdom
+ */
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { FocusTrapManager, DialogFocusTrap } from '../FocusTrapManager';
-import { AccessibilityProvider } from '@/contexts/accessibility';
+import { DialogFocusTrap, FocusTrapManager } from '../FocusTrapManager';
 
-function TestWrapper({ children }: { children: React.ReactNode }) {
-  return <AccessibilityProvider>{children}</AccessibilityProvider>;
-}
+import { renderWithProviders } from '@/__tests__/test-helpers';
 
 describe('FocusTrapManager', () => {
   beforeEach(() => {
@@ -17,8 +18,8 @@ describe('FocusTrapManager', () => {
   it('traps focus when active', async () => {
     const user = userEvent.setup();
     
-    render(
-      <TestWrapper>
+    renderWithProviders(
+      <>
         <button data-testid="outside-before">Outside Before</button>
         <FocusTrapManager active={true}>
           <div>
@@ -27,7 +28,7 @@ describe('FocusTrapManager', () => {
           </div>
         </FocusTrapManager>
         <button data-testid="outside-after">Outside After</button>
-      </TestWrapper>
+      </>
     );
 
     // Focus should move to first element inside trap
@@ -50,8 +51,7 @@ describe('FocusTrapManager', () => {
   it('does not trap focus when inactive', async () => {
     const user = userEvent.setup();
     
-    render(
-      <TestWrapper>
+    renderWithProviders(<>
         <button data-testid="outside-before">Outside Before</button>
         <FocusTrapManager active={false}>
           <div>
@@ -60,7 +60,7 @@ describe('FocusTrapManager', () => {
           </div>
         </FocusTrapManager>
         <button data-testid="outside-after">Outside After</button>
-      </TestWrapper>
+      </>
     );
 
     // Focus outside button
@@ -82,12 +82,11 @@ describe('FocusTrapManager', () => {
     const onEscapeKey = jest.fn();
     const user = userEvent.setup();
     
-    render(
-      <TestWrapper>
+    renderWithProviders(<>
         <FocusTrapManager active={true} onEscapeKey={onEscapeKey}>
           <button data-testid="inside">Inside</button>
         </FocusTrapManager>
-      </TestWrapper>
+      </>
     );
 
     await user.keyboard('{Escape}');
@@ -95,13 +94,12 @@ describe('FocusTrapManager', () => {
   });
 
   it('saves and restores focus', async () => {
-    const { rerender } = render(
-      <TestWrapper>
+    const { rerender } = renderWithProviders(<>
         <button data-testid="trigger">Trigger</button>
         <FocusTrapManager active={false} restoreFocus={true}>
           <button data-testid="inside">Inside</button>
         </FocusTrapManager>
-      </TestWrapper>
+      </>
     );
 
     // Focus trigger button
@@ -110,12 +108,12 @@ describe('FocusTrapManager', () => {
 
     // Activate trap
     rerender(
-      <TestWrapper>
+      <>
         <button data-testid="trigger">Trigger</button>
         <FocusTrapManager active={true} restoreFocus={true}>
           <button data-testid="inside">Inside</button>
         </FocusTrapManager>
-      </TestWrapper>
+      </>
     );
 
     // Focus should move to trap
@@ -125,12 +123,12 @@ describe('FocusTrapManager', () => {
 
     // Deactivate trap
     rerender(
-      <TestWrapper>
+      <>
         <button data-testid="trigger">Trigger</button>
         <FocusTrapManager active={false} restoreFocus={true}>
           <button data-testid="inside">Inside</button>
         </FocusTrapManager>
-      </TestWrapper>
+      </>
     );
 
     // Focus should restore to trigger
@@ -140,8 +138,7 @@ describe('FocusTrapManager', () => {
   });
 
   it('announces on activate and deactivate', async () => {
-    const { rerender } = render(
-      <TestWrapper>
+    const { rerender } = renderWithProviders(<>
         <FocusTrapManager
           active={false}
           announceOnActivate="Dialog opened"
@@ -149,7 +146,7 @@ describe('FocusTrapManager', () => {
         >
           <button>Inside</button>
         </FocusTrapManager>
-      </TestWrapper>
+      </>
     );
 
     // Check for live regions
@@ -160,7 +157,7 @@ describe('FocusTrapManager', () => {
 
     // Activate trap
     rerender(
-      <TestWrapper>
+      <>
         <FocusTrapManager
           active={true}
           announceOnActivate="Dialog opened"
@@ -168,7 +165,7 @@ describe('FocusTrapManager', () => {
         >
           <button>Inside</button>
         </FocusTrapManager>
-      </TestWrapper>
+      </>
     );
 
     // Check for announcement
@@ -183,15 +180,14 @@ describe('DialogFocusTrap', () => {
     const onClose = jest.fn();
     const user = userEvent.setup();
     
-    render(
-      <TestWrapper>
+    renderWithProviders(<>
         <DialogFocusTrap open={true} onClose={onClose} dialogTitle="Test Dialog">
           <div>
             <h2>Test Dialog</h2>
             <button data-testid="close">Close</button>
           </div>
         </DialogFocusTrap>
-      </TestWrapper>
+      </>
     );
 
     // Press Escape
@@ -204,12 +200,11 @@ describe('DialogFocusTrap', () => {
   });
 
   it('does not render when closed', () => {
-    render(
-      <TestWrapper>
+    renderWithProviders(<>
         <DialogFocusTrap open={false} onClose={jest.fn()}>
           <div data-testid="dialog-content">Content</div>
         </DialogFocusTrap>
-      </TestWrapper>
+      </>
     );
 
     expect(screen.queryByTestId('dialog-content')).toBeInTheDocument();

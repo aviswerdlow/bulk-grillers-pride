@@ -1,7 +1,8 @@
-import { render, screen, fireEvent } from '@/__tests__/test-utils';
-import CategoriesPage from '../page';
-import { mockUseQuery } from '@/__tests__/test-utils';
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import React from 'react';
+import { fireEvent, mockUseQuery, render, screen, renderWithProviders } from '@/__tests__/test-helpers';
 import { useParams } from 'next/navigation';
+import CategoriesPage from '../page';
 
 // Mock Next.js router
 jest.mock('next/navigation', () => ({
@@ -13,7 +14,7 @@ jest.mock('@/components/categories/create-category-dialog', () => ({
   CreateCategoryDialog: ({ open, onOpenChange }: any) => 
     open ? (
       <div data-testid="create-category-dialog">
-        <button onClick={() => onOpenChange(false)}>Close</button>
+        <button onClick={() => (onOpenChange as any)(false)}>Close</button>
       </div>
     ) : null,
 }));
@@ -22,8 +23,8 @@ jest.mock('@/components/categories/edit-category-dialog', () => ({
   EditCategoryDialog: ({ open, onOpenChange, category }: any) => 
     open ? (
       <div data-testid="edit-category-dialog">
-        <div data-testid="editing-category">{category.name}</div>
-        <button onClick={() => onOpenChange(false)}>Close</button>
+        <div data-testid="editing-category">{(category as any).name}</div>
+        <button onClick={() => (onOpenChange as any)(false)}>Close</button>
       </div>
     ) : null,
 }));
@@ -52,30 +53,36 @@ jest.mock('lucide-react', () => ({
 
 describe('CategoriesPage', () => {
   const mockOrganization = {
-    _id: 'org_123' as any,
+    _id: 'org_123',
+    _creationTime: Date.now(),
     name: 'Test Organization',
     slug: 'test-org',
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
   };
 
   const mockProject = {
-    _id: 'proj_123' as any,
+    _id: 'proj_123',
+    _creationTime: Date.now(),
     name: 'Test Project',
-    organizationId: 'org_123' as any,
+    organizationId: 'org_123',
   };
 
   const mockCategory = {
     _id: 'cat_123',
+    _creationTime: Date.now(),
     name: 'Electronics',
     handle: 'electronics',
     level: 0,
     children: [
       {
         _id: 'cat_124',
+        _creationTime: Date.now(),
         name: 'Computers',
         handle: 'computers',
         level: 1,
         parentId: 'cat_123',
-        children: [],
+        children: [] as Category[],
         status: 'active' as const,
         isVisible: true,
         updatedAt: Date.now(),
@@ -94,39 +101,51 @@ describe('CategoriesPage', () => {
   it('renders loading state while fetching data', () => {
     mockUseQuery.mockReturnValue(undefined);
     
-    render(<CategoriesPage />);
+    renderWithProviders(<CategoriesPage />);
     
     expect(screen.getByText('Loading categories...')).toBeInTheDocument();
   });
 
   it('renders error when organization not found', () => {
-    mockUseQuery
-      .mockReturnValueOnce(null) // organization query
-      .mockReturnValueOnce([]); // projects query
+    let callCount = 0;
+    mockUseQuery.mockImplementation(((query: any, args: any) => {
+      callCount++;
+      if (callCount === 1) return null; // organization query
+      if (callCount === 2) return []; // projects query
+      return undefined;
+    }) as any);
     
-    render(<CategoriesPage />);
+    renderWithProviders(<CategoriesPage />);
     
     expect(screen.getByText('Organization not found')).toBeInTheDocument();
   });
 
   it('renders error when no projects found', () => {
-    mockUseQuery
-      .mockReturnValueOnce(mockOrganization) // organization query
-      .mockReturnValueOnce([]); // projects query
+    let callCount = 0;
+    mockUseQuery.mockImplementation(((query: any, args: any) => {
+      callCount++;
+      if (callCount === 1) return mockOrganization; // organization query
+      if (callCount === 2) return []; // projects query
+      return undefined;
+    }) as any);
     
-    render(<CategoriesPage />);
+    renderWithProviders(<CategoriesPage />);
     
     expect(screen.getByText('No Projects Found')).toBeInTheDocument();
     expect(screen.getByText('Create a project first to manage categories')).toBeInTheDocument();
   });
 
   it('renders categories page with empty state', () => {
-    mockUseQuery
-      .mockReturnValueOnce(mockOrganization) // organization query
-      .mockReturnValueOnce([mockProject]) // projects query
-      .mockReturnValueOnce([]); // categories query
+    let callCount = 0;
+    mockUseQuery.mockImplementation(((query: any, args: any) => {
+      callCount++;
+      if (callCount === 1) return mockOrganization; // organization query
+      if (callCount === 2) return [mockProject]; // projects query
+      if (callCount === 3) return []; // categories query
+      return undefined;
+    }) as any);
     
-    render(<CategoriesPage />);
+    renderWithProviders(<CategoriesPage />);
     
     expect(screen.getByRole('heading', { name: 'Categories' })).toBeInTheDocument();
     expect(screen.getByText('No categories yet')).toBeInTheDocument();
@@ -134,12 +153,16 @@ describe('CategoriesPage', () => {
   });
 
   it('renders categories page with data', () => {
-    mockUseQuery
-      .mockReturnValueOnce(mockOrganization) // organization query
-      .mockReturnValueOnce([mockProject]) // projects query
-      .mockReturnValueOnce([mockCategory]); // categories query
+    let callCount = 0;
+    mockUseQuery.mockImplementation(((query: any, args: any) => {
+      callCount++;
+      if (callCount === 1) return mockOrganization; // organization query
+      if (callCount === 2) return [mockProject]; // projects query
+      if (callCount === 3) return [mockCategory]; // categories query
+      return undefined;
+    }) as any);
     
-    render(<CategoriesPage />);
+    renderWithProviders(<CategoriesPage />);
     
     // Check header
     expect(screen.getByRole('heading', { name: 'Categories' })).toBeInTheDocument();
@@ -162,24 +185,28 @@ describe('CategoriesPage', () => {
   });
 
   it('filters categories based on search term', () => {
-    mockUseQuery
-      .mockReturnValueOnce(mockOrganization)
-      .mockReturnValueOnce([mockProject])
-      .mockReturnValueOnce([mockCategory]);
+    let callCount = 0;
+    mockUseQuery.mockImplementation(((query: any, args: any) => {
+      callCount++;
+      if (callCount === 1) return mockOrganization;
+      if (callCount === 2) return [mockProject];
+      if (callCount === 3) return [mockCategory];
+      return undefined;
+    }) as any);
     
-    render(<CategoriesPage />);
+    renderWithProviders(<CategoriesPage />);
     
     const searchInput = screen.getByPlaceholderText('Search categories...');
     
     // Search for "comp"
-    fireEvent.change(searchInput, { target: { value: 'comp' } });
+    fireEvent.change(searchInput, { target: { value: 'comp'  } } as any);
     
     // Should only show Computers
     expect(screen.getByText('Computers')).toBeInTheDocument();
     expect(screen.queryByText('Electronics')).not.toBeInTheDocument();
     
     // Clear search
-    fireEvent.change(searchInput, { target: { value: '' } });
+    fireEvent.change(searchInput, { target: { value: ''  } } as any);
     
     // Should show all categories again
     expect(screen.getByText('Electronics')).toBeInTheDocument();
@@ -187,15 +214,21 @@ describe('CategoriesPage', () => {
   });
 
   it('opens create category dialog when clicking add category button', () => {
-    mockUseQuery
-      .mockReturnValueOnce(mockOrganization)
-      .mockReturnValueOnce([mockProject])
-      .mockReturnValueOnce([]);
+    let callCount = 0;
+    mockUseQuery.mockImplementation(((query: any, args: any) => {
+      callCount++;
+      if (callCount === 1) return mockOrganization;
+      if (callCount === 2) return [mockProject];
+      if (callCount === 3) return [];
+      return undefined;
+    }) as any);
     
-    render(<CategoriesPage />);
+    renderWithProviders(<CategoriesPage />);
     
     const addButton = screen.getAllByRole('button', { name: /Add Category/i })[0];
-    fireEvent.click(addButton);
+    if (addButton) {
+      fireEvent.click(addButton as HTMLElement);
+    }
     
     expect(screen.getByTestId('create-category-dialog')).toBeInTheDocument();
   });
@@ -206,6 +239,7 @@ describe('CategoriesPage', () => {
       { 
         ...mockCategory, 
         _id: 'cat_125', 
+        _creationTime: Date.now(),
         name: 'Hidden Category',
         handle: 'hidden-category',
         status: 'hidden' as const,
@@ -213,12 +247,16 @@ describe('CategoriesPage', () => {
       }
     ];
     
-    mockUseQuery
-      .mockReturnValueOnce(mockOrganization)
-      .mockReturnValueOnce([mockProject])
-      .mockReturnValueOnce(categories);
+    let callCount = 0;
+    mockUseQuery.mockImplementation(((query: any, args: any) => {
+      callCount++;
+      if (callCount === 1) return mockOrganization;
+      if (callCount === 2) return [mockProject];
+      if (callCount === 3) return categories;
+      return undefined;
+    }) as any);
     
-    render(<CategoriesPage />);
+    renderWithProviders(<CategoriesPage />);
     
     // Check active count (Electronics + Computers = 2 active)
     const activeCard = screen.getByText('Active').closest('.space-y-0')?.nextElementSibling;
@@ -226,19 +264,25 @@ describe('CategoriesPage', () => {
   });
 
   it('opens dropdown menu for category actions', () => {
-    mockUseQuery
-      .mockReturnValueOnce(mockOrganization)
-      .mockReturnValueOnce([mockProject])
-      .mockReturnValueOnce([mockCategory]);
+    let callCount = 0;
+    mockUseQuery.mockImplementation(((query: any, args: any) => {
+      callCount++;
+      if (callCount === 1) return mockOrganization;
+      if (callCount === 2) return [mockProject];
+      if (callCount === 3) return [mockCategory];
+      return undefined;
+    }) as any);
     
-    render(<CategoriesPage />);
+    renderWithProviders(<CategoriesPage />);
     
     // Find the dropdown button for Electronics category
     const dropdownButtons = screen.getAllByRole('button').filter(btn => 
       btn.querySelector('svg.lucide-more-horizontal')
     );
     
-    fireEvent.click(dropdownButtons[0]);
+    if (dropdownButtons[0]) {
+      fireEvent.click(dropdownButtons[0] as HTMLElement);
+    }
     
     expect(screen.getByText('Add Subcategory')).toBeInTheDocument();
     expect(screen.getByText('Edit')).toBeInTheDocument();
@@ -246,18 +290,24 @@ describe('CategoriesPage', () => {
   });
 
   it('opens edit dialog when clicking edit in dropdown', () => {
-    mockUseQuery
-      .mockReturnValueOnce(mockOrganization)
-      .mockReturnValueOnce([mockProject])
-      .mockReturnValueOnce([mockCategory]);
+    let callCount = 0;
+    mockUseQuery.mockImplementation(((query: any, args: any) => {
+      callCount++;
+      if (callCount === 1) return mockOrganization;
+      if (callCount === 2) return [mockProject];
+      if (callCount === 3) return [mockCategory];
+      return undefined;
+    }) as any);
     
-    render(<CategoriesPage />);
+    renderWithProviders(<CategoriesPage />);
     
     // Open dropdown
     const dropdownButtons = screen.getAllByRole('button').filter(btn => 
       btn.querySelector('svg.lucide-more-horizontal')
     );
-    fireEvent.click(dropdownButtons[0]);
+    if (dropdownButtons[0]) {
+      fireEvent.click(dropdownButtons[0] as HTMLElement);
+    }
     
     // Click Edit
     fireEvent.click(screen.getByText('Edit'));
@@ -267,27 +317,35 @@ describe('CategoriesPage', () => {
   });
 
   it('handles search with no results', () => {
-    mockUseQuery
-      .mockReturnValueOnce(mockOrganization)
-      .mockReturnValueOnce([mockProject])
-      .mockReturnValueOnce([mockCategory]);
+    let callCount = 0;
+    mockUseQuery.mockImplementation(((query: any, args: any) => {
+      callCount++;
+      if (callCount === 1) return mockOrganization;
+      if (callCount === 2) return [mockProject];
+      if (callCount === 3) return [mockCategory];
+      return undefined;
+    }) as any);
     
-    render(<CategoriesPage />);
+    renderWithProviders(<CategoriesPage />);
     
     const searchInput = screen.getByPlaceholderText('Search categories...');
-    fireEvent.change(searchInput, { target: { value: 'nonexistent' } });
+    fireEvent.change(searchInput, { target: { value: 'nonexistent'  } } as any);
     
     expect(screen.getByText('No categories found')).toBeInTheDocument();
     expect(screen.getByText('Try adjusting your search')).toBeInTheDocument();
   });
 
   it('displays nested categories with proper indentation', () => {
-    mockUseQuery
-      .mockReturnValueOnce(mockOrganization)
-      .mockReturnValueOnce([mockProject])
-      .mockReturnValueOnce([mockCategory]);
+    let callCount = 0;
+    mockUseQuery.mockImplementation(((query: any, args: any) => {
+      callCount++;
+      if (callCount === 1) return mockOrganization;
+      if (callCount === 2) return [mockProject];
+      if (callCount === 3) return [mockCategory];
+      return undefined;
+    }) as any);
     
-    const { container } = render(<CategoriesPage />);
+    const { } = renderWithProviders(<CategoriesPage />);
     
     // Check that nested category has indentation
     const computersCategoryRow = screen.getByText('Computers').closest('.flex');
@@ -299,12 +357,16 @@ describe('CategoriesPage', () => {
   });
 
   it('displays category status badges', () => {
-    mockUseQuery
-      .mockReturnValueOnce(mockOrganization)
-      .mockReturnValueOnce([mockProject])
-      .mockReturnValueOnce([mockCategory]);
+    let callCount = 0;
+    mockUseQuery.mockImplementation(((query: any, args: any) => {
+      callCount++;
+      if (callCount === 1) return mockOrganization;
+      if (callCount === 2) return [mockProject];
+      if (callCount === 3) return [mockCategory];
+      return undefined;
+    }) as any);
     
-    render(<CategoriesPage />);
+    renderWithProviders(<CategoriesPage />);
     
     // Should show active badges for both categories
     const activeBadges = screen.getAllByText('active');

@@ -3,6 +3,7 @@
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import Image from 'next/image';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,10 +16,10 @@ import { Product } from '@/types/models';
 import { SkuCopyButton } from '@/components/ui/sku-copy-button';
 
 interface ProductCardProps {
-  product: Product;
-  onEdit?: (product: Product) => void;
-  onView?: (product: Product) => void;
-  onArchive?: (product: Product) => void;
+  product: Doc<'products'>;
+  onEdit?: (product: Doc<'products'>) => void;
+  onView?: (product: Doc<'products'>) => void;
+  onArchive?: (product: Doc<'products'>) => void;
   className?: string;
 }
 
@@ -55,7 +56,12 @@ export function ProductCard({ product, onEdit, onView, onArchive, className }: P
         {/* Product Image Placeholder */}
         <div className="relative w-full aspect-square bg-muted rounded-lg overflow-hidden mb-4">
           {product.image ? (
-            <img src={product.image} alt={product.title} className="object-cover w-full h-full" />
+            <Image 
+              src={product.image} 
+              alt={product.title} 
+              fill
+              className="object-cover" 
+            />
           ) : (
             <div className="flex items-center justify-center h-full">
               <Package className="w-16 h-16 text-muted-foreground/30" />

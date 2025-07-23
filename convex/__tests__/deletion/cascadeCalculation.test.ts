@@ -1,5 +1,6 @@
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import { t } from '../../test.setup';
 import { expect, test, describe, beforeEach, vi } from 'vitest';
-import { convexTest } from 'convex-test';
 import schema from '../../schema';
 import { api } from '../../_generated/api';
 import { Id } from '../../_generated/dataModel';
@@ -292,7 +293,7 @@ describe('Cascade Calculation Engine', () => {
               entityId: 'multiple',
               entityName: '2 Variants',
               operation: 'archive' as const,
-              children: [],
+              children: [] as Category[],
               metadata: { count: 2, canRecover: true },
             },
           ],
@@ -343,7 +344,7 @@ describe('Cascade Calculation Engine', () => {
           entityId: 'j97test_product',
           entityName: 'Test Product',
           operation: 'delete' as const,
-          children: [],
+          children: [] as Category[],
           metadata: {},
         },
         performance: {

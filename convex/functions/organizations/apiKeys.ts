@@ -1,6 +1,7 @@
 import { v } from 'convex/values';
-import { mutation, query } from '../../_generated/server';
+import { mutation, query, internalQuery, internalMutation } from '../../_generated/server';
 import { Id } from '../../_generated/dataModel';
+import { encryptApiKey, decryptApiKey, isEncrypted } from '../../lib/encryption';
 
 /**
  * Update API keys for an organization
@@ -46,10 +47,13 @@ export const updateApiKeys = mutation({
       throw new Error('Organization not found');
     }
 
+    // Encrypt the API key before storing
+    const encryptedKey = encryptApiKey(args.apiKey);
+    
     // Update the API key for the specified provider
     const updatedApiKeys = {
       ...org.settings.apiKeys,
-      [args.provider]: args.apiKey,
+      [args.provider]: encryptedKey,
     };
 
     await ctx.db.patch(args.organizationId, {
@@ -248,15 +252,25 @@ export const getMaskedApiKeys = query({
       gemini: null,
     };
 
-    for (const [provider, key] of Object.entries(org.settings.apiKeys)) {
-      if (key && key.length > 4) {
-        // Show only the last 4 characters
-        maskedKeys[provider as keyof typeof maskedKeys] = `${'*'.repeat(
-          key.length - 4
-        )}${key.slice(-4)}`;
-      } else if (key) {
-        // If key is too short, mask it entirely
-        maskedKeys[provider as keyof typeof maskedKeys] = '****';
+    for (const [provider, encryptedKey] of Object.entries(org.settings.apiKeys)) {
+      if (encryptedKey) {
+        try {
+          // Decrypt the key to get its length and last characters
+          const decryptedKey = decryptApiKey(encryptedKey);
+          if (decryptedKey && decryptedKey.length > 4) {
+            // Show only the last 4 characters
+            maskedKeys[provider as keyof typeof maskedKeys] = `${'*'.repeat(
+              decryptedKey.length - 4
+            )}${decryptedKey.slice(-4)}`;
+          } else if (decryptedKey) {
+            // If key is too short, mask it entirely
+            maskedKeys[provider as keyof typeof maskedKeys] = '****';
+          }
+        } catch (error) {
+          // If decryption fails, show a generic mask
+          maskedKeys[provider as keyof typeof maskedKeys] = '****';
+          console.error(`Failed to decrypt ${provider} API key for masking:`, error);
+        }
       }
     }
 
@@ -318,7 +332,7 @@ export const hasApiKey = query({
 });
 
 /**
- * Internal function to get API keys (for backend use only)
+ * Internal function to get decrypted API keys (for backend use only)
  * Should only be called from server-side functions
  */
 export const getApiKeys = query({
@@ -333,6 +347,75 @@ export const getApiKeys = query({
       throw new Error('Organization not found');
     }
 
-    return org.settings.apiKeys;
+    // Decrypt all API keys before returning
+    const decryptedKeys: Record<string, string | null> = {
+      openai: null,
+      anthropic: null,
+      gemini: null,
+    };
+
+    for (const [provider, encryptedKey] of Object.entries(org.settings.apiKeys)) {
+      if (encryptedKey) {
+        try {
+          decryptedKeys[provider as keyof typeof decryptedKeys] = decryptApiKey(encryptedKey);
+        } catch (error) {
+          console.error(`Failed to decrypt ${provider} API key:`, error);
+          // Check if it's a legacy unencrypted key
+          if (!isEncrypted(encryptedKey)) {
+            decryptedKeys[provider as keyof typeof decryptedKeys] = encryptedKey;
+          }
+        }
+      }
+    }
+
+    return decryptedKeys;
+  },
+});
+
+/**
+ * Internal query to get all organizations for migration
+ * Used by the encryption action
+ */
+// Internal query to get all organizations for migration
+// Used by the encryption action
+export const getAllOrganizations = internalQuery({
+  handler: async (ctx) => {
+    return await ctx.db.query('organizations').collect();
+  },
+});
+
+/**
+ * Internal mutation to update encrypted API keys
+ * Used by the encryption action
+ */
+// Internal mutation to update encrypted API keys
+// Used by the encryption action
+export const updateEncryptedKeys = internalMutation({
+  args: {
+    organizationId: v.id('organizations'),
+    encryptedKeys: v.object({
+      openai: v.optional(v.string()),
+      anthropic: v.optional(v.string()),
+      gemini: v.optional(v.string()),
+    }),
+  },
+  handler: async (ctx, args) => {
+    const org = await ctx.db.get(args.organizationId);
+    if (!org) {
+      throw new Error('Organization not found');
+    }
+    
+    const updatedApiKeys = {
+      ...org.settings.apiKeys,
+      ...args.encryptedKeys,
+    };
+    
+    await ctx.db.patch(args.organizationId, {
+      settings: {
+        ...org.settings,
+        apiKeys: updatedApiKeys,
+      },
+      updatedAt: Date.now(),
+    });
   },
 });

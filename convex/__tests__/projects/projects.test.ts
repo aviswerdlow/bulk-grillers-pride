@@ -1,4 +1,6 @@
-import { convexTest } from '../test-helpers';
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import { t } from '../../test.setup';
+import { convexTest } from '../../test-helpers';
 
 describe('Projects API', () => {
   let ctx: any;
@@ -6,7 +8,7 @@ describe('Projects API', () => {
   let orgId: string;
 
   beforeEach(async () => {
-    ctx = convexTest();
+    ctx = await t.run(async (ctx) => ctx);
 
     // Create test user
     userId = await ctx.db.insert('users', {
@@ -88,6 +90,7 @@ describe('Projects API', () => {
     });
 
     it('should return all active projects for organization', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const result = await ctx.runQuery('getProjects', { organizationId: orgId });
 
       expect(result).toHaveLength(4); // Excluding archived project
@@ -96,6 +99,7 @@ describe('Projects API', () => {
     });
 
     it('should include product counts', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const result = await ctx.runQuery('getProjects', { organizationId: orgId });
 
       expect(result[0].productCount).toBe(1); // Project 0 has 1 product
@@ -105,6 +109,7 @@ describe('Projects API', () => {
     });
 
     it('should include archived projects when requested', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const result = await ctx.runQuery('getProjects', {
         organizationId: orgId,
         includeArchived: true,
@@ -115,6 +120,7 @@ describe('Projects API', () => {
     });
 
     it('should return empty array for org without projects', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const newOrgId = await ctx.db.insert('organizations', {
         name: 'Empty Org',
         clerkOrganizationId: 'org_456',
@@ -161,6 +167,7 @@ describe('Projects API', () => {
     });
 
     it('should return project by ID', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const result = await ctx.runQuery('getProject', { projectId });
 
       expect(result).toBeDefined();
@@ -171,12 +178,14 @@ describe('Projects API', () => {
     });
 
     it('should throw error for non-existent project', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       await expect(
         ctx.runQuery('getProject', { projectId: 'nonexistent' as any })
       ).rejects.toThrow();
     });
 
     it('should throw error when user not in organization', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       // Create project in different org
       const otherOrgId = await ctx.db.insert('organizations', {
         name: 'Other Org',
@@ -218,6 +227,7 @@ describe('Projects API', () => {
     });
 
     it('should return project by slug', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const result = await ctx.runQuery('getProjectBySlug', {
         organizationId: orgId,
         slug: 'slug-test',
@@ -229,6 +239,7 @@ describe('Projects API', () => {
     });
 
     it('should return null for non-existent slug', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const result = await ctx.runQuery('getProjectBySlug', {
         organizationId: orgId,
         slug: 'does-not-exist',
@@ -240,6 +251,7 @@ describe('Projects API', () => {
 
   describe('createProject', () => {
     it('should create new project with generated slug', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const projectData = {
         organizationId: orgId,
         name: 'New Project',
@@ -260,6 +272,7 @@ describe('Projects API', () => {
     });
 
     it('should use custom slug when provided', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const result = await ctx.runMutation('createProject', {
         organizationId: orgId,
         name: 'Custom Slug Project',
@@ -270,6 +283,7 @@ describe('Projects API', () => {
     });
 
     it('should ensure unique slugs within organization', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       // Create first project
       await ctx.runMutation('createProject', {
         organizationId: orgId,
@@ -288,6 +302,7 @@ describe('Projects API', () => {
     });
 
     it('should allow same slug in different organizations', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       // Create project in first org
       const project1 = await ctx.runMutation('createProject', {
         organizationId: orgId,
@@ -329,6 +344,7 @@ describe('Projects API', () => {
     });
 
     it('should create audit log entry', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const result = await ctx.runMutation('createProject', {
         organizationId: orgId,
         name: 'Audited Project',
@@ -365,6 +381,7 @@ describe('Projects API', () => {
     });
 
     it('should update project fields', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const updates = {
         projectId,
         name: 'Updated Project',
@@ -387,6 +404,7 @@ describe('Projects API', () => {
     });
 
     it('should update slug when explicitly provided', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const result = await ctx.runMutation('updateProject', {
         projectId,
         slug: 'new-slug',
@@ -396,6 +414,7 @@ describe('Projects API', () => {
     });
 
     it('should require admin role', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       // Update membership to member role
       const membership = (await ctx.db.query('organizationMemberships').collect())[0];
       await ctx.db.patch(membership._id, { role: 'member' });
@@ -439,6 +458,7 @@ describe('Projects API', () => {
     });
 
     it('should archive project and its products', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       await ctx.runMutation('archiveProject', { projectId });
 
       const project = await ctx.db.get(projectId);
@@ -455,6 +475,7 @@ describe('Projects API', () => {
     });
 
     it('should create audit log for archiving', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       await ctx.runMutation('archiveProject', { projectId });
 
       const auditLogs = await ctx.db
@@ -484,6 +505,7 @@ describe('Projects API', () => {
     });
 
     it('should require owner role', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       // Admin should not be able to delete
       await expect(
         ctx.runMutation('deleteProject', { projectId })
@@ -501,6 +523,7 @@ describe('Projects API', () => {
     });
 
     it('should not allow deletion with existing products', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       // Update to owner
       const membership = (await ctx.db.query('organizationMemberships').collect())[0];
       await ctx.db.patch(membership._id, { role: 'owner' });

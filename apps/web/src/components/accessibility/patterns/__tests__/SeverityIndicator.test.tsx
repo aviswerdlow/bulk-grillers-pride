@@ -1,20 +1,19 @@
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+/**
+ * @jest-environment jsdom
+ */
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { SeverityIndicator, SeverityIndicatorWithIcon, SeverityIndicatorGroup } from '../SeverityIndicator';
+import { SeverityIndicator, SeverityIndicatorGroup, SeverityIndicatorWithIcon } from '../SeverityIndicator';
 import { AccessibilityProvider } from '@/contexts/accessibility';
 import { Info } from 'lucide-react';
 
-// Wrapper component for tests
-function TestWrapper({ children }: { children: React.ReactNode }) {
-  return <AccessibilityProvider>{children}</AccessibilityProvider>;
-}
+import { renderWithProviders } from '@/__tests__/test-helpers';
 
 describe('SeverityIndicator', () => {
   it('renders with default props', () => {
-    render(
-      <TestWrapper>
+    renderWithProviders(
         <SeverityIndicator severity="info" />
-      </TestWrapper>
     );
 
     const indicator = screen.getByRole('status');
@@ -23,20 +22,16 @@ describe('SeverityIndicator', () => {
   });
 
   it('renders with custom children', () => {
-    render(
-      <TestWrapper>
+    renderWithProviders(
         <SeverityIndicator severity="warning">Custom Warning</SeverityIndicator>
-      </TestWrapper>
     );
 
     expect(screen.getByText('Custom Warning')).toBeInTheDocument();
   });
 
   it('applies correct aria-label', () => {
-    render(
-      <TestWrapper>
+    renderWithProviders(
         <SeverityIndicator severity="danger" />
-      </TestWrapper>
     );
 
     const indicator = screen.getByRole('status');
@@ -44,10 +39,8 @@ describe('SeverityIndicator', () => {
   });
 
   it('renders custom aria-label when provided', () => {
-    render(
-      <TestWrapper>
+    renderWithProviders(
         <SeverityIndicator severity="critical" ariaLabel="Critical error" />
-      </TestWrapper>
     );
 
     const indicator = screen.getByRole('status');
@@ -55,19 +48,15 @@ describe('SeverityIndicator', () => {
   });
 
   it('renders different size variants', () => {
-    const { rerender } = render(
-      <TestWrapper>
+    const { rerender } = renderWithProviders(
         <SeverityIndicator severity="info" size="sm" />
-      </TestWrapper>
     );
 
     let indicator = screen.getByRole('status');
     expect(indicator).toHaveClass('text-xs');
 
     rerender(
-      <TestWrapper>
         <SeverityIndicator severity="info" size="lg" />
-      </TestWrapper>
     );
 
     indicator = screen.getByRole('status');
@@ -75,19 +64,15 @@ describe('SeverityIndicator', () => {
   });
 
   it('renders different style variants', () => {
-    const { rerender } = render(
-      <TestWrapper>
+    const { rerender } = renderWithProviders(
         <SeverityIndicator severity="warning" variant="outlined" />
-      </TestWrapper>
     );
 
     let indicator = screen.getByRole('status');
     expect(indicator).toHaveClass('bg-transparent');
 
     rerender(
-      <TestWrapper>
         <SeverityIndicator severity="warning" variant="text" />
-      </TestWrapper>
     );
 
     indicator = screen.getByRole('status');
@@ -95,10 +80,8 @@ describe('SeverityIndicator', () => {
   });
 
   it('renders pattern overlay when showPattern is true', () => {
-    render(
-      <TestWrapper>
+    renderWithProviders(
         <SeverityIndicator severity="danger" showPattern={true} variant="filled" />
-      </TestWrapper>
     );
 
     const patternOverlay = document.querySelector('.severity-pattern');
@@ -107,10 +90,8 @@ describe('SeverityIndicator', () => {
   });
 
   it('does not render pattern for non-filled variants', () => {
-    render(
-      <TestWrapper>
+    renderWithProviders(
         <SeverityIndicator severity="danger" showPattern={true} variant="outlined" />
-      </TestWrapper>
     );
 
     const patternOverlay = document.querySelector('.severity-pattern');
@@ -120,14 +101,12 @@ describe('SeverityIndicator', () => {
 
 describe('SeverityIndicatorWithIcon', () => {
   it('renders with icon and label', () => {
-    render(
-      <TestWrapper>
+    renderWithProviders(
         <SeverityIndicatorWithIcon
           severity="info"
           icon={<Info data-testid="info-icon" />}
           label="Information"
         />
-      </TestWrapper>
     );
 
     expect(screen.getByTestId('info-icon')).toBeInTheDocument();
@@ -135,20 +114,16 @@ describe('SeverityIndicatorWithIcon', () => {
   });
 
   it('renders without icon', () => {
-    render(
-      <TestWrapper>
+    renderWithProviders(
         <SeverityIndicatorWithIcon severity="warning" label="Warning" />
-      </TestWrapper>
     );
 
     expect(screen.getByText('Warning')).toBeInTheDocument();
   });
 
   it('uses severity as label when label not provided', () => {
-    render(
-      <TestWrapper>
+    renderWithProviders(
         <SeverityIndicatorWithIcon severity="critical" />
-      </TestWrapper>
     );
 
     expect(screen.getByText('critical')).toBeInTheDocument();
@@ -163,10 +138,8 @@ describe('SeverityIndicatorGroup', () => {
       { severity: 'danger' as const, label: 'Danger' },
     ];
 
-    render(
-      <TestWrapper>
+    renderWithProviders(
         <SeverityIndicatorGroup items={items} />
-      </TestWrapper>
     );
 
     expect(screen.getByText('Info')).toBeInTheDocument();
@@ -180,10 +153,8 @@ describe('SeverityIndicatorGroup', () => {
       { severity: 'warning' as const, count: 10 },
     ];
 
-    render(
-      <TestWrapper>
+    renderWithProviders(
         <SeverityIndicatorGroup items={items} />
-      </TestWrapper>
     );
 
     expect(screen.getByText('Critical')).toBeInTheDocument();
@@ -192,10 +163,8 @@ describe('SeverityIndicatorGroup', () => {
   });
 
   it('returns null for empty items', () => {
-    const { container } = render(
-      <TestWrapper>
+    const { container } = renderWithProviders(
         <SeverityIndicatorGroup items={[]} />
-      </TestWrapper>
     );
 
     expect(container.firstChild).toBeNull();
@@ -204,10 +173,8 @@ describe('SeverityIndicatorGroup', () => {
   it('applies custom className', () => {
     const items = [{ severity: 'info' as const }];
 
-    render(
-      <TestWrapper>
+    renderWithProviders(
         <SeverityIndicatorGroup items={items} className="custom-class" />
-      </TestWrapper>
     );
 
     const group = screen.getByRole('status').parentElement;

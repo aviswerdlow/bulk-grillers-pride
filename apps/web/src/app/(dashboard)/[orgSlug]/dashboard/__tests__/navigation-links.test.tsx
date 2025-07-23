@@ -1,8 +1,10 @@
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import React from 'react';
-import { render, screen } from '@testing-library/react';
-import { useRouter, useParams } from 'next/navigation';
-import { useQuery } from 'convex/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { cleanupTest, mockUseQuery, mockUseMutation, renderWithProviders, setupTest } from '@/__tests__/test-helpers';
 import { api } from '@convex/_generated/api';
+import { useParams, useRouter } from 'next/navigation';
+;
 import OrganizationDashboard from '../page';
 
 // Mock Next.js navigation
@@ -12,10 +14,6 @@ jest.mock('next/navigation', () => ({
 }));
 
 // Mock Convex
-jest.mock('convex/react', () => ({
-  useQuery: jest.fn(),
-}));
-
 // Mock the Convex API paths
 jest.mock('@convex/_generated/api', () => ({
   api: {
@@ -97,15 +95,15 @@ describe('Dashboard Navigation Links', () => {
 
   it('should render with correct navigation links when data is loaded', () => {
     // Mock all queries to return data
-    (useQuery as jest.Mock).mockImplementation((query: any) => {
-      if (query === api.functions.organizations.organizations.getOrganizationBySlug) {
+    mockUseQuery.mockImplementation((query: unknown) => {
+      if (query === (api as any).functions.organizations.organizations.getOrganizationBySlug) {
         return {
           _id: 'org123',
           name: 'Test Organization',
           slug: 'test-org',
         };
       }
-      if (query === api.functions.projects.projects.getOrganizationProjects) {
+      if (query === (api as any).functions?.projects.projects.getOrganizationProjects) {
         return [
           {
             _id: 'proj123',
@@ -117,7 +115,7 @@ describe('Dashboard Navigation Links', () => {
           },
         ];
       }
-      if (query === api.functions.dashboard.getDashboardStats) {
+      if (query === (api as any).functions.dashboard.getDashboardStats) {
         return {
           projectsCount: 1,
           productsCount: 10,
@@ -129,13 +127,13 @@ describe('Dashboard Navigation Links', () => {
           recentImports: [],
         };
       }
-      if (query === api.functions.dashboard.getRecentActivity) {
+      if (query === (api as any).functions.dashboard.getRecentActivity) {
         return [];
       }
       return undefined;
     });
 
-    const { container } = render(<OrganizationDashboard />);
+    const { container } = renderWithProviders(<OrganizationDashboard />);
 
     // Check that the component rendered (not in loading state)
     expect(screen.getByText('Dashboard')).toBeInTheDocument();
@@ -170,18 +168,18 @@ describe('Dashboard Navigation Links', () => {
 
   it('should NOT have the old /products/import link', () => {
     // Mock all queries to return data
-    (useQuery as jest.Mock).mockImplementation((query: any) => {
-      if (query === api.functions.organizations.organizations.getOrganizationBySlug) {
+    mockUseQuery.mockImplementation((query: unknown) => {
+      if (query === (api as any).functions.organizations.organizations.getOrganizationBySlug) {
         return {
           _id: 'org123',
           name: 'Test Organization',
           slug: 'test-org',
         };
       }
-      if (query === api.functions.projects.projects.getOrganizationProjects) {
+      if (query === (api as any).functions?.projects.projects.getOrganizationProjects) {
         return [];
       }
-      if (query === api.functions.dashboard.getDashboardStats) {
+      if (query === (api as any).functions.dashboard.getDashboardStats) {
         return {
           projectsCount: 0,
           productsCount: 0,
@@ -193,13 +191,13 @@ describe('Dashboard Navigation Links', () => {
           recentImports: [],
         };
       }
-      if (query === api.functions.dashboard.getRecentActivity) {
+      if (query === (api as any).functions.dashboard.getRecentActivity) {
         return [];
       }
       return undefined;
     });
 
-    const { container } = render(<OrganizationDashboard />);
+    const { container } = renderWithProviders(<OrganizationDashboard />);
 
     // Ensure the old link does not exist
     const oldImportLink = container.querySelector('a[href="/test-org/products/import"]');

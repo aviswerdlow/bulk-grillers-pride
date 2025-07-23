@@ -141,7 +141,7 @@ export const getABTestConfig = query({
 // Update A/B test configuration
 export const updateABTestConfig = mutation({
   args: {
-    config: v.partial(abTestConfigSchema),
+    config: v.any(), // TODO: Create partial schema manually
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();

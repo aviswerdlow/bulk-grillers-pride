@@ -1,5 +1,6 @@
 import { internalMutation, query } from '../_generated/server';
 import { v } from 'convex/values';
+import { internal } from '../_generated/api';
 
 /**
  * Migration Validation Scripts for Phase 3
@@ -81,7 +82,18 @@ export const validateTransactionIntegrity = query({
 
       for (const txn of transactions) {
         // Count by status
-        validation.stats[txn.status === 'rolled_back' ? 'rolledBack' : txn.status]++;
+        if (txn.status === 'rolled_back') {
+          validation.stats.rolledBack++;
+        } else if (txn.status === 'completed') {
+          validation.stats.completed++;
+        } else if (txn.status === 'failed') {
+          validation.stats.failed++;
+        } else if (txn.status === 'in_progress') {
+          validation.stats.inProgress++;
+        } else if (txn.status === 'pending') {
+          // Handle pending status - count as in progress
+          validation.stats.inProgress++;
+        }
 
         // Check for integrity issues
         
@@ -285,7 +297,15 @@ export const validateImageCleanupQueue = query({
 
       for (const entry of allEntries) {
         // Count by status
-        validation.stats[entry.status]++;
+        if (entry.status === 'pending') {
+          validation.stats.pending++;
+        } else if (entry.status === 'processing') {
+          validation.stats.processing++;
+        } else if (entry.status === 'completed') {
+          validation.stats.completed++;
+        } else if (entry.status === 'failed') {
+          validation.stats.failed++;
+        }
 
         if (entry.permanentRetention) {
           validation.stats.permanentRetention++;
@@ -373,7 +393,7 @@ export const runFullValidation = internalMutation({
 
     // Run schema validation
     try {
-      const schemaValidation = await validateSchemaDeployment(ctx, {});
+      const schemaValidation = await ctx.runQuery(internal.migrations.validateMigration001.validateSchemaDeployment, {});
       results.validations.schema.passed = schemaValidation.passed;
       if (!schemaValidation.passed) {
         results.passed = false;
@@ -387,12 +407,12 @@ export const runFullValidation = internalMutation({
 
     // Run transaction validation
     try {
-      const txnValidation = await validateTransactionIntegrity(ctx, { limit: 100 });
+      const txnValidation = await ctx.runQuery(internal.migrations.validateMigration001.validateTransactionIntegrity, { limit: 100 });
       results.validations.transactions.passed = txnValidation.passed;
       if (!txnValidation.passed) {
         results.passed = false;
-        const errors = txnValidation.issues.filter(i => i.severity === 'error').length;
-        const warnings = txnValidation.issues.filter(i => i.severity === 'warning').length;
+        const errors = txnValidation.issues.filter((i: any) => i.severity === 'error').length;
+        const warnings = txnValidation.issues.filter((i: any) => i.severity === 'warning').length;
         results.summary.criticalIssues += errors;
         results.summary.warnings += warnings;
       }
@@ -404,12 +424,12 @@ export const runFullValidation = internalMutation({
 
     // Run category assignment validation
     try {
-      const assignmentValidation = await validateCategoryAssignmentPreservation(ctx, { sampleSize: 50 });
+      const assignmentValidation = await ctx.runQuery(internal.migrations.validateMigration001.validateCategoryAssignmentPreservation, { sampleSize: 50 });
       results.validations.categoryAssignments.passed = assignmentValidation.passed;
       if (!assignmentValidation.passed) {
         results.passed = false;
-        const errors = assignmentValidation.issues.filter(i => i.severity === 'error').length;
-        const warnings = assignmentValidation.issues.filter(i => i.severity === 'warning').length;
+        const errors = assignmentValidation.issues.filter((i: any) => i.severity === 'error').length;
+        const warnings = assignmentValidation.issues.filter((i: any) => i.severity === 'warning').length;
         results.summary.criticalIssues += errors;
         results.summary.warnings += warnings;
       }
@@ -421,12 +441,12 @@ export const runFullValidation = internalMutation({
 
     // Run image queue validation
     try {
-      const queueValidation = await validateImageCleanupQueue(ctx, {});
+      const queueValidation = await ctx.runQuery(internal.migrations.validateMigration001.validateImageCleanupQueue, {});
       results.validations.imageQueue.passed = queueValidation.passed;
       if (!queueValidation.passed) {
         results.passed = false;
-        const errors = queueValidation.issues.filter(i => i.severity === 'error').length;
-        const warnings = queueValidation.issues.filter(i => i.severity === 'warning').length;
+        const errors = queueValidation.issues.filter((i: any) => i.severity === 'error').length;
+        const warnings = queueValidation.issues.filter((i: any) => i.severity === 'warning').length;
         results.summary.criticalIssues += errors;
         results.summary.warnings += warnings;
       }

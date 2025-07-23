@@ -9,7 +9,7 @@ import {
   OperationResultAnnouncer,
   CountdownAnnouncer,
   ScreenReaderOnly,
-  VisuallyHidden,
+//   VisuallyHidden,
   useDeletionAnnouncements,
 } from '@/components/accessibility/announcements';
 import { useAnnouncement } from '@/contexts/accessibility';

@@ -1,8 +1,8 @@
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@/__tests__/test-utils';
-import ProductsPage from '../page';
-import { mockUseQuery } from '@/__tests__/test-utils';
+import { fireEvent, mockUseQuery, render, screen, waitFor, renderWithProviders } from '@/__tests__/test-helpers';
 import { useParams } from 'next/navigation';
+import ProductsPage from '../page';
 
 // Mock Next.js router
 jest.mock('next/navigation', () => ({
@@ -93,19 +93,24 @@ jest.mock('@/components/ui/toggle-group', () => ({
 
 describe('ProductsPage', () => {
   const mockOrganization = {
-    _id: 'org_123' as any,
+    _id: 'org_123',
+    _creationTime: Date.now(),
     name: 'Test Organization',
     slug: 'test-org',
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
   };
 
   const mockProject = {
-    _id: 'proj_123' as any,
+    _id: 'proj_123',
+    _creationTime: Date.now(),
     name: 'Test Project',
-    organizationId: 'org_123' as any,
+    organizationId: 'org_123',
   };
 
   const mockProduct = {
     _id: 'prod_123',
+    _creationTime: Date.now(),
     title: 'Test Product',
     handle: 'test-product',
     vendor: 'Test Vendor',
@@ -124,39 +129,51 @@ describe('ProductsPage', () => {
   it('renders loading state while fetching data', () => {
     mockUseQuery.mockReturnValue(undefined);
     
-    render(<ProductsPage />);
+    renderWithProviders(<ProductsPage />);
     
     expect(screen.getByText('Loading products...')).toBeInTheDocument();
   });
 
   it('renders error when organization not found', () => {
-    mockUseQuery
-      .mockReturnValueOnce(null) // organization query
-      .mockReturnValueOnce([]); // projects query
+    let callCount = 0;
+    mockUseQuery.mockImplementation(((query: any, args: any) => {
+      callCount++;
+      if (callCount === 1) return null;
+      if (callCount === 2) return [];
+      return undefined;
+    }) as any); // projects query
     
-    render(<ProductsPage />);
+    renderWithProviders(<ProductsPage />);
     
     expect(screen.getByText('Organization not found')).toBeInTheDocument();
   });
 
   it('renders error when no projects found', () => {
-    mockUseQuery
-      .mockReturnValueOnce(mockOrganization) // organization query
-      .mockReturnValueOnce([]); // projects query
+    let callCount = 0;
+    mockUseQuery.mockImplementation(((query: any, args: any) => {
+      callCount++;
+      if (callCount === 1) return mockOrganization;
+      if (callCount === 2) return [];
+      return undefined;
+    }) as any); // projects query
     
-    render(<ProductsPage />);
+    renderWithProviders(<ProductsPage />);
     
     expect(screen.getByText('No Projects Found')).toBeInTheDocument();
     expect(screen.getByText('Create a project first to manage products')).toBeInTheDocument();
   });
 
   it('renders products page with empty state', () => {
-    mockUseQuery
-      .mockReturnValueOnce(mockOrganization) // organization query
-      .mockReturnValueOnce([mockProject]) // projects query
-      .mockReturnValueOnce({ page: [] }); // products query
+    let callCount = 0;
+    mockUseQuery.mockImplementation(((query: any, args: any) => {
+      callCount++;
+      if (callCount === 1) return mockOrganization;
+      if (callCount === 2) return [mockProject];
+      if (callCount === 3) return { page: [] };
+      return undefined;
+    }) as any); // products query
     
-    render(<ProductsPage />);
+    renderWithProviders(<ProductsPage />);
     
     expect(screen.getByRole('heading', { name: 'Products' })).toBeInTheDocument();
     expect(screen.getByText('No products yet')).toBeInTheDocument();
@@ -164,12 +181,16 @@ describe('ProductsPage', () => {
   });
 
   it('renders products page with data in grid view', () => {
-    mockUseQuery
-      .mockReturnValueOnce(mockOrganization) // organization query
-      .mockReturnValueOnce([mockProject]) // projects query
-      .mockReturnValueOnce({ page: [mockProduct] }); // products query
+    let callCount = 0;
+    mockUseQuery.mockImplementation(((query: any, args: any) => {
+      callCount++;
+      if (callCount === 1) return mockOrganization;
+      if (callCount === 2) return [mockProject];
+      if (callCount === 3) return { page: [mockProduct] };
+      return undefined;
+    }) as any); // products query
     
-    render(<ProductsPage />);
+    renderWithProviders(<ProductsPage />);
     
     // Check header
     expect(screen.getByRole('heading', { name: 'Products' })).toBeInTheDocument();
@@ -186,15 +207,15 @@ describe('ProductsPage', () => {
   it('switches between grid and list view', async () => {
     // Mock all queries based on the query being called
     let callCount = 0;
-    mockUseQuery.mockImplementation(() => {
+    mockUseQuery.mockImplementation(((query: any, args: any) => {
       callCount++;
       if (callCount === 1) return mockOrganization; // getOrganizationBySlug
       if (callCount === 2) return [mockProject];     // getOrganizationProjects
       if (callCount === 3) return { page: [mockProduct] }; // getProjectProducts
       return undefined;
-    });
+    }) as any);
     
-    const { container } = render(<ProductsPage />);
+    const { } = renderWithProviders(<ProductsPage />);
     
     // Wait for the product to appear in grid view
     await waitFor(() => {
@@ -203,7 +224,9 @@ describe('ProductsPage', () => {
     
     // Switch to list view
     const listButton = screen.getByLabelText('List view');
-    fireEvent.click(listButton);
+    if (listButton) {
+      fireEvent.click(listButton as HTMLElement);
+    }
     
     // Wait for table to appear
     await waitFor(() => {
@@ -219,17 +242,21 @@ describe('ProductsPage', () => {
       { ...mockProduct, _id: 'prod_124', title: 'Another Product', handle: 'another-product' }
     ];
     
-    mockUseQuery
-      .mockReturnValueOnce(mockOrganization)
-      .mockReturnValueOnce([mockProject])
-      .mockReturnValueOnce({ page: products });
+    let callCount = 0;
+    mockUseQuery.mockImplementation(((query: any, args: any) => {
+      callCount++;
+      if (callCount === 1) return mockOrganization;
+      if (callCount === 2) return [mockProject];
+      if (callCount === 3) return { page: products };
+      return undefined;
+    }) as any);
     
-    render(<ProductsPage />);
+    renderWithProviders(<ProductsPage />);
     
     const searchInput = screen.getByPlaceholderText('Search products...');
     
     // Search for "test"
-    fireEvent.change(searchInput, { target: { value: 'test' } });
+    fireEvent.change(searchInput, { target: { value: 'test'  } } as any);
     
     // Should only show Test Product
     expect(screen.getByText('Test Product')).toBeInTheDocument();
@@ -242,52 +269,74 @@ describe('ProductsPage', () => {
       { ...mockProduct, _id: 'prod_124', title: 'Draft Product', status: 'draft' }
     ];
     
-    mockUseQuery
-      .mockReturnValueOnce(mockOrganization)
-      .mockReturnValueOnce([mockProject])
-      .mockReturnValueOnce({ page: products });
+    let callCount = 0;
+    mockUseQuery.mockImplementation(((query: any, args: any) => {
+      callCount++;
+      if (callCount === 1) return mockOrganization;
+      if (callCount === 2) return [mockProject];
+      if (callCount === 3) return { page: products };
+      return undefined;
+    }) as any);
     
-    render(<ProductsPage />);
+    renderWithProviders(<ProductsPage />);
     
     // Initially shows all products
     expect(screen.getAllByText('1')[0]).toBeInTheDocument(); // Total: 2
     
     // Filter by active status
     const statusSelect = screen.getByRole('combobox');
-    fireEvent.click(statusSelect);
+    if (statusSelect) {
+      fireEvent.click(statusSelect as HTMLElement);
+    }
     fireEvent.click(screen.getByText('Active'));
     
     // Mock the filtered query response
-    mockUseQuery
-      .mockReturnValueOnce(mockOrganization)
-      .mockReturnValueOnce([mockProject])
-      .mockReturnValueOnce({ page: [mockProduct] }); // Only active products
+    let callCount2 = 0;
+    mockUseQuery.mockImplementation(((query: any, args: any) => {
+      callCount2++;
+      if (callCount2 === 1) return mockOrganization;
+      if (callCount2 === 2) return [mockProject];
+      if (callCount2 === 3) return { page: [mockProduct] };
+      return undefined;
+    }) as any); // Only active products
   });
 
   it('opens create product dialog when clicking add product button', () => {
-    mockUseQuery
-      .mockReturnValueOnce(mockOrganization)
-      .mockReturnValueOnce([mockProject])
-      .mockReturnValueOnce({ page: [] });
+    let callCount = 0;
+    mockUseQuery.mockImplementation(((query: any, args: any) => {
+      callCount++;
+      if (callCount === 1) return mockOrganization;
+      if (callCount === 2) return [mockProject];
+      if (callCount === 3) return { page: [] };
+      return undefined;
+    }) as any);
     
-    render(<ProductsPage />);
+    renderWithProviders(<ProductsPage />);
     
     const addButton = screen.getAllByRole('button', { name: /Add Product/i })[0];
-    fireEvent.click(addButton);
+    if (addButton) {
+      fireEvent.click(addButton as HTMLElement);
+    }
     
     expect(screen.getByTestId('create-product-dialog')).toBeInTheDocument();
   });
 
   it('opens edit product dialog when clicking edit button', () => {
-    mockUseQuery
-      .mockReturnValueOnce(mockOrganization)
-      .mockReturnValueOnce([mockProject])
-      .mockReturnValueOnce({ page: [mockProduct] });
+    let callCount = 0;
+    mockUseQuery.mockImplementation(((query: any, args: any) => {
+      callCount++;
+      if (callCount === 1) return mockOrganization;
+      if (callCount === 2) return [mockProject];
+      if (callCount === 3) return { page: [mockProduct] };
+      return undefined;
+    }) as any);
     
-    render(<ProductsPage />);
+    renderWithProviders(<ProductsPage />);
     
     const editButton = screen.getByRole('button', { name: 'Edit' });
-    fireEvent.click(editButton);
+    if (editButton) {
+      fireEvent.click(editButton as HTMLElement);
+    }
     
     expect(screen.getByTestId('edit-product-dialog')).toBeInTheDocument();
     expect(screen.getByTestId('editing-product')).toHaveTextContent('Test Product');
@@ -300,12 +349,16 @@ describe('ProductsPage', () => {
       { ...mockProduct, _id: 'prod_125', status: 'active' },
     ];
     
-    mockUseQuery
-      .mockReturnValueOnce(mockOrganization)
-      .mockReturnValueOnce([mockProject])
-      .mockReturnValueOnce({ page: products });
+    let callCount = 0;
+    mockUseQuery.mockImplementation(((query: any, args: any) => {
+      callCount++;
+      if (callCount === 1) return mockOrganization;
+      if (callCount === 2) return [mockProject];
+      if (callCount === 3) return { page: products };
+      return undefined;
+    }) as any);
     
-    render(<ProductsPage />);
+    renderWithProviders(<ProductsPage />);
     
     // Total products
     expect(screen.getByText('3')).toBeInTheDocument();
@@ -330,12 +383,16 @@ describe('ProductsPage', () => {
   });
 
   it('shows loading skeletons in grid view while loading', () => {
-    mockUseQuery
-      .mockReturnValueOnce(mockOrganization)
-      .mockReturnValueOnce([mockProject])
-      .mockReturnValueOnce(undefined); // products loading
+    let callCount = 0;
+    mockUseQuery.mockImplementation(((query: any, args: any) => {
+      callCount++;
+      if (callCount === 1) return mockOrganization;
+      if (callCount === 2) return [mockProject];
+      if (callCount === 3) return undefined;
+      return undefined;
+    }) as any); // products loading
     
-    render(<ProductsPage />);
+    renderWithProviders(<ProductsPage />);
     
     const skeletons = screen.getAllByTestId('product-skeleton');
     expect(skeletons).toHaveLength(8); // Should show 8 skeleton cards
@@ -348,12 +405,16 @@ describe('ProductsPage', () => {
       productType: undefined,
     };
     
-    mockUseQuery
-      .mockReturnValueOnce(mockOrganization)
-      .mockReturnValueOnce([mockProject])
-      .mockReturnValueOnce({ page: [productWithoutDetails] });
+    let callCount = 0;
+    mockUseQuery.mockImplementation(((query: any, args: any) => {
+      callCount++;
+      if (callCount === 1) return mockOrganization;
+      if (callCount === 2) return [mockProject];
+      if (callCount === 3) return { page: [productWithoutDetails] };
+      return undefined;
+    }) as any);
     
-    render(<ProductsPage />);
+    renderWithProviders(<ProductsPage />);
     
     // Wait for loading to complete
     await waitFor(() => {
@@ -362,7 +423,7 @@ describe('ProductsPage', () => {
     
     // Switch to list view
     const listButton = screen.getByLabelText('List view');
-    fireEvent.click(listButton);
+    fireEvent.click(listButton as HTMLElement);
     
     // Should show em dashes for missing data
     const cells = screen.getAllByText('—');
@@ -375,12 +436,16 @@ describe('ProductsPage', () => {
       { ...mockProduct, _id: 'prod_124', categories: ['cat_2', 'cat_3', 'cat_4'] },
     ];
     
-    mockUseQuery
-      .mockReturnValueOnce(mockOrganization)
-      .mockReturnValueOnce([mockProject])
-      .mockReturnValueOnce({ page: products });
+    let callCount = 0;
+    mockUseQuery.mockImplementation(((query: any, args: any) => {
+      callCount++;
+      if (callCount === 1) return mockOrganization;
+      if (callCount === 2) return [mockProject];
+      if (callCount === 3) return { page: products };
+      return undefined;
+    }) as any);
     
-    render(<ProductsPage />);
+    renderWithProviders(<ProductsPage />);
     
     // Unique categories: cat_1, cat_2, cat_3, cat_4 = 4
     const categoriesCard = screen.getByText('Categories').closest('.space-y-0')?.nextElementSibling;

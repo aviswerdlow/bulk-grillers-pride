@@ -1,16 +1,18 @@
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import React from 'react';
-import { screen, fireEvent, waitFor } from '@testing-library/react';
+import { fireEvent } from '@testing-library/react';
+import { render, resetAllMocks, setAuthState
 import { LogoutButton } from '@/components/auth/logout-button';
-import { render, resetAllMocks, setAuthState } from '../../test-utils';
 import { useClerk } from '@clerk/nextjs';
-
 // Mock is now handled by jest module mapper
 const mockUseClerk = useClerk as jest.MockedFunction<typeof useClerk>;
 
 describe('LogoutButton', () => {
   let mockSignOut: jest.Mock;
 
-  beforeEach(() => {
+  const setAuthState = jest.fn();
+
+beforeEach(() => {
     jest.useFakeTimers();
     resetAllMocks();
     setAuthState(true, 'user_123');
@@ -32,7 +34,7 @@ describe('LogoutButton', () => {
   });
 
   it('renders with default props', () => {
-    render(<LogoutButton />);
+    renderWithProviders(<LogoutButton />);
 
     const button = screen.getByRole('button', { name: /sign out/i });
     expect(button).toBeInTheDocument();
@@ -40,14 +42,14 @@ describe('LogoutButton', () => {
   });
 
   it('renders with custom class name', () => {
-    render(<LogoutButton className="custom-class" />);
+    renderWithProviders(<LogoutButton className="custom-class" />);
 
     const button = screen.getByRole('button', { name: /sign out/i });
     expect(button).toHaveClass('custom-class');
   });
 
   it('renders different variants', () => {
-    const { rerender } = render(<LogoutButton variant="default" />);
+    const { rerender } = renderWithProviders(<LogoutButton variant="default" />);
     const button = screen.getByRole('button', { name: /sign out/i });
 
     // The Button component should apply the variant classes
@@ -59,7 +61,7 @@ describe('LogoutButton', () => {
   });
 
   it('renders different sizes', () => {
-    const { rerender } = render(<LogoutButton size="sm" />);
+    const { rerender } = renderWithProviders(<LogoutButton size="sm" />);
     const button = screen.getByRole('button', { name: /sign out/i });
     expect(button).toBeInTheDocument();
 
@@ -68,16 +70,18 @@ describe('LogoutButton', () => {
   });
 
   it('renders with custom children', () => {
-    render(<LogoutButton>Log Out</LogoutButton>);
+    renderWithProviders(<LogoutButton>Log Out</LogoutButton>);
 
     expect(screen.getByRole('button', { name: /log out/i })).toBeInTheDocument();
   });
 
   it('calls signOut when clicked', async () => {
-    render(<LogoutButton />);
+    renderWithProviders(<LogoutButton />);
 
     const button = screen.getByRole('button', { name: /sign out/i });
-    fireEvent.click(button);
+    if (button) {
+      fireEvent.click(button as HTMLElement);
+    }
 
     await waitFor(() => {
       expect(mockSignOut).toHaveBeenCalledWith({
@@ -87,7 +91,7 @@ describe('LogoutButton', () => {
   });
 
   it('shows loading state when signing out', async () => {
-    render(<LogoutButton />);
+    renderWithProviders(<LogoutButton />);
 
     const button = screen.getByRole('button', { name: /sign out/i });
 
@@ -96,7 +100,7 @@ describe('LogoutButton', () => {
     expect(screen.queryByText('Signing out...')).not.toBeInTheDocument();
 
     // Click the button
-    fireEvent.click(button);
+    fireEvent.click(button as HTMLElement);
 
     // Button should show loading state
     await waitFor(() => {
@@ -109,10 +113,10 @@ describe('LogoutButton', () => {
     // Mock signOut to throw an error
     mockSignOut.mockRejectedValue(new Error('Sign out failed'));
 
-    render(<LogoutButton />);
+    renderWithProviders(<LogoutButton />);
 
     const button = screen.getByRole('button', { name: /sign out/i });
-    fireEvent.click(button);
+    fireEvent.click(button as HTMLElement);
 
     // Wait for error handling - button should be re-enabled
     await waitFor(() => {
@@ -124,26 +128,26 @@ describe('LogoutButton', () => {
     // Mock signOut to be slow
     mockSignOut.mockImplementation(() => new Promise((resolve) => setTimeout(resolve, 100)));
 
-    render(<LogoutButton />);
+    renderWithProviders(<LogoutButton />);
 
     const button = screen.getByRole('button', { name: /sign out/i });
 
     // Click the button
-    fireEvent.click(button);
+    fireEvent.click(button as HTMLElement);
 
     // Try to click again while signing out
     await waitFor(() => {
       expect(button).toBeDisabled();
     });
 
-    fireEvent.click(button);
+    fireEvent.click(button as HTMLElement);
 
     // Should still only be called once
     expect(mockSignOut).toHaveBeenCalledTimes(1);
   });
 
   it('passes additional button props', () => {
-    render(<LogoutButton className="custom-class test-class" variant="destructive" />);
+    renderWithProviders(<LogoutButton className="custom-class test-class" variant="destructive" />);
 
     const button = screen.getByRole('button', { name: /sign out/i });
     expect(button).toHaveClass('custom-class');

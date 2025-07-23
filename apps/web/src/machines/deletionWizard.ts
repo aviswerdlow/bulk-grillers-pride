@@ -56,8 +56,8 @@ export interface DeletionWizardContext {
 
 // Guard functions
 const hasSelectedItems = (context: DeletionWizardContext) => context.selectedItems.length > 0;
-const hasImpactData = (context: DeletionWizardContext) => context.impact !== null;
-const hasValidOptions = (context: DeletionWizardContext) => {
+// const _hasImpactData = (_context: DeletionWizardContext) => _context.impact !== null;
+const hasValidOptions = () => {
   // Validate that options are properly configured
   return true; // Simplified for now
 };
@@ -93,11 +93,11 @@ export const deletionWizardMachine = createMachine({
         LOAD_DRAFT: {
           target: 'loadingDraft',
           actions: assign({
-            draftId: (_, event) => event.draft.id,
-            selectedItems: (_, event) => event.draft.selectedItems,
-            impact: (_, event) => event.draft.impact,
-            affectedItems: (_, event) => event.draft.affectedItems,
-            options: (_, event) => event.draft.options,
+            draftId: (_, event) => event?.draft.id,
+            selectedItems: (_, event) => event?.draft.selectedItems,
+            impact: (_, event) => event?.draft.impact,
+            affectedItems: (_, event) => event?.draft.affectedItems,
+            options: (_, event) => event?.draft.options,
           }),
         },
       },
@@ -110,21 +110,21 @@ export const deletionWizardMachine = createMachine({
       on: {
         SELECT_ITEMS: {
           actions: assign({
-            selectedItems: (context, event) => [...context.selectedItems, ...event.items],
+            selectedItems: (context, event) => [...context.selectedItems, ...event?.items],
           }),
         },
         DESELECT_ITEMS: {
           actions: assign({
             selectedItems: (context, event) => 
-              context.selectedItems.filter(item => !event.itemIds.includes(item.id)),
+              context.selectedItems.filter((item: any) => !event?.itemIds.includes(item.id)),
           }),
         },
         TOGGLE_ITEM: {
           actions: assign({
             selectedItems: (context, event) => {
-              const exists = context.selectedItems.some(item => item.id === event.itemId);
+              const exists = context.selectedItems.some((item: any) => item.id === event?.itemId);
               if (exists) {
-                return context.selectedItems.filter(item => item.id !== event.itemId);
+                return context.selectedItems.filter((item: any) => item.id !== event?.itemId);
               }
               // Note: In real implementation, we'd need to find the item to add
               return context.selectedItems;
@@ -133,7 +133,7 @@ export const deletionWizardMachine = createMachine({
         },
         NEXT: {
           target: 'calculatingImpact',
-          cond: hasSelectedItems,
+          guard: hasSelectedItems,
         },
         CANCEL: {
           target: 'idle',
@@ -154,14 +154,14 @@ export const deletionWizardMachine = createMachine({
         onDone: {
           target: 'previewing',
           actions: assign({
-            impact: (_, event) => event.data.impact,
-            affectedItems: (_, event) => event.data.affectedItems,
+            impact: (_, event) => event?.data.impact,
+            affectedItems: (_, event) => event?.data.affectedItems,
           }),
         },
         onError: {
           target: 'selecting',
           actions: assign({
-            error: (_, event) => event.data?.message || 'Failed to calculate impact',
+            error: (_, event) => event?.data?.message || 'Failed to calculate impact',
           }),
         },
       },
@@ -188,12 +188,12 @@ export const deletionWizardMachine = createMachine({
       on: {
         UPDATE_OPTIONS: {
           actions: assign({
-            options: (context, event) => ({ ...context.options, ...event.options }),
+            options: (context, event) => ({ ...(context as any).options, ...event?.options }),
           }),
         },
         NEXT: {
           target: 'confirming',
-          cond: hasValidOptions,
+          guard: hasValidOptions,
         },
         BACK: {
           target: 'previewing',
@@ -234,7 +234,7 @@ export const deletionWizardMachine = createMachine({
         onError: {
           target: 'error',
           actions: assign({
-            error: (_, event) => event.data?.message || 'Deletion failed',
+            error: (_, event) => event?.data?.message || 'Deletion failed',
           }),
         },
       },
@@ -266,12 +266,12 @@ export const deletionWizardMachine = createMachine({
         onDone: {
           target: 'selecting', // Return to current state
           actions: assign({
-            draftId: (_, event) => event.data.draftId,
+            draftId: (_, event) => event?.data.draftId,
           }),
         },
         onError: {
           actions: assign({
-            error: (_, event) => event.data?.message || 'Failed to save draft',
+            error: (_, event) => event?.data?.message || 'Failed to save draft',
           }),
         },
       },
@@ -287,7 +287,7 @@ export const deletionWizardMachine = createMachine({
         onError: {
           target: 'idle',
           actions: assign({
-            error: (_, event) => event.data?.message || 'Failed to load draft',
+            error: (_, event) => event?.data?.message || 'Failed to load draft',
           }),
         },
       },
@@ -297,8 +297,8 @@ export const deletionWizardMachine = createMachine({
     // Global event handlers for history tracking
     '*': {
       actions: assign({
-        history: (context, event, { state }) => {
-          if (event.type === 'xstate.init') return context.history;
+        history: (context: any, event: any, { state }: any) => {
+          if (event?.type === 'xstate.init') return context.history;
           
           return [
             ...context.history,
@@ -314,7 +314,7 @@ export const deletionWizardMachine = createMachine({
     // Handle ERROR event globally
     ERROR: {
       actions: assign({
-        error: (_, event) => event.error,
+        error: (_, event) => event?.error,
       }),
     },
   },
@@ -327,7 +327,7 @@ export const getUndoEvent = (history: DeletionWizardContext['history']) => {
   if (history.length === 0) return null;
   const lastEvent = history[history.length - 1];
   // Map events to their inverse operations
-  switch (lastEvent.event.type) {
+  switch (lastEvent.event?.type) {
     case 'SELECT_ITEMS':
       return { type: 'DESELECT_ITEMS', itemIds: lastEvent.event.items.map(i => i.id) } as const;
     case 'NEXT':

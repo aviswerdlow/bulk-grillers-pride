@@ -1,3 +1,4 @@
+import { t } from '../../test.setup';
 /**
  * Example test using the @bulk-grillers-pride/convex-test-helpers package
  * This demonstrates how to use the new test helper package in actual Convex tests
@@ -18,19 +19,17 @@ import {
 } from '@bulk-grillers-pride/convex-test-helpers';
 
 // Import the actual Convex types
-import type { QueryCtx, MutationCtx } from '../_generated/server';
+import type { QueryCtx, MutationCtx } from '../../_generated/server';
+import { convexTest } from '../convex-test-standard';
 
 describe('Example using convex-test-helpers package', () => {
-  let test: ConvexTestContext;
-  
   beforeEach(() => {
-    test = createConvexTest();
-  });
+    });
   
   it('should demonstrate query testing', async () => {
     // Setup authentication
     const user = createMockUser({ _id: 'user_123', email: 'test@example.com' });
-    setupAuth(test, { tokenIdentifier: user.clerkId });
+    setupAuth(t, { tokenIdentifier: user.clerkId });
     
     // Seed data
     const org = createMockOrganization({ _id: 'org_123' });
@@ -40,17 +39,17 @@ describe('Example using convex-test-helpers package', () => {
       createMockProduct({ organizationId: org._id, price: 30 }),
     ];
     
-    await seedDatabase(test, {
+    await seedDatabase(t, {
       users: [user],
       organizations: [org],
       products,
     });
     
     // Create context (cast to Convex type if needed)
-    const ctx = createQueryContext(test) as unknown as QueryCtx;
+    const ctx = createQueryContext(t) as unknown as QueryCtx;
     
     // Test queries
-    const allProducts = await test.db.query('products')
+    const allProducts = await t.db.query('products')
       .filter(p => p.organizationId === org._id)
       .collect();
     
@@ -61,10 +60,10 @@ describe('Example using convex-test-helpers package', () => {
   });
   
   it('should demonstrate mutation testing', async () => {
-    const ctx = createMutationContext(test) as unknown as MutationCtx;
+    const ctx = createMutationContext(t) as unknown as MutationCtx;
     
     // Create a product
-    const productId = await test.db.insert('products', {
+    const productId = await t.db.insert('products', {
       title: 'New Product',
       organizationId: 'org_123',
       price: 25,
@@ -72,15 +71,15 @@ describe('Example using convex-test-helpers package', () => {
     });
     
     // Update it
-    await test.db.patch(productId, { price: 30 });
+    await t.db.patch(productId, { price: 30 });
     
     // Verify
-    const updated = await test.db.get(productId);
+    const updated = await t.db.get(productId);
     expect(updated.price).toBe(30);
     
     // Test scheduling
     await ctx.scheduler.runAfter(5000, 'processProduct', { productId });
-    expect(test.scheduler.runAfter).toHaveBeenCalledWith(
+    expect(t.scheduler.runAfter).toHaveBeenCalledWith(
       5000,
       'processProduct',
       { productId }

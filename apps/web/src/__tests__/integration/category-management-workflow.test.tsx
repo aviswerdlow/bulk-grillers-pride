@@ -1,23 +1,19 @@
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import React from 'react';
-import { render, screen, waitFor, within } from '@/__tests__/test-utils';
+import { within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { setupTest, cleanupTest } from '@/__tests__/frontend-test-helpers';
-import { toast } from 'sonner';
-import { useQuery, useMutation } from 'convex/react';
+import { cleanupTest, mockUseMutation, mockUseQuery, render, screen, setupTest, waitFor, within, renderWithProviders } from '@/__tests__/test-helpers';
 import { CategorySelector } from '@/components/categories/category-selector';
 import { CreateCategoryDialog } from '@/components/categories/create-category-dialog';
 import { EditCategoryDialog } from '@/components/categories/edit-category-dialog';
 import { Category } from '@/types/models';
+import { api } from '@convex/_generated/api';
 import { Id } from '@convex/_generated/dataModel';
+import { toast } from 'sonner';
+;
 
 // Mock dependencies
 jest.mock('sonner');
-jest.mock('convex/react', () => ({
-  ...jest.requireActual('convex/react'),
-  useQuery: jest.fn(),
-  useMutation: jest.fn(() => jest.fn()),
-}));
-
 const mockCategoryTree = [
   {
     _id: 'cat_electronics' as Id<'categories'>,
@@ -25,7 +21,7 @@ const mockCategoryTree = [
     handle: 'electronics',
     level: 0,
     parentId: null,
-    path: [],
+    path: '',
     isActive: true,
     children: [
       {
@@ -45,7 +41,7 @@ const mockCategoryTree = [
             parentId: 'cat_computers' as Id<'categories'>,
             path: ['cat_electronics', 'cat_computers'],
             isActive: true,
-            children: [],
+            children: [] as Category[],
           },
         ],
       },
@@ -57,7 +53,7 @@ const mockCategoryTree = [
         parentId: 'cat_electronics' as Id<'categories'>,
         path: ['cat_electronics'],
         isActive: true,
-        children: [],
+        children: [] as Category[],
       },
     ],
   },
@@ -67,9 +63,9 @@ const mockCategoryTree = [
     handle: 'home-garden',
     level: 0,
     parentId: null,
-    path: [],
+    path: '',
     isActive: true,
-    children: [],
+    children: [] as Category[],
   },
 ];
 
@@ -80,6 +76,10 @@ const mockLevelDefinitions = [
 ];
 
 describe('Category Management Workflow', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   const mockCreateCategory = jest.fn();
   const mockUpdateCategory = jest.fn();
   const mockDeleteCategory = jest.fn();
@@ -89,13 +89,13 @@ describe('Category Management Workflow', () => {
     setupTest();
     jest.clearAllMocks();
     
-    (useQuery as jest.Mock).mockImplementation((query) => {
+    mockUseQuery.mockImplementation((query) => {
       if (query.name?.includes('getCategoryTree')) return mockCategoryTree;
       if (query.name?.includes('getCategoryLevels')) return mockLevelDefinitions;
       return null;
     });
     
-    (useMutation as jest.Mock).mockImplementation((fn) => {
+    mockUseMutation.mockImplementation((fn) => {
       if (fn.name?.includes('createCategory')) return mockCreateCategory;
       if (fn.name?.includes('updateCategory')) return mockUpdateCategory;
       if (fn.name?.includes('deleteCategory')) return mockDeleteCategory;
@@ -119,13 +119,11 @@ describe('Category Management Workflow', () => {
       const user = userEvent.setup();
       const onSuccess = jest.fn();
       
-      render(
-        <CreateCategoryDialog
+      renderWithProviders(<CreateCategoryDialog
           open={true}
           onOpenChange={() => {}}
           organizationId={'org_123' as Id<'organizations'>}
           projectId={'project_123' as Id<'projects'>}
-          onSuccess={onSuccess}
         />
       );
 
@@ -173,8 +171,7 @@ describe('Category Management Workflow', () => {
     it('creates a subcategory with parent selection', async () => {
       const user = userEvent.setup();
       
-      render(
-        <CreateCategoryDialog
+      renderWithProviders(<CreateCategoryDialog
           open={true}
           onOpenChange={() => {}}
           organizationId={'org_123' as Id<'organizations'>}
@@ -211,10 +208,9 @@ describe('Category Management Workflow', () => {
     });
 
     it('validates category hierarchy constraints', async () => {
-      const user = userEvent.setup();
+//       const user = userEvent.setup();
       
-      render(
-        <CreateCategoryDialog
+      renderWithProviders(<CreateCategoryDialog
           open={true}
           onOpenChange={() => {}}
           organizationId={'org_123' as Id<'organizations'>}
@@ -241,8 +237,7 @@ describe('Category Management Workflow', () => {
       const user = userEvent.setup();
       const onChange = jest.fn();
       
-      render(
-        <CategorySelector
+      renderWithProviders(<CategorySelector
           organizationId={'org_123' as Id<'organizations'>}
           projectId={'project_123' as Id<'projects'>}
           selectedCategories={[]}
@@ -270,8 +265,7 @@ describe('Category Management Workflow', () => {
       const user = userEvent.setup();
       const onChange = jest.fn();
       
-      render(
-        <CategorySelector
+      renderWithProviders(<CategorySelector
           organizationId={'org_123' as Id<'organizations'>}
           projectId={'project_123' as Id<'projects'>}
           selectedCategories={[]}
@@ -300,8 +294,7 @@ describe('Category Management Workflow', () => {
     it('filters categories by search term', async () => {
       const user = userEvent.setup();
       
-      render(
-        <CategorySelector
+      renderWithProviders(<CategorySelector
           organizationId={'org_123' as Id<'organizations'>}
           projectId={'project_123' as Id<'projects'>}
           selectedCategories={[]}
@@ -325,30 +318,18 @@ describe('Category Management Workflow', () => {
   describe('Category Editing Workflow', () => {
     it('edits existing category properties', async () => {
       const user = userEvent.setup();
-      const category: Category = {
-        _id: 'cat_electronics' as Id<'categories'>,
-        _creationTime: Date.now(),
-        organizationId: 'org_123' as Id<'organizations'>,
-        projectId: 'project_123' as Id<'projects'>,
+      const category = {
+        _id: 'cat_electronics',
         name: 'Electronics',
         handle: 'electronics',
         description: 'Electronic products',
-        level: 0,
-        parentId: null,
-        path: [],
-        properties: { featured: 'true' },
-        isActive: true,
-        order: 0,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
+        isVisible: true,
       };
       
-      render(
-        <EditCategoryDialog
+      renderWithProviders(<EditCategoryDialog
           open={true}
           onOpenChange={() => {}}
           category={category}
-          onSuccess={() => {}}
         />
       );
 
@@ -401,29 +382,17 @@ describe('Category Management Workflow', () => {
       const user = userEvent.setup();
       
       // Mock a category with children
-      const parentCategory: Category = {
-        _id: 'cat_electronics' as Id<'categories'>,
-        _creationTime: Date.now(),
-        organizationId: 'org_123' as Id<'organizations'>,
-        projectId: 'project_123' as Id<'projects'>,
+      const parentCategory = {
+        _id: 'cat_electronics',
         name: 'Electronics',
         handle: 'electronics',
-        level: 0,
-        parentId: null,
-        path: [],
-        isActive: true,
-        children: mockCategoryTree[0].children,
-        order: 0,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
+        isVisible: true,
       };
       
-      render(
-        <EditCategoryDialog
+      renderWithProviders(<EditCategoryDialog
           open={true}
           onOpenChange={() => {}}
           category={parentCategory}
-          onSuccess={() => {}}
         />
       );
 
@@ -472,7 +441,7 @@ describe('Category Management Workflow', () => {
         );
       }
       
-      render(<BulkAssignment />);
+      renderWithProviders(<BulkAssignment />);
 
       // Select categories
       await user.click(screen.getByRole('button', { name: /select categories/i }));
@@ -499,7 +468,7 @@ describe('Category Management Workflow', () => {
     it('displays category breadcrumbs correctly', () => {
       // Component that shows category path
       function CategoryPath({ categoryId }: { categoryId: Id<'categories'> }) {
-        const categoryTree = useQuery(api.functions.categories.categories.getCategoryTree, {
+        const categoryTree = mockUseQuery((api as any).functions.categories.categories.getCategoryTree, {
           organizationId: 'org_123' as Id<'organizations'>,
           projectId: 'project_123' as Id<'projects'>,
         });
@@ -534,12 +503,12 @@ describe('Category Management Workflow', () => {
             {result.path.length > 0 && (
               <span>{result.path.join(' > ')} &gt; </span>
             )}
-            <strong>{result.category.name}</strong>
+            <strong>{(result.category as any).name}</strong>
           </div>
         );
       }
       
-      render(<CategoryPath categoryId={'cat_laptops' as Id<'categories'>} />);
+      renderWithProviders(<CategoryPath categoryId={'cat_laptops' as Id<'categories'>} />);
 
       // Should show full path
       expect(screen.getByText(/Electronics > Computers >/)).toBeInTheDocument();

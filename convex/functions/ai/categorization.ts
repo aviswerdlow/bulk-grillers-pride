@@ -1,3 +1,4 @@
+import { internal } from "@convex/_generated/api";
 import { v } from 'convex/values';
 import {
   mutation,
@@ -736,8 +737,12 @@ export const processCategorizationJob = internalAction({
         throw new Error(keyValidation.error);
       }
       
-      console.log(`✅ [AI-CAT] API key validated for ${job.aiProvider} (length: ${apiKey!.length} chars)`);
-      console.log(`🔑 [AI-CAT] Key starts with: ${apiKey!.substring(0, 10)}...`);
+      // Only log in development with minimal key exposure
+      if (process.env.NODE_ENV === 'development') {
+        console.debug(`✅ [AI-CAT] API key validated for ${job.aiProvider} (length: ${apiKey!.length} chars)`);
+        // Maximum 4 characters for security
+        console.debug(`🔑 [AI-CAT] Key prefix: ${apiKey!.substring(0, 4)}***`);
+      }
 
       // Get products to categorize
       const products = await ctx.runQuery(internal.functions.ai.categorization.getProductsByIds, {
@@ -1559,7 +1564,7 @@ export const exportJobResults = action({
     const { jobId, format } = args;
 
     // Get job details using the query we just created
-    const jobDetails = await ctx.runQuery(api.functions.ai.categorization.getJobDetails, { jobId });
+    const jobDetails = await ctx.runQuery(api.ai.categorization.getJobDetails, { jobId });
 
     if (!jobDetails) {
       throw new Error('Job not found or access denied');

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useMutation } from 'convex/react';
 import { api } from '@convex/_generated/api';
 import { Id } from '@convex/_generated/dataModel';
@@ -55,13 +55,13 @@ export function CreateImportJobDialog({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   // Note: Using (api as any) as a workaround until Convex dev server regenerates the API types
-  const createImportJob = useMutation(api.functions.imports.imports.createImportJob);
+  const createImportJob = useMutation((api as any).functions.imports.imports.createImportJob);
    
   const startProductImport = useMutation(
-    api.functions.imports.productImport.startProductImport
+    (api as any).functions.imports.productImport.startProductImport
   );
-  const generateUploadUrl = useMutation(api.functions.imports.imports.generateUploadUrl);
-  const completeFileUpload = useMutation(api.functions.imports.imports.completeFileUpload);
+  const generateUploadUrl = useMutation((api as any).functions.imports.imports.generateUploadUrl);
+  const completeFileUpload = useMutation((api as any).functions.imports.imports.completeFileUpload);
 
   const {
     register,

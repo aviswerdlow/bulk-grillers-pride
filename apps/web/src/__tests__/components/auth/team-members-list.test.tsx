@@ -1,15 +1,16 @@
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import React from 'react';
-import { screen, fireEvent } from '@testing-library/react';
+import { fireEvent } from '@testing-library/react';
+import { mockUseMutation, mockUseQuery, renderWithProviders, resetAllMocks, screen } from '@/__tests__/test-helpers';
 import { TeamMembersList } from '@/components/auth/team-members-list';
-import { render, resetAllMocks } from '../../test-utils';
-// import { toast } from 'sonner';
-import { useQuery, useMutation } from 'convex/react';
+import { toast } from 'sonner';
 
 // Mock convex/react
 jest.mock('convex/react', () => ({
+  ...jest.requireActual('convex/react'),
   useQuery: jest.fn(),
   useMutation: jest.fn(),
-}));
+}) as any);
 
 // Mock sonner
 jest.mock('sonner', () => ({
@@ -17,7 +18,7 @@ jest.mock('sonner', () => ({
     success: jest.fn(),
     error: jest.fn(),
   },
-}));
+}) as any);
 
 // Mock the InviteUserDialog component
 jest.mock('@/components/auth/invite-user-dialog', () => ({
@@ -27,7 +28,7 @@ jest.mock('@/components/auth/invite-user-dialog', () => ({
         <button onClick={() => onOpenChange(false)}>Close Dialog</button>
       </div>
     ) : null,
-}));
+}) as any);
 
 // Mock data
 const mockMembers = [
@@ -60,15 +61,13 @@ const mockMembers = [
   },
 ];
 
-const _mockActiveSessions = [
-  { userId: 'user_123', lastActiveAt: Date.now() },
-  { userId: 'user_456', lastActiveAt: Date.now() },
-];
-
-const mockUseQuery = useQuery as jest.MockedFunction<typeof useQuery>;
-const mockUseMutation = useMutation as jest.MockedFunction<typeof useMutation>;
+// Use mockUseMutation from test-utils
 
 describe('TeamMembersList', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   let mockUpdateUserRole: jest.Mock;
   let mockRemoveUser: jest.Mock;
 
@@ -78,14 +77,14 @@ describe('TeamMembersList', () => {
     mockRemoveUser = jest.fn().mockResolvedValue(undefined);
 
     // Setup default query responses
-    mockUseQuery.mockImplementation(() => {
+    mockUseQuery.mockImplementation(((query: any, args: any) => {
       // Return mock members by default
       return mockMembers;
-    });
+    }) as any);
 
-    mockUseMutation.mockImplementation(() => {
+    mockUseMutation.mockImplementation(((mutation: any) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const mutationName = (_mutation as any)?._functionName || (_mutation as any)?.name || (_mutation as any)?.toString() || '';
+      const mutationName = (mutation as any)?._functionName || (mutation as any)?.name || (mutation as any)?.toString() || '';
       let mutationFn: jest.Mock;
       
       if (mutationName.includes('updateUserRole')) {
@@ -98,14 +97,14 @@ describe('TeamMembersList', () => {
       
       // Return an object that looks like a ReactMutation
       return Object.assign(mutationFn, {
-        withOptimisticUpdate: jest.fn().mockReturnValue(mutationFn)
+        withOptimisticUpdate: jest.fn().mockReturnValue(mutationFn as any)
       });
-    });
+    }) as any);
   });
 
   describe('rendering', () => {
     it('renders team members list', () => {
-      render(<TeamMembersList organizationId="org_123" currentUserRole="owner" />);
+      renderWithProviders(<TeamMembersList organizationId="org_123" currentUserRole="owner" />);
 
       expect(screen.getByText('Team Members')).toBeInTheDocument();
       expect(
@@ -114,10 +113,9 @@ describe('TeamMembersList', () => {
     });
 
     it('shows loading state when members are loading', () => {
-      mockUseQuery.mockReturnValue(undefined);
+      mockUseQuery.mockReturnValue(undefined as any);
 
-      const { container } = render(
-        <TeamMembersList organizationId="org_123" currentUserRole="owner" />
+      const { container } = renderWithProviders(<TeamMembersList organizationId="org_123" currentUserRole="owner" />
       );
 
       const loader = container.querySelector('.animate-spin');
@@ -125,7 +123,7 @@ describe('TeamMembersList', () => {
     });
 
     it('displays all team members', () => {
-      render(<TeamMembersList organizationId="org_123" currentUserRole="owner" />);
+      renderWithProviders(<TeamMembersList organizationId="org_123" currentUserRole="owner" />);
 
       expect(screen.getByText('John Doe')).toBeInTheDocument();
       expect(screen.getByText('Jane Smith')).toBeInTheDocument();
@@ -137,7 +135,7 @@ describe('TeamMembersList', () => {
     });
 
     it('shows role badges', () => {
-      render(<TeamMembersList organizationId="org_123" currentUserRole="member" />);
+      renderWithProviders(<TeamMembersList organizationId="org_123" currentUserRole="member" />);
 
       // When current user is member, all roles are shown as badges
       expect(screen.getByText('Owner')).toBeInTheDocument();
@@ -146,7 +144,7 @@ describe('TeamMembersList', () => {
     });
 
     it('shows active status for online users', () => {
-      render(<TeamMembersList organizationId="org_123" currentUserRole="owner" />);
+      renderWithProviders(<TeamMembersList organizationId="org_123" currentUserRole="owner" />);
 
       const activeStatuses = screen.getAllByText('Active');
       expect(activeStatuses).toHaveLength(2); // John and Jane are active
@@ -155,8 +153,7 @@ describe('TeamMembersList', () => {
     });
 
     it('shows join dates', () => {
-      const { container } = render(
-        <TeamMembersList organizationId="org_123" currentUserRole="owner" />
+      const { container } = renderWithProviders(<TeamMembersList organizationId="org_123" currentUserRole="owner" />
       );
 
       // Find date cells in the table
@@ -169,7 +166,7 @@ describe('TeamMembersList', () => {
     });
 
     it('shows member initials in avatars', () => {
-      render(<TeamMembersList organizationId="org_123" currentUserRole="owner" />);
+      renderWithProviders(<TeamMembersList organizationId="org_123" currentUserRole="owner" />);
 
       expect(screen.getByText('JD')).toBeInTheDocument(); // John Doe
       expect(screen.getByText('JS')).toBeInTheDocument(); // Jane Smith
@@ -177,7 +174,7 @@ describe('TeamMembersList', () => {
     });
 
     it('shows "Unnamed User" for users without names', () => {
-      mockUseQuery.mockImplementation(() => {
+      mockUseQuery.mockImplementation(((query: any, args: any) => {
         // Return mock data for unnamed users test
         return [
           {
@@ -186,9 +183,9 @@ describe('TeamMembersList', () => {
             lastName: null,
           },
         ];
-      });
+      }) as any);
 
-      render(<TeamMembersList organizationId="org_123" currentUserRole="owner" />);
+      renderWithProviders(<TeamMembersList organizationId="org_123" currentUserRole="owner" />);
 
       expect(screen.getByText('Unnamed User')).toBeInTheDocument();
     });
@@ -196,10 +193,10 @@ describe('TeamMembersList', () => {
 
   describe('search functionality', () => {
     it('filters members by email', () => {
-      render(<TeamMembersList organizationId="org_123" currentUserRole="owner" />);
+      renderWithProviders(<TeamMembersList organizationId="org_123" currentUserRole="owner" />);
 
       const searchInput = screen.getByPlaceholderText('Search by name or email...');
-      fireEvent.change(searchInput, { target: { value: 'jane' } });
+      fireEvent.change(searchInput, { target: { value: 'jane'  } } as any);
 
       expect(screen.getByText('Jane Smith')).toBeInTheDocument();
       expect(screen.queryByText('John Doe')).not.toBeInTheDocument();
@@ -207,31 +204,31 @@ describe('TeamMembersList', () => {
     });
 
     it('filters members by name', () => {
-      render(<TeamMembersList organizationId="org_123" currentUserRole="owner" />);
+      renderWithProviders(<TeamMembersList organizationId="org_123" currentUserRole="owner" />);
 
       const searchInput = screen.getByPlaceholderText('Search by name or email...');
-      fireEvent.change(searchInput, { target: { value: 'Smith' } });
+      fireEvent.change(searchInput, { target: { value: 'Smith'  } } as any);
 
       expect(screen.getByText('Jane Smith')).toBeInTheDocument();
       expect(screen.queryByText('John Doe')).not.toBeInTheDocument();
     });
 
     it('shows empty state when no matches found', () => {
-      render(<TeamMembersList organizationId="org_123" currentUserRole="owner" />);
+      renderWithProviders(<TeamMembersList organizationId="org_123" currentUserRole="owner" />);
 
       const searchInput = screen.getByPlaceholderText('Search by name or email...');
-      fireEvent.change(searchInput, { target: { value: 'nonexistent' } });
+      fireEvent.change(searchInput, { target: { value: 'nonexistent'  } } as any);
 
       expect(screen.getByText('No members found matching your search')).toBeInTheDocument();
     });
 
     it('shows empty state when no members', () => {
-      mockUseQuery.mockImplementation(() => {
+      mockUseQuery.mockImplementation(((query: any, args: any) => {
         // Return empty array for no members test
         return [];
-      });
+      }) as any);
 
-      render(<TeamMembersList organizationId="org_123" currentUserRole="owner" />);
+      renderWithProviders(<TeamMembersList organizationId="org_123" currentUserRole="owner" />);
 
       expect(screen.getByText('No team members yet')).toBeInTheDocument();
     });
@@ -239,26 +236,25 @@ describe('TeamMembersList', () => {
 
   describe('permissions', () => {
     it('shows invite button for admin users', () => {
-      render(<TeamMembersList organizationId="org_123" currentUserRole="admin" />);
+      renderWithProviders(<TeamMembersList organizationId="org_123" currentUserRole="admin" />);
 
       expect(screen.getByText('Invite Member')).toBeInTheDocument();
     });
 
     it('shows invite button for owner users', () => {
-      render(<TeamMembersList organizationId="org_123" currentUserRole="owner" />);
+      renderWithProviders(<TeamMembersList organizationId="org_123" currentUserRole="owner" />);
 
       expect(screen.getByText('Invite Member')).toBeInTheDocument();
     });
 
     it('hides invite button for regular members', () => {
-      render(<TeamMembersList organizationId="org_123" currentUserRole="member" />);
+      renderWithProviders(<TeamMembersList organizationId="org_123" currentUserRole="member" />);
 
       expect(screen.queryByText('Invite Member')).not.toBeInTheDocument();
     });
 
     it('shows role dropdown for admin users', () => {
-      const { container } = render(
-        <TeamMembersList organizationId="org_123" currentUserRole="admin" />
+      const { container } = renderWithProviders(<TeamMembersList organizationId="org_123" currentUserRole="admin" />
       );
 
       // Should see select components for non-owner users
@@ -267,7 +263,7 @@ describe('TeamMembersList', () => {
     });
 
     it('shows static role badges for regular members', () => {
-      render(<TeamMembersList organizationId="org_123" currentUserRole="member" />);
+      renderWithProviders(<TeamMembersList organizationId="org_123" currentUserRole="member" />);
 
       // Should not see any role dropdowns
       expect(screen.queryAllByRole('combobox')).toHaveLength(0);
@@ -280,15 +276,15 @@ describe('TeamMembersList', () => {
 
     it('does not fetch active sessions for regular members', () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    mockUseQuery.mockImplementation((_query: any, args?: any) => {
+    mockUseQuery.mockImplementation(((query: any, args?: any) => {
         if (args === 'skip') {
           return undefined;
         }
         // Return mock members for member permission test
         return mockMembers;
-      });
+      }) as any);
 
-      render(<TeamMembersList organizationId="org_123" currentUserRole="member" />);
+      renderWithProviders(<TeamMembersList organizationId="org_123" currentUserRole="member" />);
 
       // Sessions should not be loaded, all users shown as offline
       expect(screen.queryByText('Active')).not.toBeInTheDocument();
@@ -299,7 +295,7 @@ describe('TeamMembersList', () => {
   describe('role management', () => {
     it('updates user role successfully', async () => {
       // Since we're mocking the mutation, just test that it's called correctly
-      render(<TeamMembersList organizationId="org_123" currentUserRole="owner" />);
+      renderWithProviders(<TeamMembersList organizationId="org_123" currentUserRole="owner" />);
 
       // The component should have rendered and mutations should be set up
       expect(mockUseMutation).toHaveBeenCalled();
@@ -322,7 +318,7 @@ describe('TeamMembersList', () => {
       const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
       mockUpdateUserRole.mockRejectedValue(new Error('Update failed'));
 
-      render(<TeamMembersList organizationId="org_123" currentUserRole="owner" />);
+      renderWithProviders(<TeamMembersList organizationId="org_123" currentUserRole="owner" />);
 
       // Test error handling by calling the mutation directly
       try {
@@ -355,14 +351,14 @@ describe('TeamMembersList', () => {
     it('opens confirmation dialog when removing user', async () => {
       // This test is complex due to dropdown menu interactions
       // We'll test that the component renders with action buttons
-      render(<TeamMembersList organizationId="org_123" currentUserRole="owner" />);
+      renderWithProviders(<TeamMembersList organizationId="org_123" currentUserRole="owner" />);
 
       const moreButtons = screen.getAllByLabelText('More actions');
       expect(moreButtons).toHaveLength(2); // Jane and Bob have action buttons
     });
 
     it('removes user successfully', async () => {
-      render(<TeamMembersList organizationId="org_123" currentUserRole="owner" />);
+      renderWithProviders(<TeamMembersList organizationId="org_123" currentUserRole="owner" />);
 
       // Test the mutation is set up correctly
       expect(mockUseMutation).toHaveBeenCalled();
@@ -383,7 +379,7 @@ describe('TeamMembersList', () => {
       const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
       mockRemoveUser.mockRejectedValue(new Error('Remove failed'));
 
-      render(<TeamMembersList organizationId="org_123" currentUserRole="owner" />);
+      renderWithProviders(<TeamMembersList organizationId="org_123" currentUserRole="owner" />);
 
       // Test error handling by calling the mutation directly
       try {
@@ -402,14 +398,14 @@ describe('TeamMembersList', () => {
 
     it('cancels user removal', async () => {
       // This test is simplified as the dialog interaction is complex with mocks
-      render(<TeamMembersList organizationId="org_123" currentUserRole="owner" />);
+      renderWithProviders(<TeamMembersList organizationId="org_123" currentUserRole="owner" />);
 
       // Verify remove mutation is not called on initial render
       expect(mockRemoveUser).not.toHaveBeenCalled();
     });
 
     it('cannot remove owner users', () => {
-      render(<TeamMembersList organizationId="org_123" currentUserRole="owner" />);
+      renderWithProviders(<TeamMembersList organizationId="org_123" currentUserRole="owner" />);
 
       // Owner row should not have actions menu
       const moreButtons = screen.getAllByLabelText('More actions');
@@ -419,22 +415,26 @@ describe('TeamMembersList', () => {
 
   describe('invite dialog', () => {
     it('opens invite dialog when clicking invite button', () => {
-      render(<TeamMembersList organizationId="org_123" currentUserRole="owner" />);
+      renderWithProviders(<TeamMembersList organizationId="org_123" currentUserRole="owner" />);
 
       const inviteButton = screen.getByText('Invite Member');
-      fireEvent.click(inviteButton);
+      if (inviteButton) {
+      fireEvent.click(inviteButton as HTMLElement);
+    }
 
       expect(screen.getByTestId('invite-dialog')).toBeInTheDocument();
     });
 
     it('closes invite dialog', () => {
-      render(<TeamMembersList organizationId="org_123" currentUserRole="owner" />);
+      renderWithProviders(<TeamMembersList organizationId="org_123" currentUserRole="owner" />);
 
       const inviteButton = screen.getByText('Invite Member');
-      fireEvent.click(inviteButton);
+      fireEvent.click(inviteButton as HTMLElement);
 
       const closeButton = screen.getByText('Close Dialog');
-      fireEvent.click(closeButton);
+      if (closeButton) {
+      fireEvent.click(closeButton as HTMLElement);
+    }
 
       expect(screen.queryByTestId('invite-dialog')).not.toBeInTheDocument();
     });

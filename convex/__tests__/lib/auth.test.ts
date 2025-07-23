@@ -1,3 +1,5 @@
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import { t } from '../../test.setup';
 import { 
   authenticateAndAuthorize, 
   requireRole, 
@@ -336,7 +338,7 @@ describe('Auth Utilities', () => {
   });
 
   describe('hasPermission', () => {
-    it('should return true when user has permission', () => {
+    it('should return true when user has permission', async () => {
       const authResult = {
         user: {
           _id: mockUser._id,
@@ -356,7 +358,7 @@ describe('Auth Utilities', () => {
       expect(hasPermission(authResult, 'delete')).toBe(true);
     });
 
-    it('should return false when user lacks permission', () => {
+    it('should return false when user lacks permission', async () => {
       const authResult = {
         user: {
           _id: mockUser._id,
@@ -376,7 +378,7 @@ describe('Auth Utilities', () => {
       expect(hasPermission(authResult, 'admin')).toBe(false);
     });
 
-    it('should handle empty permissions array', () => {
+    it('should handle empty permissions array', async () => {
       const authResult = {
         user: {
           _id: mockUser._id,
@@ -397,7 +399,7 @@ describe('Auth Utilities', () => {
 
   describe('roleHasAccess', () => {
     describe('owner role', () => {
-      it('should have access to all roles', () => {
+      it('should have access to all roles', async () => {
         expect(roleHasAccess('owner', 'owner')).toBe(true);
         expect(roleHasAccess('owner', 'admin')).toBe(true);
         expect(roleHasAccess('owner', 'editor')).toBe(true);
@@ -406,7 +408,7 @@ describe('Auth Utilities', () => {
     });
 
     describe('admin role', () => {
-      it('should have access to admin and below', () => {
+      it('should have access to admin and below', async () => {
         expect(roleHasAccess('admin', 'owner')).toBe(false);
         expect(roleHasAccess('admin', 'admin')).toBe(true);
         expect(roleHasAccess('admin', 'editor')).toBe(true);
@@ -415,7 +417,7 @@ describe('Auth Utilities', () => {
     });
 
     describe('editor role', () => {
-      it('should have access to editor and viewer', () => {
+      it('should have access to editor and viewer', async () => {
         expect(roleHasAccess('editor', 'owner')).toBe(false);
         expect(roleHasAccess('editor', 'admin')).toBe(false);
         expect(roleHasAccess('editor', 'editor')).toBe(true);
@@ -424,7 +426,7 @@ describe('Auth Utilities', () => {
     });
 
     describe('viewer role', () => {
-      it('should only have access to viewer', () => {
+      it('should only have access to viewer', async () => {
         expect(roleHasAccess('viewer', 'owner')).toBe(false);
         expect(roleHasAccess('viewer', 'admin')).toBe(false);
         expect(roleHasAccess('viewer', 'editor')).toBe(false);
@@ -434,14 +436,14 @@ describe('Auth Utilities', () => {
   });
 
   describe('ROLE_HIERARCHY', () => {
-    it('should define correct role hierarchies', () => {
+    it('should define correct role hierarchies', async () => {
       expect(ROLE_HIERARCHY.owner).toEqual(['owner', 'admin', 'editor', 'viewer']);
       expect(ROLE_HIERARCHY.admin).toEqual(['admin', 'editor', 'viewer']);
       expect(ROLE_HIERARCHY.editor).toEqual(['editor', 'viewer']);
       expect(ROLE_HIERARCHY.viewer).toEqual(['viewer']);
     });
 
-    it('should be typed as readonly', () => {
+    it('should be typed as readonly', async () => {
       // TypeScript ensures this is readonly at compile time
       // The type system prevents modification, which is what matters
       expect(ROLE_HIERARCHY).toBeDefined();

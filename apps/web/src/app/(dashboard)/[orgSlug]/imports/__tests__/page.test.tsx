@@ -1,7 +1,9 @@
-import { render, screen, fireEvent, waitFor } from '@/__tests__/test-utils';
-import ImportsPage from '../page';
-import { mockUseQuery } from '@/__tests__/test-utils';
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import React from 'react';
+import { fireEvent, mockUseQuery, render, screen, waitFor, renderWithProviders } from '@/__tests__/test-helpers';
+import { downloadCategoriesTemplate, downloadProductsTemplate, downloadVariantsTemplate } from '@/utils/csv-templates';
 import { useParams } from 'next/navigation';
+import ImportsPage from '../page';
 
 // Mock Next.js router
 jest.mock('next/navigation', () => ({
@@ -18,9 +20,9 @@ jest.mock('@/utils/csv-templates', () => ({
 // Mock the CreateImportJobDialog
 jest.mock('@/components/imports/create-import-job-dialog', () => ({
   CreateImportJobDialog: ({ open, onOpenChange }: any) => 
-    open ? (
+    (open as boolean) ? (
       <div data-testid="create-import-dialog">
-        <button onClick={() => onOpenChange(false)}>Close</button>
+        <button onClick={() => (onOpenChange as any)(false)}>Close</button>
       </div>
     ) : null,
 }));
@@ -48,29 +50,34 @@ jest.mock('lucide-react', () => ({
 // Mock UI components
 jest.mock('@/components/ui/badge', () => ({
   Badge: ({ children, className }: any) => 
-    <span className={className}>{children}</span>,
+    <span className={className as string}>{children}</span>,
 }));
 
 jest.mock('@/components/ui/progress', () => ({
   Progress: ({ value }: any) => 
-    <div data-testid="progress" data-value={value}>Progress: {value}%</div>,
+    <div data-testid="progress" data-value={value as number}>Progress: {value as number}%</div>,
 }));
 
 describe('ImportsPage', () => {
   const mockOrganization = {
-    _id: 'org_123' as any,
+    _id: 'org_123',
+    _creationTime: Date.now(),
     name: 'Test Organization',
     slug: 'test-org',
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
   };
 
   const mockProject = {
-    _id: 'proj_123' as any,
+    _id: 'proj_123',
+    _creationTime: Date.now(),
     name: 'Test Project',
-    organizationId: 'org_123' as any,
+    organizationId: 'org_123',
   };
 
   const mockImportJob = {
     _id: 'job_123',
+    _creationTime: Date.now(),
     status: 'completed',
     fileName: 'products.csv',
     fileSize: 102400,
@@ -93,39 +100,51 @@ describe('ImportsPage', () => {
   it('renders loading state while fetching data', () => {
     mockUseQuery.mockReturnValue(undefined);
     
-    render(<ImportsPage />);
+    renderWithProviders(<ImportsPage />);
     
     expect(screen.getByText('Loading imports...')).toBeInTheDocument();
   });
 
   it('renders error when organization not found', () => {
-    mockUseQuery
-      .mockReturnValueOnce(null) // organization query
-      .mockReturnValueOnce([]); // projects query
+    let callCount = 0;
+    mockUseQuery.mockImplementation(((query: any, args: any) => {
+      callCount++;
+      if (callCount === 1) return null;
+      if (callCount === 2) return [];
+      return undefined;
+    }) as any); // projects query
     
-    render(<ImportsPage />);
+    renderWithProviders(<ImportsPage />);
     
     expect(screen.getByText('Organization not found')).toBeInTheDocument();
   });
 
   it('renders error when no projects found', () => {
-    mockUseQuery
-      .mockReturnValueOnce(mockOrganization) // organization query
-      .mockReturnValueOnce([]); // projects query
+    let callCount = 0;
+    mockUseQuery.mockImplementation(((query: any, args: any) => {
+      callCount++;
+      if (callCount === 1) return mockOrganization;
+      if (callCount === 2) return [];
+      return undefined;
+    }) as any); // projects query
     
-    render(<ImportsPage />);
+    renderWithProviders(<ImportsPage />);
     
     expect(screen.getByText('No Projects Found')).toBeInTheDocument();
     expect(screen.getByText('Create a project first to import data')).toBeInTheDocument();
   });
 
   it('renders import page with empty state', () => {
-    mockUseQuery
-      .mockReturnValueOnce(mockOrganization) // organization query
-      .mockReturnValueOnce([mockProject]) // projects query
-      .mockReturnValueOnce([]); // import jobs query
+    let callCount = 0;
+    mockUseQuery.mockImplementation(((query: any, args: any) => {
+      callCount++;
+      if (callCount === 1) return mockOrganization;
+      if (callCount === 2) return [mockProject];
+      if (callCount === 3) return [];
+      return undefined;
+    }) as any); // import jobs query
     
-    render(<ImportsPage />);
+    renderWithProviders(<ImportsPage />);
     
     expect(screen.getByRole('heading', { name: 'Data Import' })).toBeInTheDocument();
     expect(screen.getByText('No imports yet')).toBeInTheDocument();
@@ -133,12 +152,16 @@ describe('ImportsPage', () => {
   });
 
   it('renders import page with data', () => {
-    mockUseQuery
-      .mockReturnValueOnce(mockOrganization) // organization query
-      .mockReturnValueOnce([mockProject]) // projects query
-      .mockReturnValueOnce([mockImportJob]); // import jobs query
+    let callCount = 0;
+    mockUseQuery.mockImplementation(((query: any, args: any) => {
+      callCount++;
+      if (callCount === 1) return mockOrganization;
+      if (callCount === 2) return [mockProject];
+      if (callCount === 3) return [mockImportJob];
+      return undefined;
+    }) as any); // import jobs query
     
-    render(<ImportsPage />);
+    renderWithProviders(<ImportsPage />);
     
     // Check header
     expect(screen.getByRole('heading', { name: 'Data Import' })).toBeInTheDocument();
@@ -166,12 +189,16 @@ describe('ImportsPage', () => {
       { ...mockImportJob, _id: 'job_4', status: 'uploaded' },
     ];
     
-    mockUseQuery
-      .mockReturnValueOnce(mockOrganization)
-      .mockReturnValueOnce([mockProject])
-      .mockReturnValueOnce(jobs);
+    let callCount = 0;
+    mockUseQuery.mockImplementation(((query: any, args: any) => {
+      callCount++;
+      if (callCount === 1) return mockOrganization;
+      if (callCount === 2) return [mockProject];
+      if (callCount === 3) return jobs;
+      return undefined;
+    }) as any);
     
-    render(<ImportsPage />);
+    renderWithProviders(<ImportsPage />);
     
     // Check status badges
     expect(screen.getByText('completed')).toBeInTheDocument();
@@ -191,12 +218,16 @@ describe('ImportsPage', () => {
       },
     };
     
-    mockUseQuery
-      .mockReturnValueOnce(mockOrganization)
-      .mockReturnValueOnce([mockProject])
-      .mockReturnValueOnce([jobWithProgress]);
+    let callCount = 0;
+    mockUseQuery.mockImplementation(((query: any, args: any) => {
+      callCount++;
+      if (callCount === 1) return mockOrganization;
+      if (callCount === 2) return [mockProject];
+      if (callCount === 3) return [jobWithProgress];
+      return undefined;
+    }) as any);
     
-    render(<ImportsPage />);
+    renderWithProviders(<ImportsPage />);
     
     // Check progress display
     expect(screen.getByText('150/200')).toBeInTheDocument();
@@ -205,7 +236,7 @@ describe('ImportsPage', () => {
 
   it('opens create import dialog when clicking import button', async () => {
     // Mock all useQuery calls to return the expected values
-    mockUseQuery.mockImplementation((query) => {
+    mockUseQuery.mockImplementation(((query: any, args: any) => {
       // Check what query is being called based on the function name
       if (query?.toString().includes('getOrganizationBySlug')) {
         return mockOrganization;
@@ -217,9 +248,9 @@ describe('ImportsPage', () => {
         return [];
       }
       return undefined;
-    });
+    }) as any);
     
-    render(<ImportsPage />);
+    renderWithProviders(<ImportsPage />);
     
     // Wait for the page to load and find the import button
     await waitFor(() => {
@@ -227,18 +258,24 @@ describe('ImportsPage', () => {
     });
     
     const importButton = screen.getAllByRole('button', { name: /Import Data/i })[0];
-    fireEvent.click(importButton);
+    if (importButton) {
+      fireEvent.click(importButton as HTMLElement);
+    }
     
     expect(screen.getByTestId('create-import-dialog')).toBeInTheDocument();
   });
 
   it('renders import templates section', () => {
-    mockUseQuery
-      .mockReturnValueOnce(mockOrganization)
-      .mockReturnValueOnce([mockProject])
-      .mockReturnValueOnce([]);
+    let callCount = 0;
+    mockUseQuery.mockImplementation(((query: any, args: any) => {
+      callCount++;
+      if (callCount === 1) return mockOrganization;
+      if (callCount === 2) return [mockProject];
+      if (callCount === 3) return [];
+      return undefined;
+    }) as any);
     
-    render(<ImportsPage />);
+    renderWithProviders(<ImportsPage />);
     
     expect(screen.getByText('Import Templates')).toBeInTheDocument();
     expect(screen.getByText('Products Template')).toBeInTheDocument();
@@ -247,27 +284,36 @@ describe('ImportsPage', () => {
   });
 
   it('calls download functions when clicking template buttons', () => {
-    const { downloadProductsTemplate, downloadCategoriesTemplate, downloadVariantsTemplate } = 
-      require('@/utils/csv-templates');
+    // Download functions are imported at the top of the file
     
-    mockUseQuery
-      .mockReturnValueOnce(mockOrganization)
-      .mockReturnValueOnce([mockProject])
-      .mockReturnValueOnce([]);
+    let callCount = 0;
+    mockUseQuery.mockImplementation(((query: any, args: any) => {
+      callCount++;
+      if (callCount === 1) return mockOrganization;
+      if (callCount === 2) return [mockProject];
+      if (callCount === 3) return [];
+      return undefined;
+    }) as any);
     
-    render(<ImportsPage />);
+    renderWithProviders(<ImportsPage />);
     
     // Find and click download buttons
     const downloadButtons = screen.getAllByRole('button', { name: /Download/i });
     
-    fireEvent.click(downloadButtons[0]); // Products template
-    expect(downloadProductsTemplate).toHaveBeenCalled();
+    if (downloadButtons[0]) {
+      fireEvent.click(downloadButtons[0] as HTMLElement); // Products template
+      expect(downloadProductsTemplate).toHaveBeenCalled();
+    }
     
-    fireEvent.click(downloadButtons[1]); // Categories template
-    expect(downloadCategoriesTemplate).toHaveBeenCalled();
+    if (downloadButtons[1]) {
+      fireEvent.click(downloadButtons[1] as HTMLElement); // Categories template
+      expect(downloadCategoriesTemplate).toHaveBeenCalled();
+    }
     
-    fireEvent.click(downloadButtons[2]); // Variants template
-    expect(downloadVariantsTemplate).toHaveBeenCalled();
+    if (downloadButtons[2]) {
+      fireEvent.click(downloadButtons[2] as HTMLElement); // Variants template
+      expect(downloadVariantsTemplate).toHaveBeenCalled();
+    }
   });
 
   it('displays validation errors when present', () => {
@@ -276,12 +322,16 @@ describe('ImportsPage', () => {
       validationErrors: ['Invalid SKU format', 'Missing required field'],
     };
     
-    mockUseQuery
-      .mockReturnValueOnce(mockOrganization)
-      .mockReturnValueOnce([mockProject])
-      .mockReturnValueOnce([jobWithErrors]);
+    let callCount = 0;
+    mockUseQuery.mockImplementation(((query: any, args: any) => {
+      callCount++;
+      if (callCount === 1) return mockOrganization;
+      if (callCount === 2) return [mockProject];
+      if (callCount === 3) return [jobWithErrors];
+      return undefined;
+    }) as any);
     
-    render(<ImportsPage />);
+    renderWithProviders(<ImportsPage />);
     
     expect(screen.getByText('2 errors')).toBeInTheDocument();
   });
@@ -293,12 +343,16 @@ describe('ImportsPage', () => {
       { ...mockImportJob, _id: 'job_3', status: 'failed', progress: { ...mockImportJob.progress, importedRows: 0 } },
     ];
     
-    mockUseQuery
-      .mockReturnValueOnce(mockOrganization)
-      .mockReturnValueOnce([mockProject])
-      .mockReturnValueOnce(jobs);
+    let callCount = 0;
+    mockUseQuery.mockImplementation(((query: any, args: any) => {
+      callCount++;
+      if (callCount === 1) return mockOrganization;
+      if (callCount === 2) return [mockProject];
+      if (callCount === 3) return jobs;
+      return undefined;
+    }) as any);
     
-    render(<ImportsPage />);
+    renderWithProviders(<ImportsPage />);
     
     // Total imports
     expect(screen.getByText('3')).toBeInTheDocument();

@@ -27,7 +27,7 @@ function useHighContrastMode() {
   try {
     const mediaQuery = window.matchMedia('(prefers-contrast: high)');
     return mediaQuery.matches;
-  } catch (e) {
+  } catch {
     // For testing environments where matchMedia might not be available
     return false;
   }
@@ -37,9 +37,9 @@ export function usePatternV2(severity: SeverityLevel): PatternConfigV2 {
   const highContrast = useHighContrastMode();
 
   return useMemo(() => {
-    const pattern = getPatternV2(severity, highContrast);
-    const colors = getPatternColorsV2(severity, highContrast);
-    const patternUrl = getPatternUrlV2(severity, highContrast);
+    const pattern = getPatternV2(severity);
+    const colors = getPatternColorsV2(severity);
+    const patternUrl = getPatternUrlV2(severity);
 
     return {
       patternUrl,
@@ -59,9 +59,9 @@ export function usePatternsV2(severities: SeverityLevel[]): Record<SeverityLevel
     const configs: Partial<Record<SeverityLevel, PatternConfigV2>> = {};
     
     severities.forEach(severity => {
-      const pattern = getPatternV2(severity, highContrast);
-      const colors = getPatternColorsV2(severity, highContrast);
-      const patternUrl = getPatternUrlV2(severity, highContrast);
+      const pattern = getPatternV2(severity);
+      const colors = getPatternColorsV2(severity);
+      const patternUrl = getPatternUrlV2(severity);
 
       configs[severity] = {
         patternUrl,

@@ -1,5 +1,6 @@
+import { t } from '../../test.setup';
 import { describe, it, expect, beforeEach } from '@jest/globals';
-import { convexTest } from './test-helpers';
+import { convexTest } from '../../test-helpers';
 import { 
   checkRateLimit, 
   consumeRateLimit, 
@@ -8,7 +9,7 @@ import {
   WINDOW_DURATIONS,
   getRateLimitStatus
 } from '../lib/rateLimit';
-import { Id } from '../_generated/dataModel';
+import { Id } from '../../_generated/dataModel';
 
 describe('Rate Limiting', () => {
   const testUserId = 'user123' as Id<'users'>;
@@ -20,8 +21,7 @@ describe('Rate Limiting', () => {
 
   describe('checkRateLimit', () => {
     it('should allow requests within rate limit', async () => {
-      const t = convexTest();
-      
+    const ctx = await t.mutation(async (ctx) => ctx);
       // Set up test organization
       await t.run(async (ctx) => {
         await ctx.db.insert('organizations', {
@@ -74,8 +74,7 @@ describe('Rate Limiting', () => {
     });
 
     it('should block requests exceeding rate limit', async () => {
-      const t = convexTest();
-      
+    const ctx = await t.mutation(async (ctx) => ctx);
       // Set up test organization with free plan (lower limits)
       await t.run(async (ctx) => {
         await ctx.db.insert('organizations', {
@@ -143,8 +142,7 @@ describe('Rate Limiting', () => {
     });
 
     it('should respect token limits for AI endpoints', async () => {
-      const t = convexTest();
-      
+    const ctx = await t.mutation(async (ctx) => ctx);
       await t.run(async (ctx) => {
         await ctx.db.insert('organizations', {
           name: 'Test Org',
@@ -200,8 +198,7 @@ describe('Rate Limiting', () => {
 
   describe('recordViolation', () => {
     it('should record rate limit violations with correct severity', async () => {
-      const t = convexTest();
-      
+    const ctx = await t.mutation(async (ctx) => ctx);
       await t.run(async (ctx) => {
         await recordViolation(ctx as any, {
           resource: RATE_LIMIT_RESOURCES.AI_CATEGORIZATION,
@@ -233,8 +230,7 @@ describe('Rate Limiting', () => {
     });
 
     it('should mark repeat offenders', async () => {
-      const t = convexTest();
-      
+    const ctx = await t.mutation(async (ctx) => ctx);
       // Record multiple violations
       for (let i = 0; i < 6; i++) {
         await t.run(async (ctx) => {
@@ -270,8 +266,7 @@ describe('Rate Limiting', () => {
 
   describe('getRateLimitStatus', () => {
     it('should return comprehensive rate limit status', async () => {
-      const t = convexTest();
-      
+    const ctx = await t.mutation(async (ctx) => ctx);
       await t.run(async (ctx) => {
         await ctx.db.insert('organizations', {
           name: 'Test Org',
@@ -326,8 +321,7 @@ describe('Rate Limiting', () => {
 
   describe('Rate limit window expiration', () => {
     it('should reset counts when window expires', async () => {
-      const t = convexTest();
-      
+    const ctx = await t.mutation(async (ctx) => ctx);
       await t.run(async (ctx) => {
         await ctx.db.insert('organizations', {
           name: 'Test Org',

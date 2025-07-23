@@ -62,7 +62,7 @@ export function useDeletionUndoRedo(
       case 'TOGGLE_ITEM':
         return { 
           type: 'TOGGLE_ITEM', 
-          itemId: (entry.event as any).itemId 
+          itemId: (entry.event as unknown).itemId 
         };
         
       case 'UPDATE_OPTIONS':

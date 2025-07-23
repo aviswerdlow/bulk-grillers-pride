@@ -1,4 +1,6 @@
-import { convexTest } from '../test-helpers';
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import { t } from '../../test.setup';
+import { convexTest } from '../../test-helpers';
 
 describe('Dashboard API', () => {
   let ctx: any;
@@ -7,7 +9,7 @@ describe('Dashboard API', () => {
   let projectId: string;
 
   beforeEach(async () => {
-    ctx = convexTest();
+    ctx = await t.run(async (ctx) => ctx);
 
     // Create test user
     userId = await ctx.db.insert('users', {
@@ -202,6 +204,7 @@ describe('Dashboard API', () => {
     });
 
     it('should return comprehensive dashboard statistics', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const stats = await ctx.runQuery('getDashboardStats', { organizationId: orgId });
 
       expect(stats).toBeDefined();
@@ -244,6 +247,7 @@ describe('Dashboard API', () => {
     });
 
     it('should handle organization with no data', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       // Create empty org
       const emptyOrgId = await ctx.db.insert('organizations', {
         name: 'Empty Org',
@@ -339,6 +343,7 @@ describe('Dashboard API', () => {
     });
 
     it('should return recent activity in chronological order', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const activities = await ctx.runQuery('getRecentActivity', {
         organizationId: orgId,
         limit: 10,
@@ -355,6 +360,7 @@ describe('Dashboard API', () => {
     });
 
     it('should include user information', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const activities = await ctx.runQuery('getRecentActivity', {
         organizationId: orgId,
         limit: 10,
@@ -366,6 +372,7 @@ describe('Dashboard API', () => {
     });
 
     it('should respect limit parameter', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const activities = await ctx.runQuery('getRecentActivity', {
         organizationId: orgId,
         limit: 3,
@@ -375,6 +382,7 @@ describe('Dashboard API', () => {
     });
 
     it('should filter by project if provided', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       // Create another project with activity
       const projectId2 = await ctx.db.insert('projects', {
         organizationId: orgId,
@@ -411,6 +419,7 @@ describe('Dashboard API', () => {
     });
 
     it('should handle empty activity log', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const emptyOrgId = await ctx.db.insert('organizations', {
         name: 'Empty Activity Org',
         clerkOrganizationId: 'org_789',
@@ -442,6 +451,7 @@ describe('Dashboard API', () => {
 
   describe('getDashboardMetrics', () => {
     it('should calculate growth metrics', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       const now = Date.now();
       const dayMs = 86400000;
 

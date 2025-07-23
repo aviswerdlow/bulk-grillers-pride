@@ -14,8 +14,8 @@ import { toast } from 'sonner';
 
 export function UserProfile() {
   const { user } = useUser();
-  const currentUser = useQuery(api.functions.auth.users.current);
-  const updateProfile = useMutation(api.functions.auth.sessions.updateProfile);
+  const currentUser = useQuery((api as any).functions.auth.users.current);
+  const updateProfile = useMutation((api as any).functions.auth.sessions.updateProfile);
 
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);

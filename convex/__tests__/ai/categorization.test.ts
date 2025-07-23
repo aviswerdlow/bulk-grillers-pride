@@ -1,15 +1,18 @@
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import { t } from '../../test.setup';
 // Jest doesn't need explicit imports for describe, it, expect, beforeEach;
-import { convexTest } from '../test-helpers';
+import { convexTest } from '../../test-helpers';
 
 describe('AI Categorization', () => {
   let ctx: any;
 
   beforeEach(async () => {
-    ctx = convexTest();
+    ctx = await t.run(async (ctx) => ctx);
   });
 
   describe('getCategorizationJob', () => {
     it('should fetch job from database correctly', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       // Create mock user
       const userId = await ctx.db.insert('users', {
         clerkId: 'user_123',
@@ -105,6 +108,7 @@ describe('AI Categorization', () => {
     });
 
     it('should throw error if job not found', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       // Mock auth
       ctx.auth = {
         getUserIdentity: jest.fn().mockResolvedValue({ subject: 'user_123' }),
@@ -131,6 +135,7 @@ describe('AI Categorization', () => {
 
   describe('applyCategorization', () => {
     it('should create categoryProductAssignment correctly', async () => {
+    const ctx = await t.mutation(async (ctx) => ctx);
       // Create required entities
       const userId = await ctx.db.insert('users', {
         clerkId: 'user_123',

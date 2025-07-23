@@ -1,7 +1,11 @@
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+/**
+ * @jest-environment jsdom
+ */
 import React from 'react';
-import { render, screen, waitFor } from '@/__tests__/test-utils';
+import { cleanupTest, renderWithProviders, screen, setupTest, waitFor } from '@/__tests__/test-helpers';
 import userEvent from '@testing-library/user-event';
-import { setupTest, cleanupTest } from '@/__tests__/frontend-test-helpers';
+
 import {
   Dialog,
   DialogClose,
@@ -24,8 +28,7 @@ describe('Dialog', () => {
 
   describe('Basic Functionality', () => {
     it('renders closed by default', () => {
-      render(
-        <Dialog>
+      renderWithProviders(<Dialog>
           <DialogTrigger>Open Dialog</DialogTrigger>
           <DialogContent>
             <DialogTitle>Test Dialog</DialogTitle>
@@ -40,8 +43,7 @@ describe('Dialog', () => {
 
     it('opens when trigger is clicked', async () => {
       const user = userEvent.setup();
-      render(
-        <Dialog>
+      renderWithProviders(<Dialog>
           <DialogTrigger>Open Dialog</DialogTrigger>
           <DialogContent>
             <DialogTitle>Test Dialog</DialogTitle>
@@ -60,8 +62,7 @@ describe('Dialog', () => {
 
     it('shows close button by default', async () => {
       const user = userEvent.setup();
-      render(
-        <Dialog>
+      renderWithProviders(<Dialog>
           <DialogTrigger>Open Dialog</DialogTrigger>
           <DialogContent>
             <DialogTitle>Test Dialog</DialogTitle>
@@ -79,8 +80,7 @@ describe('Dialog', () => {
 
     it('hides close button when showCloseButton is false', async () => {
       const user = userEvent.setup();
-      render(
-        <Dialog>
+      renderWithProviders(<Dialog>
           <DialogTrigger>Open Dialog</DialogTrigger>
           <DialogContent showCloseButton={false}>
             <DialogTitle>Test Dialog</DialogTitle>
@@ -98,8 +98,7 @@ describe('Dialog', () => {
 
     it('closes when close button is clicked', async () => {
       const user = userEvent.setup();
-      render(
-        <Dialog>
+      renderWithProviders(<Dialog>
           <DialogTrigger>Open Dialog</DialogTrigger>
           <DialogContent>
             <DialogTitle>Test Dialog</DialogTitle>
@@ -110,7 +109,7 @@ describe('Dialog', () => {
       await user.click(screen.getByText('Open Dialog'));
       await waitFor(() => expect(screen.getByText('Test Dialog')).toBeInTheDocument());
 
-      const closeButton = screen.getByRole('button', { name: /close/i });
+      const closeButton = screen.getByTestId('dialog-close-button');
       await user.click(closeButton);
 
       await waitFor(() => {
@@ -121,8 +120,7 @@ describe('Dialog', () => {
 
   describe('Controlled State', () => {
     it('respects controlled open state', () => {
-      const { rerender } = render(
-        <Dialog open={false}>
+      const { rerender } = renderWithProviders(<Dialog open={false}>
           <DialogContent>
             <DialogTitle>Controlled Dialog</DialogTitle>
           </DialogContent>
@@ -146,8 +144,7 @@ describe('Dialog', () => {
       const user = userEvent.setup();
       const mockOnOpenChange = jest.fn();
       
-      render(
-        <Dialog onOpenChange={mockOnOpenChange}>
+      renderWithProviders(<Dialog onOpenChange={mockOnOpenChange}>
           <DialogTrigger>Open Dialog</DialogTrigger>
           <DialogContent>
             <DialogTitle>Test Dialog</DialogTitle>
@@ -164,8 +161,7 @@ describe('Dialog', () => {
   describe('Dialog Components', () => {
     it('renders header and footer sections', async () => {
       const user = userEvent.setup();
-      render(
-        <Dialog>
+      renderWithProviders(<Dialog>
           <DialogTrigger>Open Dialog</DialogTrigger>
           <DialogContent>
             <DialogHeader>
@@ -194,8 +190,7 @@ describe('Dialog', () => {
 
     it('applies custom className to components', async () => {
       const user = userEvent.setup();
-      render(
-        <Dialog>
+      renderWithProviders(<Dialog>
           <DialogTrigger>Open</DialogTrigger>
           <DialogContent className="custom-content">
             <DialogHeader className="custom-header">
@@ -235,8 +230,7 @@ describe('Dialog', () => {
   describe('Overlay Behavior', () => {
     it('shows overlay when dialog is open', async () => {
       const user = userEvent.setup();
-      render(
-        <Dialog>
+      renderWithProviders(<Dialog>
           <DialogTrigger>Open Dialog</DialogTrigger>
           <DialogContent>
             <DialogTitle>Test Dialog</DialogTitle>
@@ -255,8 +249,7 @@ describe('Dialog', () => {
 
     it('closes dialog when overlay is clicked', async () => {
       const user = userEvent.setup();
-      render(
-        <Dialog>
+      renderWithProviders(<Dialog>
           <DialogTrigger>Open Dialog</DialogTrigger>
           <DialogContent>
             <DialogTitle>Test Dialog</DialogTitle>
@@ -279,8 +272,7 @@ describe('Dialog', () => {
   describe('Keyboard Navigation', () => {
     it('closes on Escape key', async () => {
       const user = userEvent.setup();
-      render(
-        <Dialog>
+      renderWithProviders(<Dialog>
           <DialogTrigger>Open Dialog</DialogTrigger>
           <DialogContent>
             <DialogTitle>Test Dialog</DialogTitle>
@@ -300,8 +292,7 @@ describe('Dialog', () => {
 
     it('traps focus within dialog', async () => {
       const user = userEvent.setup();
-      render(
-        <Dialog>
+      renderWithProviders(<Dialog>
           <DialogTrigger>Open Dialog</DialogTrigger>
           <DialogContent>
             <DialogHeader>
@@ -338,8 +329,7 @@ describe('Dialog', () => {
   describe('Accessibility', () => {
     it('has proper ARIA attributes', async () => {
       const user = userEvent.setup();
-      render(
-        <Dialog>
+      renderWithProviders(<Dialog>
           <DialogTrigger>Open Dialog</DialogTrigger>
           <DialogContent>
             <DialogTitle>Accessible Dialog</DialogTitle>
@@ -360,8 +350,7 @@ describe('Dialog', () => {
 
     it('announces dialog opening to screen readers', async () => {
       const user = userEvent.setup();
-      render(
-        <Dialog>
+      renderWithProviders(<Dialog>
           <DialogTrigger>Open Dialog</DialogTrigger>
           <DialogContent>
             <DialogTitle>Screen Reader Dialog</DialogTitle>
@@ -384,8 +373,7 @@ describe('Dialog', () => {
 
     it('provides accessible close button', async () => {
       const user = userEvent.setup();
-      render(
-        <Dialog>
+      renderWithProviders(<Dialog>
           <DialogTrigger>Open Dialog</DialogTrigger>
           <DialogContent>
             <DialogTitle>Test Dialog</DialogTitle>
@@ -406,8 +394,7 @@ describe('Dialog', () => {
       const user = userEvent.setup();
       const triggerRef = React.createRef<HTMLButtonElement>();
       
-      render(
-        <Dialog>
+      renderWithProviders(<Dialog>
           <DialogTrigger ref={triggerRef}>Open Dialog</DialogTrigger>
           <DialogContent>
             <DialogTitle>Focus Test Dialog</DialogTitle>
@@ -432,8 +419,7 @@ describe('Dialog', () => {
   describe('Animation States', () => {
     it('applies animation classes', async () => {
       const user = userEvent.setup();
-      render(
-        <Dialog>
+      renderWithProviders(<Dialog>
           <DialogTrigger>Open Dialog</DialogTrigger>
           <DialogContent>
             <DialogTitle>Animated Dialog</DialogTitle>

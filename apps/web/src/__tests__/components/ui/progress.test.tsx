@@ -1,54 +1,60 @@
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import React from 'react';
-import { render, screen } from '../../test-utils';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { cleanupTest, mockUseQuery, mockUseMutation, renderWithProviders, setupTest } from '@/__tests__/test-helpers';
 import { Progress } from '@/components/ui/progress';
-
 // Mock Radix UI Progress
-jest.mock('@radix-ui/react-progress', () => ({
-  Root: React.forwardRef<HTMLDivElement, any>(({ children, className, ...props }, ref) => (
+jest.mock('@radix-ui/react-progress', () => {
+  const Root = React.forwardRef<HTMLDivElement, React.PropsWithChildren<React.HTMLAttributes<HTMLDivElement>>>(({ children, className, ...props }, ref) => (
     <div ref={ref} className={className} role="progressbar" {...props}>
       {children}
     </div>
-  )),
-  Indicator: React.forwardRef<HTMLDivElement, any>(({ className, style, ...props }, ref) => (
+  ));
+  Root.displayName = 'ProgressRoot';
+
+  const Indicator = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(({ className, style, ...props }, ref) => (
     <div ref={ref} className={className} style={style} data-testid="progress-indicator" {...props} />
-  )),
-}));
+  ));
+  Indicator.displayName = 'ProgressIndicator';
+
+  return { Root, Indicator };
+});
 
 describe('Progress Component', () => {
   describe('Rendering', () => {
     it('renders with default props', () => {
-      render(<Progress />);
+      renderWithProviders(<Progress />);
       const progressBar = screen.getByRole('progressbar');
       expect(progressBar).toBeInTheDocument();
     });
 
     it('renders with specific value', () => {
-      render(<Progress value={50} />);
+      renderWithProviders(<Progress value={50} />);
       const indicator = screen.getByTestId('progress-indicator');
       expect(indicator).toHaveStyle({ transform: 'translateX(-50%)' });
     });
 
     it('renders with 0 value', () => {
-      render(<Progress value={0} />);
+      renderWithProviders(<Progress value={0} />);
       const indicator = screen.getByTestId('progress-indicator');
       expect(indicator).toHaveStyle({ transform: 'translateX(-100%)' });
     });
 
     it('renders with 100 value', () => {
-      render(<Progress value={100} />);
+      renderWithProviders(<Progress value={100} />);
       const indicator = screen.getByTestId('progress-indicator');
       expect(indicator).toHaveStyle({ transform: 'translateX(-0%)' });
     });
 
     it('applies custom className to root', () => {
-      render(<Progress className="custom-progress" value={50} />);
+      renderWithProviders(<Progress className="custom-progress" value={50} />);
       const progressBar = screen.getByRole('progressbar');
       expect(progressBar).toHaveClass('custom-progress');
     });
 
     it('forwards ref correctly', () => {
       const ref = React.createRef<HTMLDivElement>();
-      render(<Progress ref={ref} value={75} />);
+      renderWithProviders(<Progress ref={ref} value={75} />);
       expect(ref.current).toBeInstanceOf(HTMLDivElement);
       expect(ref.current).toHaveAttribute('role', 'progressbar');
     });
@@ -56,7 +62,7 @@ describe('Progress Component', () => {
 
   describe('Styling', () => {
     it('applies base styles to root element', () => {
-      render(<Progress value={50} />);
+      renderWithProviders(<Progress value={50} />);
       const progressBar = screen.getByRole('progressbar');
       expect(progressBar.className).toContain('relative');
       expect(progressBar.className).toContain('h-2');
@@ -67,7 +73,7 @@ describe('Progress Component', () => {
     });
 
     it('applies base styles to indicator element', () => {
-      render(<Progress value={50} />);
+      renderWithProviders(<Progress value={50} />);
       const indicator = screen.getByTestId('progress-indicator');
       expect(indicator.className).toContain('h-full');
       expect(indicator.className).toContain('w-full');
@@ -77,14 +83,14 @@ describe('Progress Component', () => {
     });
 
     it('can override height with custom className', () => {
-      render(<Progress className="h-4" value={50} />);
+      renderWithProviders(<Progress className="h-4" value={50} />);
       const progressBar = screen.getByRole('progressbar');
       expect(progressBar).toHaveClass('h-4');
       // Note: h-4 will override the base h-2 class
     });
 
     it('can override colors with custom className', () => {
-      render(<Progress className="bg-gray-200" value={50} />);
+      renderWithProviders(<Progress className="bg-gray-200" value={50} />);
       const progressBar = screen.getByRole('progressbar');
       expect(progressBar).toHaveClass('bg-gray-200');
       // Note: bg-gray-200 will override the base bg-secondary class
@@ -93,33 +99,33 @@ describe('Progress Component', () => {
 
   describe('Value Handling', () => {
     it('handles null/undefined value as 0', () => {
-      render(<Progress value={undefined} />);
+      renderWithProviders(<Progress value={undefined} />);
       const indicator = screen.getByTestId('progress-indicator');
       expect(indicator).toHaveStyle({ transform: 'translateX(-100%)' });
     });
 
     it('handles negative values', () => {
-      render(<Progress value={-10} />);
+      renderWithProviders(<Progress value={-10} />);
       const indicator = screen.getByTestId('progress-indicator');
       // The component doesn't clamp negative values, it will calculate transform based on the value
       expect(indicator).toHaveStyle({ transform: 'translateX(-110%)' });
     });
 
     it('handles values over 100', () => {
-      render(<Progress value={150} />);
+      renderWithProviders(<Progress value={150} />);
       const indicator = screen.getByTestId('progress-indicator');
       // The component doesn't clamp values over 100, it will calculate transform based on the value
       expect(indicator).toHaveStyle({ transform: `translateX(-${100 - 150}%)` });
     });
 
     it('handles decimal values correctly', () => {
-      render(<Progress value={33.33} />);
+      renderWithProviders(<Progress value={33.33} />);
       const indicator = screen.getByTestId('progress-indicator');
       expect(indicator).toHaveStyle({ transform: 'translateX(-66.67%)' });
     });
 
     it('updates when value changes', () => {
-      const { rerender } = render(<Progress value={25} />);
+      const { rerender } = renderWithProviders(<Progress value={25} />);
       const indicator = screen.getByTestId('progress-indicator');
       
       expect(indicator).toHaveStyle({ transform: 'translateX(-75%)' });
@@ -131,32 +137,32 @@ describe('Progress Component', () => {
 
   describe('Accessibility', () => {
     it('has progressbar role', () => {
-      render(<Progress value={50} />);
+      renderWithProviders(<Progress value={50} />);
       const progressBar = screen.getByRole('progressbar');
       expect(progressBar).toBeInTheDocument();
     });
 
     it('can have aria-label', () => {
-      render(<Progress value={50} aria-label="Loading progress" />);
+      renderWithProviders(<Progress value={50} aria-label="Loading progress" />);
       const progressBar = screen.getByRole('progressbar');
       expect(progressBar).toHaveAttribute('aria-label', 'Loading progress');
     });
 
     it('can have aria-valuemin and aria-valuemax', () => {
-      render(<Progress value={50} aria-valuemin={0} aria-valuemax={100} />);
+      renderWithProviders(<Progress value={50} aria-valuemin={0} aria-valuemax={100} />);
       const progressBar = screen.getByRole('progressbar');
       expect(progressBar).toHaveAttribute('aria-valuemin', '0');
       expect(progressBar).toHaveAttribute('aria-valuemax', '100');
     });
 
     it('can have aria-valuenow', () => {
-      render(<Progress value={50} aria-valuenow={50} />);
+      renderWithProviders(<Progress value={50} aria-valuenow={50} />);
       const progressBar = screen.getByRole('progressbar');
       expect(progressBar).toHaveAttribute('aria-valuenow', '50');
     });
 
     it('can have aria-valuetext', () => {
-      render(<Progress value={50} aria-valuetext="50 percent" />);
+      renderWithProviders(<Progress value={50} aria-valuetext="50 percent" />);
       const progressBar = screen.getByRole('progressbar');
       expect(progressBar).toHaveAttribute('aria-valuetext', '50 percent');
     });
@@ -172,7 +178,7 @@ describe('Progress Component', () => {
         </div>
       );
 
-      render(<LoadingState progress={75} />);
+      renderWithProviders(<LoadingState progress={75} />);
       expect(screen.getByText('Uploading file...')).toBeInTheDocument();
       expect(screen.getByRole('progressbar')).toBeInTheDocument();
       expect(screen.getByText('75% complete')).toBeInTheDocument();
@@ -190,7 +196,7 @@ describe('Progress Component', () => {
         return <Progress value={value} />;
       };
 
-      const { rerender } = render(<AnimatedProgress />);
+      renderWithProviders(<AnimatedProgress />);
       const indicator = screen.getByTestId('progress-indicator');
       
       expect(indicator).toHaveStyle({ transform: 'translateX(-100%)' });
@@ -198,8 +204,7 @@ describe('Progress Component', () => {
     });
 
     it('works with multiple progress bars', () => {
-      render(
-        <div>
+      renderWithProviders(<div>
           <Progress value={25} aria-label="Task 1" />
           <Progress value={50} aria-label="Task 2" />
           <Progress value={75} aria-label="Task 3" />
@@ -216,7 +221,7 @@ describe('Progress Component', () => {
 
   describe('Edge Cases', () => {
     it('handles rapid value changes', () => {
-      const { rerender } = render(<Progress value={0} />);
+      const { rerender } = renderWithProviders(<Progress value={0} />);
       const indicator = screen.getByTestId('progress-indicator');
 
       for (let i = 0; i <= 100; i += 10) {
@@ -226,7 +231,7 @@ describe('Progress Component', () => {
     });
 
     it('maintains transition during updates', () => {
-      const { rerender } = render(<Progress value={0} />);
+      const { rerender } = renderWithProviders(<Progress value={0} />);
       const indicator = screen.getByTestId('progress-indicator');
       
       expect(indicator.className).toContain('transition-all');
@@ -239,8 +244,7 @@ describe('Progress Component', () => {
     });
 
     it('works with custom data attributes', () => {
-      render(
-        <Progress 
+      renderWithProviders(<Progress 
           value={50} 
           data-testid="custom-progress"
           data-state="loading"
@@ -252,8 +256,7 @@ describe('Progress Component', () => {
     });
 
     it('handles style prop alongside className', () => {
-      render(
-        <Progress 
+      renderWithProviders(<Progress 
           value={50} 
           className="custom-class"
           style={{ marginTop: '10px' }}
@@ -267,7 +270,7 @@ describe('Progress Component', () => {
 
   describe('Display Name', () => {
     it('component exists and can be rendered', () => {
-      const { container } = render(<Progress value={50} />);
+      const { container } = renderWithProviders(<Progress value={50} />);
       expect(container.firstChild).toBeInTheDocument();
     });
   });

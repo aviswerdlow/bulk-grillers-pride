@@ -1,12 +1,12 @@
 'use client';
 
-import { useQuery, useMutation } from 'convex/react';
+import { useQuery } from 'convex/react';
 import { api } from '@convex/_generated/api';
 import { Id } from '@convex/_generated/dataModel';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -44,15 +44,9 @@ import {
   AlertTriangle,
   Info,
   MoreHorizontal,
-  CheckSquare,
-  Square,
   Archive,
   UserX,
-  Calendar,
-  ChevronLeft,
-  ChevronRight,
 } from 'lucide-react';
-import { SkuCopyButton } from '@/components/ui/sku-copy-button';
 import { Loading } from '@/components/loading';
 import { Product } from '@/types/models';
 import { toast } from 'sonner';
@@ -75,7 +69,7 @@ export default function TrashPage() {
   const [activeTab, setActiveTab] = useState<'products' | 'all'>('products');
 
   // Get organization
-  const organization = useQuery(api.functions.organizations.organizations.getOrganizationBySlug, {
+  const organization = useQuery((api as any).functions.organizations.organizations.getOrganizationBySlug, {
     slug: orgSlug,
   });
 
@@ -123,8 +117,8 @@ export default function TrashPage() {
   ];
 
   // TODO: Replace with actual mutations when backend implements them
-  const restoreProducts = useMutation(api.functions.products.products.createProduct);
-  const permanentlyDeleteProducts = useMutation(api.functions.products.products.createProduct);
+  // const restoreProducts = useMutation((api as any).functions.products.products.createProduct);
+  // const permanentlyDeleteProducts = useMutation((api as any).functions.products.products.createProduct);
 
   if (organization === undefined) {
     return <Loading size="lg" text="Loading trash..." />;

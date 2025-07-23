@@ -1,3 +1,5 @@
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import { t } from '../../test.setup';
 import { isValidSlug, getSlugValidationError } from '../../lib/slugValidation';
 
 describe('Backend Slug Validation', () => {

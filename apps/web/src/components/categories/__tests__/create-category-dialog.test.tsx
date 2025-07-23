@@ -1,11 +1,12 @@
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@/__tests__/test-utils';
+
 import userEvent from '@testing-library/user-event';
+import { cleanupTest, mockUseMutation, mockUseQuery, render, screen, setupTest, waitFor, renderWithProviders } from '@/__tests__/test-helpers';
 import { CreateCategoryDialog } from '../create-category-dialog';
-import { setupTest, cleanupTest } from '@/__tests__/frontend-test-helpers';
-import { toast } from 'sonner';
-import { useQuery, useMutation } from 'convex/react';
 import { Id } from '@convex/_generated/dataModel';
+import { toast } from 'sonner';
+;
 
 // Mock dependencies
 jest.mock('sonner', () => ({
@@ -15,43 +16,40 @@ jest.mock('sonner', () => ({
   },
 }));
 
-jest.mock('convex/react', () => ({
-  ...jest.requireActual('convex/react'),
-  useQuery: jest.fn(),
-  useMutation: jest.fn(() => jest.fn()),
-}));
-
 const mockCategories = [
   {
+    _creationTime: Date.now(),
     _id: 'cat_1',
     name: 'Electronics',
     handle: 'electronics',
     level: 0,
     parentId: null,
-    path: [],
+    path: '',
     isActive: true,
     children: [
       {
-        _id: 'cat_2',
+    _creationTime: Date.now(),
+    _id: 'cat_2',
         name: 'Computers',
         handle: 'computers',
         level: 1,
         parentId: 'cat_1',
-        path: ['cat_1'],
+        path: 'electronics',
         isActive: true,
-        children: [],
+        children: [] as Category[],
       },
     ],
   },
   {
+    _creationTime: Date.now(),
     _id: 'cat_3',
     name: 'Clothing',
     handle: 'clothing',
     level: 0,
     parentId: null,
-    path: [],
+    path: '',
     isActive: true,
-    children: [],
+    children: [] as Category[],
   },
 ];
 
@@ -62,6 +60,10 @@ const mockLevelDefinitions = [
 ];
 
 describe('CreateCategoryDialog', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   const mockOnOpenChange = jest.fn();
   const mockOnSuccess = jest.fn();
   const mockCreateCategory = jest.fn();
@@ -77,7 +79,7 @@ describe('CreateCategoryDialog', () => {
   beforeEach(() => {
     setupTest();
     jest.clearAllMocks();
-    (useQuery as jest.Mock).mockImplementation((query) => {
+    mockUseQuery.mockImplementation((query) => {
       if (query.name?.includes('getCategoryTree')) {
         return mockCategories;
       }
@@ -86,7 +88,7 @@ describe('CreateCategoryDialog', () => {
       }
       return null;
     });
-    (useMutation as jest.Mock).mockReturnValue(mockCreateCategory);
+    mockUseMutation.mockReturnValue(mockCreateCategory);
   });
 
   afterEach(() => {
@@ -95,7 +97,7 @@ describe('CreateCategoryDialog', () => {
 
   describe('Rendering', () => {
     it('renders dialog with correct title', () => {
-      render(<CreateCategoryDialog {...defaultProps} />);
+      renderWithProviders(<CreateCategoryDialog {...defaultProps} />);
 
       expect(screen.getByRole('dialog')).toBeInTheDocument();
       expect(screen.getByText('Create New Category')).toBeInTheDocument();
@@ -103,7 +105,7 @@ describe('CreateCategoryDialog', () => {
 
     it('shows level selector with options', async () => {
       const user = userEvent.setup();
-      render(<CreateCategoryDialog {...defaultProps} />);
+      renderWithProviders(<CreateCategoryDialog {...defaultProps} />);
 
       const levelSelect = screen.getByLabelText(/level/i);
       await user.click(levelSelect);
@@ -115,7 +117,7 @@ describe('CreateCategoryDialog', () => {
 
     it('shows parent selector when subcategory is selected', async () => {
       const user = userEvent.setup();
-      render(<CreateCategoryDialog {...defaultProps} />);
+      renderWithProviders(<CreateCategoryDialog {...defaultProps} />);
 
       // Select subcategory level
       const levelSelect = screen.getByLabelText(/level/i);
@@ -127,7 +129,7 @@ describe('CreateCategoryDialog', () => {
     });
 
     it('hides parent selector for root level', () => {
-      render(<CreateCategoryDialog {...defaultProps} />);
+      renderWithProviders(<CreateCategoryDialog {...defaultProps} />);
 
       // Default is root level, so no parent selector
       expect(screen.queryByLabelText(/parent category/i)).not.toBeInTheDocument();
@@ -137,7 +139,7 @@ describe('CreateCategoryDialog', () => {
   describe('Form Interactions', () => {
     it('auto-generates handle from name', async () => {
       const user = userEvent.setup();
-      render(<CreateCategoryDialog {...defaultProps} />);
+      renderWithProviders(<CreateCategoryDialog {...defaultProps} />);
 
       const nameInput = screen.getByLabelText(/name \*/i);
       const handleInput = screen.getByLabelText(/handle/i);
@@ -149,7 +151,7 @@ describe('CreateCategoryDialog', () => {
 
     it('validates required name field', async () => {
       const user = userEvent.setup();
-      render(<CreateCategoryDialog {...defaultProps} />);
+      renderWithProviders(<CreateCategoryDialog {...defaultProps} />);
 
       const submitButton = screen.getByRole('button', { name: /create category/i });
       await user.click(submitButton);
@@ -161,7 +163,7 @@ describe('CreateCategoryDialog', () => {
 
     it('allows optional description', async () => {
       const user = userEvent.setup();
-      render(<CreateCategoryDialog {...defaultProps} />);
+      renderWithProviders(<CreateCategoryDialog {...defaultProps} />);
 
       const descriptionInput = screen.getByLabelText(/description/i);
       await user.type(descriptionInput, 'This is a test category');
@@ -171,7 +173,7 @@ describe('CreateCategoryDialog', () => {
 
     it('filters parent categories based on selected level', async () => {
       const user = userEvent.setup();
-      render(<CreateCategoryDialog {...defaultProps} />);
+      renderWithProviders(<CreateCategoryDialog {...defaultProps} />);
 
       // Select Type level (level 2)
       const levelSelect = screen.getByLabelText(/level/i);
@@ -193,7 +195,7 @@ describe('CreateCategoryDialog', () => {
       const user = userEvent.setup();
       mockCreateCategory.mockResolvedValueOnce({});
       
-      render(<CreateCategoryDialog {...defaultProps} />);
+      renderWithProviders(<CreateCategoryDialog {...defaultProps} />);
 
       // Fill form
       await user.type(screen.getByLabelText(/name \*/i), 'New Category');
@@ -221,7 +223,7 @@ describe('CreateCategoryDialog', () => {
       const user = userEvent.setup();
       mockCreateCategory.mockResolvedValueOnce({});
       
-      render(<CreateCategoryDialog {...defaultProps} />);
+      renderWithProviders(<CreateCategoryDialog {...defaultProps} />);
 
       // Select subcategory level
       const levelSelect = screen.getByLabelText(/level/i);
@@ -252,7 +254,7 @@ describe('CreateCategoryDialog', () => {
       const user = userEvent.setup();
       mockCreateCategory.mockResolvedValueOnce({});
       
-      render(<CreateCategoryDialog {...defaultProps} />);
+      renderWithProviders(<CreateCategoryDialog {...defaultProps} />);
 
       await user.type(screen.getByLabelText(/name \*/i), 'Test Category');
       await user.click(screen.getByRole('button', { name: /create category/i }));
@@ -268,7 +270,7 @@ describe('CreateCategoryDialog', () => {
       const user = userEvent.setup();
       mockCreateCategory.mockRejectedValueOnce(new Error('Creation failed'));
       
-      render(<CreateCategoryDialog {...defaultProps} />);
+      renderWithProviders(<CreateCategoryDialog {...defaultProps} />);
 
       await user.type(screen.getByLabelText(/name \*/i), 'Test Category');
       await user.click(screen.getByRole('button', { name: /create category/i }));
@@ -282,7 +284,7 @@ describe('CreateCategoryDialog', () => {
       const user = userEvent.setup();
       mockCreateCategory.mockImplementation(() => new Promise(resolve => setTimeout(resolve, 100)));
       
-      render(<CreateCategoryDialog {...defaultProps} />);
+      renderWithProviders(<CreateCategoryDialog {...defaultProps} />);
 
       await user.type(screen.getByLabelText(/name \*/i), 'Test Category');
       const submitButton = screen.getByRole('button', { name: /create category/i });
@@ -297,7 +299,7 @@ describe('CreateCategoryDialog', () => {
   describe('Custom Properties', () => {
     it('adds custom properties', async () => {
       const user = userEvent.setup();
-      render(<CreateCategoryDialog {...defaultProps} />);
+      renderWithProviders(<CreateCategoryDialog {...defaultProps} />);
 
       // Expand custom properties section
       const propertiesButton = screen.getByRole('button', { name: /custom properties/i });
@@ -320,7 +322,7 @@ describe('CreateCategoryDialog', () => {
 
     it('removes custom properties', async () => {
       const user = userEvent.setup();
-      render(<CreateCategoryDialog {...defaultProps} />);
+      renderWithProviders(<CreateCategoryDialog {...defaultProps} />);
 
       // Add a property first
       const propertiesButton = screen.getByRole('button', { name: /custom properties/i });
@@ -341,7 +343,7 @@ describe('CreateCategoryDialog', () => {
       const user = userEvent.setup();
       mockCreateCategory.mockResolvedValueOnce({});
       
-      render(<CreateCategoryDialog {...defaultProps} />);
+      renderWithProviders(<CreateCategoryDialog {...defaultProps} />);
 
       // Add properties
       await user.click(screen.getByRole('button', { name: /custom properties/i }));
@@ -366,7 +368,7 @@ describe('CreateCategoryDialog', () => {
   describe('Dialog Management', () => {
     it('resets form when dialog closes', async () => {
       const user = userEvent.setup();
-      const { rerender } = render(<CreateCategoryDialog {...defaultProps} />);
+      const { rerender } = renderWithProviders(<CreateCategoryDialog {...defaultProps} />);
 
       // Fill some fields
       await user.type(screen.getByLabelText(/name \*/i), 'Test Category');
@@ -381,7 +383,7 @@ describe('CreateCategoryDialog', () => {
 
     it('calls onOpenChange when cancelled', async () => {
       const user = userEvent.setup();
-      render(<CreateCategoryDialog {...defaultProps} />);
+      renderWithProviders(<CreateCategoryDialog {...defaultProps} />);
 
       const cancelButton = screen.getByRole('button', { name: /cancel/i });
       await user.click(cancelButton);
@@ -392,7 +394,7 @@ describe('CreateCategoryDialog', () => {
 
   describe('Accessibility', () => {
     it('has proper ARIA attributes', () => {
-      render(<CreateCategoryDialog {...defaultProps} />);
+      renderWithProviders(<CreateCategoryDialog {...defaultProps} />);
 
       const dialog = screen.getByRole('dialog');
       expect(dialog).toHaveAttribute('aria-labelledby');
@@ -400,7 +402,7 @@ describe('CreateCategoryDialog', () => {
     });
 
     it('focuses on first input when opened', async () => {
-      render(<CreateCategoryDialog {...defaultProps} />);
+      renderWithProviders(<CreateCategoryDialog {...defaultProps} />);
 
       await waitFor(() => {
         const levelSelect = screen.getByLabelText(/level/i);
@@ -410,7 +412,7 @@ describe('CreateCategoryDialog', () => {
 
     it('supports keyboard navigation', async () => {
       const user = userEvent.setup();
-      render(<CreateCategoryDialog {...defaultProps} />);
+      renderWithProviders(<CreateCategoryDialog {...defaultProps} />);
 
       // Tab through form elements
       await user.tab(); // Level select

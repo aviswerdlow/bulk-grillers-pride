@@ -1,26 +1,24 @@
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import React from 'react';
-import { render, screen, waitFor } from '@/__tests__/test-utils';
-import userEvent from '@testing-library/user-event';
-import { setupTest, cleanupTest, createMockProduct } from '@/__tests__/frontend-test-helpers';
-import { toast } from 'sonner';
-import { useQuery, useMutation } from 'convex/react';
-import { Id } from '@convex/_generated/dataModel';
 
-// Components
-import { ProductCard } from '@/components/products/product-card';
-import { CreateProductDialog } from '@/components/products/create-product-dialog';
-import { EditProductDialog } from '@/components/products/edit-product-dialog';
+import userEvent from '@testing-library/user-event';
+import { cleanupTest, createMockProduct, mockUseMutation, mockUseQuery, render, screen, setupTest, waitFor, renderWithProviders } from '@/__tests__/test-helpers';
 import { CategorySelector } from '@/components/categories/category-selector';
 import { CreateCategoryDialog } from '@/components/categories/create-category-dialog';
+import { CreateProductDialog } from '@/components/products/create-product-dialog';
+import { EditProductDialog } from '@/components/products/edit-product-dialog';
+import { ProductCard } from '@/components/products/product-card';
+import { Product } from '@/types/models';
+import { createMockId } from '@bulk-grillers-pride/test-factories';
+import { api } from '@convex/_generated/api';
+import { Id } from '@convex/_generated/dataModel';
+import { toast } from 'sonner';
+;
+
+// Components
 
 // Mock dependencies
 jest.mock('sonner');
-jest.mock('convex/react', () => ({
-  ...jest.requireActual('convex/react'),
-  useQuery: jest.fn(),
-  useMutation: jest.fn(() => jest.fn()),
-}));
-
 jest.mock('next/navigation', () => ({
   useRouter: () => ({
     push: jest.fn(),
@@ -30,6 +28,10 @@ jest.mock('next/navigation', () => ({
 }));
 
 describe('Error States and Edge Cases', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   beforeEach(() => {
     setupTest();
     jest.clearAllMocks();
@@ -51,10 +53,9 @@ describe('Error States and Edge Cases', () => {
         )
       );
       
-      (useMutation as jest.Mock).mockReturnValue(mockCreateProduct);
+      mockUseMutation.mockReturnValue(mockCreateProduct);
       
-      render(
-        <CreateProductDialog
+      renderWithProviders(<CreateProductDialog
           open={true}
           onOpenChange={() => {}}
           organizationId={"org_123" as Id<"organizations">}
@@ -82,15 +83,21 @@ describe('Error States and Edge Cases', () => {
         message: 'Too many requests. Please try again later.',
       });
       
-      (useMutation as jest.Mock).mockReturnValue(mockUpdateProduct);
+      mockUseMutation.mockReturnValue(mockUpdateProduct);
       
       const product = createMockProduct();
       
-      render(
-        <EditProductDialog
+      renderWithProviders(<EditProductDialog
           open={true}
           onOpenChange={() => {}}
-          product={product}
+          product={{
+            ...product,
+            createdAt: Date.now(),
+            version: 1,
+            images: [],
+            metadata: {},
+            lastModifiedBy: "user_123" as Id<"users">
+          } as any}
         />
       );
 
@@ -111,15 +118,13 @@ describe('Error States and Edge Cases', () => {
         .mockRejectedValueOnce(new Error('Server error'))
         .mockResolvedValueOnce({ _id: 'cat_123' });
       
-      (useMutation as jest.Mock).mockReturnValue(mockCreateCategory);
+      mockUseMutation.mockReturnValue(mockCreateCategory);
       
-      render(
-        <CreateCategoryDialog
+      renderWithProviders(<CreateCategoryDialog
           open={true}
           onOpenChange={() => {}}
           organizationId={"org_123" as Id<"organizations">}
           projectId={"project_123" as Id<"projects">}
-          retryEnabled={true}
         />
       );
 
@@ -138,8 +143,7 @@ describe('Error States and Edge Cases', () => {
       const user = userEvent.setup();
       const veryLongTitle = 'A'.repeat(1000);
       
-      render(
-        <CreateProductDialog
+      renderWithProviders(<CreateProductDialog
           open={true}
           onOpenChange={() => {}}
           organizationId={"org_123" as Id<"organizations">}
@@ -159,10 +163,9 @@ describe('Error States and Edge Cases', () => {
     it('sanitizes HTML in user input', async () => {
       const user = userEvent.setup();
       const mockCreateProduct = jest.fn();
-      (useMutation as jest.Mock).mockReturnValue(mockCreateProduct);
+      mockUseMutation.mockReturnValue(mockCreateProduct);
       
-      render(
-        <CreateProductDialog
+      renderWithProviders(<CreateProductDialog
           open={true}
           onOpenChange={() => {}}
           organizationId={"org_123" as Id<"organizations">}
@@ -186,8 +189,7 @@ describe('Error States and Edge Cases', () => {
     it('handles special characters in handles', async () => {
       const user = userEvent.setup();
       
-      render(
-        <CreateProductDialog
+      renderWithProviders(<CreateProductDialog
           open={true}
           onOpenChange={() => {}}
           organizationId={"org_123" as Id<"organizations">}
@@ -211,10 +213,9 @@ describe('Error States and Edge Cases', () => {
         .mockResolvedValueOnce({ _id: 'prod_1' })
         .mockRejectedValueOnce({ code: 'DUPLICATE_HANDLE' });
       
-      (useMutation as jest.Mock).mockReturnValue(mockCreateProduct);
+      mockUseMutation.mockReturnValue(mockCreateProduct);
       
-      const { rerender } = render(
-        <CreateProductDialog
+      const { rerender } = renderWithProviders(<CreateProductDialog
           open={true}
           onOpenChange={() => {}}
           organizationId={"org_123" as Id<"organizations">}
@@ -257,10 +258,9 @@ describe('Error States and Edge Cases', () => {
         () => new Promise(resolve => setTimeout(resolve, 1000))
       );
       
-      (useMutation as jest.Mock).mockReturnValue(mockCreateProduct);
+      mockUseMutation.mockReturnValue(mockCreateProduct);
       
-      render(
-        <CreateProductDialog
+      renderWithProviders(<CreateProductDialog
           open={true}
           onOpenChange={() => {}}
           organizationId={"org_123" as Id<"organizations">}
@@ -289,10 +289,9 @@ describe('Error States and Edge Cases', () => {
         () => new Promise(resolve => setTimeout(() => resolve({ _id: 'cat_123' }), 1000))
       );
       
-      (useMutation as jest.Mock).mockReturnValue(mockCreateCategory);
+      mockUseMutation.mockReturnValue(mockCreateCategory);
       
-      const { unmount } = render(
-        <CreateCategoryDialog
+      const { unmount } = renderWithProviders(<CreateCategoryDialog
           open={true}
           onOpenChange={() => {}}
           organizationId={"org_123" as Id<"organizations">}
@@ -320,7 +319,7 @@ describe('Error States and Edge Cases', () => {
         // Missing optional fields
       };
       
-      render(<ProductCard product={minimalProduct as any} />);
+      renderWithProviders(<ProductCard product={minimalProduct as unknown as Product} />);
       
       expect(screen.getByText('Minimal Product')).toBeInTheDocument();
       expect(screen.getByText('N/A')).toBeInTheDocument(); // Vendor fallback
@@ -330,14 +329,13 @@ describe('Error States and Edge Cases', () => {
 
   describe('Category Selection Edge Cases', () => {
     it('handles empty category tree', async () => {
-      (useQuery as jest.Mock).mockImplementation((query) => {
+      mockUseQuery.mockImplementation((query) => {
         if (query.name?.includes('getCategoryTree')) return [];
         if (query.name?.includes('getCategoryLevels')) return [];
         return null;
       });
       
-      render(
-        <CategorySelector
+      renderWithProviders(<CategorySelector
           organizationId={"org_123" as Id<"organizations">}
           projectId={"project_123" as Id<"projects">}
           selectedCategories={[]}
@@ -357,24 +355,23 @@ describe('Error States and Edge Cases', () => {
           _id: 'cat_1',
           name: 'Category A',
           parentId: 'cat_2', // Points to B
-          children: [],
+          children: [] as Category[],
         },
         {
           _id: 'cat_2',
           name: 'Category B',
           parentId: 'cat_1', // Points to A (circular)
-          children: [],
+          children: [] as Category[],
         },
       ];
       
-      (useQuery as jest.Mock).mockImplementation((query) => {
+      mockUseQuery.mockImplementation((query) => {
         if (query.name?.includes('getCategoryTree')) return circularCategories;
         return null;
       });
       
       // Should not crash or infinite loop
-      render(
-        <CategorySelector
+      renderWithProviders(<CategorySelector
           organizationId={"org_123" as Id<"organizations">}
           projectId={"project_123" as Id<"projects">}
           selectedCategories={[]}
@@ -387,11 +384,11 @@ describe('Error States and Edge Cases', () => {
 
     it('handles very deep category hierarchies', async () => {
       // Create a deeply nested category structure
-      const deepCategories = [];
-      let current = null;
+      const deepCategories: any[] = [];
+      let current: any = null;
       
       for (let i = 0; i < 20; i++) {
-        const category = {
+        const category: any = {
           _id: `cat_${i}`,
           name: `Level ${i}`,
           level: i,
@@ -402,14 +399,13 @@ describe('Error States and Edge Cases', () => {
         if (i === 0) deepCategories.push(category);
       }
       
-      (useQuery as jest.Mock).mockImplementation((query) => {
+      mockUseQuery.mockImplementation((query: any) => {
         if (query.name?.includes('getCategoryTree')) return deepCategories;
         return null;
       });
       
       const user = userEvent.setup();
-      render(
-        <CategorySelector
+      renderWithProviders(<CategorySelector
           organizationId={"org_123" as Id<"organizations">}
           projectId={"project_123" as Id<"projects">}
           selectedCategories={[]}
@@ -432,7 +428,7 @@ describe('Error States and Edge Cases', () => {
       const mockMutation3 = jest.fn().mockResolvedValue({ success: true });
       
       let mutationCount = 0;
-      (useMutation as jest.Mock).mockImplementation(() => {
+      mockUseMutation.mockImplementation(() => {
         mutationCount++;
         if (mutationCount === 1) return mockMutation1;
         if (mutationCount === 2) return mockMutation2;
@@ -441,22 +437,22 @@ describe('Error States and Edge Cases', () => {
       
       // Component that triggers multiple mutations
       function MultiMutationComponent() {
-        const mutation1 = useMutation(() => {});
-        const mutation2 = useMutation(() => {});
-        const mutation3 = useMutation(() => {});
+        const mutation1 = mockUseMutation((api as any).functions.products.products.updateProduct);
+        const mutation2 = mockUseMutation((api as any).functions.products.products.updateProduct);
+        const mutation3 = mockUseMutation((api as any).functions.products.products.updateProduct);
         
         const handleMultiple = async () => {
           await Promise.all([
-            mutation1(),
-            mutation2(),
-            mutation3(),
+            mutation1({ productId: createMockId('products') as Id<'products'> }),
+            mutation2({ productId: createMockId('products') as Id<'products'> }),
+            mutation3({ productId: createMockId('products') as Id<'products'> }),
           ]);
         };
         
         return <button onClick={handleMultiple}>Execute All</button>;
       }
       
-      render(<MultiMutationComponent />);
+      renderWithProviders(<MultiMutationComponent />);
       
       await user.click(screen.getByText('Execute All'));
       
@@ -473,13 +469,12 @@ describe('Error States and Edge Cases', () => {
       // Create a large product list
       const largeProductList = Array.from({ length: 10000 }, (_, i) => 
         createMockProduct({
-          _id: `prod_${i}`,
+          _id: `prod_${i}` as Id<'products'>,
           title: `Product ${i}`,
-        })
+        }) as unknown as Product
       );
       
-      const { unmount } = render(
-        <div>
+      const { unmount } = renderWithProviders(<div>
           {largeProductList.slice(0, 100).map(product => (
             <ProductCard key={product._id} product={product} />
           ))}
@@ -514,7 +509,7 @@ describe('Error States and Edge Cases', () => {
         );
       }
       
-      render(<RapidUpdateComponent />);
+      renderWithProviders(<RapidUpdateComponent />);
       
       await user.click(screen.getByText('Rapid Update'));
       

@@ -56,19 +56,19 @@ export default function ProjectSettingsPage() {
   const [isDeletingProject, setIsDeletingProject] = useState(false);
 
   // Get organization
-  const organization = useQuery(api.functions.organizations.organizations.getOrganizationBySlug, {
+  const organization = useQuery((api as any).functions.organizations.organizations.getOrganizationBySlug, {
     slug: orgSlug,
   });
 
   // Get project
   const project = useQuery(
-    api.functions.projects.projects.getProjectBySlug,
+    (api as any).functions.projects.projects.getProjectBySlug,
     organization ? { organizationId: organization._id, slug: projectSlug } : 'skip'
   );
 
   // Update project mutation
-  const updateProject = useMutation(api.functions.projects.projects.updateProject);
-  const deleteProject = useMutation(api.functions.projects.projects.deleteProject);
+  const updateProject = useMutation((api as any).functions.projects.projects.updateProject);
+  const deleteProject = useMutation((api as any).functions.projects.projects.deleteProject);
 
   // Form setup
   const {
@@ -240,7 +240,7 @@ export default function ProjectSettingsPage() {
                   <Label htmlFor="status">Project Status</Label>
                   <Select
                     value={watch('status')}
-                    onValueChange={(value) => setValue('status', value as any)}
+                    onValueChange={(value) => setValue('status', value as unknown)}
                   >
                     <SelectTrigger>
                       <SelectValue />
