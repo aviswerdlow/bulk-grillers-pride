@@ -163,8 +163,8 @@ describe('SKU Feature Integration Tests', () => {
         </ConvexProvider>
       );
 
-      await user.type(screen.getByPlaceholderText('Enter product title'), 'Test Product');
-      await user.type(screen.getByPlaceholderText('SKU-123'), 'TEST-123');
+      await user.type(screen.getByPlaceholderText('Product Title'), 'Test Product');
+      await user.type(screen.getByPlaceholderText('SKU'), 'TEST-123');
       
       await user.click(screen.getByRole('button', { name: 'Create Product' }));
 

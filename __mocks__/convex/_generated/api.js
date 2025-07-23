@@ -38,6 +38,10 @@ module.exports = {
       },
     },
     organizations: {
+      create: 'organizations.create',
+      update: 'organizations.update',
+      delete: 'organizations.delete',
+      addMember: 'organizations.addMember',
       getUserOrganizations: 'organizations.getUserOrganizations',
       organizations: {
         getOrganizationBySlug: 'organizations.organizations.getOrganizationBySlug',
@@ -73,6 +77,10 @@ module.exports = {
         create: 'products.products.create',
         update: 'products.products.update',
         delete: 'products.products.delete',
+        getProjectProducts: 'products.products.getProjectProducts',
+        createProduct: 'products.products.createProduct',
+        updateProduct: 'products.products.updateProduct',
+        searchProducts: 'products.products.searchProducts',
       },
     },
     projects: {
