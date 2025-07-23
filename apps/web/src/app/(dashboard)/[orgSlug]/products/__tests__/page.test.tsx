@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import { describe, it, expect, beforeEach } from '@jest/globals';
 import React from 'react';
-import { fireEvent, mockUseQuery, render, screen, waitFor, renderWithProviders } from '@/__tests__/test-helpers';
+import { fireEvent, mockUseQuery, screen, waitFor, renderWithProviders } from '@/__tests__/test-helpers';
 import { useParams } from 'next/navigation';
 import ProductsPage from '../page';
 
@@ -11,7 +11,7 @@ jest.mock('next/navigation', () => ({
 
 // Mock the dialogs
 jest.mock('@/components/products/create-product-dialog', () => ({
-  CreateProductDialog: ({ open, onOpenChange }: any) => 
+  CreateProductDialog: ({ open, onOpenChange }: { open?: boolean; onOpenChange?: (open: boolean) => void }) => 
     open ? (
       <div data-testid="create-product-dialog">
         <button onClick={() => onOpenChange(false)}>Close</button>
@@ -20,7 +20,7 @@ jest.mock('@/components/products/create-product-dialog', () => ({
 }));
 
 jest.mock('@/components/products/edit-product-dialog', () => ({
-  EditProductDialog: ({ open, onOpenChange, product }: any) => 
+  EditProductDialog: ({ open, onOpenChange, product }: { open?: boolean; onOpenChange?: (open: boolean) => void; product?: { title?: string } }) => 
     open ? (
       <div data-testid="edit-product-dialog">
         <div data-testid="editing-product">{product.title}</div>
@@ -31,7 +31,7 @@ jest.mock('@/components/products/edit-product-dialog', () => ({
 
 // Mock ProductCard component
 jest.mock('@/components/products/product-card', () => ({
-  ProductCard: ({ product, onEdit }: any) => (
+  ProductCard: ({ product, onEdit }: { product: { _id: string; title: string }; onEdit?: () => void }) => (
     <div data-testid={`product-card-${product._id}`}>
       <h3>{product.title}</h3>
       <button onClick={() => onEdit()}>Edit</button>
@@ -53,30 +53,30 @@ jest.mock('@/components/loading', () => ({
 
 // Mock table components
 jest.mock('@/components/ui/table', () => ({
-  Table: ({ children }: any) => <table>{children}</table>,
-  TableHeader: ({ children }: any) => <thead>{children}</thead>,
-  TableBody: ({ children }: any) => <tbody>{children}</tbody>,
-  TableRow: ({ children }: any) => <tr>{children}</tr>,
-  TableHead: ({ children }: any) => <th role="columnheader">{children}</th>,
-  TableCell: ({ children }: any) => <td>{children}</td>,
+  Table: ({ children }: { children?: React.ReactNode }) => <table>{children}</table>,
+  TableHeader: ({ children }: { children?: React.ReactNode }) => <thead>{children}</thead>,
+  TableBody: ({ children }: { children?: React.ReactNode }) => <tbody>{children}</tbody>,
+  TableRow: ({ children }: { children?: React.ReactNode }) => <tr>{children}</tr>,
+  TableHead: ({ children }: { children?: React.ReactNode }) => <th role="columnheader">{children}</th>,
+  TableCell: ({ children }: { children?: React.ReactNode }) => <td>{children}</td>,
 }));
 
 // Mock UI components that are causing issues
 jest.mock('@/components/ui/toggle-group', () => ({
-  ToggleGroup: ({ value, onValueChange, children }: any) => {
+  ToggleGroup: ({ value, onValueChange, children }: { value?: string; onValueChange?: (value: string) => void; children?: React.ReactNode }) => {
     // Pass onValueChange to children
     return (
       <div data-testid="toggle-group" data-value={value}>
         {React.Children.map(children, (child) => {
           if (React.isValidElement(child)) {
-            return React.cloneElement(child, { onValueChange } as any);
+            return React.cloneElement(child, { onValueChange } as { onValueChange?: (value: string) => void });
           }
           return child;
         })}
       </div>
     );
   },
-  ToggleGroupItem: ({ value, children, onValueChange, 'aria-label': ariaLabel }: any) => (
+  ToggleGroupItem: ({ value, children, onValueChange, 'aria-label': ariaLabel }: { value?: string; children?: React.ReactNode; onValueChange?: (value: string) => void; 'aria-label'?: string }) => (
     <button
       data-testid={`toggle-${value}`}
       aria-label={ariaLabel}
@@ -134,44 +134,48 @@ describe('ProductsPage', () => {
     expect(screen.getByText('Loading products...')).toBeInTheDocument();
   });
 
-  it('renders error when organization not found', () => {
+  it('renders error when organization not found', async () => {
     let callCount = 0;
-    mockUseQuery.mockImplementation(((query: any, args: any) => {
+    mockUseQuery.mockImplementation(((_query: unknown, _args: unknown) => {
       callCount++;
       if (callCount === 1) return null;
       if (callCount === 2) return [];
       return undefined;
-    }) as any); // projects query
+    }) as jest.Mock); // projects query
     
     renderWithProviders(<ProductsPage />);
     
-    expect(screen.getByText('Organization not found')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('Organization not found')).toBeInTheDocument();
+    });
   });
 
-  it('renders error when no projects found', () => {
+  it('renders error when no projects found', async () => {
     let callCount = 0;
-    mockUseQuery.mockImplementation(((query: any, args: any) => {
+    mockUseQuery.mockImplementation(((_query: unknown, _args: unknown) => {
       callCount++;
       if (callCount === 1) return mockOrganization;
       if (callCount === 2) return [];
       return undefined;
-    }) as any); // projects query
+    }) as jest.Mock); // projects query
     
     renderWithProviders(<ProductsPage />);
     
-    expect(screen.getByText('No Projects Found')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('No Projects Found')).toBeInTheDocument();
+    });
     expect(screen.getByText('Create a project first to manage products')).toBeInTheDocument();
   });
 
   it('renders products page with empty state', () => {
     let callCount = 0;
-    mockUseQuery.mockImplementation(((query: any, args: any) => {
+    mockUseQuery.mockImplementation(((_query: unknown, _args: unknown) => {
       callCount++;
       if (callCount === 1) return mockOrganization;
       if (callCount === 2) return [mockProject];
       if (callCount === 3) return { page: [] };
       return undefined;
-    }) as any); // products query
+    }) as jest.Mock); // products query
     
     renderWithProviders(<ProductsPage />);
     
@@ -182,13 +186,13 @@ describe('ProductsPage', () => {
 
   it('renders products page with data in grid view', () => {
     let callCount = 0;
-    mockUseQuery.mockImplementation(((query: any, args: any) => {
+    mockUseQuery.mockImplementation(((_query: unknown, _args: unknown) => {
       callCount++;
       if (callCount === 1) return mockOrganization;
       if (callCount === 2) return [mockProject];
       if (callCount === 3) return { page: [mockProduct] };
       return undefined;
-    }) as any); // products query
+    }) as jest.Mock); // products query
     
     renderWithProviders(<ProductsPage />);
     
@@ -207,15 +211,15 @@ describe('ProductsPage', () => {
   it('switches between grid and list view', async () => {
     // Mock all queries based on the query being called
     let callCount = 0;
-    mockUseQuery.mockImplementation(((query: any, args: any) => {
+    mockUseQuery.mockImplementation(((_query: unknown, _args: unknown) => {
       callCount++;
       if (callCount === 1) return mockOrganization; // getOrganizationBySlug
       if (callCount === 2) return [mockProject];     // getOrganizationProjects
       if (callCount === 3) return { page: [mockProduct] }; // getProjectProducts
       return undefined;
-    }) as any);
+    }) as jest.Mock);
     
-    const { } = renderWithProviders(<ProductsPage />);
+    renderWithProviders(<ProductsPage />);
     
     // Wait for the product to appear in grid view
     await waitFor(() => {
@@ -243,20 +247,20 @@ describe('ProductsPage', () => {
     ];
     
     let callCount = 0;
-    mockUseQuery.mockImplementation(((query: any, args: any) => {
+    mockUseQuery.mockImplementation(((_query: unknown, _args: unknown) => {
       callCount++;
       if (callCount === 1) return mockOrganization;
       if (callCount === 2) return [mockProject];
       if (callCount === 3) return { page: products };
       return undefined;
-    }) as any);
+    }) as jest.Mock);
     
     renderWithProviders(<ProductsPage />);
     
     const searchInput = screen.getByPlaceholderText('Search products...');
     
     // Search for "test"
-    fireEvent.change(searchInput, { target: { value: 'test'  } } as any);
+    fireEvent.change(searchInput, { target: { value: 'test'  } });
     
     // Should only show Test Product
     expect(screen.getByText('Test Product')).toBeInTheDocument();
@@ -270,13 +274,13 @@ describe('ProductsPage', () => {
     ];
     
     let callCount = 0;
-    mockUseQuery.mockImplementation(((query: any, args: any) => {
+    mockUseQuery.mockImplementation(((_query: unknown, _args: unknown) => {
       callCount++;
       if (callCount === 1) return mockOrganization;
       if (callCount === 2) return [mockProject];
       if (callCount === 3) return { page: products };
       return undefined;
-    }) as any);
+    }) as jest.Mock);
     
     renderWithProviders(<ProductsPage />);
     
@@ -292,24 +296,24 @@ describe('ProductsPage', () => {
     
     // Mock the filtered query response
     let callCount2 = 0;
-    mockUseQuery.mockImplementation(((query: any, args: any) => {
+    mockUseQuery.mockImplementation(((_query: unknown, _args: unknown) => {
       callCount2++;
       if (callCount2 === 1) return mockOrganization;
       if (callCount2 === 2) return [mockProject];
       if (callCount2 === 3) return { page: [mockProduct] };
       return undefined;
-    }) as any); // Only active products
+    }) as jest.Mock); // Only active products
   });
 
   it('opens create product dialog when clicking add product button', () => {
     let callCount = 0;
-    mockUseQuery.mockImplementation(((query: any, args: any) => {
+    mockUseQuery.mockImplementation(((_query: unknown, _args: unknown) => {
       callCount++;
       if (callCount === 1) return mockOrganization;
       if (callCount === 2) return [mockProject];
       if (callCount === 3) return { page: [] };
       return undefined;
-    }) as any);
+    }) as jest.Mock);
     
     renderWithProviders(<ProductsPage />);
     
@@ -323,13 +327,13 @@ describe('ProductsPage', () => {
 
   it('opens edit product dialog when clicking edit button', () => {
     let callCount = 0;
-    mockUseQuery.mockImplementation(((query: any, args: any) => {
+    mockUseQuery.mockImplementation(((_query: unknown, _args: unknown) => {
       callCount++;
       if (callCount === 1) return mockOrganization;
       if (callCount === 2) return [mockProject];
       if (callCount === 3) return { page: [mockProduct] };
       return undefined;
-    }) as any);
+    }) as jest.Mock);
     
     renderWithProviders(<ProductsPage />);
     
@@ -350,13 +354,13 @@ describe('ProductsPage', () => {
     ];
     
     let callCount = 0;
-    mockUseQuery.mockImplementation(((query: any, args: any) => {
+    mockUseQuery.mockImplementation(((_query: unknown, _args: unknown) => {
       callCount++;
       if (callCount === 1) return mockOrganization;
       if (callCount === 2) return [mockProject];
       if (callCount === 3) return { page: products };
       return undefined;
-    }) as any);
+    }) as jest.Mock);
     
     renderWithProviders(<ProductsPage />);
     
@@ -384,13 +388,13 @@ describe('ProductsPage', () => {
 
   it('shows loading skeletons in grid view while loading', () => {
     let callCount = 0;
-    mockUseQuery.mockImplementation(((query: any, args: any) => {
+    mockUseQuery.mockImplementation(((_query: unknown, _args: unknown) => {
       callCount++;
       if (callCount === 1) return mockOrganization;
       if (callCount === 2) return [mockProject];
       if (callCount === 3) return undefined;
       return undefined;
-    }) as any); // products loading
+    }) as jest.Mock); // products loading
     
     renderWithProviders(<ProductsPage />);
     
@@ -406,13 +410,13 @@ describe('ProductsPage', () => {
     };
     
     let callCount = 0;
-    mockUseQuery.mockImplementation(((query: any, args: any) => {
+    mockUseQuery.mockImplementation(((_query: unknown, _args: unknown) => {
       callCount++;
       if (callCount === 1) return mockOrganization;
       if (callCount === 2) return [mockProject];
       if (callCount === 3) return { page: [productWithoutDetails] };
       return undefined;
-    }) as any);
+    }) as jest.Mock);
     
     renderWithProviders(<ProductsPage />);
     
@@ -437,13 +441,13 @@ describe('ProductsPage', () => {
     ];
     
     let callCount = 0;
-    mockUseQuery.mockImplementation(((query: any, args: any) => {
+    mockUseQuery.mockImplementation(((_query: unknown, _args: unknown) => {
       callCount++;
       if (callCount === 1) return mockOrganization;
       if (callCount === 2) return [mockProject];
       if (callCount === 3) return { page: products };
       return undefined;
-    }) as any);
+    }) as jest.Mock);
     
     renderWithProviders(<ProductsPage />);
     

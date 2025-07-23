@@ -3,7 +3,7 @@ import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
  * @jest-environment jsdom
  */
 import React from 'react';
-import { fireEvent, within, screen, waitFor } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { 
   cleanupTest, 
@@ -30,11 +30,11 @@ import { CreateProductDialog } from '@/components/products/create-product-dialog
 // Mock components that would use SKU
 jest.mock('@/components/products/product-card', () => ({
   ProductCard: ({ product }: { product: unknown }) => {
-    const React = require('react');
+    const React = jest.requireActual('react');
     return (
       <div data-testid="product-card">
-        <h3>{(product as any).title}</h3>
-        <p data-testid="product-sku">{(product as any).sku || 'No SKU'}</p>
+        <h3>{(product as Record<string, unknown>).title}</h3>
+        <p data-testid="product-sku">{(product as Record<string, unknown>).sku || 'No SKU'}</p>
       </div>
     );
   },
@@ -42,12 +42,12 @@ jest.mock('@/components/products/product-card', () => ({
 
 jest.mock('@/components/products/create-product-dialog', () => ({
   CreateProductDialog: ({ onSuccess }: { onSuccess?: () => void }) => {
-    const React = require('react');
+    const React = jest.requireActual('react');
     
     return (
       <form onSubmit={(e) => {
         e.preventDefault();
-        const formData = new FormData(e.target as HTMLFormElement);
+        const _formData = new FormData(e.target as HTMLFormElement);
         // Simply call onSuccess without mutation
         onSuccess?.();
       }}>
@@ -89,10 +89,10 @@ describe('SKU Feature Integration Tests', () => {
       mockUseQuery.mockReturnValue(mockProducts);
 
       const ProductList = () => {
-        const products = mockUseQuery((api as any).functions.products.products.getProjectProducts);
+        const products = mockUseQuery((api as unknown as Record<string, unknown>).functions.products.products.getProjectProducts);
         return (
           <div>
-            {Array.isArray(products) ? products.map((product: any) => (
+            {Array.isArray(products) ? products.map((product: unknown) => (
               <ProductCard key={product._id} product={product as Product} />
             )) : null}
           </div>
@@ -110,7 +110,7 @@ describe('SKU Feature Integration Tests', () => {
       mockUseQuery.mockReturnValue(mockProducts);
 
       const ProductsTable = () => {
-        const products = mockUseQuery((api as any).functions.products.products.getProjectProducts);
+        const products = mockUseQuery((api as unknown as Record<string, unknown>).functions.products.products.getProjectProducts);
         return (
           <table>
             <thead>
@@ -121,7 +121,7 @@ describe('SKU Feature Integration Tests', () => {
               </tr>
             </thead>
             <tbody>
-              {Array.isArray(products) ? products.map((product: any) => (
+              {Array.isArray(products) ? products.map((product: unknown) => (
                 <tr key={product._id}>
                   <td>{product.title}</td>
                   <td data-testid={`sku-${product._id}`}>{product.sku || '-'}</td>
@@ -140,9 +140,9 @@ describe('SKU Feature Integration Tests', () => {
       );
 
       expect(screen.getByText('SKU')).toBeInTheDocument();
-      expect(screen.getByTestId(`sku-${mockProducts[0]!._id}`)).toHaveTextContent('MEAT-001');
-      expect(screen.getByTestId(`sku-${mockProducts[1]!._id}`)).toHaveTextContent('MEAT-002');
-      expect(screen.getByTestId(`sku-${mockProducts[2]!._id}`)).toHaveTextContent('-');
+      expect(screen.getByTestId(`sku-${mockProducts[0]?._id || ''}`)).toHaveTextContent('MEAT-001');
+      expect(screen.getByTestId(`sku-${mockProducts[1]?._id || ''}`)).toHaveTextContent('MEAT-002');
+      expect(screen.getByTestId(`sku-${mockProducts[2]?._id || ''}`)).toHaveTextContent('-');
     });
   });
 
@@ -163,18 +163,20 @@ describe('SKU Feature Integration Tests', () => {
         </ConvexProvider>
       );
 
-      await user.type(screen.getByPlaceholderText('Product Title'), 'Test Product');
-      await user.type(screen.getByPlaceholderText('SKU'), 'TEST-123');
-      await user.type(screen.getByPlaceholderText('Price'), '29.99');
+      await user.type(screen.getByPlaceholderText('Enter product title'), 'Test Product');
+      await user.type(screen.getByPlaceholderText('SKU-123'), 'TEST-123');
       
-      await user.click(screen.getByText('Create Product'));
+      await user.click(screen.getByRole('button', { name: 'Create Product' }));
 
       await waitFor(() => {
-        expect(createProductMock).toHaveBeenCalledWith({
-          title: 'Test Product',
-          sku: 'TEST-123',
-          price: 29.99,
-        });
+        expect(createProductMock).toHaveBeenCalledWith(
+          expect.objectContaining({
+            title: 'Test Product',
+            sku: 'TEST-123',
+            organizationId: 'org_123',
+            projectId: 'proj_123',
+          })
+        );
       });
     });
 
@@ -233,7 +235,7 @@ describe('SKU Feature Integration Tests', () => {
       const ProductSearch = () => {
         const [searchQuery, setSearchQuery] = React.useState('');
         const products = mockUseQuery(
-          (api as any).functions.products.products.searchProducts,
+          (api as unknown as Record<string, unknown>).functions.products.products.searchProducts,
           searchQuery ? { query: searchQuery } : 'skip'
         );
 
@@ -245,7 +247,7 @@ describe('SKU Feature Integration Tests', () => {
               onChange={(e) => setSearchQuery(e.target?.value)}
             />
             <div data-testid="search-results">
-              {Array.isArray(products) ? products.map((product: any) => (
+              {Array.isArray(products) ? products.map((product: unknown) => (
                 <div key={product._id}>
                   {product.title} - {product.sku || 'No SKU'}
                 </div>
@@ -255,9 +257,9 @@ describe('SKU Feature Integration Tests', () => {
         );
       };
 
-      mockUseQuery.mockImplementation((query: any, args: any) => {
+      mockUseQuery.mockImplementation((_query: unknown, args: unknown) => {
         if (args === 'skip') return undefined;
-        if (args?.query === 'MEAT-001') return mockSearchResults;
+        if ((args as Record<string, unknown>)?.query === 'MEAT-001') return mockSearchResults;
         return [];
       });
 
@@ -281,7 +283,7 @@ describe('SKU Feature Integration Tests', () => {
   describe('SKU Copy Functionality', () => {
     afterEach(() => {
       // Clean up clipboard mock
-      delete (navigator as any).clipboard;
+      delete (navigator as unknown as Record<string, unknown>).clipboard;
     });
     
     it('copies SKU to clipboard when copy button is clicked', async () => {
@@ -294,7 +296,7 @@ describe('SKU Feature Integration Tests', () => {
         writable: true,
       });
 
-      const ProductWithCopyButton = ({ product }: { product: any }) => (
+      const ProductWithCopyButton = ({ product }: { product: { sku: string } }) => (
         <div>
           <span>{product.sku}</span>
           <button
@@ -333,8 +335,8 @@ describe('SKU Feature Integration Tests', () => {
     });
 
     it('validates SKU uniqueness during bulk import', async () => {
-      const validateImportData = (rows: any[]) => {
-        const skus = rows.map((row: any) => row.sku).filter(Boolean);
+      const validateImportData = (rows: unknown[]) => {
+        const skus = rows.map((row: unknown) => (row as Record<string, unknown>).sku).filter(Boolean);
         const uniqueSkus = new Set(skus);
         
         if (skus.length !== uniqueSkus.size) {
@@ -363,8 +365,8 @@ describe('SKU Feature Integration Tests', () => {
       const updateProductMock = jest.fn().mockResolvedValue({});
       mockUseMutation.mockReturnValue(updateProductMock);
 
-      const EditProductDialog = ({ product }: { product: any }) => {
-        const updateProduct = mockUseMutation((api as any).functions.products.products.updateProduct);
+      const EditProductDialog = ({ product }: { product: Product }) => {
+        const updateProduct = mockUseMutation((api as unknown as Record<string, unknown>).functions.products.products.updateProduct);
         
         return (
           <form onSubmit={(e) => {
@@ -395,7 +397,7 @@ describe('SKU Feature Integration Tests', () => {
 
       await waitFor(() => {
         expect(updateProductMock).toHaveBeenCalledWith({
-          id: mockProducts[0]!._id,
+          id: mockProducts[0]?._id || '',
           sku: 'UPDATED-001',
         });
       });

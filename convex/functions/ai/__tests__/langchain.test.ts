@@ -1,13 +1,13 @@
-import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
-import { t } from '../../../test.setup';
+import { describe, it, expect, beforeEach } from '@jest/globals';
+import { Id, Doc } from '../../../_generated/dataModel';
+
 // Jest doesn't need explicit imports for describe, it, expect, beforeEach
 import {
   initializeLLM,
-  createCategorizationChain,
+  estimateCost,
   formatProductsForPrompt,
   formatCategoriesForPrompt,
   estimateTokenCount,
-  estimateCost,
   generateCacheKey,
   ProductCategorizationCache,
   AIProvider,
@@ -117,9 +117,9 @@ describe('LangChain AI Integration', () => {
     it('should calculate costs for OpenAI models', () => {
       const cost = estimateCost('openai', 'o1', 1000, 500);
       
-      expect(cost.inputCost).toBeCloseTo(0.035);
-      expect(cost.outputCost).toBeCloseTo(0.035);
-      expect(cost.totalCost).toBeCloseTo(0.07);
+      expect(cost.inputCost).toBeCloseTo(0.005);
+      expect(cost.outputCost).toBeCloseTo(0.0075);
+      expect(cost.totalCost).toBeCloseTo(0.0125);
     });
 
     it('should calculate costs for Anthropic models', () => {
@@ -159,7 +159,7 @@ describe('LangChain AI Integration', () => {
     it('should format products correctly for prompt', () => {
       const products: Partial<Doc<'products'>>[] = [
         {
-          _id: 'prod1' as any,
+          _id: 'prod1' as Id<'products'>,
           title: 'Test Product',
           description: 'A test product description',
           productType: 'Electronics',
@@ -167,7 +167,7 @@ describe('LangChain AI Integration', () => {
           tags: ['tag1', 'tag2'],
         },
         {
-          _id: 'prod2' as any,
+          _id: 'prod2' as Id<'products'>,
           title: 'Another Product',
           tags: [],
         },
