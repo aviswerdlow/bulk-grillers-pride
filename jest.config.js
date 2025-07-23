@@ -58,6 +58,14 @@ module.exports = {
           '<rootDir>/apps/web/src/__tests__/__mocks__/@radix-ui/react-primitive.js',
         '^@radix-ui/react-slot$':
           '<rootDir>/apps/web/src/__tests__/__mocks__/@radix-ui/react-slot.js',
+        '^@radix-ui/react-label$':
+          '<rootDir>/apps/web/src/__tests__/__mocks__/@radix-ui/react-label.js',
+        '^@radix-ui/react-checkbox$':
+          '<rootDir>/apps/web/src/__tests__/__mocks__/@radix-ui/react-checkbox.js',
+        '^@radix-ui/react-select$':
+          '<rootDir>/apps/web/src/__tests__/__mocks__/@radix-ui/react-select.js',
+        '^@radix-ui/react-scroll-area$':
+          '<rootDir>/apps/web/src/__tests__/__mocks__/@radix-ui/react-scroll-area.js',
         // Generic @convex mapping last
         '^@convex/(.*)$': '<rootDir>/convex/$1',
       },
