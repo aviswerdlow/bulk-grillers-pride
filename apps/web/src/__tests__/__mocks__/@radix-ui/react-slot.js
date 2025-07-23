@@ -18,6 +18,27 @@ const Slot = React.forwardRef(({ children, ...props }, ref) => {
 
 Slot.displayName = 'Slot';
 
+// Slottable component - just renders children
+const Slottable = ({ children }) => children;
+
+// Create slot function for compatibility with @radix-ui/react-primitive
+const createSlot = (name) => {
+  const SlotComponent = React.forwardRef(({ children, ...props }, ref) => {
+    if (React.isValidElement(children)) {
+      return React.cloneElement(children, {
+        ...props,
+        ...children.props,
+        ref,
+      });
+    }
+    return children;
+  });
+  SlotComponent.displayName = name;
+  return SlotComponent;
+};
+
 module.exports = {
   Slot,
+  Slottable,
+  createSlot,
 };

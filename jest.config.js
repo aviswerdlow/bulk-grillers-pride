@@ -54,6 +54,10 @@ module.exports = {
         '^lucide-react$': '<rootDir>/apps/web/src/__tests__/__mocks__/lucide-react.jsx',
         '^@radix-ui/react-dialog$':
           '<rootDir>/apps/web/src/__tests__/__mocks__/@radix-ui/react-dialog.tsx',
+        '^@radix-ui/react-primitive$':
+          '<rootDir>/apps/web/src/__tests__/__mocks__/@radix-ui/react-primitive.js',
+        '^@radix-ui/react-slot$':
+          '<rootDir>/apps/web/src/__tests__/__mocks__/@radix-ui/react-slot.js',
         // Generic @convex mapping last
         '^@convex/(.*)$': '<rootDir>/convex/$1',
       },

@@ -210,6 +210,16 @@ export {
 };
 
 // Also export as namespace for compatibility
+export const Root = Dialog;
+export const Trigger = DialogTrigger;
+export const Portal = DialogPortal;
+export const Overlay = DialogOverlay;
+export const Content = DialogContent;
+export const Close = DialogClose;
+export const Title = DialogTitle;
+export const Description = DialogDescription;
+
+// Default export for star imports
 const DialogPrimitive = {
   Root: Dialog,
   Trigger: DialogTrigger,
