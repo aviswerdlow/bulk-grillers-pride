@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import React from 'react';
 import { fireEvent } from '@testing-library/react';
-import { render, resetAllMocks, setAuthState
+import { render, resetAllMocks, setAuthState } from '@/__tests__/test-helpers';
 import { LogoutButton } from '@/components/auth/logout-button';
 import { useClerk } from '@clerk/nextjs';
 // Mock is now handled by jest module mapper

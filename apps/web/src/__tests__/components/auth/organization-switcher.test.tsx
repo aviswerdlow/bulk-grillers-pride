@@ -5,11 +5,6 @@ import { resetAllMocks, renderWithProviders, mockUseQuery, mockUseMutation } fro
 import { OrganizationSwitcher } from '@/components/auth/organization-switcher';
 import { useParams, useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { render,
-  resetAllMocks,
-  mockUseQuery,
-  mockUseMutation,
-//   createMockOrganization,
 
 
 // Mock next/navigation

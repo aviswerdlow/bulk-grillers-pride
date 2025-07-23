@@ -672,11 +672,11 @@ export async function assertDocumentNotExists(
  * Legacy compatibility wrapper for existing tests
  * @deprecated Use createConvexTest() instead
  */
-export function t {
+export function t() {
   const test = createConvexTest();
   
   return {
-    db: t.db,
+    db: test.db,
     auth: test.auth,
     runQuery: test.runQuery,
     runMutation: test.runMutation,
