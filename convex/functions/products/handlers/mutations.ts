@@ -71,35 +71,16 @@ export async function createProductHandler(
     sku: sku || undefined,
     ...productData,
     status: productData.status || defaultStatus,
-    type: args.type || 'physical',
+    categories: [], // Initialize with empty categories
+    images: [], // Initialize with empty images
+    version: 1, // Initial version
     createdAt: Date.now(),
     updatedAt: Date.now(),
     createdBy: user._id,
     lastModifiedBy: user._id,
   };
 
-  const productId = await ctx.db.insert('products', {
-    organizationId,
-    projectId,
-    title: productData.title,
-    description: productData.description,
-    vendor: productData.vendor,
-    productType: productData.productType,
-    handle: productHandle,
-    sku: sku || undefined,
-    status: productData.status || defaultStatus,
-    seoTitle: productData.seoTitle,
-    seoDescription: productData.seoDescription,
-    tags: productData.tags,
-    categories: [],
-    images: [],
-    metadata: productData.metadata,
-    version: 1,
-    createdBy: user._id,
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-    lastModifiedBy: user._id,
-  });
+  const productId = await ctx.db.insert('products', newProduct);
 
   // Create audit log
   await ctx.db.insert('auditLogs', {

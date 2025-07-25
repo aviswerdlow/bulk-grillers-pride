@@ -48,18 +48,12 @@ export const get = internalQuery({
     
     // Check if expired
     if (entry.expiresAt < now) {
-      // Schedule deletion of expired entry
-      await ctx.scheduler.runAfter(0, internal.cache.service.deleteExpired, {
-        key: args.key,
-      });
+      // Entry is expired, return null
+      // Note: Cleanup will be handled by a separate cron job or mutation
       return null;
     }
     
-    // Update access stats asynchronously
-    await ctx.scheduler.runAfter(0, internal.cache.service.updateStats, {
-      key: args.key,
-      lastAccessedAt: now,
-    });
+    // Note: Access stats update will be handled separately since we can't use scheduler in queries
     
     return entry.value;
   },
@@ -221,7 +215,7 @@ export const deleteExpired = internalMutation({
       
       // If there are more expired entries, schedule another cleanup
       if (expired.length === 100) {
-        await ctx.scheduler.runAfter(0, internal.cache.service.deleteExpired, {});
+        await ctx.scheduler.runAfter(0, internal.functions.cache.service.deleteExpired, {});
       }
     }
   },

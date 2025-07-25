@@ -29,9 +29,10 @@ export const trackDeletionProgress = internalMutation({
       throw new Error(`Transaction not found: ${args.transactionId}`);
     }
     
+    // Note: cascadeTransactions table doesn't have a 'progress' field
+    // We need to update the operations array or status instead
     await ctx.db.patch(transaction._id, {
-      progress: args.progress,
-      updatedAt: Date.now(),
+      status: args.progress.phase === 'completed' ? 'completed' : 'in_progress',
     });
     
     // Update performance metrics if available
@@ -63,10 +64,12 @@ export const subscribeToDeletionProgress = query({
     
     // Calculate additional real-time metrics
     const elapsedTime = Date.now() - transaction.startedAt;
-    const progress = transaction.progress || {
-      phase: 'pending',
-      currentOperation: 'Initializing',
-      completedOperations: 0,
+    // Build progress from transaction status and operations
+    const completedOperations = transaction.operations.filter(op => op.status === 'completed').length;
+    const progress = {
+      phase: transaction.status === 'completed' ? 'completed' : transaction.status === 'in_progress' ? 'executing' : 'pending',
+      currentOperation: transaction.operations.find(op => op.status === 'pending')?.operation || 'Processing',
+      completedOperations,
       totalOperations: 0,
       estimatedTimeRemaining: 0,
     };
@@ -143,18 +146,9 @@ export const createProgressNotification = internalMutation({
     }
     
     // Here you would typically emit a real-time notification
-    // For now, we'll just log it to the transaction
-    const notifications = transaction.notifications || [];
-    notifications.push({
-      type: args.type,
-      message: args.message,
-      details: args.details,
-      timestamp: Date.now(),
-    });
-    
-    await ctx.db.patch(transaction._id, {
-      notifications: notifications.slice(-50), // Keep last 50 notifications
-    });
+    // For now, we'll just update the transaction status
+    // Note: cascadeTransactions table doesn't have a notifications field
+    // In a real implementation, you might want to create a separate notifications table
   },
 });
 

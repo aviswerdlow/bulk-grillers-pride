@@ -1,6 +1,6 @@
 import React from 'react';
-import { fireEvent } from '@testing-library/react';
-import { render, resetAllMocks, setAuthState } from '@/__tests__/test-helpers';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { renderWithProviders, resetAllMocks } from '@/__tests__/test-helpers';
 import { LogoutButton } from '@/components/auth/logout-button';
 import { useClerk } from '@clerk/nextjs';
 // Mock is now handled by jest module mapper
@@ -9,12 +9,9 @@ const mockUseClerk = useClerk as jest.MockedFunction<typeof useClerk>;
 describe('LogoutButton', () => {
   let mockSignOut: jest.Mock;
 
-  const setAuthState = jest.fn();
-
-beforeEach(() => {
+  beforeEach(() => {
     jest.useFakeTimers();
     resetAllMocks();
-    setAuthState(true, 'user_123');
 
     // Create a fresh mock for each test
     mockSignOut = jest.fn().mockResolvedValue(undefined);

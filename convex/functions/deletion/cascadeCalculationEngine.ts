@@ -136,7 +136,7 @@ async function buildCascadeTree(
       entityId,
       entityName: 'Circular Reference',
       operation: 'cascade',
-      children: [] as Category[],
+      children: [] as CascadeNode[],
       metadata: { isCircular: true },
     };
   }
@@ -149,7 +149,7 @@ async function buildCascadeTree(
     entityId,
     entityName: '',
     operation: 'delete',
-    children: [] as Category[],
+    children: [] as CascadeNode[],
     metadata: {},
   };
   
@@ -196,7 +196,7 @@ async function buildProductCascadeNode(
       entityId: 'multiple',
       entityName: `${variants.length} Variant${variants.length > 1 ? 's' : ''}`,
       operation: 'archive',
-      children: [] as Category[],
+      children: [] as CascadeNode[],
       metadata: {
         count: variants.length,
         canRecover: true,
@@ -220,7 +220,7 @@ async function buildProductCascadeNode(
       entityId: 'multiple',
       entityName: `${assignments.length} Category Assignment${assignments.length > 1 ? 's' : ''}`,
       operation: 'delete',
-      children: [] as Category[],
+      children: [] as CascadeNode[],
       metadata: {
         count: assignments.length,
         canRecover: true,
@@ -237,7 +237,7 @@ async function buildProductCascadeNode(
       entityId: 'multiple',
       entityName: `${product.images.length} Image${product.images.length > 1 ? 's' : ''}`,
       operation: 'queue',
-      children: [] as Category[],
+      children: [] as CascadeNode[],
       metadata: {
         count: product.images.length,
         canRecover: false,
@@ -263,7 +263,7 @@ async function buildProductCascadeNode(
       entityId: 'multiple',
       entityName: `${aiJobs.length} AI Categorization Job${aiJobs.length > 1 ? 's' : ''}`,
       operation: 'update',
-      children: [] as Category[],
+      children: [] as CascadeNode[],
       metadata: {
         count: aiJobs.length,
         canRecover: true,

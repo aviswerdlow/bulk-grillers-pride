@@ -1,6 +1,7 @@
 import { query } from '../../_generated/server';
 import { v } from 'convex/values';
 import { CascadeCalculationResult, CascadeNode } from '../../types/cascadeCalculation';
+import { internal } from '../../_generated/api';
 
 export const generateCascadeVisualization = query({
   args: {
@@ -275,7 +276,7 @@ export const getCascadeStatistics = query({
     
     analyzeNode(result.cascadeTree);
     
-    const maxDepth = await getCascadeTreeDepth(ctx, args);
+    const maxDepth = await ctx.runQuery(internal.functions.deletion.cascadeVisualization.getCascadeTreeDepth, args);
     
     return {
       totalNodes,

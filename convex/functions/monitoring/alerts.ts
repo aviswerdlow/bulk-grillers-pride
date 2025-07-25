@@ -228,7 +228,7 @@ export const getAlertHistory = internalQuery({
   handler: async (ctx, args) => {
     // For now, we'll generate alerts on-demand
     // In a production system, you'd store alerts in a separate table
-    const alerts = await checkAlertThresholds(ctx, {
+    const alerts = await ctx.runQuery(internal.functions.monitoring.alerts.checkAlertThresholds, {
       organizationId: args.organizationId,
       timeWindow: 60, // Check last hour
     });
@@ -245,7 +245,7 @@ export const getAlertSummary = internalQuery({
     organizationId: v.id('organizations'),
   },
   handler: async (ctx, args) => {
-    const alerts = await checkAlertThresholds(ctx, {
+    const alerts = await ctx.runQuery(internal.functions.monitoring.alerts.checkAlertThresholds, {
       organizationId: args.organizationId,
       timeWindow: 5, // Check last 5 minutes for current status
     });

@@ -561,11 +561,15 @@ export const bulkDeleteProductsWithPreview = mutation({
     if (!firstProduct) throw new Error('Product not found');
 
     // Permission check
-    const { user } = await requireRole(ctx, firstProduct.organizationId, ['owner', 'admin']);
+    const authResult = await requireRole(ctx, firstProduct.organizationId, ['owner', 'admin']);
+    
+    // Fetch full user document
+    const user = await ctx.db.get(authResult.user._id);
+    if (!user) throw new Error('User not found');
 
     // Validate deletion if not skipping preview
     if (!args.skipPreview) {
-      const validation = await ctx.runQuery(internal.functions.deletion.cascadeDeletionPreview.validateDeletion, { productIds: args.productIds });
+      const validation = await ctx.runQuery(validateDeletion, { productIds: args.productIds });
       if (!validation.canDelete) {
         throw new Error(`Cannot delete: ${validation.blockingReasons.join(', ')}`);
       }
