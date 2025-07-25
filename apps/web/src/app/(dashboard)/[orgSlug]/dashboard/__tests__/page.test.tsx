@@ -1,17 +1,7 @@
 import React from 'react';
 import { fireEvent, within } from '@testing-library/react';
-import { cleanupTest, mockUseQuery, mockUseMutation, renderWithProviders, setupTest } from '@/__tests__/test-helpers';
+import { cleanupTest, mockUseQuery, mockUseMutation, renderWithProviders, setupTest, render, screen, waitFor, seedMockData, createMockOrganization, createMockProject } from '@/__tests__/test-helpers';
 import { useParams } from 'next/navigation';
-import { render, 
-  screen, 
-  waitFor, 
-  setupTest, 
-  cleanupTest,
-  mockUseQuery,
-  seedMockData,
-  createMockOrganization,
-  createMockProject
-, renderWithProviders } from '@/__tests__/test-helpers';
 import OrganizationDashboard from '../page';
 // import { formatDistanceToNow } from 'date-fns';
 

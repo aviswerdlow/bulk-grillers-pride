@@ -30,7 +30,15 @@ mockUseQuery.mockImplementation((query: any) => {
   }
   return undefined;
 });
-mockUseMutation.mockReturnValue(jest.fn());
+// Create a mock mutation that includes withOptimisticUpdate
+export const createMockMutation = () => {
+  const mockFn = jest.fn();
+  mockFn.withOptimisticUpdate = jest.fn().mockReturnValue(mockFn);
+  return mockFn;
+};
+
+// Set default implementation for mockUseMutation
+mockUseMutation.mockImplementation(() => createMockMutation());
 mockUseAction.mockReturnValue(jest.fn());
 
 // Simple wrapper component that includes AccessibilityProvider

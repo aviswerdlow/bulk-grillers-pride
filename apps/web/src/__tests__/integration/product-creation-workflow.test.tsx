@@ -2,7 +2,6 @@
  * @jest-environment jsdom
  */
 import React from 'react';
-import { within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { cleanupTest, createMockProduct, mockUseMutation, render, screen, setupTest, waitFor, within, renderWithProviders } from '@/__tests__/test-helpers';
 import { CreateProductDialog } from '@/components/products/create-product-dialog';

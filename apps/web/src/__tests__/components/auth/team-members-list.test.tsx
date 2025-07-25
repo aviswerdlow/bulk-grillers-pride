@@ -1,8 +1,7 @@
 import React from 'react';
 import { fireEvent, screen } from '@testing-library/react';
-import { mockUseMutation, mockUseQuery, renderWithProviders, resetAllMocks, screen } from '@/__tests__/test-helpers';
+import { mockUseMutation, mockUseQuery, renderWithProviders, resetAllMocks } from '@/__tests__/test-helpers';
 import { TeamMembersList } from '@/components/auth/team-members-list';
-import { toast } from 'sonner';
 
 // Mock convex/react
 jest.mock('convex/react', () => ({
@@ -82,7 +81,7 @@ describe('TeamMembersList', () => {
     }) as any);
 
     mockUseMutation.mockImplementation(((mutation: any) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const mutationName = (mutation as any)?._functionName || (mutation as any)?.name || (mutation as any)?.toString() || '';
       let mutationFn: jest.Mock;
       
@@ -274,7 +273,7 @@ describe('TeamMembersList', () => {
     });
 
     it('does not fetch active sessions for regular members', () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
     mockUseQuery.mockImplementation(((query: any, args?: any) => {
         if (args === 'skip') {
           return undefined;

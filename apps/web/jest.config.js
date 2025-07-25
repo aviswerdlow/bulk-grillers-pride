@@ -25,12 +25,18 @@ module.exports = {
   transformIgnorePatterns: ['node_modules/(?!(convex|@radix-ui|cmdk)/)', '!convex/_generated/'],
   // Transform JS files from convex
   transform: {
-    ...webProjectConfig.transform,
+    '^.+\\.(ts|tsx)$': [
+      'ts-jest',
+      {
+        tsconfig: '<rootDir>/apps/web/tsconfig.test.json',
+      },
+    ],
     '^.+\\.(js|jsx)$': [
       'ts-jest',
       {
         tsconfig: {
-          jsx: 'react',
+          jsx: 'react-jsx',
+          jsxImportSource: 'react',
           allowJs: true,
           esModuleInterop: true,
         },
