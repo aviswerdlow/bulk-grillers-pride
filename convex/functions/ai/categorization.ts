@@ -1,4 +1,3 @@
-import { internal } from "@convex/_generated/api";
 import { v } from 'convex/values';
 import {
   mutation,

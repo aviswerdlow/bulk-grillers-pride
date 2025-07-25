@@ -11,7 +11,6 @@ import { Agent, AgentRole, LLMConfig } from "./types";
 import { 
   processBatchWithLangChain,
   AIProvider,
-  ProductCategorizationResult,
   initializeLLM,
   estimateTokenCount,
   estimateCost,

@@ -1,6 +1,5 @@
 import React from 'react';
-import { fireEvent, screen } from '@testing-library/react';
-import { mockUseMutation, mockUseQuery, renderWithProviders, resetAllMocks } from '@/__tests__/test-helpers';
+import { fireEvent, screen, mockUseMutation, mockUseQuery, renderWithProviders, resetAllMocks } from '@/__tests__/test-helpers';
 import { TeamMembersList } from '@/components/auth/team-members-list';
 
 // Mock convex/react

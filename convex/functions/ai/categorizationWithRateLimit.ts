@@ -1,6 +1,7 @@
 import { v } from 'convex/values';
 import { mutation } from '../../_generated/server';
 import { api } from '../../_generated/api';
+import { Id } from '../../_generated/dataModel';
 import { 
   withRateLimit, 
   RATE_LIMIT_RESOURCES,
@@ -66,7 +67,8 @@ export const createCategorizationJob = withRateLimit(
     }
     
     // Call the original categorization job creation through internal API
-    const jobId = await ctx.scheduler.runNow(
+    const jobId = await ctx.scheduler.runAfter(
+      0,
       api.ai.categorization.createCategorizationJob,
       args
     );
@@ -164,7 +166,8 @@ export const createCategorizationJobManual = mutation({
     });
     
     // Create the job using the original function
-    const jobId = await ctx.scheduler.runNow(
+    const jobId = await ctx.scheduler.runAfter(
+      0,
       api.ai.categorization.createCategorizationJob,
       args
     );
