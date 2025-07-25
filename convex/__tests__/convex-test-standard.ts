@@ -13,7 +13,6 @@
  */
 
 import { Id } from '../_generated/dataModel';
-import { t } from '../../test.setup';
 import { QueryCtx, MutationCtx, ActionCtx } from '../_generated/server';
 
 // ============================================================================
@@ -143,11 +142,11 @@ export function debugMockCalls(test: ConvexTestContext): void {
   console.log('\n=== Mock Function Calls ===');
   
   const mocks = {
-    'db.query': t.db.query,
-    'db.insert': t.db.insert,
-    'db.get': t.db.get,
-    'db.patch': t.db.patch,
-    'db.delete': t.db.delete,
+    'db.query': test.db.query,
+    'db.insert': test.db.insert,
+    'db.get': test.db.get,
+    'db.patch': test.db.patch,
+    'db.delete': test.db.delete,
     'auth.getUserIdentity': test.auth.getUserIdentity,
     'runQuery': test.runQuery,
     'runMutation': test.runMutation,
@@ -537,7 +536,7 @@ export function createConvexTest(): ConvexTestContext {
  */
 export function createQueryContext(test: ConvexTestContext): QueryCtx {
   return {
-    db: t.db,
+    db: test.db,
     auth: test.auth,
   } as unknown as QueryCtx;
 }
@@ -547,7 +546,7 @@ export function createQueryContext(test: ConvexTestContext): QueryCtx {
  */
 export function createMutationContext(test: ConvexTestContext): MutationCtx {
   return {
-    db: t.db,
+    db: test.db,
     auth: test.auth,
     scheduler: test.scheduler,
   } as unknown as MutationCtx;
@@ -608,7 +607,7 @@ export async function seedDatabase(test: ConvexTestContext, data: {
         });
       } else {
         // Otherwise, use the insert method to generate an ID
-        await t.db.insert(table, doc);
+        await test.db.insert(table, doc);
       }
     }
   }

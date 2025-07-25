@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
-import { t } from '../../test.setup';
+import { t } from '../test.setup';
 // Mock convex test helper since convex-test is not installed
 
 import { Id } from '../_generated/dataModel';
@@ -461,7 +461,7 @@ export const convexTest = () => {
         let data = { ...args };
         
         // Add createdBy field if auth is available
-        const authUser = ctx.auth.getUserIdentity ? await ctx.auth.getUserIdentity() : null;
+        const authUser = mockAuth.getUserIdentity ? await mockAuth.getUserIdentity() : null;
         if (authUser && authUser.subject) {
           const user = (storage['users'] || []).find((u: any) => u.clerkId === authUser.subject);
           if (user) {
@@ -635,7 +635,7 @@ export const convexTest = () => {
         const job = await mockDb.get(args.jobId);
         if (!job) throw new Error('Job not found');
         
-        const updates = {
+        const updates: any = {
           progress: {
             ...job.progress,
             ...args.progress,
