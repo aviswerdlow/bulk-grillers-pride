@@ -29,3 +29,5 @@ declare module '@jest/globals' {
     toHaveErrorMessage(text?: string | RegExp): R;
   }
 }
+
+export {};
