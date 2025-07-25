@@ -1,8 +1,9 @@
 
 import React from 'react';
-import { render } from '@testing-library/react';
+import { render, RenderOptions } from '@testing-library/react';
 import { ConvexProvider } from 'convex/react';
 import { ClerkProvider } from '@clerk/nextjs';
+import userEvent from '@testing-library/user-event';
 
 // Create a mock Convex client
 const mockClient = {
@@ -18,16 +19,20 @@ const mockClient = {
 export function TestProviders({ children }: { children: React.ReactNode }) {
   return (
     <ClerkProvider>
-      <ConvexProvider client={mockClient as unknown}>
+      <ConvexProvider client={mockClient as any}>
         {children}
       </ConvexProvider>
     </ClerkProvider>
   );
 }
 
-export function renderWithProviders(ui: React.ReactElement, options?: unknown) {
+export function renderWithProviders(
+  ui: React.ReactElement,
+  options?: Omit<RenderOptions, 'wrapper'>
+) {
   return render(ui, { wrapper: TestProviders, ...options });
 }
 
 // Re-export everything from testing library
 export * from '@testing-library/react';
+export { userEvent };

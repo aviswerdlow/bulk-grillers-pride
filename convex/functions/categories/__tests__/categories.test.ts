@@ -1,71 +1,72 @@
-import { api } from '../../_generated/api';
+import { api } from '../../../_generated/api';
 import { t } from '../../../test.setup';
 import { describe, it, expect, beforeEach } from '@jest/globals';
 import { Id } from '../../../_generated/dataModel';
 import { createCategoryHandler, updateCategoryHandler, deleteCategoryHandler } from '../handlers/mutations';
 import { getCategoryTreeHandler, getBreadcrumbHandler } from '../handlers/queries';
+import { setupAuthenticatedContext } from '../../../test-helpers';
 
 describe('Categories Functions', () => {
-    let userId: Id<'users'>;
+  let userId: Id<'users'>;
   let orgId: Id<'organizations'>;
+  let projectId: Id<'projects'>;
+  let ctx: any;
 
-  beforeEach(() => {
-    // t is already imported from test.setup
-    userId = 'user123' as Id<'users'>;
-    orgId = 'org123' as Id<'organizations'>;
-
-    // Set up test data
-    t.db.insert('users', {
-      _id: userId,
-      _creationTime: Date.now(),
-      email: 'test@example.com',
-      emailVerified: true,
-      displayName: 'Test User',
-      role: 'admin' as const,
+  beforeEach(async () => {
+    // Get the test context
+    ctx = await t.run(async (runCtx) => runCtx);
+    
+    // Setup authenticated context with test user, organization, and project
+    const setup = await setupAuthenticatedContext(ctx, {
+      userId: 'user123',
+      orgId: 'org123',
+      projectId: 'project123',
+      role: 'owner'
     });
+    
+    userId = setup.user._id;
+    orgId = setup.org._id;
+    projectId = setup.project._id;
+  });
 
-    t.db.insert('organizations', {
-      _id: orgId,
+  // Helper to create test category
+  const createTestCategory = async (data: any) => {
+    return ctx.db.insert('categories', {
       _creationTime: Date.now(),
-      name: 'Test Organization',
-      slug: 'test-org',
-      owner: userId,
-      ownerId: userId,
+      organizationId: orgId,
+      projectId,
       createdAt: Date.now(),
       updatedAt: Date.now(),
-      isPersonal: false,
-      subscriptionStatus: 'active',
-      subscriptionPlan: 'free',
-      enforceUniqueSku: false,
+      status: 'active',
+      isVisible: true,
+      version: 1,
+      metadata: {},
+      ...data,
     });
-
-    t.db.insert('organizationMembers', {
-      _id: 'member123' as Id<'organizationMembers'>,
-      _creationTime: Date.now(),
-      userId,
-      organizationId: orgId,
-      role: 'owner',
-      joinedAt: Date.now(),
-    });
-  });
+  };
 
   describe('createCategory', () => {
     it('should create root category', async () => {
-      const ctx = { db: t.db, auth: t.auth };
-      const result = await createCategoryHandler(ctx, {
+      const categoryId = await createCategoryHandler(ctx, {
         name: 'Electronics',
         organizationId: orgId,
+        projectId,
         userId,
       });
 
-      expect(result).toMatchObject({
-        _id: expect.any(String),
+      // The handler returns just the ID, so we need to fetch the created category
+      expect(categoryId).toBeTruthy();
+      expect(typeof categoryId).toBe('string');
+      
+      const createdCategory = await ctx.db.get(categoryId);
+      expect(createdCategory).toMatchObject({
+        _id: categoryId,
         name: 'Electronics',
         organizationId: orgId,
-        parentId: null,
+        parentId: undefined, // Handler stores undefined not null
         level: 0,
-        path: [] as Id<'categories'>[],
-        isActive: true,
+        path: '/electronics', // Handler stores path as string
+        status: 'active',
         createdAt: expect.any(Number),
         updatedAt: expect.any(Number),
       });
@@ -74,29 +75,28 @@ describe('Categories Functions', () => {
     it('should create child category with correct path', async () => {
       // Create parent category
       const parentId = 'parent123' as Id<'categories'>;
-      t.db.insert('categories', {
+      await createTestCategory({
         _id: parentId,
-        _creationTime: Date.now(),
         name: 'Electronics',
-        organizationId: orgId,
         parentId: null,
         level: 0,
         path: [] as Id<'categories'>[],
-        isActive: true,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
+        handle: 'electronics',
       });
 
       // Create child
-      const ctx = { db: t.db, auth: t.auth };
-      const result = await createCategoryHandler(ctx, {
+      const categoryId = await createCategoryHandler(ctx, {
         name: 'Laptops',
         organizationId: orgId,
+        projectId,
         parentId,
         userId,
       });
 
-      expect(result).toMatchObject({
+      expect(categoryId).toBeTruthy();
+      
+      const createdCategory = await ctx.db.get(categoryId);
+      expect(createdCategory).toMatchObject({
         name: 'Laptops',
         parentId,
         level: 1,
@@ -107,7 +107,7 @@ describe('Categories Functions', () => {
     it('should create nested category with full path', async () => {
       // Create grandparent
       const grandparentId = 'grandparent123' as Id<'categories'>;
-      t.db.insert('categories', {
+      ctx.db.insert('categories', {
         _id: grandparentId,
         _creationTime: Date.now(),
         name: 'Electronics',
@@ -122,7 +122,7 @@ describe('Categories Functions', () => {
 
       // Create parent
       const parentId = 'parent123' as Id<'categories'>;
-      t.db.insert('categories', {
+      ctx.db.insert('categories', {
         _id: parentId,
         _creationTime: Date.now(),
         name: 'Computers',
@@ -176,7 +176,7 @@ describe('Categories Functions', () => {
       const parent1Id = 'parent1' as Id<'categories'>;
       const parent2Id = 'parent2' as Id<'categories'>;
       
-      t.db.insert('categories', {
+      ctx.db.insert('categories', {
         _id: parent1Id,
         _creationTime: Date.now(),
         name: 'Electronics',
@@ -189,7 +189,7 @@ describe('Categories Functions', () => {
         updatedAt: Date.now(),
       });
 
-      t.db.insert('categories', {
+      ctx.db.insert('categories', {
         _id: parent2Id,
         _creationTime: Date.now(),
         name: 'Home & Garden',
@@ -243,9 +243,9 @@ describe('Categories Functions', () => {
   describe('updateCategory', () => {
     let categoryId: Id<'categories'>;
 
-    beforeEach(() => {
+    beforeEach(async () => {
       categoryId = 'category123' as Id<'categories'>;
-      t.db.insert('categories', {
+      await ctx.db.insert('categories', {
         _id: categoryId,
         _creationTime: Date.now(),
         name: 'Original Name',
@@ -305,7 +305,7 @@ describe('Categories Functions', () => {
     it('should reject duplicate name at same level', async () => {
       // Create another category
       const otherId = 'other123' as Id<'categories'>;
-      t.db.insert('categories', {
+      ctx.db.insert('categories', {
         _id: otherId,
         _creationTime: Date.now(),
         name: 'Existing Name',
@@ -334,7 +334,7 @@ describe('Categories Functions', () => {
 
     beforeEach(() => {
       categoryId = 'category123' as Id<'categories'>;
-      t.db.insert('categories', {
+      ctx.db.insert('categories', {
         _id: categoryId,
         _creationTime: Date.now(),
         name: 'To Delete',
@@ -362,7 +362,7 @@ describe('Categories Functions', () => {
     it('should reject deletion of category with children', async () => {
       // Create child category
       const childId = 'child123' as Id<'categories'>;
-      t.db.insert('categories', {
+      ctx.db.insert('categories', {
         _id: childId,
         _creationTime: Date.now(),
         name: 'Child Category',
@@ -387,7 +387,7 @@ describe('Categories Functions', () => {
     it('should reject deletion of category with products', async () => {
       // Create a product in this category
       const productId = 'product123' as Id<'products'>;
-      t.db.insert('products', {
+      ctx.db.insert('products', {
         _id: productId,
         _creationTime: Date.now(),
         title: 'Test Product',
@@ -442,7 +442,7 @@ describe('Categories Functions', () => {
       ];
 
       categories.forEach(cat => {
-        t.db.insert('categories', {
+        ctx.db.insert('categories', {
           ...cat,
           _creationTime: Date.now(),
           organizationId: orgId,
@@ -526,7 +526,7 @@ describe('Categories Functions', () => {
       level2Id = 'level2' as Id<'categories'>;
 
       // Create category hierarchy
-      t.db.insert('categories', {
+      ctx.db.insert('categories', {
         _id: rootId,
         _creationTime: Date.now(),
         name: 'Electronics',
@@ -539,7 +539,7 @@ describe('Categories Functions', () => {
         updatedAt: Date.now(),
       });
 
-      t.db.insert('categories', {
+      ctx.db.insert('categories', {
         _id: level1Id,
         _creationTime: Date.now(),
         name: 'Computers',
@@ -552,7 +552,7 @@ describe('Categories Functions', () => {
         updatedAt: Date.now(),
       });
 
-      t.db.insert('categories', {
+      ctx.db.insert('categories', {
         _id: level2Id,
         _creationTime: Date.now(),
         name: 'Laptops',

@@ -27,7 +27,7 @@ const resetMockState = () => {
 // Create a proper chainable query interface
 const createChainableQuery = (tableName, initialData) => {
   let data = [...initialData];
-  let indexApplied = false;
+  let _indexApplied = false;
   
   const chainable = {
     withIndex: jest.fn((indexName, queryFn) => {
@@ -79,7 +79,7 @@ const createChainableQuery = (tableName, initialData) => {
             return true;
           });
         });
-        indexApplied = true;
+        _indexApplied = true;
       }
       return chainable;
     }),
