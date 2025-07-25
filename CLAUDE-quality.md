@@ -32,6 +32,26 @@ owns_paths:
 - \*_/_.spec.ts
 - .github/workflows/test.yml
 
+## Git Workflow Rules
+
+1. **NEVER work directly on main branch**
+2. **Always create feature branch**: `git checkout -b quality/[task-name]`
+3. **Check existing PRs before starting**: `gh pr list`
+4. **Pull main regularly**: `git pull origin main`
+5. **Push to branch when complete**: `git push -u origin quality/[task-name]`
+6. **DON'T create PR unless explicitly asked**
+
+### Branch Naming Convention
+- Use format: `quality/[brief-description]`
+- Examples: `quality/improve-test-coverage`, `quality/add-e2e-tests`, `quality/security-audit`
+
+### Before Starting Any Work
+```bash
+git checkout main
+git pull origin main
+git checkout -b quality/[task-description]
+```
+
 ## SuperClaude Workflow
 
 1. **Security Audit**: `/sc:scan --security --owasp --strict`

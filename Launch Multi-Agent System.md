@@ -1,5 +1,59 @@
 # **Launch Multi-Agent System**
 
+## CRITICAL: Branching Strategy
+
+### All Agents MUST Use Feature Branches
+To prevent issues like PR#12 (where infrastructure changes blocked all other work), agents must follow this branching strategy:
+
+1. **Never work directly on main branch**
+2. **Create feature branches using naming convention**: `[agent-type]/[task-description]`
+3. **Check for existing PRs before starting work**: `gh pr list`
+4. **Pull main regularly to stay updated**
+5. **Push to branch when complete, DON'T create PR unless explicitly asked**
+
+### Branch Naming Examples:
+- `frontend/add-user-profile`
+- `backend/fix-auth-tests`
+- `infra/upgrade-dependencies`
+- `quality/improve-test-coverage`
+- `docs/update-api-docs`
+
+### Git Workflow for All Agents:
+```bash
+# Before starting any work
+git checkout main
+git pull origin main
+git checkout -b [agent-type]/[task-name]
+
+# During work
+git add .
+git commit -m "type: description"  # Use conventional commits
+
+# When ready for review
+git push -u origin [branch-name]
+# Then notify human to create PR
+```
+
+### PR Creation Best Practices
+
+**When Agents Should Push (Not Create PR)**:
+- After completing a logical unit of work
+- When switching to unrelated tasks
+- At the end of a work session
+- When human requests status update
+
+**Human Creates PRs When**:
+- Feature is complete and tested
+- Multiple related commits are ready for review
+- Critical fixes need immediate deployment
+- Before major context switches
+
+**Avoiding PR#12 Situations**:
+- Infrastructure changes always on separate branches
+- Never merge breaking changes without coordination
+- Keep main branch stable at all times
+- Group related changes in single PRs
+
 ## Phase 2: Launch the Multi-Agent System (10 Agents Total)
 
 ### **Terminal 1: Frontend Agent**

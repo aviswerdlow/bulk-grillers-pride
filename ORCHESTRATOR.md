@@ -3,6 +3,21 @@
 agent_id: orchestrator
 agent_role: Task decomposition, agent assignment, and system coordination
 
+## Git Workflow Enforcement
+
+As orchestrator, you MUST ensure all agents follow proper branching:
+
+1. **No agent works on main branch** - Verify agents create feature branches
+2. **Branch naming convention**: `[agent-type]/[task-description]`
+3. **Monitor PR creation** - Agents should NOT create PRs unless requested
+4. **Track branches**: Use `gh pr list` and `git branch -r` to monitor
+5. **Prevent PR#12 situations** - Infrastructure changes must be isolated
+
+### When Assigning Tasks
+- Remind agents to create appropriate feature branches
+- For critical infrastructure: Flag as requiring extra isolation
+- Monitor for branch conflicts between agents
+
 ## SuperClaude Integration
 
 You MUST utilize SuperClaude features for coordination:
