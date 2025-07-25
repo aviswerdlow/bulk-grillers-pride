@@ -9,7 +9,7 @@ import { z } from 'zod';
 /**
  * Generic form field configuration
  */
-export interface FormField<T = Record<string, unknown>> {
+export interface FormField<T = unknown> {
   name: keyof T;
   label: string;
   type:
@@ -25,7 +25,7 @@ export interface FormField<T = Record<string, unknown>> {
   placeholder?: string;
   required?: boolean;
   disabled?: boolean;
-  defaultValue?: T[keyof T];
+  defaultValue?: unknown;
   options?: SelectOption[];
   validation?: z.ZodType<unknown>;
   description?: string;
@@ -44,7 +44,7 @@ export interface SelectOption {
 /**
  * Form submission handler types
  */
-export type FormSubmitHandler<T = Record<string, unknown>> = (data: T) => void | Promise<void>;
+export type FormSubmitHandler<T = unknown> = (data: T) => void | Promise<void>;
 export type FormErrorHandler = (errors: Record<string, FieldError>) => void;
 
 /**
@@ -71,7 +71,7 @@ export interface FileUploadConfig {
 /**
  * Form section configuration for multi-step or sectioned forms
  */
-export interface FormSection<T = Record<string, unknown>> {
+export interface FormSection<T = unknown> {
   id: string;
   title: string;
   description?: string;
@@ -82,7 +82,7 @@ export interface FormSection<T = Record<string, unknown>> {
 /**
  * Multi-step form configuration
  */
-export interface MultiStepFormConfig<T = Record<string, unknown>> {
+export interface MultiStepFormConfig<T = unknown> {
   steps: FormStep<T>[];
   onComplete: FormSubmitHandler<T>;
   onStepChange?: (step: number) => void;
@@ -93,7 +93,7 @@ export interface MultiStepFormConfig<T = Record<string, unknown>> {
 /**
  * Form step configuration
  */
-export interface FormStep<T = Record<string, unknown>> {
+export interface FormStep<T = unknown> {
   id: string;
   title: string;
   description?: string;
@@ -105,7 +105,7 @@ export interface FormStep<T = Record<string, unknown>> {
 /**
  * Dynamic form field configuration
  */
-export interface DynamicFormField<T = Record<string, unknown>> extends FormField<T> {
+export interface DynamicFormField<T = unknown> extends FormField<T> {
   dependsOn?: keyof T;
   showWhen?: (values: T) => boolean;
   requiredWhen?: (values: T) => boolean;
@@ -114,7 +114,7 @@ export interface DynamicFormField<T = Record<string, unknown>> extends FormField
 /**
  * Form state with validation
  */
-export interface ValidatedFormState<T = Record<string, unknown>> {
+export interface ValidatedFormState<T = unknown> {
   values: T;
   errors: Record<keyof T, string | undefined>;
   touched: Record<keyof T, boolean>;
@@ -169,7 +169,7 @@ export interface ImportConfig {
 /**
  * Form builder configuration
  */
-export interface FormBuilderConfig<T = Record<string, unknown>> {
+export interface FormBuilderConfig<T = unknown> {
   fields: DynamicFormField<T>[];
   layout?: 'vertical' | 'horizontal' | 'inline';
   columns?: number;
@@ -183,7 +183,7 @@ export interface FormBuilderConfig<T = Record<string, unknown>> {
  */
 export interface ValidationRule {
   type: 'required' | 'minLength' | 'maxLength' | 'pattern' | 'custom';
-  value?: string | number | RegExp;
+  value?: unknown;
   message: string;
   validator?: (value: unknown) => boolean;
 }
@@ -195,7 +195,7 @@ export interface FormContext<T extends FieldValues = FieldValues> {
   form: UseFormReturn<T>;
   isSubmitting: boolean;
   errors: Record<string, FieldError>;
-  setFieldValue: (field: keyof T, value: T[keyof T]) => void;
+  setFieldValue: (field: keyof T, value: unknown) => void;
   setFieldError: (field: keyof T, error: string) => void;
 }
 
@@ -214,7 +214,7 @@ export interface SearchFormConfig {
 /**
  * Filter form configuration
  */
-export interface FilterFormConfig<T = Record<string, unknown>> {
+export interface FilterFormConfig<T = unknown> {
   filters: FilterField<T>[];
   onApply: (filters: T) => void;
   onReset?: () => void;
@@ -224,7 +224,7 @@ export interface FilterFormConfig<T = Record<string, unknown>> {
 /**
  * Filter field configuration
  */
-export interface FilterField<T = Record<string, unknown>> {
+export interface FilterField<T = unknown> {
   name: keyof T;
   label: string;
   type: 'select' | 'range' | 'date' | 'boolean' | 'text';
