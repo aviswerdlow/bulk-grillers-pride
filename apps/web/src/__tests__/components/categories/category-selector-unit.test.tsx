@@ -1,4 +1,3 @@
-import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import React from 'react';
 import { Category } from '@/types/models';
 import { Id } from '@convex/_generated/dataModel';

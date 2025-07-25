@@ -1,4 +1,3 @@
-import { describe, expect, it } from '@jest/globals';
 
 describe('Tailwind Accessibility Utilities', () => {
   describe('Semantic Color Classes', () => {

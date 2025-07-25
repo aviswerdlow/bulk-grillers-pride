@@ -1,4 +1,3 @@
-import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import React from 'react';
 import { DeletionImpactItem } from '@/components/deletion/visualization/types';
 import { deletionWizardMachine } from '@/machines/deletionWizard';

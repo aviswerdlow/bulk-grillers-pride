@@ -1,5 +1,4 @@
 import React from 'react';
-import { describe, expect, it } from '@jest/globals';
 
 
 // Helper function to calculate relative luminance
