@@ -2,14 +2,13 @@
  * @jest-environment jsdom
  */
 import React from 'react';
-import { fireEvent, within } from '@testing-library/react';
+import { fireEvent, within, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { mockUseQuery, render, renderWithProviders } from '@/__tests__/test-helpers';
 import { CategorySelector } from '@/components/categories/category-selector';
 import { Category } from '@/types/models';
 import { api } from '@convex/_generated/api';
 import { Id } from '@convex/_generated/dataModel';
-;
 // Import will be automatically mocked by Jest moduleNameMapper
 
 // Mock the convex hooks

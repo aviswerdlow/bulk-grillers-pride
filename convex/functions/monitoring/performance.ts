@@ -30,7 +30,9 @@ export async function withPerformanceTracking<T>(
     const itemCount = Array.isArray(result) ? result.length : undefined;
 
     // Log metrics asynchronously to avoid blocking
-    await ctx.scheduler.runAfter(0, internal.monitoring.performance.logMetric, {
+    // Only schedule if we have a scheduler (mutations have it, queries don't)
+    if (ctx.scheduler) {
+      await ctx.scheduler.runAfter(0, internal.functions.monitoring.performance.logMetric, {
       organizationId,
       operation,
       startTime,
@@ -42,13 +44,16 @@ export async function withPerformanceTracking<T>(
       userId: options?.userId,
       metadata: options?.metadata,
     });
+    }
 
     return result;
   } catch (error: any) {
     const duration = Date.now() - startTime;
 
     // Log error metric
-    await ctx.scheduler.runAfter(0, internal.monitoring.performance.logMetric, {
+    // Only schedule if we have a scheduler (mutations have it, queries don't)
+    if (ctx.scheduler) {
+      await ctx.scheduler.runAfter(0, internal.functions.monitoring.performance.logMetric, {
       organizationId,
       operation,
       startTime,
@@ -59,6 +64,7 @@ export async function withPerformanceTracking<T>(
       userId: options?.userId,
       metadata: options?.metadata,
     });
+    }
 
     throw error;
   }

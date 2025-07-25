@@ -1,5 +1,5 @@
 import React from 'react';
-import { fireEvent } from '@testing-library/react';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { mockUseMutation, mockUseQuery, render, renderWithProviders } from '@/__tests__/test-helpers';
 import { CreateProductDialog } from '@/components/products/create-product-dialog';
 import { Id } from '@convex/_generated/dataModel';

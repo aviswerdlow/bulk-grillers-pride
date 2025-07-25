@@ -1,5 +1,5 @@
 import React from 'react';
-import { fireEvent } from '@testing-library/react';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { resetAllMocks, renderWithProviders, mockUseQuery, mockUseMutation } from '@/__tests__/test-helpers';
 import { OrganizationSwitcher } from '@/components/auth/organization-switcher';
 import { useParams, useRouter } from 'next/navigation';

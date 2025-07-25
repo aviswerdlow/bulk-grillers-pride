@@ -1,5 +1,5 @@
 import React from 'react';
-import { fireEvent } from '@testing-library/react';
+import { fireEvent, screen } from '@testing-library/react';
 import { mockUseMutation, mockUseQuery, renderWithProviders, resetAllMocks, screen } from '@/__tests__/test-helpers';
 import { TeamMembersList } from '@/components/auth/team-members-list';
 import { toast } from 'sonner';

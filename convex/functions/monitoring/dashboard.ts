@@ -48,13 +48,13 @@ export const getPerformanceDashboard = query({
     );
 
     // Get current alerts
-    const alerts = await checkAlertThresholds(ctx, {
+    const alerts = await ctx.runQuery(internal.functions.monitoring.alerts.checkAlertThresholds, {
       organizationId,
       timeWindow: 5, // Last 5 minutes
     });
 
     // Get alert summary
-    const alertSummary = await getAlertSummary(ctx, { organizationId });
+    const alertSummary = await ctx.runQuery(internal.functions.monitoring.alerts.getAlertSummary, { organizationId });
 
     // Get recent performance trends (hourly for last 24 hours)
     const hourlyTrends = await getHourlyTrends(ctx, organizationId);
