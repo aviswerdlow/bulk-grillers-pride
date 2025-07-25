@@ -1,4 +1,3 @@
-import { describe, it, expect, beforeEach } from '@jest/globals';
 import React from 'react';
 import { fireEvent, mockUseQuery, screen, waitFor, renderWithProviders } from '@/__tests__/test-helpers';
 import { useParams } from 'next/navigation';

@@ -1,4 +1,3 @@
-import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import { getSlugValidationError, isValidSlug, sanitizeSlug } from '../slug-validation';
 
 describe('slug-validation', () => {

@@ -1,4 +1,3 @@
-import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { CategorySelector } from '@/components/categories/category-selector';
