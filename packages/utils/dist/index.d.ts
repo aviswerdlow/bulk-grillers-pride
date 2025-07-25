@@ -48,19 +48,11 @@ declare function formatCurrency(amount: number, currency?: string, locale?: stri
 /**
  * Format a number with thousands separators
  */
-declare function formatNumber(
-  num: number,
-  locale?: string,
-  options?: Intl.NumberFormatOptions
-): string;
+declare function formatNumber(num: number, locale?: string, options?: Intl.NumberFormatOptions): string;
 /**
  * Format a date to a localized string
  */
-declare function formatDate(
-  date: Date | string | number,
-  locale?: string,
-  options?: Intl.DateTimeFormatOptions
-): string;
+declare function formatDate(date: Date | string | number, locale?: string, options?: Intl.DateTimeFormatOptions): string;
 /**
  * Format a date to a relative time string (e.g., "2 hours ago")
  */
@@ -85,17 +77,11 @@ declare function formatDuration(ms: number): string;
 /**
  * Debounce a function
  */
-declare function debounce<T extends (...args: any[]) => any>(
-  func: T,
-  wait: number
-): (...args: Parameters<T>) => void;
+declare function debounce<T extends (...args: any[]) => any>(func: T, wait: number): (...args: Parameters<T>) => void;
 /**
  * Throttle a function
  */
-declare function throttle<T extends (...args: any[]) => any>(
-  func: T,
-  limit: number
-): (...args: Parameters<T>) => void;
+declare function throttle<T extends (...args: any[]) => any>(func: T, limit: number): (...args: Parameters<T>) => void;
 /**
  * Deep clone an object
  */
@@ -119,42 +105,12 @@ declare function sleep(ms: number): Promise<void>;
 /**
  * Retry a function with exponential backoff
  */
-declare function retry<T>(
-  fn: () => Promise<T>,
-  options?: {
+declare function retry<T>(fn: () => Promise<T>, options?: {
     attempts?: number;
     delay?: number;
     maxDelay?: number;
     factor?: number;
     onError?: (error: Error, attempt: number) => void;
-  }
-): Promise<T>;
+}): Promise<T>;
 
-export {
-  capitalize,
-  capitalizeWords,
-  cleanWhitespace,
-  debounce,
-  deepClone,
-  deepEqual,
-  formatBytes,
-  formatCurrency,
-  formatDate,
-  formatDuration,
-  formatNumber,
-  formatPercentage,
-  formatPhoneNumber,
-  formatRelativeTime,
-  generateHandle,
-  groupBy,
-  isBlank,
-  randomString,
-  retry,
-  sleep,
-  slugify,
-  throttle,
-  toCamelCase,
-  toPascalCase,
-  truncate,
-  unique,
-};
+export { capitalize, capitalizeWords, cleanWhitespace, debounce, deepClone, deepEqual, formatBytes, formatCurrency, formatDate, formatDuration, formatNumber, formatPercentage, formatPhoneNumber, formatRelativeTime, generateHandle, groupBy, isBlank, randomString, retry, sleep, slugify, throttle, toCamelCase, toPascalCase, truncate, unique };

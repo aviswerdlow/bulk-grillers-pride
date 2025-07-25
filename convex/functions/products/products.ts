@@ -84,6 +84,275 @@ export const getProductVariants = query({
   },
 });
 
+// Search products by SKU
+export const searchProductsBySku = query({
+  args: {
+    organizationId: v.id('organizations'),
+    projectId: v.optional(v.id('projects')),
+    sku: v.string(),
+    exact: v.optional(v.boolean()),
+  },
+  handler: async (ctx, { organizationId, projectId, sku, exact = false }) => {
+    // Authenticate and authorize
+    await authenticateAndAuthorize(ctx, organizationId);
+
+    if (!sku || sku.trim().length === 0) {
+      return { products: [], variants: [] };
+    }
+
+    const searchTerm = sku.trim().toUpperCase();
+
+    // Search products by SKU
+    const products = await ctx.db
+      .query('products')
+      .withIndex('by_sku', (q) => q.eq('organizationId', organizationId))
+      .filter((q) => {
+        const skuFilter = exact
+          ? q.eq(q.field('sku'), searchTerm)
+          : q.neq(q.field('sku'), undefined);
+        
+        if (projectId) {
+          return q.and(
+            q.eq(q.field('projectId'), projectId),
+            skuFilter
+          );
+        }
+        return skuFilter;
+      })
+      .collect();
+
+    // Filter by partial match if not exact
+    const matchedProducts = exact
+      ? products
+      : products.filter((p) => p.sku?.toUpperCase().includes(searchTerm));
+
+    // Also search in variants
+    let variantQuery = ctx.db
+      .query('productVariants')
+      .withIndex('by_sku', (q) => q.eq('organizationId', organizationId));
+
+    if (exact) {
+      variantQuery = variantQuery.filter((q) => q.eq(q.field('sku'), searchTerm));
+    }
+
+    const variants = await variantQuery.collect();
+
+    // Filter variants by partial match and project if needed
+    const matchedVariants = variants.filter((v) => {
+      const skuMatch = exact
+        ? v.sku === searchTerm
+        : v.sku.toUpperCase().includes(searchTerm);
+      
+      if (!skuMatch) return false;
+      if (!projectId) return true;
+      
+      return v.projectId === projectId;
+    });
+
+    // Get product details for matched variants
+    const variantProductIds = [...new Set(matchedVariants.map((v) => v.productId))];
+    const variantProducts = await Promise.all(
+      variantProductIds.map((id) => ctx.db.get(id))
+    );
+
+    return {
+      products: matchedProducts,
+      variants: matchedVariants,
+      variantProducts: variantProducts.filter((p) => p !== null),
+    };
+  },
+});
+
+// Get product by exact SKU
+export const getProductBySku = query({
+  args: {
+    organizationId: v.id('organizations'),
+    sku: v.string(),
+  },
+  handler: async (ctx, { organizationId, sku }) => {
+    // Authenticate and authorize
+    await authenticateAndAuthorize(ctx, organizationId);
+
+    // Try to find product by SKU
+    const product = await ctx.db
+      .query('products')
+      .withIndex('by_sku', (q) => q.eq('organizationId', organizationId).eq('sku', sku))
+      .first();
+
+    if (product) {
+      return { type: 'product' as const, data: product };
+    }
+
+    // If not found, try variants
+    const variant = await ctx.db
+      .query('productVariants')
+      .withIndex('by_sku', (q) => q.eq('organizationId', organizationId).eq('sku', sku))
+      .first();
+
+    if (variant) {
+      const parentProduct = await ctx.db.get(variant.productId);
+      return { 
+        type: 'variant' as const, 
+        data: variant,
+        product: parentProduct 
+      };
+    }
+
+    return null;
+  },
+});
+
+// Full-text search for products (includes title and SKU)
+export const searchProducts = query({
+  args: {
+    organizationId: v.id('organizations'),
+    projectId: v.optional(v.id('projects')),
+    searchTerm: v.string(),
+    status: v.optional(v.union(v.literal('active'), v.literal('draft'), v.literal('archived'))),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, { organizationId, projectId, searchTerm, status, limit = 50 }) => {
+    // Authenticate and authorize
+    await authenticateAndAuthorize(ctx, organizationId);
+
+    if (!searchTerm || searchTerm.trim().length === 0) {
+      return { products: [], skuMatches: [] };
+    }
+
+    const term = searchTerm.trim();
+
+    // First, try exact SKU match (highest priority)
+    // Inline the getProductBySku logic since we can't call queries from within queries
+    const exactSkuProduct = await ctx.db
+      .query('products')
+      .withIndex('by_sku', (q) => q.eq('organizationId', organizationId).eq('sku', term))
+      .first();
+
+    let exactSkuMatch = null;
+    if (exactSkuProduct) {
+      exactSkuMatch = { type: 'product' as const, data: exactSkuProduct };
+    } else {
+      // If not found, try variants
+      const exactSkuVariant = await ctx.db
+        .query('productVariants')
+        .withIndex('by_sku', (q) => q.eq('organizationId', organizationId).eq('sku', term))
+        .first();
+
+      if (exactSkuVariant) {
+        const parentProduct = await ctx.db.get(exactSkuVariant.productId);
+        exactSkuMatch = { 
+          type: 'variant' as const, 
+          data: exactSkuVariant,
+          product: parentProduct 
+        };
+      }
+    }
+
+    // Full-text search on title
+    let titleQuery = ctx.db
+      .query('products')
+      .withSearchIndex('search_products', (q) => 
+        q.search('title', term)
+          .eq('organizationId', organizationId)
+      );
+
+    if (projectId) {
+      titleQuery = titleQuery.filter((q) => q.eq(q.field('projectId'), projectId));
+    }
+
+    if (status) {
+      titleQuery = titleQuery.filter((q) => q.eq(q.field('status'), status));
+    }
+
+    const titleResults = await titleQuery.take(limit);
+
+    // SKU partial match search
+    // Inline the searchProductsBySku logic since we can't call queries from within queries
+    const upperTerm = term.toUpperCase();
+
+    // Search products by SKU
+    const productsWithSku = await ctx.db
+      .query('products')
+      .withIndex('by_sku', (q) => q.eq('organizationId', organizationId))
+      .filter((q) => {
+        if (projectId) {
+          return q.and(
+            q.eq(q.field('projectId'), projectId),
+            q.neq(q.field('sku'), undefined)
+          );
+        }
+        return q.neq(q.field('sku'), undefined);
+      })
+      .collect();
+
+    // Filter by partial match
+    const matchedProducts = productsWithSku.filter((p) => p.sku?.toUpperCase().includes(upperTerm));
+
+    // Also search in variants
+    let variantQuery = ctx.db
+      .query('productVariants')
+      .withIndex('by_sku', (q) => q.eq('organizationId', organizationId));
+
+    const variants = await variantQuery.collect();
+
+    // Filter variants by partial match and project if needed
+    const matchedVariants = variants.filter((v) => {
+      const skuMatch = v.sku.toUpperCase().includes(upperTerm);
+      
+      if (!skuMatch) return false;
+      if (!projectId) return true;
+      
+      return v.projectId === projectId;
+    });
+
+    // Get product details for matched variants
+    const variantProductIds = [...new Set(matchedVariants.map((v) => v.productId))];
+    const variantProducts = await Promise.all(
+      variantProductIds.map((id) => ctx.db.get(id))
+    );
+
+    const skuSearchResults = {
+      products: matchedProducts,
+      variants: matchedVariants,
+      variantProducts: variantProducts.filter((p) => p !== null),
+    };
+
+    // Combine and deduplicate results
+    const allProducts = new Map<string, Doc<'products'>>();
+    
+    // Add exact SKU match first (highest priority)
+    if (exactSkuMatch) {
+      if (exactSkuMatch.type === 'product') {
+        allProducts.set(exactSkuMatch.data._id, exactSkuMatch.data);
+      } else if (exactSkuMatch.product) {
+        allProducts.set(exactSkuMatch.product._id, exactSkuMatch.product);
+      }
+    }
+
+    // Add SKU partial matches
+    skuSearchResults.products.forEach((p) => {
+      allProducts.set(p._id, p);
+    });
+    skuSearchResults.variantProducts.forEach((p) => {
+      if (p) allProducts.set(p._id, p);
+    });
+
+    // Add title matches
+    titleResults.forEach((p) => {
+      allProducts.set(p._id, p);
+    });
+
+    return {
+      products: Array.from(allProducts.values()),
+      exactSkuMatch,
+      skuMatches: {
+        products: skuSearchResults.products,
+        variants: skuSearchResults.variants,
+      },
+    };
+  },
+});
+
 // Create a new product
 export const createProduct = mutation({
   args: {
@@ -94,6 +363,7 @@ export const createProduct = mutation({
     vendor: v.optional(v.string()),
     productType: v.optional(v.string()),
     handle: v.optional(v.string()),
+    sku: v.optional(v.string()),
     seoTitle: v.optional(v.string()),
     seoDescription: v.optional(v.string()),
     tags: v.array(v.string()),
@@ -131,6 +401,32 @@ export const createProduct = mutation({
       throw new Error('Product handle already exists in this project');
     }
 
+    // Check SKU uniqueness within organization if SKU is provided
+    if (args.sku) {
+      const existingProductWithSku = await ctx.db
+        .query('products')
+        .withIndex('by_sku', (q) =>
+          q.eq('organizationId', args.organizationId).eq('sku', args.sku!)
+        )
+        .first();
+
+      if (existingProductWithSku) {
+        throw new Error(`SKU "${args.sku}" already exists in this organization`);
+      }
+
+      // Also check if SKU exists in variants
+      const existingVariantWithSku = await ctx.db
+        .query('productVariants')
+        .withIndex('by_sku', (q) =>
+          q.eq('organizationId', args.organizationId).eq('sku', args.sku!)
+        )
+        .first();
+
+      if (existingVariantWithSku) {
+        throw new Error(`SKU "${args.sku}" already exists as a variant SKU in this organization`);
+      }
+    }
+
     const now = Date.now();
     const productId = await ctx.db.insert('products', {
       organizationId: args.organizationId,
@@ -140,6 +436,7 @@ export const createProduct = mutation({
       vendor: args.vendor,
       productType: args.productType,
       handle,
+      sku: args.sku,
       status: args.status || 'draft',
       seoTitle: args.seoTitle,
       seoDescription: args.seoDescription,
@@ -195,6 +492,7 @@ export const updateProduct = mutation({
     vendor: v.optional(v.string()),
     productType: v.optional(v.string()),
     handle: v.optional(v.string()),
+    sku: v.optional(v.string()),
     seoTitle: v.optional(v.string()),
     seoDescription: v.optional(v.string()),
     tags: v.optional(v.array(v.string())),
@@ -252,6 +550,37 @@ export const updateProduct = mutation({
 
       if (existingProduct) {
         throw new Error('Product handle already exists in this project');
+      }
+    }
+
+    // Check SKU uniqueness if SKU is being changed
+    if (args.sku !== undefined && args.sku !== product.sku) {
+      if (args.sku) {
+        const sku = args.sku;
+        // Check if another product has this SKU
+        const existingProductWithSku = await ctx.db
+          .query('products')
+          .withIndex('by_sku', (q) =>
+            q.eq('organizationId', product.organizationId).eq('sku', sku)
+          )
+          .filter((q) => q.neq(q.field('_id'), productId))
+          .first();
+
+        if (existingProductWithSku) {
+          throw new Error(`SKU "${sku}" already exists in this organization`);
+        }
+
+        // Also check if SKU exists in variants
+        const existingVariantWithSku = await ctx.db
+          .query('productVariants')
+          .withIndex('by_sku', (q) =>
+            q.eq('organizationId', product.organizationId).eq('sku', sku)
+          )
+          .first();
+
+        if (existingVariantWithSku) {
+          throw new Error(`SKU "${sku}" already exists as a variant SKU in this organization`);
+        }
       }
     }
 

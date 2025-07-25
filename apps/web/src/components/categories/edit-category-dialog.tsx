@@ -6,6 +6,7 @@ import { api } from "../../../../../convex/_generated/api";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { toast } from "sonner";
+import { createLogger } from '@/utils/error-monitoring';
 
 import {
   Dialog,
@@ -35,6 +36,8 @@ const editCategorySchema = z.object({
 
 type EditCategoryForm = z.infer<typeof editCategorySchema>;
 
+const logger = createLogger('EditCategoryDialog');
+
 interface EditCategoryDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -58,8 +61,6 @@ export function EditCategoryDialog({
 }: EditCategoryDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Note: Using (api as any) as a workaround until Convex dev server regenerates the API types
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const updateCategory = useMutation((api as any).functions.categories.categories.updateCategory);
 
   const {
@@ -126,7 +127,7 @@ export function EditCategoryDialog({
       toast.success("Category updated successfully");
       onOpenChange(false);
     } catch (error) {
-      console.error("Failed to update category:", error);
+      logger.error("Failed to update category:", error);
       toast.error("Failed to update category. Please try again.");
     } finally {
       setIsSubmitting(false);

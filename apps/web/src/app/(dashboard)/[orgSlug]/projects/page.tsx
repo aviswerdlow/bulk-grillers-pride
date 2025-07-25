@@ -2,33 +2,34 @@
 
 import { useParams } from 'next/navigation';
 import { useQuery } from 'convex/react';
-import { api } from '../../../../../../../convex/_generated/api';
+import { api } from '@convex/_generated/api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { PageLoading } from '@/components/loading';
-import { Plus, Settings, Package, Clock, TrendingUp, Users } from 'lucide-react';
+import { Plus, Settings, Package, Clock, TrendingUp } from 'lucide-react';
 import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
+// import { Project } from '@/types/models';
 
 export default function ProjectsPage() {
   const params = useParams();
   const orgSlug = params.orgSlug as string;
 
   // Get organization
-  const organization = useQuery(api.functions.organizations.organizations.getOrganizationBySlug, {
+  const organization = useQuery((api as any).functions.organizations.organizations.getOrganizationBySlug, {
     slug: orgSlug,
   });
 
   // Get projects for this organization
   const projects = useQuery(
-    api.functions.projects.projects.getOrganizationProjects,
+    (api as any).functions.projects.projects.getOrganizationProjects,
     organization ? { organizationId: organization._id } : 'skip'
   );
 
   // Get dashboard stats for each project
   const projectStats = useQuery(
-    api.functions.dashboard.getDashboardStats,
+    (api as any).functions.dashboard.getDashboardStats,
     organization ? { organizationId: organization._id } : 'skip'
   );
 
@@ -43,7 +44,7 @@ export default function ProjectsPage() {
       <div className="p-8">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900">Organization not found</h1>
-          <p className="text-gray-600 mt-2">The organization you're looking for doesn't exist.</p>
+          <p className="text-gray-600 mt-2">The organization you&apos;re looking for doesn&apos;t exist.</p>
         </div>
       </div>
     );
@@ -68,7 +69,7 @@ export default function ProjectsPage() {
       {/* Projects Grid */}
       {projects && projects.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {projects.map((project) => (
+          {projects.map((project: any) => (
             <Card key={project._id} className="hover:shadow-lg transition-shadow">
               <CardHeader>
                 <div className="flex items-center justify-between mb-2">

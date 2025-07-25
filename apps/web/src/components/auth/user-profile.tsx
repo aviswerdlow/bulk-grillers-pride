@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { useMutation, useQuery } from 'convex/react';
-import { api } from '../../../../../convex/_generated/api';
+import { api } from '@convex/_generated/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,8 +14,8 @@ import { toast } from 'sonner';
 
 export function UserProfile() {
   const { user } = useUser();
-  const currentUser = useQuery(api.functions.auth.users.current);
-  const updateProfile = useMutation(api.functions.auth.sessions.updateProfile);
+  const currentUser = useQuery((api as any).functions.auth.users.current);
+  const updateProfile = useMutation((api as any).functions.auth.sessions.updateProfile);
 
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);

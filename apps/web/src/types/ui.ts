@@ -3,7 +3,7 @@
  * These types are used across UI components to ensure consistency
  */
 
-import { ReactNode } from 'react';
+import React, { ReactNode } from 'react';
 
 /**
  * Base props for all dialog components
@@ -25,7 +25,7 @@ export interface LoadingState {
 /**
  * Form state management
  */
-export interface FormState<T = any> {
+export interface FormState<T = Record<string, unknown>> {
   isSubmitting: boolean;
   isDirty: boolean;
   errors?: Record<string, string>;
@@ -59,14 +59,14 @@ export interface ActionButton {
 /**
  * Table column configuration
  */
-export interface TableColumn<T = any> {
+export interface TableColumn<T = Record<string, unknown>> {
   id: string;
   header: string;
-  accessor: keyof T | ((row: T) => any);
+  accessor: keyof T | ((row: T) => unknown);
   sortable?: boolean;
   width?: string | number;
   align?: 'left' | 'center' | 'right';
-  render?: (value: any, row: T) => ReactNode;
+  render?: (value: unknown, row: T) => ReactNode;
 }
 
 /**
@@ -111,7 +111,7 @@ export interface VisibilityState {
 /**
  * Selection state for multi-select components
  */
-export interface SelectionState<T = any> {
+export interface SelectionState<T = unknown> {
   selectedItems: T[];
   isAllSelected: boolean;
   isPartiallySelected: boolean;
@@ -184,7 +184,7 @@ export interface BadgeConfig {
 /**
  * Tree node for hierarchical components
  */
-export interface TreeNode<T = any> {
+export interface TreeNode<T = unknown> {
   id: string;
   label: string;
   value: T;

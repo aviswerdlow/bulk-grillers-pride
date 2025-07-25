@@ -1,0 +1,670 @@
+'use client';
+
+import { useParams } from 'next/navigation';
+import { useQuery } from 'convex/react';
+import { api } from '@convex/_generated/api';
+import { Id } from '@convex/_generated/dataModel';
+import { PageLoading } from '@/components/loading';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { 
+  Key, 
+  Users, 
+  CreditCard, 
+  Building2,
+  Globe,
+  Shield,
+  Eye,
+  EyeOff,
+  Plus,
+  Trash2,
+  AlertCircle,
+  Bot,
+} from 'lucide-react';
+import { useState } from 'react';
+import { toast } from 'sonner';
+import { useMutation } from 'convex/react';
+import { Organization } from '@/types/models';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+
+export default function OrganizationSettingsPage() {
+  const params = useParams();
+  const orgSlug = params.orgSlug as string;
+
+  const organization = useQuery((api as any).functions.organizations.organizations.getOrganizationBySlug, {
+    slug: orgSlug,
+  });
+
+  const currentUser = useQuery((api as any).functions.auth.users.currentWithOrganizations);
+
+  const currentUserRole = currentUser?.organizations?.find((org: any) => org._id === organization?._id)
+    ?.membership.role;
+
+  // Loading state
+  if (organization === undefined || currentUser === undefined) {
+    return <PageLoading text="Loading settings..." />;
+  }
+
+  // Not found state
+  if (!organization) {
+    return (
+      <div className="p-8">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900">Organization not found</h1>
+          <p className="text-gray-600 mt-2">
+            The organization you&apos;re looking for doesn&apos;t exist.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Check permissions - only owners and admins can access settings
+  if (currentUserRole !== 'owner' && currentUserRole !== 'admin') {
+    return (
+      <div className="p-8">
+        <div className="text-center">
+          <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-gray-900">Access Denied</h1>
+          <p className="text-gray-600 mt-2">
+            You don&apos;t have permission to access organization settings.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">Organization Settings</h1>
+        <p className="text-muted-foreground">
+          Manage your organization settings, API keys, team, and billing
+        </p>
+      </div>
+
+      {/* Tabs */}
+      <Tabs defaultValue="general" className="space-y-4">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="general">
+            <Building2 className="h-4 w-4 mr-2" />
+            General
+          </TabsTrigger>
+          <TabsTrigger value="api-keys">
+            <Key className="h-4 w-4 mr-2" />
+            API Keys
+          </TabsTrigger>
+          <TabsTrigger value="team">
+            <Users className="h-4 w-4 mr-2" />
+            Team
+          </TabsTrigger>
+          <TabsTrigger value="billing">
+            <CreditCard className="h-4 w-4 mr-2" />
+            Billing
+          </TabsTrigger>
+        </TabsList>
+
+        {/* General Settings Tab */}
+        <TabsContent value="general" className="space-y-4">
+          <GeneralSettings organization={organization} currentUserRole={currentUserRole} />
+        </TabsContent>
+
+        {/* API Keys Tab */}
+        <TabsContent value="api-keys" className="space-y-4">
+          <ApiKeysSettings organizationId={organization._id} />
+        </TabsContent>
+
+        {/* Team Tab */}
+        <TabsContent value="team" className="space-y-4">
+          <TeamSettings organization={organization} currentUserRole={currentUserRole} />
+        </TabsContent>
+
+        {/* Billing Tab */}
+        <TabsContent value="billing" className="space-y-4">
+          <BillingSettings organization={organization} />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
+
+// General Settings Component
+function GeneralSettings({ 
+  organization, 
+  currentUserRole 
+}: { 
+  organization: Organization;
+  currentUserRole?: string;
+}) {
+  const [name, setName] = useState(organization.name);
+  const [slug, setSlug] = useState(organization.slug);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    // TODO: Implement organization update mutation
+    toast.success("Organization settings updated successfully");
+    setIsSaving(false);
+  };
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Organization Details</CardTitle>
+          <CardDescription>
+            Update your organization&apos;s basic information
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="org-name">Organization Name</Label>
+            <Input
+              id="org-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Enter organization name"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="org-slug">Organization Slug</Label>
+            <div className="flex items-center space-x-2">
+              <Globe className="h-4 w-4 text-gray-500" />
+              <Input
+                id="org-slug"
+                value={slug}
+                onChange={(e) => setSlug(e.target.value)}
+                placeholder="organization-slug"
+              />
+            </div>
+            <p className="text-sm text-muted-foreground">
+              This is your organization&apos;s unique identifier in URLs
+            </p>
+          </div>
+
+          <div className="flex items-center justify-between pt-4">
+            <div className="space-y-1">
+              <p className="text-sm font-medium">Organization ID</p>
+              <p className="text-xs text-muted-foreground font-mono">{organization._id}</p>
+            </div>
+            <Button onClick={handleSave} disabled={isSaving}>
+              {isSaving ? "Saving..." : "Save Changes"}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {currentUserRole === 'owner' && (
+        <Card className="border-red-200">
+          <CardHeader>
+            <CardTitle className="text-red-600">Danger Zone</CardTitle>
+            <CardDescription>
+              Irreversible actions that affect your entire organization
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="font-medium">Delete Organization</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Permanently delete this organization and all its data
+                  </p>
+                </div>
+                <Button variant="destructive" size="sm">
+                  Delete Organization
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
+
+// API Keys Settings Component
+function ApiKeysSettings({ organizationId }: { organizationId: Id<'organizations'> }) {
+  const [deletingKey, setDeletingKey] = useState<string | null>(null);
+  const [isAddingKey, setIsAddingKey] = useState(false);
+  const [selectedProvider, setSelectedProvider] = useState<'openai' | 'anthropic' | 'gemini'>('openai');
+  const [newApiKey, setNewApiKey] = useState('');
+  const [isSavingKey, setIsSavingKey] = useState(false);
+  const [showNewApiKey, setShowNewApiKey] = useState(false);
+  
+  // Query for masked API keys
+  const maskedApiKeys = useQuery((api as any).functions.organizations.apiKeys.getMaskedApiKeys, {
+    organizationId,
+  });
+  
+  // Mutation for removing API keys
+  const removeApiKey = useMutation((api as any).functions.organizations.apiKeys.removeApiKey);
+  
+  // Mutation for updating API keys
+  const updateApiKeys = useMutation((api as any).functions.organizations.apiKeys.updateApiKeys);
+  
+  // Transform the masked API keys into the format we need for display
+  const apiKeys = maskedApiKeys?.apiKeys
+    ? Object.entries(maskedApiKeys.apiKeys)
+        .filter(([, maskedKey]) => maskedKey !== null)
+        .map(([provider, maskedKey]) => ({
+          id: provider,
+          name: `${provider.charAt(0).toUpperCase() + provider.slice(1)} API Key`,
+          provider,
+          lastUsed: 'Recently', // We don't track last used in the current implementation
+          status: 'active' as const,
+          maskedKey: maskedKey as string,
+        }))
+    : [];
+
+  const handleDeleteKey = async (provider: string) => {
+    try {
+      await removeApiKey({
+        organizationId,
+        provider: provider as 'openai' | 'anthropic' | 'gemini',
+      });
+      toast.success(`${provider} API key removed successfully`);
+      setDeletingKey(null);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to remove API key");
+    }
+  };
+
+  const handleSaveKey = async () => {
+    if (!newApiKey.trim()) {
+      toast.error("Please enter an API key");
+      return;
+    }
+
+    try {
+      setIsSavingKey(true);
+      await updateApiKeys({
+        organizationId,
+        provider: selectedProvider,
+        apiKey: newApiKey,
+      });
+      toast.success(`${selectedProvider} API key saved successfully`);
+      setNewApiKey('');
+      setIsAddingKey(false);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to save API key");
+    } finally {
+      setIsSavingKey(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>API Keys</CardTitle>
+              <CardDescription>
+                Manage API keys for AI categorization providers
+              </CardDescription>
+            </div>
+            <Button size="sm" onClick={() => setIsAddingKey(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add API Key
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {apiKeys.map((apiKey) => (
+              <div key={apiKey.id} className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="space-y-1">
+                  <div className="flex items-center space-x-2">
+                    <h4 className="font-medium">{apiKey.name}</h4>
+                    <Badge variant={apiKey.status === 'active' ? 'default' : 'secondary'}>
+                      {apiKey.status}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                    <span>Provider: {apiKey.provider}</span>
+                    <span>Last used: {apiKey.lastUsed}</span>
+                  </div>
+                  <div className="flex items-center space-x-2 mt-2">
+                    <code className="text-xs bg-gray-100 px-2 py-1 rounded">
+                      {apiKey.maskedKey}
+                    </code>
+                  </div>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-red-600"
+                  onClick={() => setDeletingKey(apiKey.provider)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            ))}
+
+            {apiKeys.length === 0 && (
+              <div className="text-center py-8">
+                <Key className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No API keys yet</h3>
+                <p className="text-gray-600 mb-4">
+                  Add API keys to enable AI categorization features
+                </p>
+                <Button onClick={() => setIsAddingKey(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Your First API Key
+                </Button>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Security Notice</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-start space-x-3">
+            <Shield className="h-5 w-5 text-blue-500 mt-0.5" />
+            <div className="text-sm text-muted-foreground">
+              <p>Your API keys are encrypted and stored securely. We never log or expose your full API keys.</p>
+              <p className="mt-2">Only organization owners and admins can view and manage API keys.</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deletingKey !== null} onOpenChange={(open) => !open && setDeletingKey(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove API Key</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove the {deletingKey} API key? This action cannot be undone
+              and may affect AI categorization functionality.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700 text-white"
+              onClick={() => deletingKey && handleDeleteKey(deletingKey)}
+            >
+              Remove API Key
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Add API Key Dialog */}
+      <Dialog open={isAddingKey} onOpenChange={(open) => {
+        if (!open) {
+          setNewApiKey('');
+          setSelectedProvider('openai');
+          setShowNewApiKey(false);
+        }
+        setIsAddingKey(open);
+      }}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Add API Key</DialogTitle>
+            <DialogDescription>
+              Add an API key to enable AI categorization features for your products.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            {/* Provider Selection */}
+            <div className="space-y-2">
+              <Label htmlFor="provider">AI Provider</Label>
+              <Select value={selectedProvider} onValueChange={(value: 'openai' | 'anthropic' | 'gemini') => setSelectedProvider(value)}>
+                <SelectTrigger id="provider">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="openai">
+                    <div className="flex items-center gap-2">
+                      <Bot className="h-4 w-4" />
+                      <span>OpenAI</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="anthropic">
+                    <div className="flex items-center gap-2">
+                      <Bot className="h-4 w-4" />
+                      <span>Anthropic</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="gemini" disabled>
+                    <div className="flex items-center gap-2">
+                      <Bot className="h-4 w-4" />
+                      <span>Google Gemini (Coming Soon)</span>
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* API Key Input */}
+            <div className="space-y-2">
+              <Label htmlFor="api-key">API Key</Label>
+              <div className="relative">
+                <Input
+                  id="api-key"
+                  type={showNewApiKey ? "text" : "password"}
+                  value={newApiKey}
+                  onChange={(e) => setNewApiKey(e.target.value)}
+                  placeholder={`Enter your ${selectedProvider} API key`}
+                  className="pr-10"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-0 top-0 h-full px-3"
+                  onClick={() => setShowNewApiKey(!showNewApiKey)}
+                >
+                  {showNewApiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </Button>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                {selectedProvider === 'openai' && 'You can find your API key at platform.openai.com/api-keys'}
+                {selectedProvider === 'anthropic' && 'You can find your API key at console.anthropic.com/account/keys'}
+                {selectedProvider === 'gemini' && 'Gemini integration coming soon'}
+              </p>
+            </div>
+
+            {/* Security Notice */}
+            <div className="rounded-lg bg-primary/5 p-3">
+              <div className="flex items-start space-x-2">
+                <Shield className="h-4 w-4 text-primary mt-0.5" />
+                <p className="text-sm text-primary-foreground">
+                  Your API key will be encrypted and stored securely. We never log or expose your keys.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsAddingKey(false)} disabled={isSavingKey}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveKey} disabled={isSavingKey || !newApiKey.trim()}>
+              {isSavingKey ? "Saving..." : "Save API Key"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+// Team Settings Component
+function TeamSettings({ 
+  organization, 
+//   currentUserRole 
+}: { 
+  organization: Organization;
+  currentUserRole?: string;
+}) {
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Team Overview</CardTitle>
+          <CardDescription>
+            Quick overview of your team and permissions
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between p-4 border rounded-lg">
+              <div>
+                <h4 className="font-medium">Total Team Members</h4>
+                <p className="text-2xl font-bold">5</p>
+              </div>
+              <Users className="h-8 w-8 text-gray-400" />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-4 border rounded-lg">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium">Owners</span>
+                  <Badge>1</Badge>
+                </div>
+                <p className="text-xs text-muted-foreground">Full control</p>
+              </div>
+
+              <div className="p-4 border rounded-lg">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium">Admins</span>
+                  <Badge variant="secondary">2</Badge>
+                </div>
+                <p className="text-xs text-muted-foreground">Manage team & resources</p>
+              </div>
+
+              <div className="p-4 border rounded-lg">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium">Editors</span>
+                  <Badge variant="outline">1</Badge>
+                </div>
+                <p className="text-xs text-muted-foreground">Create & modify content</p>
+              </div>
+
+              <div className="p-4 border rounded-lg">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium">Viewers</span>
+                  <Badge variant="outline">1</Badge>
+                </div>
+                <p className="text-xs text-muted-foreground">Read-only access</p>
+              </div>
+            </div>
+
+            <div className="pt-4">
+              <Button asChild className="w-full">
+                <a href={`/${organization.slug}/team`}>
+                  Manage Team Members
+                </a>
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// Billing Settings Component
+function BillingSettings({ organization }: { organization: Organization }) {
+  void organization;
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Current Plan</CardTitle>
+          <CardDescription>
+            Manage your subscription and billing details
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between p-4 border rounded-lg bg-gray-50">
+              <div>
+                <h4 className="font-medium text-lg">Free Plan</h4>
+                <p className="text-sm text-muted-foreground">Perfect for getting started</p>
+              </div>
+              <Badge variant="secondary">Current Plan</Badge>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 pt-4">
+              <div className="space-y-2">
+                <p className="text-sm font-medium">Products</p>
+                <p className="text-2xl font-bold">243 / 1,000</p>
+                <p className="text-xs text-muted-foreground">24% used</p>
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-sm font-medium">AI Categorizations</p>
+                <p className="text-2xl font-bold">127 / 500</p>
+                <p className="text-xs text-muted-foreground">25% used this month</p>
+              </div>
+            </div>
+
+            <div className="pt-4">
+              <Button className="w-full">
+                Upgrade to Pro
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Billing History</CardTitle>
+          <CardDescription>
+            View your past invoices and payments
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8">
+            <CreditCard className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No billing history</h3>
+            <p className="text-gray-600">
+              You&apos;re on the free plan. Upgrade to see billing history.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

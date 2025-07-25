@@ -1,4 +1,12 @@
 #!/bin/sh
-. "$(dirname "$0")/_/husky.sh"
 
+# Run lint-staged first
 npx lint-staged
+
+# If lint-staged fails, exit
+if [ $? -ne 0 ]; then
+    exit 1
+fi
+
+# Run TypeScript type check on changed files
+node ./scripts/type-check-changed.js

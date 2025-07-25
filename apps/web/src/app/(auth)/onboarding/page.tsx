@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { useMutation, useQuery } from 'convex/react';
-import { api } from '../../../../../../convex/_generated/api';
+import { api } from '@convex/_generated/api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -12,6 +12,9 @@ import { Label } from '@/components/ui/label';
 import { ShoppingCart, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { sanitizeSlug, isValidSlug, getSlugValidationError } from '@/utils/slugValidation';
+import { createLogger } from '@/utils/error-monitoring';
+
+const logger = createLogger('OnboardingPage');
 
 export default function OnboardingPage() {
   const { user } = useUser();
@@ -21,25 +24,27 @@ export default function OnboardingPage() {
   const [isCreating, setIsCreating] = useState(false);
   const [slugError, setSlugError] = useState<string | null>(null);
 
-  const storeUser = useMutation(api.functions.auth.users.store);
-  const createOrganization = useMutation(api.functions.organizations.organizations.create);
+  const storeUser = useMutation((api as any).functions.auth.users.store);
+  const createOrganization = useMutation((api as any).functions.organizations.organizations.create);
 
   // Check if user already has organizations - moved to top level
-  const userWithOrgs = useQuery(api.functions.auth.users.currentWithOrganizations);
+  const userWithOrgs = useQuery((api as any).functions.auth.users.currentWithOrganizations);
 
-  console.log('[OnboardingPage] userWithOrgs query result:', userWithOrgs);
+  logger.debug('userWithOrgs query result:', userWithOrgs);
 
   // If user has organizations, redirect to their first organization's dashboard
   useEffect(() => {
-    console.log('[OnboardingPage] Checking redirect:', {
+    logger.debug('Checking redirect:', {
       hasUserWithOrgs: !!userWithOrgs,
       hasOrganizations: userWithOrgs?.organizations?.length || 0,
     });
 
     if (userWithOrgs && userWithOrgs.organizations && userWithOrgs.organizations.length > 0) {
       const firstOrg = userWithOrgs.organizations[0];
-      console.log('[OnboardingPage] Redirecting to:', `/${firstOrg.slug}/dashboard`);
-      router.push(`/${firstOrg.slug}/dashboard`);
+      if (firstOrg) {
+        logger.info('Redirecting to:', `/${firstOrg.slug}/dashboard`);
+        router.push(`/${firstOrg.slug}/dashboard`);
+      }
     }
   }, [userWithOrgs, router]);
 
@@ -97,9 +102,9 @@ export default function OnboardingPage() {
 
       toast.success('Organization created successfully!');
       router.push(`/${organizationSlug}/dashboard`);
-    } catch (error: any) {
+    } catch (error) {
       // Check if it's a slug conflict error
-      if (error?.message?.includes('slug already exists')) {
+      if (error instanceof Error && error.message.includes('slug already exists')) {
         setSlugError('This organization URL is already taken. Please choose another.');
         toast.error('Organization URL already taken');
       } else {
@@ -123,8 +128,8 @@ export default function OnboardingPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-slate-50 to-white">
         <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600" />
-          <p className="text-gray-600">Loading...</p>
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
+          <p className="text-muted-foreground">Loading...</p>
         </div>
       </div>
     );
@@ -135,11 +140,11 @@ export default function OnboardingPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center space-x-2 mb-4">
-            <ShoppingCart className="h-8 w-8 text-blue-600" />
-            <span className="text-2xl font-bold text-gray-900">Bulk</span>
+            <ShoppingCart className="h-8 w-8 text-primary" />
+            <span className="text-2xl font-bold text-foreground">Bulk</span>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">Welcome to Bulk!</h1>
-          <p className="text-gray-600 mt-2">Let&apos;s create your organization to get started</p>
+          <h1 className="text-2xl font-bold text-foreground">Welcome to Bulk!</h1>
+          <p className="text-muted-foreground mt-2">Let&apos;s create your organization to get started</p>
         </div>
 
         <Card className="shadow-lg border-0">
@@ -174,12 +179,12 @@ export default function OnboardingPage() {
                   onChange={(e) => handleSlugChange(e.target.value)}
                   required
                   disabled={isCreating}
-                  className={slugError ? 'border-red-500' : ''}
+                  className={slugError ? 'border-destructive' : ''}
                 />
                 {slugError ? (
-                  <p className="text-xs text-red-500 mt-1">{slugError}</p>
+                  <p className="text-xs text-destructive mt-1">{slugError}</p>
                 ) : (
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-muted-foreground mt-1">
                     This will be your organization&apos;s URL: /{organizationSlug}
                   </p>
                 )}
@@ -203,7 +208,7 @@ export default function OnboardingPage() {
           </CardContent>
         </Card>
 
-        <div className="text-center mt-6 text-sm text-gray-500">
+        <div className="text-center mt-6 text-sm text-muted-foreground">
           You can create additional organizations later in your dashboard.
         </div>
       </div>

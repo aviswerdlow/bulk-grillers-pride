@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery } from 'convex/react';
-import { api } from '../../../../../../../convex/_generated/api';
+import { api } from '@convex/_generated/api';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -56,13 +56,13 @@ export default function ImportsPage() {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
 
   // Get organization
-  const organization = useQuery(api.functions.organizations.organizations.getOrganizationBySlug, {
+  const organization = useQuery((api as any).functions.organizations.organizations.getOrganizationBySlug, {
     slug: orgSlug,
   });
 
   // Get projects for this organization
   const projects = useQuery(
-    api.functions.projects.projects.getOrganizationProjects,
+    (api as any).functions.projects.projects.getOrganizationProjects,
     organization ? { organizationId: organization._id } : 'skip'
   );
 
@@ -70,9 +70,7 @@ export default function ImportsPage() {
   const currentProject = projects?.[0];
 
   // Get import jobs
-  // Note: Using (api as any) as a workaround until Convex dev server regenerates the API types
   const jobs = useQuery(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (api as any).functions.imports.imports.getImportJobs,
     organization && currentProject
       ? {

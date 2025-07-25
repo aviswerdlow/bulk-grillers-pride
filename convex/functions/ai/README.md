@@ -8,7 +8,7 @@ This directory contains the complete LangChain-powered AI categorization system 
 
 - **OpenAI** (GPT-4, GPT-3.5-turbo)
 - **Anthropic** (Claude 3 Opus, Sonnet, Haiku)
-- **Google Gemini** (Coming soon)
+- **Google Gemini** (Gemini 1.5 Pro, Gemini 1.5 Flash, Gemini 1.0 Pro)
 
 ### 🎯 Intelligent Categorization
 
@@ -33,7 +33,15 @@ This directory contains the complete LangChain-powered AI categorization system 
 
 ## Setup
 
-### 1. Configure API Keys
+### 1. Install Required Dependencies
+
+For Gemini support, install the Google Generative AI package:
+
+```bash
+npm install --workspace=web @langchain/google-genai
+```
+
+### 2. Configure API Keys
 
 In your organization settings, add API keys for your chosen provider:
 
@@ -42,11 +50,11 @@ In your organization settings, add API keys for your chosen provider:
 {
   settings: {
     aiProvider: "openai", // or "anthropic", "gemini"
-    aiModel: "gpt-4", // or "gpt-3.5-turbo", "claude-3-sonnet", etc.
+    aiModel: "gpt-4", // or "gpt-3.5-turbo", "claude-3-sonnet", "gemini-1.5-pro", etc.
     apiKeys: {
       openai: "sk-...",
       anthropic: "sk-ant-...",
-      gemini: "..." // Coming soon
+      gemini: "..." // Google AI API key
     },
     categorization: {
       batchSize: 10, // Products per batch
@@ -240,14 +248,32 @@ Each completed job includes:
 - Smaller batches (3-5): Lower latency, more API calls
 - Consider your use case and user experience
 
-### 4. Cost Management
+### 4. Supported Models & Pricing
+
+#### OpenAI Models
+- **GPT-4**: $0.03/1K input, $0.06/1K output tokens
+- **GPT-4 Turbo**: $0.01/1K input, $0.03/1K output tokens
+- **GPT-3.5 Turbo**: $0.0005/1K input, $0.0015/1K output tokens
+
+#### Anthropic Models
+- **Claude 3 Opus**: $0.015/1K input, $0.075/1K output tokens
+- **Claude 3 Sonnet**: $0.003/1K input, $0.015/1K output tokens
+- **Claude 3 Haiku**: $0.00025/1K input, $0.00125/1K output tokens
+
+#### Google Gemini Models
+- **Gemini 1.5 Pro**: $0.0035/1K input, $0.0105/1K output tokens
+- **Gemini 1.5 Flash**: $0.000075/1K input, $0.0003/1K output tokens (most cost-effective)
+- **Gemini 1.0 Pro**: $0.0005/1K input, $0.0015/1K output tokens
+
+### 5. Cost Management
 
 - Monitor token usage and costs regularly
 - Use caching aggressively for similar products
-- Choose appropriate models (GPT-3.5 vs GPT-4)
+- Choose appropriate models based on complexity
+- Gemini 1.5 Flash offers excellent cost/performance for most use cases
 - Set spending limits in provider dashboards
 
-### 5. Feedback Integration
+### 6. Feedback Integration
 
 - Review rejected categorizations regularly
 - Update prompts based on common mistakes
@@ -287,7 +313,7 @@ Each completed job includes:
 
 ### Planned Features
 
-- [ ] Google Gemini support
+- [x] Google Gemini support (Complete!)
 - [ ] Redis caching for production scale
 - [ ] Fine-tuned models for specific domains
 - [ ] Streaming responses for real-time UI

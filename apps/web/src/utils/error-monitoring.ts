@@ -11,7 +11,7 @@ export interface ErrorContext {
   action?: string;
   userId?: string;
   organizationId?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface LogLevel {
@@ -40,12 +40,12 @@ export class Logger {
     this.isDevelopment = process.env.NODE_ENV === 'development';
   }
 
-  private formatMessage(level: string, message: string, data?: any): string {
+  private formatMessage(level: string, message: string): string {
     const timestamp = new Date().toISOString();
     return `[${timestamp}] [${level.toUpperCase()}] [${this.context}] ${message}`;
   }
 
-  private log(level: keyof LogLevel, message: string, data?: any) {
+  private log(level: LogLevel[keyof LogLevel], message: string, data?: unknown) {
     const formattedMessage = this.formatMessage(level, message);
 
     switch (level) {
@@ -71,19 +71,19 @@ export class Logger {
     }
   }
 
-  debug(message: string, data?: any) {
+  debug(message: string, data?: unknown) {
     this.log('debug', message, data);
   }
 
-  info(message: string, data?: any) {
+  info(message: string, data?: unknown) {
     this.log('info', message, data);
   }
 
-  warn(message: string, data?: any) {
+  warn(message: string, data?: unknown) {
     this.log('warn', message, data);
   }
 
-  error(message: string, error?: any) {
+  error(message: string, error?: unknown) {
     const errorData =
       error instanceof Error
         ? {
@@ -99,7 +99,8 @@ export class Logger {
   /**
    * Report error to external service (placeholder for future implementation)
    */
-  private reportError(message: string, data: any) {
+  private reportError(message: string) {
+    void message;
     // Future: Send to error monitoring service
     // For now, just ensure errors are logged
   }
@@ -156,7 +157,7 @@ export function monitorConvexErrors(logger: Logger) {
 
   // Override console.error to catch Convex-related errors
   const originalError = console.error;
-  console.error = function (...args: any[]) {
+  console.error = function (...args: unknown[]) {
     const errorMessage = args.join(' ');
 
     // Check for Convex function errors

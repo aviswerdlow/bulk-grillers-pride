@@ -1,19 +1,19 @@
 'use client';
 
 import { useQuery, useMutation } from 'convex/react';
-import { api } from '../../../../../convex/_generated/api';
+import { api } from '@convex/_generated/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Check, X, Mail, Calendar, Building, Loader2 } from 'lucide-react';
+import { Check, X, Mail, Calendar, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useState } from 'react';
 
 export function PendingInvitations() {
-  const invitations = useQuery(api.functions.auth.invitations.getPendingInvitations);
-  const acceptInvitation = useMutation(api.functions.auth.invitations.acceptInvitation);
-  const declineInvitation = useMutation(api.functions.auth.invitations.declineInvitation);
+  const invitations = useQuery((api as any).functions.auth.invitations.getPendingInvitations);
+  const acceptInvitation = useMutation((api as any).functions.auth.invitations.acceptInvitation);
+  const declineInvitation = useMutation((api as any).functions.auth.invitations.declineInvitation);
 
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [action, setAction] = useState<'accept' | 'decline' | null>(null);
@@ -72,7 +72,7 @@ export function PendingInvitations() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {invitations.map((invitation) => (
+        {invitations.map((invitation: any) => (
           <div
             key={invitation._id}
             className="flex items-center justify-between p-4 bg-white rounded-lg border"
@@ -100,7 +100,7 @@ export function PendingInvitations() {
                 </div>
                 {invitation.customMessage && (
                   <p className="text-sm text-muted-foreground mt-2 italic">
-                    "{invitation.customMessage}"
+                    &ldquo;{invitation.customMessage}&rdquo;
                   </p>
                 )}
               </div>

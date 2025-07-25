@@ -44,7 +44,6 @@ lock_tier_1:
 
 ## Always Read
 always_read:
-  - /AGENTS_BOARD.md
   - convex/schema.ts
   - Recent migration history
   - Current data statistics
@@ -63,3 +62,11 @@ always_read:
 3. Set up staging environment
 4. Create data validation tools
 5. Implement rollback mechanisms
+
+## Task Management
+
+- Run `/check-tasks` to see available GitHub Issues
+- Claim tasks with `gh issue edit <number> --add-assignee @me`
+- Update status with `gh issue edit <number> --add-label "status-in-progress"`
+- Complete tasks with `gh issue close <number> --comment "Summary"`
+- Always run `/check-tasks` again after completing work

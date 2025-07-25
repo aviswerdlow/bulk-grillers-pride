@@ -8,6 +8,12 @@ updates:
       day: "monday"
       time: "03:00"
     open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "automated"
+      - "agent-infra-agent"
+    reviewers:
+      - "aviswerdlow"
     groups:
       development-dependencies:
         patterns:
@@ -47,3 +53,9 @@ updates:
       day: "monday"
       time: "03:00"
     open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "github-actions"
+      - "automated"
+    reviewers:
+      - "aviswerdlow"

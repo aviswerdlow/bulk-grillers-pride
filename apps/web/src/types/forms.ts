@@ -3,13 +3,13 @@
  * These types are used for form validation, submission, and field management
  */
 
-import { FieldError, UseFormReturn } from 'react-hook-form';
+import { FieldError, UseFormReturn, FieldValues } from 'react-hook-form';
 import { z } from 'zod';
 
 /**
  * Generic form field configuration
  */
-export interface FormField<T = any> {
+export interface FormField<T = Record<string, unknown>> {
   name: keyof T;
   label: string;
   type:
@@ -25,9 +25,9 @@ export interface FormField<T = any> {
   placeholder?: string;
   required?: boolean;
   disabled?: boolean;
-  defaultValue?: any;
+  defaultValue?: T[keyof T];
   options?: SelectOption[];
-  validation?: z.ZodType<any>;
+  validation?: z.ZodType<unknown>;
   description?: string;
 }
 
@@ -44,7 +44,7 @@ export interface SelectOption {
 /**
  * Form submission handler types
  */
-export type FormSubmitHandler<T = any> = (data: T) => void | Promise<void>;
+export type FormSubmitHandler<T = Record<string, unknown>> = (data: T) => void | Promise<void>;
 export type FormErrorHandler = (errors: Record<string, FieldError>) => void;
 
 /**
@@ -71,18 +71,18 @@ export interface FileUploadConfig {
 /**
  * Form section configuration for multi-step or sectioned forms
  */
-export interface FormSection<T = any> {
+export interface FormSection<T = Record<string, unknown>> {
   id: string;
   title: string;
   description?: string;
   fields: FormField<T>[];
-  validation?: z.ZodType<any>;
+  validation?: z.ZodType<unknown>;
 }
 
 /**
  * Multi-step form configuration
  */
-export interface MultiStepFormConfig<T = any> {
+export interface MultiStepFormConfig<T = Record<string, unknown>> {
   steps: FormStep<T>[];
   onComplete: FormSubmitHandler<T>;
   onStepChange?: (step: number) => void;
@@ -93,19 +93,19 @@ export interface MultiStepFormConfig<T = any> {
 /**
  * Form step configuration
  */
-export interface FormStep<T = any> {
+export interface FormStep<T = Record<string, unknown>> {
   id: string;
   title: string;
   description?: string;
   fields: FormField<T>[];
-  validation?: z.ZodType<any>;
+  validation?: z.ZodType<unknown>;
   canSkip?: boolean;
 }
 
 /**
  * Dynamic form field configuration
  */
-export interface DynamicFormField<T = any> extends FormField<T> {
+export interface DynamicFormField<T = Record<string, unknown>> extends FormField<T> {
   dependsOn?: keyof T;
   showWhen?: (values: T) => boolean;
   requiredWhen?: (values: T) => boolean;
@@ -114,7 +114,7 @@ export interface DynamicFormField<T = any> extends FormField<T> {
 /**
  * Form state with validation
  */
-export interface ValidatedFormState<T = any> {
+export interface ValidatedFormState<T = Record<string, unknown>> {
   values: T;
   errors: Record<keyof T, string | undefined>;
   touched: Record<keyof T, boolean>;
@@ -126,7 +126,7 @@ export interface ValidatedFormState<T = any> {
 /**
  * Common form props for form components
  */
-export interface BaseFormProps<T = any> {
+export interface BaseFormProps<T extends FieldValues = FieldValues> {
   form: UseFormReturn<T>;
   onSubmit: FormSubmitHandler<T>;
   onCancel?: () => void;
@@ -138,7 +138,7 @@ export interface BaseFormProps<T = any> {
 /**
  * Field array item for dynamic form lists
  */
-export interface FieldArrayItem<T = any> {
+export interface FieldArrayItem<T = unknown> {
   id: string;
   index: number;
   value: T;
@@ -150,9 +150,9 @@ export interface FieldArrayItem<T = any> {
 export interface CSVFieldMapping {
   csvColumn: string;
   targetField: string;
-  transform?: (value: string) => any;
+  transform?: (value: string) => unknown;
   required?: boolean;
-  defaultValue?: any;
+  defaultValue?: unknown;
 }
 
 /**
@@ -161,7 +161,7 @@ export interface CSVFieldMapping {
 export interface ImportConfig {
   type: 'csv' | 'json' | 'excel';
   mappings: CSVFieldMapping[];
-  validation?: z.ZodType<any>;
+  validation?: z.ZodType<unknown>;
   duplicateHandling?: 'skip' | 'update' | 'create';
   batchSize?: number;
 }
@@ -169,7 +169,7 @@ export interface ImportConfig {
 /**
  * Form builder configuration
  */
-export interface FormBuilderConfig<T = any> {
+export interface FormBuilderConfig<T = Record<string, unknown>> {
   fields: DynamicFormField<T>[];
   layout?: 'vertical' | 'horizontal' | 'inline';
   columns?: number;
@@ -183,19 +183,19 @@ export interface FormBuilderConfig<T = any> {
  */
 export interface ValidationRule {
   type: 'required' | 'minLength' | 'maxLength' | 'pattern' | 'custom';
-  value?: any;
+  value?: string | number | RegExp;
   message: string;
-  validator?: (value: any) => boolean;
+  validator?: (value: unknown) => boolean;
 }
 
 /**
  * Form context for nested forms
  */
-export interface FormContext<T = any> {
+export interface FormContext<T extends FieldValues = FieldValues> {
   form: UseFormReturn<T>;
   isSubmitting: boolean;
   errors: Record<string, FieldError>;
-  setFieldValue: (field: keyof T, value: any) => void;
+  setFieldValue: (field: keyof T, value: T[keyof T]) => void;
   setFieldError: (field: keyof T, error: string) => void;
 }
 
@@ -214,7 +214,7 @@ export interface SearchFormConfig {
 /**
  * Filter form configuration
  */
-export interface FilterFormConfig<T = any> {
+export interface FilterFormConfig<T = Record<string, unknown>> {
   filters: FilterField<T>[];
   onApply: (filters: T) => void;
   onReset?: () => void;
@@ -224,7 +224,7 @@ export interface FilterFormConfig<T = any> {
 /**
  * Filter field configuration
  */
-export interface FilterField<T = any> {
+export interface FilterField<T = Record<string, unknown>> {
   name: keyof T;
   label: string;
   type: 'select' | 'range' | 'date' | 'boolean' | 'text';

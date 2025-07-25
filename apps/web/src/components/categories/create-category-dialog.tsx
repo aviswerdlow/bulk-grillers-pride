@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from 'react';
 import { useMutation } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
 import { Id } from "../../../../../convex/_generated/dataModel";
@@ -52,7 +52,7 @@ export function CreateCategoryDialog({
 }: CreateCategoryDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const createCategory = useMutation(api.functions.categories.categories.createCategory);
+  const createCategory = useMutation((api as any).functions.categories.categories.createCategory);
 
   const {
     register,

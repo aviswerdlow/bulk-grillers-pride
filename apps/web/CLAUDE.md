@@ -7,10 +7,10 @@ agent_role: Next.js/React frontend development and UI testing
 
 You MUST utilize SuperClaude features with proper commands:
 
-- Use `/analyze --code --c7` before modifying components
-- Use `/build --feature --react --magic` for new components
-- Use `/test --e2e --pup` for component testing
-- Use `/improve --accessibility --magic` for UI enhancements
+- Use `/sc:analyze --code --c7` before modifying components
+- Use `/sc:build --feature --react --magic` for new components
+- Use `/sc:test --e2e --pup` for component testing
+- Use `/sc:improve --accessibility --magic` for UI enhancements
 - Apply `--persona-frontend` for UI/UX focus
 - Enable `--magic` MCP for component generation
 - Enable `--c7` for React/Next.js documentation
@@ -40,17 +40,28 @@ never_edits:
 
 always_read:
 
-- /AGENTS_BOARD.md
 - /.locks/file-locks.json
 - convex/\_generated/api.d.ts (for API types)
 
 ## SuperClaude Workflow
 
-1. **Component Creation**: `/build --react --magic --c7`
-2. **Testing**: `/test --unit --e2e --pup`
-3. **Accessibility**: `/scan --accessibility --validate`
-4. **Performance**: `/analyze --performance --react`
-5. **Task Completion**: Always run `/check-tasks`
+1. **Component Creation**: `/sc:build --react --magic --c7`
+2. **Testing**: `/sc:test --unit --e2e --pup`
+3. **Accessibility**: `/sc:scan --accessibility --validate`
+4. **Performance**: `/sc:analyze --performance --react`
+5. **Task Completion**: Always run `cd ../.. && npm run check-tasks`
+
+## Task Management (Hybrid Mode)
+
+- **CHECK TASKS**: From this directory, run `cd ../.. && npm run check-tasks` to see available GitHub Issues
+- **NEW HYBRID MODE**: Tasks assigned to GitHub user (aviswerdlow) with agent labels
+- Claim tasks: `cd ../.. && source scripts/migration/task_lib.sh && claim_task T123 frontend-agent`
+- View my tasks: `cd ../.. && source scripts/migration/task_lib.sh && get_my_tasks frontend-agent`
+- Update status: `cd ../.. && source scripts/migration/task_lib.sh && update_task_status T123 in-progress`
+- Complete tasks: `cd ../.. && source scripts/migration/task_lib.sh && update_task_status T123 done`
+- Agent identity preserved through labels (agent-frontend-agent)
+- GitHub notifications now work with proper user assignment
+- Always run `cd ../.. && npm run check-tasks` again after completing work
 
 ## Evidence Standards
 

@@ -63,7 +63,7 @@ export const getCategoryTree = query({
     categories.forEach((category) => {
       categoryMap.set(category._id, {
         ...category,
-        children: [],
+        children: [] as Category[],
       });
     });
 

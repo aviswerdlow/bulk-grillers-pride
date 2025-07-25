@@ -4,7 +4,7 @@
  * but are not generated types - they are manually maintained for frontend use
  */
 
-import { Id } from '../../../../convex/_generated/dataModel';
+import { Id } from '@convex/_generated/dataModel';
 
 /**
  * Product model for UI components
@@ -110,7 +110,7 @@ export interface ImportJob {
  * AI Categorization job model for UI components
  */
 export interface CategorizationJob {
-  _id: Id<'categorizationJobs'>;
+  _id: Id<'aiCategorizationJobs'>;
   organizationId: Id<'organizations'>;
   projectId: Id<'projects'>;
   status: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
@@ -144,7 +144,7 @@ export interface TeamMember {
  * Invitation model for UI components
  */
 export interface Invitation {
-  _id: Id<'invitations'>;
+  _id: string;
   organizationId: Id<'organizations'>;
   email: string;
   role: UserRole;
@@ -162,7 +162,7 @@ export interface Invitation {
  * Permission model for UI components
  */
 export interface Permission {
-  _id: Id<'permissions'>;
+  _id: string;
   userId: Id<'users'>;
   organizationId: Id<'organizations'>;
   role: UserRole;
@@ -174,7 +174,7 @@ export interface Permission {
  * Category level definition model
  */
 export interface CategoryLevel {
-  _id: Id<'categoryLevels'>;
+  _id: Id<'categoryLevelDefinitions'>;
   organizationId: Id<'organizations'>;
   projectId: Id<'projects'>;
   level: number;

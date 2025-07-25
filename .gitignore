@@ -189,4 +189,31 @@ Temporary Items
 docs-agent/
 migration-agent/
 quality-agent/
-SuperClaude/
+SuperClaude/.jest-cache/
+tsconfig.tsbuildinfo
+
+# Backup files and duplicates
+*.backup
+*.md~
+*\ 2.md
+*\ 2.js
+*\ 2.ts
+*\ 2.tsx
+*\ 2.json
+*\ 2.*
+*.orig
+.husky/_
+
+# Agent tools bin directory
+bin/
+
+# Benchmark baseline files
+.benchmarks/
+benchmark-results.json
+benchmark-report.html
+regression-report.json
+
+# Security scan reports
+security-reports/
+dependency-check-report/
+reports/

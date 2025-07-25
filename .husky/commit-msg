@@ -1,0 +1,27 @@
+#!/bin/sh
+# Validate commit message format
+
+# Get the commit message
+commit_regex='^(feat|fix|docs|style|refactor|test|chore|perf|ci|build|revert)(\(.+\))?: .{1,100}'
+commit_msg=$(cat "$1")
+
+# Check if commit message matches the pattern
+if ! echo "$commit_msg" | grep -qE "$commit_regex"; then
+  echo ""
+  echo "❌ Invalid commit message format!"
+  echo ""
+  echo "Commit message must follow Conventional Commits format:"
+  echo "  <type>(<scope>): <subject>"
+  echo ""
+  echo "Examples:"
+  echo "  feat: add new product import feature"
+  echo "  fix(auth): resolve login redirect issue"
+  echo "  docs: update README with setup instructions"
+  echo "  test(frontend): add tests for ProductCard component"
+  echo ""
+  echo "Types: feat, fix, docs, style, refactor, test, chore, perf, ci, build, revert"
+  echo ""
+  exit 1
+fi
+
+echo "✅ Commit message follows conventional format"

@@ -1,0 +1,121 @@
+/* Warning Level Animation Definitions */
+
+/* Fade in animation for info/success levels */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Slide down animation for warning/error levels */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Slide up animation for mobile bottom sheets */
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Shake animation for critical alerts */
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-2px);
+  }
+  75% {
+    transform: translateX(2px);
+  }
+}
+
+/* Glow animation for error borders */
+@keyframes glow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.2);
+  }
+}
+
+/* Critical pulse animation */
+@keyframes criticalPulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.9;
+  }
+}
+
+/* Utility classes for animations */
+.animate-fadeIn {
+  animation: fadeIn 200ms ease-out;
+}
+
+.animate-slideDown {
+  animation: slideDown 150ms ease-out;
+}
+
+.animate-slideUp {
+  animation: slideUp 200ms ease-out;
+}
+
+.animate-shake {
+  animation: shake 100ms ease-in-out;
+}
+
+.animate-glow {
+  animation: glow 2s ease-in-out infinite;
+}
+
+.animate-criticalPulse {
+  animation: criticalPulse 1.5s ease-in-out infinite;
+}
+
+/* Haptic feedback simulation for mobile */
+@media (max-width: 768px) {
+  .warning-level-3 {
+    animation: slideDown 150ms ease-out, shake 50ms ease-in-out 150ms;
+  }
+  
+  .warning-level-4 {
+    animation: slideDown 150ms ease-out, shake 75ms ease-in-out 150ms;
+  }
+  
+  .warning-level-5 {
+    animation: slideUp 200ms ease-out, shake 100ms ease-in-out 200ms;
+  }
+}
+
+/* Reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,12 +1,12 @@
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import React from 'react';
-import { screen } from '@testing-library/react';
-import { AuthLoading, AuthButtonLoading } from '@/components/auth/auth-loading';
-import { render } from '../../test-utils';
-
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { cleanupTest, mockUseQuery, mockUseMutation, renderWithProviders, setupTest } from '@/__tests__/test-helpers';
+import { AuthButtonLoading, AuthLoading } from '@/components/auth/auth-loading';
 describe('AuthLoading', () => {
   describe('default mode', () => {
     it('renders with default text', () => {
-      render(<AuthLoading />);
+      renderWithProviders(<AuthLoading />);
 
       expect(screen.getByText('Loading...')).toBeInTheDocument();
       // Check for spinner icon (Loader2 renders as an svg)
@@ -16,13 +16,13 @@ describe('AuthLoading', () => {
     });
 
     it('renders with custom text', () => {
-      render(<AuthLoading text="Authenticating..." />);
+      renderWithProviders(<AuthLoading text="Authenticating..." />);
 
       expect(screen.getByText('Authenticating...')).toBeInTheDocument();
     });
 
     it('renders with custom className', () => {
-      render(<AuthLoading className="custom-loading" />);
+      renderWithProviders(<AuthLoading className="custom-loading" />);
 
       const container = screen.getByText('Loading...').parentElement;
       expect(container).toHaveClass('custom-loading');
@@ -32,7 +32,7 @@ describe('AuthLoading', () => {
     });
 
     it('has correct default styling', () => {
-      render(<AuthLoading />);
+      renderWithProviders(<AuthLoading />);
 
       const container = screen.getByText('Loading...').parentElement;
       expect(container).toHaveClass('flex');
@@ -44,7 +44,7 @@ describe('AuthLoading', () => {
     });
 
     it('renders spinner with correct classes', () => {
-      render(<AuthLoading />);
+      renderWithProviders(<AuthLoading />);
 
       const spinner = screen.getByText('Loading...').parentElement?.querySelector('svg');
       expect(spinner).toHaveClass('h-8');
@@ -54,7 +54,7 @@ describe('AuthLoading', () => {
     });
 
     it('renders text with correct classes', () => {
-      render(<AuthLoading />);
+      renderWithProviders(<AuthLoading />);
 
       const text = screen.getByText('Loading...');
       expect(text).toHaveClass('mt-4');
@@ -65,7 +65,7 @@ describe('AuthLoading', () => {
 
   describe('inline mode', () => {
     it('renders inline when inline prop is true', () => {
-      render(<AuthLoading inline />);
+      renderWithProviders(<AuthLoading inline />);
 
       const container = screen.getByText('Loading...').parentElement;
       expect(container).toHaveClass('inline-flex');
@@ -75,13 +75,13 @@ describe('AuthLoading', () => {
     });
 
     it('renders inline with custom text', () => {
-      render(<AuthLoading inline text="Please wait..." />);
+      renderWithProviders(<AuthLoading inline text="Please wait..." />);
 
       expect(screen.getByText('Please wait...')).toBeInTheDocument();
     });
 
     it('renders inline with custom className', () => {
-      render(<AuthLoading inline className="inline-custom" />);
+      renderWithProviders(<AuthLoading inline className="inline-custom" />);
 
       const container = screen.getByText('Loading...').parentElement;
       expect(container).toHaveClass('inline-custom');
@@ -89,7 +89,7 @@ describe('AuthLoading', () => {
     });
 
     it('renders inline spinner with correct classes', () => {
-      render(<AuthLoading inline />);
+      renderWithProviders(<AuthLoading inline />);
 
       const spinner = screen.getByText('Loading...').parentElement?.querySelector('svg');
       expect(spinner).toHaveClass('h-4');
@@ -100,7 +100,7 @@ describe('AuthLoading', () => {
     });
 
     it('renders inline text with correct classes', () => {
-      render(<AuthLoading inline />);
+      renderWithProviders(<AuthLoading inline />);
 
       const text = screen.getByText('Loading...');
       expect(text).toHaveClass('text-sm');
@@ -113,7 +113,7 @@ describe('AuthLoading', () => {
 
 describe('AuthButtonLoading', () => {
   it('renders spinner without text', () => {
-    const { container } = render(<AuthButtonLoading />);
+    const { container } = renderWithProviders(<AuthButtonLoading />);
 
     // Should have spinner but no text
     expect(container.querySelector('svg')).toBeInTheDocument();
@@ -121,14 +121,14 @@ describe('AuthButtonLoading', () => {
   });
 
   it('renders with default styling', () => {
-    const { container } = render(<AuthButtonLoading />);
+    const { container } = renderWithProviders(<AuthButtonLoading />);
 
     const div = container.querySelector('.flex.items-center.justify-center');
     expect(div).toBeInTheDocument();
   });
 
   it('renders with custom className', () => {
-    const { container } = render(<AuthButtonLoading className="button-loading" />);
+    const { container } = renderWithProviders(<AuthButtonLoading className="button-loading" />);
 
     const div = container.querySelector('.button-loading');
     expect(div).toBeInTheDocument();
@@ -136,7 +136,7 @@ describe('AuthButtonLoading', () => {
   });
 
   it('renders spinner with correct classes', () => {
-    const { container } = render(<AuthButtonLoading />);
+    const { container } = renderWithProviders(<AuthButtonLoading />);
 
     const spinner = container.querySelector('svg');
     expect(spinner).toHaveClass('h-4');

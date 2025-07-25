@@ -541,7 +541,7 @@ This project uses an AI-powered multi-agent system. When contributing:
 
 1. **Respect Ownership**: Don't modify files owned by other agents without coordination
 2. **Check Locks**: Some files require locks before editing
-3. **Update Board**: Keep AGENTS_BOARD.md updated with task status
+3. **Update Status**: Keep GitHub Issues updated with task progress
 4. **Coordinate Changes**: Major changes may need multi-agent coordination
 
 ### Agent Guidelines

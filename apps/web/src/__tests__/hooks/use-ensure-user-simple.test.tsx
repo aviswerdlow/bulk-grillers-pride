@@ -1,6 +1,9 @@
-import { renderHook, waitFor } from '@testing-library/react';
-import { useMutation } from 'convex/react';
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import React from 'react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { cleanupTest, mockUseQuery, mockUseMutation, renderWithProviders, setupTest, renderHook } from '@/__tests__/test-helpers';
 import { useAuth } from '@clerk/nextjs';
+;
 
 // Mock the entire module to avoid import issues
 jest.mock('@/hooks/use-ensure-user', () => {
@@ -15,7 +18,7 @@ jest.mock('@clerk/nextjs');
 // Create a test version of the hook that doesn't import the api
 const useEnsureUserTest = () => {
   const { isSignedIn, isLoaded } = useAuth();
-  const ensureUser = useMutation('auth.users.ensureUser' as any);
+  const ensureUser = mockUseMutation('auth.users.ensureUser' as any);
 
   React.useEffect(() => {
     if (!isLoaded || !isSignedIn) return;
@@ -31,12 +34,16 @@ const useEnsureUserTest = () => {
 };
 
 describe('useEnsureUser', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   const mockEnsureUser = jest.fn().mockResolvedValue(undefined);
 
   beforeEach(() => {
     jest.clearAllMocks();
     mockEnsureUser.mockResolvedValue(undefined);
-    (useMutation as jest.Mock).mockReturnValue(mockEnsureUser);
+    mockUseMutation.mockReturnValue(mockEnsureUser);
   });
 
   it('should not call ensureUser when user is not loaded', () => {

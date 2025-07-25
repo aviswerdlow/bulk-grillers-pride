@@ -1,6 +1,7 @@
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import React from 'react';
 
-// Unit tests for product dialog logic and validation
+// // Unit tests for product dialog logic and validation
 describe('Product Dialog Unit Tests', () => {
   describe('Form Validation', () => {
     it('validates required title field', () => {
@@ -126,7 +127,19 @@ describe('Product Dialog Unit Tests', () => {
     };
 
     it('prepares form data for submission', () => {
-      const prepareFormData = (data: any) => {
+      interface FormData {
+        title?: string;
+        description?: string;
+        vendor?: string;
+        productType?: string;
+        handle?: string;
+        status?: string;
+        tags?: string[];
+        seoTitle?: string;
+        seoDescription?: string;
+      }
+
+      const prepareFormData = (data: FormData) => {
         return {
           title: data.title?.trim() || '',
           description: data.description?.trim() || undefined,
@@ -164,7 +177,17 @@ describe('Product Dialog Unit Tests', () => {
     });
 
     it('handles empty form data', () => {
-      const prepareFormData = (data: any) => {
+      interface FormData {
+        title?: string;
+        description?: string;
+        vendor?: string;
+        productType?: string;
+        handle?: string;
+        status?: string;
+        tags?: string[];
+      }
+
+      const prepareFormData = (data: FormData) => {
         return {
           title: data.title?.trim() || '',
           description: data.description?.trim() || undefined,

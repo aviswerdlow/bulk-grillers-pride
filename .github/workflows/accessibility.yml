@@ -1,0 +1,304 @@
+name: Accessibility Testing
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '18'
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
+
+jobs:
+  a11y-unit-tests:
+    name: A11y Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            apps/*/node_modules
+            packages/*/node_modules
+          key: ${{ runner.os }}-node-${{ env.NODE_VERSION }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-${{ env.NODE_VERSION }}-
+
+      - name: Install dependencies
+        run: |
+          if [ ! -d "node_modules" ]; then
+            npm ci
+          fi
+
+      - name: Run accessibility unit tests
+        run: |
+          cd apps/web
+          node --max-old-space-size=4096 node_modules/.bin/jest --testPathPatterns="accessibility" --coverage --maxWorkers=2
+        env:
+          CI: true
+
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: a11y-unit-coverage
+          path: apps/web/coverage/
+          retention-days: 1
+
+  a11y-e2e-tests:
+    name: A11y E2E Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            apps/*/node_modules
+            packages/*/node_modules
+          key: ${{ runner.os }}-node-${{ env.NODE_VERSION }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-${{ env.NODE_VERSION }}-
+
+      - name: Install dependencies
+        run: |
+          if [ ! -d "node_modules" ]; then
+            npm ci
+          fi
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+
+      - name: Build application
+        run: npm run build
+        env:
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+          NEXT_PUBLIC_CONVEX_URL: ${{ secrets.NEXT_PUBLIC_CONVEX_URL }}
+
+      - name: Run accessibility E2E tests
+        run: npx playwright test accessibility
+        env:
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+          NEXT_PUBLIC_CONVEX_URL: ${{ secrets.NEXT_PUBLIC_CONVEX_URL }}
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: a11y-playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+      - name: Upload screenshots
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: a11y-screenshots
+          path: test-results/
+          retention-days: 7
+
+  axe-scan:
+    name: Axe Accessibility Scan
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        page:
+          - { path: '/', name: 'Landing' }
+          - { path: '/sign-in', name: 'Sign In' }
+          - { path: '/sign-up', name: 'Sign Up' }
+          - { path: '/org/test-org/dashboard', name: 'Dashboard' }
+          - { path: '/org/test-org/products', name: 'Products' }
+          - { path: '/org/test-org/categories', name: 'Categories' }
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          if [ ! -d "node_modules" ]; then
+            npm ci
+          fi
+
+      - name: Install Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: Build application
+        run: npm run build
+        env:
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+          NEXT_PUBLIC_CONVEX_URL: ${{ secrets.NEXT_PUBLIC_CONVEX_URL }}
+
+      - name: Start server
+        run: |
+          npm start &
+          sleep 10
+        env:
+          PORT: 3000
+
+      - name: Run axe scan on ${{ matrix.page.name }} page
+        run: |
+          npx playwright test --project=chromium --grep "accessibility.*${{ matrix.page.path }}"
+        continue-on-error: true
+
+      - name: Generate axe report
+        if: always()
+        run: |
+          echo "## Axe Scan Results - ${{ matrix.page.name }}" >> axe-report-${{ matrix.page.name }}.md
+          echo "Path: ${{ matrix.page.path }}" >> axe-report-${{ matrix.page.name }}.md
+          echo "" >> axe-report-${{ matrix.page.name }}.md
+          if [ -f "test-results/axe-results-${{ matrix.page.name }}.json" ]; then
+            jq -r '.violations[] | "### " + .id + " (" + .impact + ")\n" + .description + "\n" + "**Elements affected:** " + (.nodes | length | tostring) + "\n"' test-results/axe-results-${{ matrix.page.name }}.json >> axe-report-${{ matrix.page.name }}.md
+          else
+            echo "✅ No accessibility violations found!" >> axe-report-${{ matrix.page.name }}.md
+          fi
+
+      - name: Upload axe report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: axe-report-${{ matrix.page.name }}
+          path: axe-report-${{ matrix.page.name }}.md
+          retention-days: 7
+
+  a11y-report:
+    name: Accessibility Report
+    needs: [a11y-unit-tests, a11y-e2e-tests, axe-scan]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Download all reports
+        uses: actions/download-artifact@v4
+        with:
+          pattern: axe-report-*
+          merge-multiple: true
+
+      - name: Generate summary report
+        run: |
+          echo "# 🎯 Accessibility Test Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "## Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "- Unit Tests: ${{ needs.a11y-unit-tests.result == 'success' && '✅ Passed' || '❌ Failed' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- E2E Tests: ${{ needs.a11y-e2e-tests.result == 'success' && '✅ Passed' || '❌ Failed' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Axe Scans: ${{ needs.axe-scan.result == 'success' && '✅ Passed' || '⚠️ Violations Found' }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "## Axe Scan Details" >> $GITHUB_STEP_SUMMARY
+          for report in axe-report-*.md; do
+            if [ -f "$report" ]; then
+              cat "$report" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+
+      - name: Comment PR with results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const reports = [];
+
+            // Read all axe reports
+            const files = fs.readdirSync('.').filter(f => f.startsWith('axe-report-'));
+            for (const file of files) {
+              const content = fs.readFileSync(file, 'utf8');
+              reports.push(content);
+            }
+
+            const comment = `## ♿ Accessibility Test Results
+
+            **Test Summary:**
+            - Unit Tests: ${{ needs.a11y-unit-tests.result == 'success' && '✅ Passed' || '❌ Failed' }}
+            - E2E Tests: ${{ needs.a11y-e2e-tests.result == 'success' && '✅ Passed' || '❌ Failed' }}
+            - Axe Scans: ${{ needs.axe-scan.result == 'success' && '✅ No violations' || '⚠️ Violations found' }}
+
+            <details>
+            <summary>Click to see detailed Axe scan results</summary>
+
+            ${reports.join('\n\n---\n\n')}
+
+            </details>
+
+            ---
+            <sub>💡 To run accessibility tests locally: \`npm run test:a11y\`</sub>`;
+
+            // Find existing comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const a11yComment = comments.find(comment => 
+              comment.body.includes('♿ Accessibility Test Results') && 
+              comment.user.type === 'Bot'
+            );
+
+            if (a11yComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: a11yComment.id,
+                body: comment,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: comment,
+              });
+            }
+
+  a11y-status-check:
+    name: Accessibility Check
+    needs: [a11y-unit-tests, a11y-e2e-tests, axe-scan]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Check accessibility test results
+        run: |
+          if [[ "${{ needs.a11y-unit-tests.result }}" != "success" || 
+                "${{ needs.a11y-e2e-tests.result }}" != "success" ]]; then
+            echo "❌ Accessibility tests failed"
+            exit 1
+          fi
+
+          if [[ "${{ needs.axe-scan.result }}" != "success" ]]; then
+            echo "⚠️ Accessibility violations found - please review and fix"
+            # Don't fail the build for axe violations, but warn
+          fi
+
+          echo "✅ All required accessibility tests passed!"

@@ -62,7 +62,7 @@ npm run dev:convex # Convex backend
 1. **Sign up** in the app to create your first organization
 2. **Import categories** using the migration tool
 3. **Add products** and test AI categorization
-4. **Check tasks** in AGENTS_BOARD.md for development work
+4. **Check tasks** using the `/check-tasks` command or GitHub Issues
 
 ## 🆘 Troubleshooting
 
@@ -86,7 +86,7 @@ npm run dev:convex # Convex backend
 ### Need Help?
 
 - Check `docs/` folder for detailed guides
-- Review `AGENTS_BOARD.md` for known issues
+- Review GitHub Issues for known issues
 - Run `npm test` to verify your setup
 
 ## 📝 Manual Setup (Alternative)

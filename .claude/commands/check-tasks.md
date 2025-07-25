@@ -1,18 +1,31 @@
 ---
-description: Check for tasks appropriate for this agent
+description: Check for GitHub Issues appropriate for this agent
 ---
 
-Check for tasks I can work on:
+Check for tasks I can work on from GitHub Issues:
 
-1. Identify which agent I am based on current directory:
+1. Identify which agent I am based on current directory's CLAUDE.md file:
+   - Read agent_id from CLAUDE.md
+   - Extract skills from CLAUDE.md
 
-   - If pwd contains "apps/web": I am frontend-agent
-   - If pwd contains "convex": I am backend-agent
-   - Otherwise: I am infra-agent
+2. Fetch GitHub Issues using `gh` CLI:
+   - Get all open issues with task labels
+   - Parse issue metadata from labels and body
 
-2. Read AGENTS_BOARD.md and find:
+3. Filter issues based on:
+   - Issues with my agent-specific label (e.g., `agent-infra-agent`)
+   - Issues with skill labels matching my skills
+   - Issues not assigned to other agents
+   - Issues not marked as done
 
-   - Tasks where Owner = my agent name AND Status = "assigned" or "👉 assigned"
-   - Unassigned tasks where required skills match my skills from CLAUDE.md
+4. Categorize and display:
+   - In Progress: My active tasks
+   - Ready: Tasks with dependencies met
+   - Available: Unassigned tasks I can work on
+   - Blocked: Tasks waiting on dependencies
 
-3. Show the results clearly with task IDs and descriptions.
+5. Show helpful commands for task management:
+   - How to claim a task using `gh issue edit`
+   - How to complete a task using `gh issue close`
+
+This command requires GitHub CLI (`gh`) to be installed and authenticated.

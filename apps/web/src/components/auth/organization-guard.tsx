@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import React, { useEffect } from 'react';
 import { useRouter } from "next/navigation";
 import { useQuery } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
@@ -13,8 +13,8 @@ interface OrganizationGuardProps {
 
 export function OrganizationGuard({ children, orgSlug }: OrganizationGuardProps) {
   const router = useRouter();
-  const userWithOrgs = useQuery(api.functions.auth.users.currentWithOrganizations);
-  const organization = useQuery(api.functions.organizations.organizations.getOrganizationBySlug, {
+  const userWithOrgs = useQuery((api as any).functions.auth.users.currentWithOrganizations);
+  const organization = useQuery((api as any).functions.organizations.organizations.getOrganizationBySlug, {
     slug: orgSlug,
   });
 
@@ -35,7 +35,7 @@ export function OrganizationGuard({ children, orgSlug }: OrganizationGuardProps)
 
     // Check if user has access to this organization
     const hasAccess = userWithOrgs.organizations?.some(
-      (org) => org._id === organization._id
+      (org: any) => org._id === organization._id
     );
 
     if (!hasAccess) {

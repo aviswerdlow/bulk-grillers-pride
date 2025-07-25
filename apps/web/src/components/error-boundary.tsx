@@ -4,6 +4,9 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertTriangle, RefreshCw } from "lucide-react";
+import { createLogger } from "@/utils/error-monitoring";
+
+const logger = createLogger('ErrorBoundary');
 
 interface ErrorBoundaryState {
   hasError: boolean;
@@ -25,16 +28,16 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
     return { hasError: true, error };
   }
 
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+  override componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     // Log error to monitoring service in production
-    console.error("Error caught by boundary:", error, errorInfo);
+    logger.error("Error caught by boundary:", { error, errorInfo });
   }
 
   resetError = () => {
     this.setState({ hasError: false, error: undefined });
   };
 
-  render() {
+  override render() {
     if (this.state.hasError) {
       if (this.props.fallback) {
         const FallbackComponent = this.props.fallback;

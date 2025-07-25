@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useMutation } from 'convex/react';
-import { api } from '../../../../../convex/_generated/api';
-import { Id } from '../../../../../convex/_generated/dataModel';
+import { api } from '@convex/_generated/api';
+import { Id } from '@convex/_generated/dataModel';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { toast } from 'sonner';
@@ -39,6 +39,7 @@ const createProductSchema = z.object({
   vendor: z.string().optional(),
   productType: z.string().optional(),
   handle: z.string().optional(),
+  sku: z.string().optional(),
   seoTitle: z.string().optional(),
   seoDescription: z.string().optional(),
   tags: z.array(z.string()).default([]),
@@ -62,7 +63,7 @@ export function CreateProductDialog({
   const [currentTag, setCurrentTag] = useState('');
   const [tags, setTags] = useState<string[]>([]);
 
-  const createProduct = useMutation(api.functions.products.products.createProduct);
+  const createProduct = useMutation((api as any).functions.products.products.createProduct);
 
   const {
     register,
@@ -133,6 +134,7 @@ export function CreateProductDialog({
         vendor: data.vendor || undefined,
         productType: data.productType || undefined,
         handle: data.handle || generateHandle(data.title),
+        sku: data.sku || undefined,
         seoTitle: data.seoTitle || undefined,
         seoDescription: data.seoDescription || undefined,
         tags: tags,
@@ -190,6 +192,11 @@ export function CreateProductDialog({
             <div className="space-y-2">
               <Label htmlFor="handle">Handle</Label>
               <Input id="handle" {...register('handle')} placeholder="product-handle" />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="sku">SKU</Label>
+              <Input id="sku" {...register('sku')} placeholder="SKU-123" />
             </div>
 
             <div className="space-y-2">

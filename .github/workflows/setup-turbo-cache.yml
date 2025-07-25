@@ -1,0 +1,100 @@
+name: Setup Turbo Remote Cache
+
+on:
+  workflow_dispatch:
+    inputs:
+      team_name:
+        description: 'Turbo team name (for remote cache)'
+        required: false
+        default: 'bulk-grillers-pride'
+
+jobs:
+  setup:
+    name: Configure Turbo Remote Cache
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Setup Turbo CLI
+        run: |
+          # Install turbo globally for easier access
+          npm install -g turbo@latest
+          
+          echo "## 🚀 Turbo Remote Cache Setup" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+      - name: Configure Turbo
+        env:
+          TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+          TURBO_TEAM: ${{ inputs.team_name }}
+        run: |
+          if [ -z "$TURBO_TOKEN" ]; then
+            echo "⚠️ TURBO_TOKEN not set in repository secrets!" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Setup Instructions:" >> $GITHUB_STEP_SUMMARY
+            echo "1. Visit https://turbo.build and create an account" >> $GITHUB_STEP_SUMMARY
+            echo "2. Create a new team or use existing one" >> $GITHUB_STEP_SUMMARY
+            echo "3. Generate an access token" >> $GITHUB_STEP_SUMMARY
+            echo "4. Add TURBO_TOKEN as a repository secret" >> $GITHUB_STEP_SUMMARY
+            echo "5. Add TURBO_TEAM as a repository secret (team slug)" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+          
+          echo "### Configuration Status" >> $GITHUB_STEP_SUMMARY
+          echo "- Team: $TURBO_TEAM" >> $GITHUB_STEP_SUMMARY
+          echo "- Token: ✅ Configured" >> $GITHUB_STEP_SUMMARY
+
+      - name: Test Remote Cache
+        env:
+          TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+          TURBO_TEAM: ${{ inputs.team_name }}
+        run: |
+          # Run a simple build to test cache
+          npx turbo run build --filter=test-factories --force
+          
+          # Run again to check cache hit
+          CACHE_OUTPUT=$(npx turbo run build --filter=test-factories --dry-run=json)
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Cache Test Results" >> $GITHUB_STEP_SUMMARY
+          
+          if echo "$CACHE_OUTPUT" | jq -e '.tasks[0].cache.status == "HIT"' > /dev/null; then
+            echo "✅ Remote cache is working!" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Cache statistics:" >> $GITHUB_STEP_SUMMARY
+            echo "$CACHE_OUTPUT" | jq -r '
+              "- Cache Status: " + .tasks[0].cache.status + "\n" +
+              "- Cache Source: " + .tasks[0].cache.source + "\n" +
+              "- Time Saved: " + (.tasks[0].cache.timeSaved // "N/A") + "ms"
+            ' >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Remote cache test failed" >> $GITHUB_STEP_SUMMARY
+            echo "Please check your TURBO_TOKEN and TURBO_TEAM settings" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Update GitHub Secrets Documentation
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Required Repository Secrets" >> $GITHUB_STEP_SUMMARY
+          echo "Ensure these secrets are configured in your repository settings:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Secret | Description | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| TURBO_TOKEN | Authentication token for Turbo remote cache | ${{ secrets.TURBO_TOKEN && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| TURBO_TEAM | Team identifier for Turbo remote cache | ${{ secrets.TURBO_TEAM && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Next Steps" >> $GITHUB_STEP_SUMMARY
+          echo "1. Ensure all CI workflows have TURBO_TOKEN and TURBO_TEAM in env" >> $GITHUB_STEP_SUMMARY
+          echo "2. Add \`TURBO_REMOTE_ONLY: true\` to prevent local cache pollution" >> $GITHUB_STEP_SUMMARY
+          echo "3. Monitor cache hit rates in workflow summaries" >> $GITHUB_STEP_SUMMARY

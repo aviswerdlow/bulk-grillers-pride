@@ -1,0 +1,28 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "🧪 Running tests before push..."
+
+# Run tests with CI configuration
+npm run test:ci
+
+# Check if tests passed
+if [ $? -ne 0 ]; then
+  echo "❌ Tests failed! Push aborted."
+  echo "💡 Fix the failing tests or use 'git push --no-verify' to skip (not recommended)"
+  exit 1
+fi
+
+# Run E2E tests if available
+if [ -f "playwright.config.ts" ] || [ -f "playwright.config.js" ]; then
+  echo "🌐 Running E2E tests..."
+  npm run test:e2e
+  
+  if [ $? -ne 0 ]; then
+    echo "❌ E2E tests failed! Push aborted."
+    echo "💡 Fix the failing E2E tests or use 'git push --no-verify' to skip"
+    exit 1
+  fi
+fi
+
+echo "✅ All tests passed! Proceeding with push..."

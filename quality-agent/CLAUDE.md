@@ -35,7 +35,6 @@ never_edits:
 
 ## Always Read
 always_read:
-  - /AGENTS_BOARD.md
   - /.locks/file-locks.json
   - /.agent-metrics/metrics.json
   - /coverage/lcov-report/index.html
@@ -53,3 +52,15 @@ always_read:
 3. Implement CI/CD quality gates
 4. Establish performance baselines
 5. Create security scanning pipeline
+
+## Task Management (Hybrid Mode)
+
+- Run `/check-tasks` to see available GitHub Issues
+- **NEW HYBRID MODE**: Tasks assigned to GitHub user (aviswerdlow) with agent labels
+- Claim tasks: `source scripts/migration/task_lib.sh && claim_task T123 quality-agent`
+- View my tasks: `get_my_tasks quality-agent`
+- Update status: `update_task_status T123 in-progress`
+- Complete tasks: `update_task_status T123 done`
+- Agent identity preserved through labels (agent-quality-agent)
+- GitHub notifications now work with proper user assignment
+- Always run `/check-tasks` again after completing work

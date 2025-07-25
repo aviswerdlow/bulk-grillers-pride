@@ -2,7 +2,7 @@
 
 import { useParams } from 'next/navigation';
 import { useQuery } from 'convex/react';
-import { api } from '../../../../../../../convex/_generated/api';
+import { api } from '@convex/_generated/api';
 import { TeamMembersList } from '@/components/auth/team-members-list';
 import { PendingInvitations } from '@/components/auth/pending-invitations';
 import { OrganizationGuard } from '@/components/auth/organization-guard';
@@ -14,13 +14,13 @@ export default function TeamPage() {
   const params = useParams();
   const orgSlug = params.orgSlug as string;
 
-  const organization = useQuery(api.functions.organizations.organizations.getOrganizationBySlug, {
+  const organization = useQuery((api as any).functions.organizations.organizations.getOrganizationBySlug, {
     slug: orgSlug,
   });
 
-  const currentUser = useQuery(api.functions.auth.users.currentWithOrganizations);
+  const currentUser = useQuery((api as any).functions.auth.users.currentWithOrganizations);
 
-  const currentUserRole = currentUser?.organizations?.find((org) => org._id === organization?._id)
+  const currentUserRole = currentUser?.organizations?.find((org: any) => org._id === organization?._id)
     ?.membership.role;
 
   if (!organization || !currentUser) {

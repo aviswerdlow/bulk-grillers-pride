@@ -7,8 +7,8 @@ agent_role: Database migrations and schema evolution
 
 You MUST utilize SuperClaude features:
 
-- Use `/migrate --database --plan --seq` for planning
-- Use `/analyze --schema --impact` before changes
+- Use `/sc:migrate --database --plan --seq` for planning
+- Use `/sc:analyze --schema --impact` before changes
 - Always use `--dry-run` first
 - Apply `--persona-backend` with migration focus
 - Enable `--seq` for migration strategy
@@ -36,12 +36,17 @@ lock_tier_1:
 
 ## SuperClaude Workflow
 
-1. **Plan**: `/migrate --plan --seq --dry-run`
-2. **Impact Analysis**: `/analyze --schema --impact`
+1. **Plan**: `/sc:migrate --plan --seq --dry-run`
+2. **Impact Analysis**: `/sc:analyze --schema --impact`
 3. **Test**: Run migration in dev environment
 4. **Document**: Create rollback procedures
 5. **Execute**: Apply with monitoring
-6. **Task Completion**: Always run `/check-tasks`
+6. **Task Completion**: 
+   - Run `npm run check-tasks` to see available GitHub Issues
+   - Claim tasks with `gh issue edit <number> --add-assignee @me`
+   - Update status with `gh issue edit <number> --add-label "status-in-progress"`
+   - Complete tasks with `gh issue close <number> --comment "Summary"`
+   - Always run `npm run check-tasks` again after completing work
 
 ## Evidence Standards
 

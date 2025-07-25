@@ -1,0 +1,24 @@
+{
+  "name": "@bulk-grillers-pride/test-factories",
+  "version": "1.0.0",
+  "description": "Test data factories for consistent test data generation across the codebase",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts --clean",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@faker-js/faker": "^9.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "jest": "^29.7.0",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2"
+  },
+  "peerDependencies": {
+    "convex": "^1.17.3"
+  }
+}

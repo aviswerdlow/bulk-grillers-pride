@@ -1,0 +1,117 @@
+name: Agent Task
+description: Task for multi-agent development system
+title: "T[NUMBER]: [DESCRIPTION]"
+labels: ["status-ready"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Task Template for Multi-Agent System
+        This template helps create properly formatted tasks for our multi-agent development workflow.
+  
+  - type: textarea
+    id: description
+    attributes:
+      label: Task Description
+      description: Clear description of what needs to be done
+      placeholder: |
+        Provide a detailed description of the task, including:
+        - What needs to be implemented/fixed/improved
+        - Context and background information
+        - Any specific requirements or constraints
+    validations:
+      required: true
+  
+  - type: dropdown
+    id: agent
+    attributes:
+      label: Suggested Agent
+      description: Which agent is best suited for this task?
+      options:
+        - frontend-agent
+        - backend-agent
+        - infra-agent
+        - quality-agent
+        - docs-agent
+        - design-agent
+        - systems-design-agent
+        - migration-agent
+      default: 0
+    validations:
+      required: true
+  
+  - type: checkboxes
+    id: skills
+    attributes:
+      label: Required Skills
+      description: Select all skills needed for this task
+      options:
+        - label: React
+        - label: TypeScript
+        - label: Convex
+        - label: Next.js
+        - label: Tailwind CSS
+        - label: Testing
+        - label: Jest
+        - label: Playwright
+        - label: API Development
+        - label: Database
+        - label: CI/CD
+        - label: Documentation
+  
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: Task priority level
+      options:
+        - P0 - Critical/Blocking
+        - P1 - High Priority
+        - P2 - Normal Priority
+        - P3 - Low Priority
+      default: 2
+    validations:
+      required: true
+  
+  - type: input
+    id: estimated_hours
+    attributes:
+      label: Estimated Hours
+      description: How many hours will this task take?
+      placeholder: "e.g., 4"
+    validations:
+      required: true
+  
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies
+      description: List any tasks that must be completed before this one
+      placeholder: |
+        - Depends on: #123
+        - Depends on: T456
+        - Blocks: #789
+  
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: Acceptance Criteria
+      description: What defines this task as complete?
+      placeholder: |
+        - [ ] Feature implemented and working
+        - [ ] Tests written and passing
+        - [ ] Documentation updated
+        - [ ] Code reviewed and approved
+    validations:
+      required: true
+  
+  - type: textarea
+    id: technical_details
+    attributes:
+      label: Technical Details
+      description: Any additional technical context, links to specs, design docs, etc.
+      placeholder: |
+        - Related PR: #123
+        - Design doc: link
+        - API spec: link
+        - Database schema changes: details

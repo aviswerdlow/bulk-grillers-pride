@@ -1,0 +1,167 @@
+name: Turbo Cache Warmup
+
+on:
+  schedule:
+    # Run daily at 2 AM UTC (10 PM EST / 7 PM PST)
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      force:
+        description: 'Force rebuild all caches'
+        required: false
+        type: boolean
+        default: false
+  push:
+    branches:
+      - main
+    paths:
+      - 'package-lock.json'
+      - 'turbo.json'
+      - '**/package.json'
+      - '**/tsconfig.json'
+
+concurrency:
+  group: cache-warmup-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '18'
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
+  TURBO_REMOTE_ONLY: true
+
+jobs:
+  warmup-cache:
+    name: Warm Up Turbo Remote Cache
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Run prepare step
+        run: npm run prepare || true
+
+      - name: Check remote cache status
+        id: cache-check
+        run: |
+          echo "🔍 Checking current cache status..."
+          npx turbo run build --dry-run --summarize > cache-status.txt 2>&1 || true
+
+          # Extract cache statistics
+          CACHE_HITS=$(grep -c "FULL TURBO" cache-status.txt || echo "0")
+          TOTAL_TASKS=$(grep -c "Task\|Package" cache-status.txt || echo "0")
+
+          if [ "$TOTAL_TASKS" -gt 0 ]; then
+            HIT_RATE=$((CACHE_HITS * 100 / TOTAL_TASKS))
+          else
+            HIT_RATE=0
+          fi
+
+          echo "cache_hits=$CACHE_HITS" >> $GITHUB_OUTPUT
+          echo "total_tasks=$TOTAL_TASKS" >> $GITHUB_OUTPUT
+          echo "hit_rate=$HIT_RATE" >> $GITHUB_OUTPUT
+
+          echo "📊 Current cache hit rate: ${HIT_RATE}%"
+
+      - name: Determine warmup strategy
+        id: strategy
+        run: |
+          FORCE_REBUILD="${{ github.event.inputs.force }}"
+          HIT_RATE="${{ steps.cache-check.outputs.hit_rate }}"
+
+          if [ "$FORCE_REBUILD" = "true" ]; then
+            echo "strategy=force" >> $GITHUB_OUTPUT
+            echo "🔄 Force rebuild requested"
+          elif [ "$HIT_RATE" -lt 50 ]; then
+            echo "strategy=full" >> $GITHUB_OUTPUT
+            echo "🔄 Low hit rate detected, running full warmup"
+          else
+            echo "strategy=incremental" >> $GITHUB_OUTPUT
+            echo "⚡ Good hit rate, running incremental warmup"
+          fi
+
+      - name: Build all packages
+        if: steps.strategy.outputs.strategy == 'full' || steps.strategy.outputs.strategy == 'force'
+        run: |
+          if [ "${{ steps.strategy.outputs.strategy }}" = "force" ]; then
+            npx turbo run build --force
+          else
+            npx turbo run build
+          fi
+        env:
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+          NEXT_PUBLIC_CONVEX_URL: ${{ secrets.NEXT_PUBLIC_CONVEX_URL }}
+
+      - name: Incremental cache warmup
+        if: steps.strategy.outputs.strategy == 'incremental'
+        run: |
+          echo "⚡ Running incremental cache warmup..."
+
+          # Only rebuild changed packages
+          npx turbo run build --filter='[HEAD^1]'
+          npx turbo run lint type-check --filter='[HEAD^1]'
+
+      - name: Run all cacheable tasks
+        if: steps.strategy.outputs.strategy == 'full' || steps.strategy.outputs.strategy == 'force'
+        run: |
+          if [ "${{ steps.strategy.outputs.strategy }}" = "force" ]; then
+            npx turbo run lint type-check test:ci --force
+          else
+            npx turbo run lint type-check test:ci
+          fi
+        env:
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+          NEXT_PUBLIC_CONVEX_URL: ${{ secrets.NEXT_PUBLIC_CONVEX_URL }}
+
+      - name: Generate cache report
+        id: report
+        if: always()
+        run: |
+          echo "📊 Generating cache warmup report..."
+
+          # Run summary to get final statistics
+          npx turbo run build --dry-run --summarize > final-status.txt 2>&1 || true
+
+          # Extract final statistics
+          FINAL_HITS=$(grep -c "FULL TURBO" final-status.txt || echo "0")
+          FINAL_TOTAL=$(grep -c "Task\|Package" final-status.txt || echo "0")
+
+          if [ "$FINAL_TOTAL" -gt 0 ]; then
+            FINAL_RATE=$((FINAL_HITS * 100 / FINAL_TOTAL))
+          else
+            FINAL_RATE=0
+          fi
+
+          # Calculate improvement
+          INITIAL_RATE="${{ steps.cache-check.outputs.hit_rate }}"
+          IMPROVEMENT=$((FINAL_RATE - INITIAL_RATE))
+
+          echo "final_hit_rate=$FINAL_RATE" >> $GITHUB_OUTPUT
+          echo "improvement=$IMPROVEMENT" >> $GITHUB_OUTPUT
+
+          # Create summary
+          echo "## Cache Warmup Report 🚀" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Results" >> $GITHUB_STEP_SUMMARY
+          echo "- **Initial hit rate**: ${INITIAL_RATE}%" >> $GITHUB_STEP_SUMMARY
+          echo "- **Final hit rate**: ${FINAL_RATE}%" >> $GITHUB_STEP_SUMMARY
+          echo "- **Improvement**: ${IMPROVEMENT}%" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Strategy" >> $GITHUB_STEP_SUMMARY
+          echo "- **Type**: ${{ steps.strategy.outputs.strategy }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Trigger**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Add notice
+          echo "::notice title=Cache Warmup Complete::Hit rate improved from ${INITIAL_RATE}% to ${FINAL_RATE}%"

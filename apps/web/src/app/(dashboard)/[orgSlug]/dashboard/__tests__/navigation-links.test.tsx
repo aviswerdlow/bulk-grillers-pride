@@ -1,7 +1,10 @@
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import React from 'react';
-import { render, screen } from '@testing-library/react';
-import { useRouter, useParams } from 'next/navigation';
-import { useQuery } from 'convex/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { cleanupTest, mockUseQuery, mockUseMutation, renderWithProviders, setupTest } from '@/__tests__/test-helpers';
+import { api } from '@convex/_generated/api';
+import { useParams, useRouter } from 'next/navigation';
+;
 import OrganizationDashboard from '../page';
 
 // Mock Next.js navigation
@@ -11,8 +14,29 @@ jest.mock('next/navigation', () => ({
 }));
 
 // Mock Convex
-jest.mock('convex/react', () => ({
-  useQuery: jest.fn(),
+// Mock the Convex API paths
+jest.mock('@convex/_generated/api', () => ({
+  api: {
+    functions: {
+      organizations: {
+        organizations: {
+          getOrganizationBySlug: jest.fn(),
+        },
+      },
+      projects: {
+        projects: {
+          getOrganizationProjects: jest.fn(),
+        },
+      },
+      dashboard: {
+        getDashboardStats: jest.fn(),
+        getRecentActivity: jest.fn(),
+      },
+    },
+  },
+}));
+jest.mock('@convex/_generated/dataModel', () => ({
+  Doc: {},
 }));
 
 // Mock Next.js Link to verify hrefs
@@ -26,6 +50,33 @@ jest.mock('next/link', () => {
     ),
   };
 });
+
+// Mock loading component
+jest.mock('@/components/loading', () => ({
+  PageLoading: ({ text }: { text?: string }) => <div>{text || 'Loading...'}</div>,
+}));
+
+// Mock Lucide icons
+jest.mock('lucide-react', () => ({
+  ShoppingCart: () => <div>ShoppingCart Icon</div>,
+  Layers: () => <div>Layers Icon</div>,
+  Upload: () => <div>Upload Icon</div>,
+  Brain: () => <div>Brain Icon</div>,
+  Plus: () => <div>Plus Icon</div>,
+  TrendingUp: () => <div>TrendingUp Icon</div>,
+  Clock: () => <div>Clock Icon</div>,
+  Users: () => <div>Users Icon</div>,
+  Activity: () => <div>Activity Icon</div>,
+  Package: () => <div>Package Icon</div>,
+  FileText: () => <div>FileText Icon</div>,
+  CheckCircle: () => <div>CheckCircle Icon</div>,
+  AlertCircle: () => <div>AlertCircle Icon</div>,
+}));
+
+// Mock date-fns
+jest.mock('date-fns', () => ({
+  formatDistanceToNow: jest.fn(() => '2 hours ago'),
+}));
 
 describe('Dashboard Navigation Links', () => {
   const mockPush = jest.fn();
@@ -44,15 +95,15 @@ describe('Dashboard Navigation Links', () => {
 
   it('should render with correct navigation links when data is loaded', () => {
     // Mock all queries to return data
-    (useQuery as jest.Mock).mockImplementation((query: any) => {
-      if (query.toString().includes('getOrganizationBySlug')) {
+    mockUseQuery.mockImplementation((query: unknown) => {
+      if (query === (api as any).functions.organizations.organizations.getOrganizationBySlug) {
         return {
           _id: 'org123',
           name: 'Test Organization',
           slug: 'test-org',
         };
       }
-      if (query.toString().includes('getOrganizationProjects')) {
+      if (query === (api as any).functions?.projects.projects.getOrganizationProjects) {
         return [
           {
             _id: 'proj123',
@@ -64,7 +115,7 @@ describe('Dashboard Navigation Links', () => {
           },
         ];
       }
-      if (query.toString().includes('getDashboardStats')) {
+      if (query === (api as any).functions.dashboard.getDashboardStats) {
         return {
           projectsCount: 1,
           productsCount: 10,
@@ -76,13 +127,13 @@ describe('Dashboard Navigation Links', () => {
           recentImports: [],
         };
       }
-      if (query.toString().includes('getRecentActivity')) {
+      if (query === (api as any).functions.dashboard.getRecentActivity) {
         return [];
       }
       return undefined;
     });
 
-    const { container } = render(<OrganizationDashboard />);
+    const { container } = renderWithProviders(<OrganizationDashboard />);
 
     // Check that the component rendered (not in loading state)
     expect(screen.getByText('Dashboard')).toBeInTheDocument();
@@ -117,18 +168,18 @@ describe('Dashboard Navigation Links', () => {
 
   it('should NOT have the old /products/import link', () => {
     // Mock all queries to return data
-    (useQuery as jest.Mock).mockImplementation((query: any) => {
-      if (query.toString().includes('getOrganizationBySlug')) {
+    mockUseQuery.mockImplementation((query: unknown) => {
+      if (query === (api as any).functions.organizations.organizations.getOrganizationBySlug) {
         return {
           _id: 'org123',
           name: 'Test Organization',
           slug: 'test-org',
         };
       }
-      if (query.toString().includes('getOrganizationProjects')) {
+      if (query === (api as any).functions?.projects.projects.getOrganizationProjects) {
         return [];
       }
-      if (query.toString().includes('getDashboardStats')) {
+      if (query === (api as any).functions.dashboard.getDashboardStats) {
         return {
           projectsCount: 0,
           productsCount: 0,
@@ -140,13 +191,13 @@ describe('Dashboard Navigation Links', () => {
           recentImports: [],
         };
       }
-      if (query.toString().includes('getRecentActivity')) {
+      if (query === (api as any).functions.dashboard.getRecentActivity) {
         return [];
       }
       return undefined;
     });
 
-    const { container } = render(<OrganizationDashboard />);
+    const { container } = renderWithProviders(<OrganizationDashboard />);
 
     // Ensure the old link does not exist
     const oldImportLink = container.querySelector('a[href="/test-org/products/import"]');

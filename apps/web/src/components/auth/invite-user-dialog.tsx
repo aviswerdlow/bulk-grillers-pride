@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useMutation } from 'convex/react';
-import { api } from '../../../../../convex/_generated/api';
+import { api } from '@convex/_generated/api';
 import {
   Dialog,
   DialogContent,
@@ -48,7 +48,7 @@ export function InviteUserDialog({ open, onOpenChange, organizationId }: InviteU
   const [isInviting, setIsInviting] = useState(false);
   const [error, setError] = useState('');
 
-  const inviteUser = useMutation(api.functions.auth.invitations.inviteToOrganization);
+  const inviteUser = useMutation((api as any).functions.auth.invitations.inviteToOrganization);
 
   const handleInvite = async () => {
     // Validate email
@@ -75,11 +75,15 @@ export function InviteUserDialog({ open, onOpenChange, organizationId }: InviteU
       setRole('editor');
       setMessage('');
       onOpenChange(false);
-    } catch (error: any) {
-      if (error.message?.includes('already a member')) {
-        setError('This user is already a member of the organization');
-      } else if (error.message?.includes('already been invited')) {
-        setError('An invitation has already been sent to this email');
+    } catch (error) {
+      if (error instanceof Error) {
+        if (error.message.includes('already a member')) {
+          setError('This user is already a member of the organization');
+        } else if (error.message.includes('already been invited')) {
+          setError('An invitation has already been sent to this email');
+        } else {
+          setError('Failed to send invitation. Please try again.');
+        }
       } else {
         setError('Failed to send invitation. Please try again.');
       }
@@ -95,7 +99,7 @@ export function InviteUserDialog({ open, onOpenChange, organizationId }: InviteU
         <DialogHeader>
           <DialogTitle>Invite Team Member</DialogTitle>
           <DialogDescription>
-            Send an invitation to join your organization. They'll receive an email with
+            Send an invitation to join your organization. They&apos;ll receive an email with
             instructions.
           </DialogDescription>
         </DialogHeader>

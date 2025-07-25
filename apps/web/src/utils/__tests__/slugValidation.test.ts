@@ -1,4 +1,5 @@
-import { isValidSlug, sanitizeSlug, getSlugValidationError } from '../slug-validation';
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import { getSlugValidationError, isValidSlug, sanitizeSlug } from '../slug-validation';
 
 describe('slug-validation', () => {
   describe('isValidSlug', () => {

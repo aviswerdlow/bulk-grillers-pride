@@ -222,7 +222,7 @@ Next steps:
 4. Check the documentation:
    - README.md for project overview
    - docs/TESTING.md for testing guide
-   - AGENTS_BOARD.md for development tasks
+   - GitHub Issues for development tasks (run /check-tasks to see available work)
 
 Happy coding! 🚀
 `);

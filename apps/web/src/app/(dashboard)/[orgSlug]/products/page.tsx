@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery } from 'convex/react';
-import { api } from '../../../../../../../convex/_generated/api';
+import { api } from '@convex/_generated/api';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -35,7 +35,10 @@ import {
   Trash2,
   Grid,
   List,
+  Settings,
 } from 'lucide-react';
+import Link from 'next/link';
+import { SkuCopyButton } from '@/components/ui/sku-copy-button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -44,22 +47,12 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { CreateProductDialog } from '@/components/products/create-product-dialog';
 import { EditProductDialog } from '@/components/products/edit-product-dialog';
+import { DeleteProductDialog } from '@/components/products/delete-product-dialog';
 import { ProductCard } from '@/components/products/product-card';
 import { ProductCardSkeleton } from '@/components/products/product-card-skeleton';
 import { Loading } from '@/components/loading';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-
-interface Product {
-  _id: string;
-  title: string;
-  handle: string;
-  vendor?: string;
-  productType?: string;
-  status: string;
-  createdAt: number;
-  updatedAt: number;
-  categories: string[];
-}
+import { Product } from '@/types/models';
 
 export default function ProductsPage() {
   const params = useParams();
@@ -69,17 +62,18 @@ export default function ProductsPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [editingProduct, setEditingProduct] = useState<any>(null);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   // Get organization
-  const organization = useQuery(api.functions.organizations.organizations.getOrganizationBySlug, {
+  const organization = useQuery((api as any).functions.organizations.organizations.getOrganizationBySlug, {
     slug: orgSlug,
   });
 
   // Get projects for this organization
   const projects = useQuery(
-    api.functions.projects.projects.getOrganizationProjects,
+    (api as any).functions.projects.projects.getOrganizationProjects,
     organization ? { organizationId: organization._id } : 'skip'
   );
 
@@ -87,9 +81,7 @@ export default function ProductsPage() {
   const currentProject = projects?.[0];
 
   // Get products for the current project
-  // Note: Using (api as any) as a workaround until Convex dev server regenerates the API types
   const productsResult = useQuery(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (api as any).functions.products.products.getProjectProducts,
     currentProject
       ? {
@@ -130,11 +122,12 @@ export default function ProductsPage() {
 
   // Filter products based on search term
   const filteredProducts = products.filter(
-    (product: Product) =>
+    (product: Doc<'products'>) =>
       product.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.handle.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (product.vendor && product.vendor.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (product.productType && product.productType.toLowerCase().includes(searchTerm.toLowerCase()))
+      (product.productType && product.productType.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (product.sku && product.sku.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const getStatusBadgeVariant = (status: string) => {
@@ -150,6 +143,15 @@ export default function ProductsPage() {
     }
   };
 
+  const handleDeleteProduct = async (productIds: string[], permanentDelete: boolean) => {
+    // TODO: Implement actual delete mutation when backend is ready
+    console.log('Deleting product:', productIds, 'Permanent:', permanentDelete);
+    
+    // Close dialog and clear state
+    setShowDeleteDialog(false);
+    setProductToDelete(null);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -160,10 +162,18 @@ export default function ProductsPage() {
             Manage your product catalog for {currentProject?.name || 'your project'}
           </p>
         </div>
-        <Button onClick={() => setShowCreateDialog(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Product
-        </Button>
+        <div className="flex items-center gap-2">
+          <Link href={`/${orgSlug}/products/manage`}>
+            <Button variant="outline">
+              <Settings className="h-4 w-4 mr-2" />
+              Manage Products
+            </Button>
+          </Link>
+          <Button onClick={() => setShowCreateDialog(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Product
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -223,7 +233,7 @@ export default function ProductsPage() {
             <div className="relative flex-1 max-w-sm">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input
-                placeholder="Search products..."
+                placeholder="Search by name, handle, SKU..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -291,13 +301,16 @@ export default function ProductsPage() {
             </div>
           ) : viewMode === 'grid' ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filteredProducts.map((product: Product) => (
+              {filteredProducts.map((product: Doc<'products'>) => (
                 <ProductCard
                   key={product._id}
-                  product={product}
-                  onEdit={() => setEditingProduct(product)}
+                  product={product as any}
+                  onEdit={() => setEditingProduct(product as Product)}
                   onView={() => console.log('View product:', product._id)}
-                  onArchive={() => console.log('Archive product:', product._id)}
+                  onArchive={() => {
+                    setProductToDelete(product as Product);
+                    setShowDeleteDialog(true);
+                  }}
                 />
               ))}
             </div>
@@ -306,6 +319,7 @@ export default function ProductsPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Product</TableHead>
+                  <TableHead>SKU</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Vendor</TableHead>
                   <TableHead>Type</TableHead>
@@ -315,13 +329,23 @@ export default function ProductsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredProducts.map((product: Product) => (
+                {filteredProducts.map((product: Doc<'products'>) => (
                   <TableRow key={product._id}>
                     <TableCell>
                       <div>
                         <div className="font-medium">{product.title}</div>
                         <div className="text-sm text-muted-foreground">{product.handle}</div>
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      {product.sku ? (
+                        <div className="flex items-center gap-2">
+                          <span className="text-muted-foreground font-mono text-sm">{product.sku}</span>
+                          <SkuCopyButton sku={product.sku} variant="icon" />
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
                     </TableCell>
                     <TableCell>
                       <Badge variant={getStatusBadgeVariant(product.status)}>
@@ -363,7 +387,7 @@ export default function ProductsPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => setEditingProduct(product)}>
+                          <DropdownMenuItem onClick={() => setEditingProduct(product as Product)}>
                             <Edit className="h-4 w-4 mr-2" />
                             Edit
                           </DropdownMenuItem>
@@ -374,12 +398,12 @@ export default function ProductsPage() {
                           <DropdownMenuItem
                             className="text-destructive"
                             onClick={() => {
-                              // TODO: Implement delete functionality
-                              console.log('Delete product:', product._id);
+                              setProductToDelete(product as Product);
+                              setShowDeleteDialog(true);
                             }}
                           >
                             <Trash2 className="h-4 w-4 mr-2" />
-                            Archive
+                            Delete
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -407,6 +431,15 @@ export default function ProductsPage() {
           open={!!editingProduct}
           onOpenChange={(open) => !open && setEditingProduct(null)}
           product={editingProduct}
+        />
+      )}
+
+      {showDeleteDialog && productToDelete && (
+        <DeleteProductDialog
+          open={showDeleteDialog}
+          onOpenChange={setShowDeleteDialog}
+          products={productToDelete}
+          onDelete={handleDeleteProduct}
         />
       )}
     </div>

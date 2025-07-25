@@ -7,7 +7,6 @@ import {
   Controller,
   FormProvider,
   useFormContext,
-  useFormState,
   type ControllerProps,
   type FieldPath,
   type FieldValues,
@@ -45,8 +44,8 @@ const FormField = <
 const useFormField = () => {
   const fieldContext = React.useContext(FormFieldContext)
   const itemContext = React.useContext(FormItemContext)
-  const { getFieldState } = useFormContext()
-  const formState = useFormState({ name: fieldContext.name })
+  const { getFieldState, formState } = useFormContext()
+
   const fieldState = getFieldState(fieldContext.name, formState)
 
   if (!fieldContext) {
@@ -97,7 +96,7 @@ function FormLabel({
     <Label
       data-slot="form-label"
       data-error={!!error}
-      className={cn("data-[error=true]:text-destructive", className)}
+      className={cn("data-[error=true]:text-semantic-danger", className)}
       htmlFor={formItemId}
       {...props}
     />
@@ -147,7 +146,7 @@ function FormMessage({ className, ...props }: React.ComponentProps<"p">) {
     <p
       data-slot="form-message"
       id={formMessageId}
-      className={cn("text-destructive text-sm", className)}
+      className={cn("text-semantic-danger text-sm", className)}
       {...props}
     >
       {body}

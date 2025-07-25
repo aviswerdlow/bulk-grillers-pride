@@ -1,0 +1,21 @@
+# Ignore all markdown files to prevent formatting issues
+*.md
+
+# Ignore specific directories
+docs/archives/
+SuperClaude/
+
+# Ignore build outputs
+dist/
+build/
+coverage/
+.next/
+.turbo/
+
+# Ignore node modules
+node_modules/
+
+# Ignore lockfiles
+package-lock.json
+pnpm-lock.yaml
+yarn.lock

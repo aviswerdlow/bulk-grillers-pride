@@ -1,6 +1,10 @@
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+/**
+ * @jest-environment jsdom
+ */
+import React from 'react';
 import {
   Logger,
-  LogLevel,
   detectSentryErrors,
   monitorConvexErrors,
   createSafeQuery,
@@ -23,16 +27,16 @@ describe('Error Monitoring Utilities', () => {
 
     // Reset performance entries mock
     if (global.performance) {
-      (global.performance as any).getEntriesByType = jest.fn(() => []);
+      (global.performance as unknown as { getEntriesByType: jest.Mock }).getEntriesByType = jest.fn(() => []);
     }
   });
 
   afterEach(() => {
     jest.restoreAllMocks();
     // Clean up any global modifications
-    delete (global as any).__SENTRY__;
-    delete (global as any).Sentry;
-    delete (global as any).sentry;
+    delete (global as unknown as { __SENTRY__?: unknown }).__SENTRY__;
+    delete (global as unknown as { Sentry?: unknown }).Sentry;
+    delete (global as unknown as { sentry?: unknown }).sentry;
   });
 
   describe('Logger', () => {
@@ -72,18 +76,18 @@ describe('Error Monitoring Utilities', () => {
       const originalEnv = process.env.NODE_ENV;
 
       // Test in production
-      process.env.NODE_ENV = 'production';
+      (process.env as any).NODE_ENV = 'production';
       const prodLogger = new Logger('TestComponent');
       prodLogger.debug('Debug message');
       expect(consoleDebugSpy).not.toHaveBeenCalled();
 
       // Test in development
-      process.env.NODE_ENV = 'development';
+      (process.env as any).NODE_ENV = 'development';
       const devLogger = new Logger('TestComponent');
       devLogger.debug('Debug message');
       expect(consoleDebugSpy).toHaveBeenCalled();
 
-      process.env.NODE_ENV = originalEnv;
+      (process.env as any).NODE_ENV = originalEnv;
     });
 
     it('should format error objects correctly', () => {
@@ -121,7 +125,7 @@ describe('Error Monitoring Utilities', () => {
         },
       ];
 
-      (global.performance as any).getEntriesByType = jest.fn(() => mockEntries);
+      (global.performance as unknown as { getEntriesByType: jest.Mock }).getEntriesByType = jest.fn(() => mockEntries);
 
       const result = detectSentryErrors();
 
@@ -132,8 +136,8 @@ describe('Error Monitoring Utilities', () => {
     });
 
     it('should detect Sentry global objects', () => {
-      (global as any).__SENTRY__ = {};
-      (global as any).Sentry = { init: jest.fn() };
+      (global as unknown as { __SENTRY__: object }).__SENTRY__ = {};
+      (global as unknown as { Sentry: { init: jest.Mock } }).Sentry = { init: jest.fn() };
 
       const result = detectSentryErrors();
 
@@ -191,7 +195,6 @@ describe('Error Monitoring Utilities', () => {
 
     it('should still call original console.error', () => {
       const logger = createLogger('Test');
-      const originalError = console.error;
 
       monitorConvexErrors(logger);
 
@@ -282,9 +285,10 @@ describe('Error Monitoring Utilities', () => {
 
       setupGlobalErrorHandling(logger);
 
-      const rejectionEvent = new Event('unhandledrejection') as any;
-      rejectionEvent.reason = new Error('Promise rejected');
-      rejectionEvent.promise = Promise.reject(rejectionEvent.reason);
+      const rejectionEvent = new Event('unhandledrejection') as PromiseRejectionEvent;
+      (rejectionEvent as any).reason = new Error('Promise rejected');
+      // Don't create an actual rejected promise, just mock it
+      (rejectionEvent as any).promise = { catch: jest.fn() };
 
       window.dispatchEvent(rejectionEvent);
 
@@ -349,7 +353,7 @@ describe('Error Monitoring Utilities', () => {
       const loggerWarnSpy = jest.spyOn(logger, 'warn');
 
       // Mock Sentry global
-      (global as any).__SENTRY__ = {};
+      (global as unknown as { __SENTRY__: object }).__SENTRY__ = {};
 
       setupGlobalErrorHandling(logger);
 

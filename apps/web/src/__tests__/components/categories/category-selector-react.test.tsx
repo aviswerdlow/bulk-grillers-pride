@@ -1,25 +1,37 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { useQuery } from 'convex/react';
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import React from 'react';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { CategorySelector } from '@/components/categories/category-selector';
+import { Id } from '@convex/_generated/dataModel';
+
+import { renderWithProviders } from '@/__tests__/test-helpers';
+
+// Mock UI components
+interface MockComponentProps {
+  children?: React.ReactNode;
+  [key: string]: unknown;
+}
 
 // Mock Convex
-jest.mock('convex/react', () => ({
-  useQuery: jest.fn(),
-}));
-
 // Mock the entire category selector to avoid import issues
 jest.mock('@/components/categories/category-selector', () => ({
   CategorySelector: ({
     value,
     onChange,
-    organizationId,
-    projectId,
     multiple,
     disabled,
     onExpand,
-  }: any) => {
+  }: MockComponentProps & { 
+    value?: string | string[]; 
+    onChange?: (value: string | string[]) => void;
+    multiple?: boolean;
+    disabled?: boolean;
+    onExpand?: (categoryId: string) => void;
+  }) => {
     const mockCategories = [
       {
-        _id: 'cat_1',
+    _creationTime: Date.now(),
+    _id: 'cat_1',
         name: 'Electronics',
         path: '/electronics',
         level: 0,
@@ -31,7 +43,8 @@ jest.mock('@/components/categories/category-selector', () => ({
         sortOrder: 0,
       },
       {
-        _id: 'cat_2',
+    _creationTime: Date.now(),
+    _id: 'cat_2',
         name: 'Computers',
         path: '/electronics/computers',
         level: 1,
@@ -52,19 +65,28 @@ jest.mock('@/components/categories/category-selector', () => ({
             <input
               type="checkbox"
               aria-label={`Select ${cat.name}`}
-              checked={value.includes(cat._id)}
+              checked={Array.isArray(value) ? value.includes(cat._id) : value === cat._id}
               disabled={disabled}
               onChange={(e) => {
+                if (!onChange) return;
                 if (e.target.checked) {
-                  onChange(multiple ? [...value, cat._id] : [cat._id]);
+                  if (multiple && Array.isArray(value)) {
+                    onChange([...value, cat._id]);
+                  } else {
+                    onChange(multiple ? [cat._id] : cat._id);
+                  }
                 } else {
-                  onChange(value.filter((id: string) => id !== cat._id));
+                  if (Array.isArray(value)) {
+                    onChange(value.filter((id: string) => id !== cat._id));
+                  } else {
+                    onChange(multiple ? [] : '');
+                  }
                 }
               }}
             />
             <span>{cat.name}</span>
             {cat.level === 0 && (
-              <button aria-label={`Expand ${cat.name}`} onClick={() => onExpand?.(cat._id, true)}>
+              <button aria-label={`Expand ${cat.name}`} onClick={() => onExpand?.(cat._id)}>
                 Expand
               </button>
             )}
@@ -75,14 +97,13 @@ jest.mock('@/components/categories/category-selector', () => ({
   },
 }));
 
-import { CategorySelector } from '@/components/categories/category-selector';
-
 describe('CategorySelector Component', () => {
   const defaultProps = {
     value: [],
     onChange: jest.fn(),
-    organizationId: 'org_123',
-    projectId: 'project_123',
+    organizationId: 'org_123' as Id<'organizations'>,
+    projectId: 'project_123' as Id<'projects'>,
+    selectedCategories: [] as Id<'categories'>[],
   };
 
   beforeEach(() => {
@@ -90,23 +111,25 @@ describe('CategorySelector Component', () => {
   });
 
   it('should render category selector', () => {
-    render(<CategorySelector {...defaultProps} />);
+    renderWithProviders(<CategorySelector {...defaultProps} />);
 
     expect(screen.getByTestId('category-selector')).toBeInTheDocument();
   });
 
   it('should render categories', () => {
-    render(<CategorySelector {...defaultProps} />);
+    renderWithProviders(<CategorySelector {...defaultProps} />);
 
     expect(screen.getByText('Electronics')).toBeInTheDocument();
     expect(screen.getByText('Computers')).toBeInTheDocument();
   });
 
   it('should handle single selection mode', () => {
-    render(<CategorySelector {...defaultProps} />);
+    renderWithProviders(<CategorySelector {...defaultProps} />);
 
     const electronicsCheckbox = screen.getByRole('checkbox', { name: /select electronics/i });
-    fireEvent.click(electronicsCheckbox);
+    if (electronicsCheckbox) {
+      fireEvent.click(electronicsCheckbox as HTMLElement);
+    }
 
     expect(defaultProps.onChange).toHaveBeenCalledWith(['cat_1']);
   });
@@ -118,10 +141,12 @@ describe('CategorySelector Component', () => {
       value: ['cat_1'],
     };
 
-    render(<CategorySelector {...multiSelectProps} />);
+    renderWithProviders(<CategorySelector {...multiSelectProps} />);
 
     const computersCheckbox = screen.getByRole('checkbox', { name: /select computers/i });
-    fireEvent.click(computersCheckbox);
+    if (computersCheckbox) {
+      fireEvent.click(computersCheckbox as HTMLElement);
+    }
 
     expect(multiSelectProps.onChange).toHaveBeenCalledWith(['cat_1', 'cat_2']);
   });
@@ -132,12 +157,12 @@ describe('CategorySelector Component', () => {
       value: ['cat_2'],
     };
 
-    render(<CategorySelector {...propsWithSelection} />);
+    renderWithProviders(<CategorySelector {...propsWithSelection} />);
 
     const computersCheckbox = screen.getByRole('checkbox', { name: /select computers/i });
     expect(computersCheckbox).toBeChecked();
 
-    fireEvent.click(computersCheckbox);
+    fireEvent.click(computersCheckbox as HTMLElement);
     expect(propsWithSelection.onChange).toHaveBeenCalledWith([]);
   });
 
@@ -147,7 +172,7 @@ describe('CategorySelector Component', () => {
       disabled: true,
     };
 
-    render(<CategorySelector {...disabledProps} />);
+    renderWithProviders(<CategorySelector {...disabledProps} />);
 
     const electronicsCheckbox = screen.getByRole('checkbox', { name: /select electronics/i });
     expect(electronicsCheckbox).toBeDisabled();
@@ -163,10 +188,12 @@ describe('CategorySelector Component', () => {
       onExpand,
     };
 
-    render(<CategorySelector {...propsWithExpand} />);
+    renderWithProviders(<CategorySelector {...propsWithExpand} />);
 
     const electronicsExpander = screen.getByRole('button', { name: /expand electronics/i });
-    fireEvent.click(electronicsExpander);
+    if (electronicsExpander) {
+      fireEvent.click(electronicsExpander as HTMLElement);
+    }
 
     expect(onExpand).toHaveBeenCalledWith('cat_1', true);
   });

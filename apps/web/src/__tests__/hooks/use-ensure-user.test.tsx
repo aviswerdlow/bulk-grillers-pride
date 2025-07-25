@@ -1,30 +1,28 @@
-import { renderHook, waitFor } from '@testing-library/react';
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import React from 'react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { cleanupTest, mockUseQuery, mockUseMutation, renderWithProviders, setupTest, renderHook } from '@/__tests__/test-helpers';
 import { useEnsureUser } from '@/hooks/use-ensure-user';
-import { useMutation } from 'convex/react';
-import { useUser, useAuth } from '@clerk/nextjs';
+import { useAuth, useUser } from '@clerk/nextjs';
+;
 
 // Mock dependencies
 jest.mock('convex/react');
 jest.mock('@clerk/nextjs');
-jest.mock('../../../../convex/_generated/api', () => ({
-  api: {
-    functions: {
-      auth: {
-        users: {
-          ensureUser: 'auth.users.ensureUser',
-        },
-      },
-    },
-  },
-}));
+// Import the mocked API
+// import { api } from '@convex/_generated/api';
 
 describe('useEnsureUser', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   const mockEnsureUser = jest.fn().mockResolvedValue(undefined);
 
   beforeEach(() => {
     jest.clearAllMocks();
     mockEnsureUser.mockResolvedValue(undefined);
-    (useMutation as jest.Mock).mockReturnValue(mockEnsureUser);
+    mockUseMutation.mockReturnValue(mockEnsureUser);
   });
 
   it('should not call ensureUser when user is not loaded', () => {

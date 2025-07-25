@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useQuery, useMutation } from 'convex/react';
-import { api } from '../../../../../convex/_generated/api';
+import { api } from '@convex/_generated/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Table,
@@ -45,6 +45,7 @@ import { MoreVertical, Shield, UserX, Search, Loader2, UserPlus, Clock, Mail } f
 import { toast } from 'sonner';
 import { InviteUserDialog } from './invite-user-dialog';
 import { UserRole, roleConfig } from '@/types/models';
+import { Id } from '@/../../../convex/_generated/dataModel';
 
 interface TeamMembersListProps {
   organizationId: string;
@@ -57,19 +58,19 @@ export function TeamMembersList({ organizationId, currentUserRole }: TeamMembers
   const [userToRemove, setUserToRemove] = useState<{ id: string; name: string } | null>(null);
   const [updatingRole, setUpdatingRole] = useState<string | null>(null);
 
-  const members = useQuery(api.functions.auth.users.getOrganizationUsers, { organizationId });
+  const members = useQuery((api as any).functions.auth.users.getOrganizationUsers, { organizationId });
 
   const activeSessions = useQuery(
-    api.functions.auth.sessions.getActiveSessions,
+    (api as any).functions.auth.sessions.getActiveSessions,
     currentUserRole === 'owner' || currentUserRole === 'admin' ? { organizationId } : 'skip'
   );
 
-  const updateUserRole = useMutation(api.functions.auth.permissions.updateUserRole);
-  const removeUser = useMutation(api.functions.auth.permissions.removeUserFromOrganization);
+  const updateUserRole = useMutation((api as any).functions.auth.permissions.updateUserRole);
+  const removeUser = useMutation((api as any).functions.auth.permissions.removeUserFromOrganization);
 
   const filteredMembers =
     members?.filter(
-      (member) =>
+      (member: any) =>
         member.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
         member.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         member.lastName?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -120,7 +121,7 @@ export function TeamMembersList({ organizationId, currentUserRole }: TeamMembers
   };
 
   const isUserActive = (userId: string) => {
-    return activeSessions?.some((session) => session.userId === userId);
+    return activeSessions?.some((session: any) => session.userId === userId);
   };
 
   if (!members) {
@@ -183,7 +184,7 @@ export function TeamMembersList({ organizationId, currentUserRole }: TeamMembers
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredMembers.map((member) => (
+                {filteredMembers.map((member: any) => (
                   <TableRow key={member._id}>
                     <TableCell>
                       <div className="flex items-center gap-3">
@@ -251,12 +252,12 @@ export function TeamMembersList({ organizationId, currentUserRole }: TeamMembers
                     </TableCell>
                     <TableCell>
                       {isUserActive(member._id) ? (
-                        <Badge variant="outline" className="text-green-600 border-green-600">
-                          <div className="h-2 w-2 bg-green-600 rounded-full mr-1" />
+                        <Badge variant="outline" className="text-success border-success">
+                          <div className="h-2 w-2 bg-success rounded-full mr-1" />
                           Active
                         </Badge>
                       ) : (
-                        <Badge variant="outline" className="text-gray-500">
+                        <Badge variant="outline" className="text-muted-foreground">
                           <Clock className="h-3 w-3 mr-1" />
                           Offline
                         </Badge>
@@ -307,7 +308,7 @@ export function TeamMembersList({ organizationId, currentUserRole }: TeamMembers
         <InviteUserDialog
           open={showInviteDialog}
           onOpenChange={setShowInviteDialog}
-          organizationId={organizationId}
+          organizationId={organizationId as Id<'organizations'>}
         />
       )}
 

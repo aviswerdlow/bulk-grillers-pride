@@ -1,5 +1,7 @@
 import { ChatAnthropic } from '@langchain/anthropic';
 import { ChatOpenAI } from '@langchain/openai';
+import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
+import { HarmCategory, HarmBlockThreshold } from '@google/generative-ai';
 import { ChatPromptTemplate } from '@langchain/core/prompts';
 import { z } from 'zod';
 import { StructuredOutputParser } from '@langchain/core/output_parsers';
@@ -166,7 +168,13 @@ export function initializeLLM(
 
   switch (provider) {
     case 'openai':
-      return new ChatOpenAI(commonOptions);
+      // OpenAI models don't need mapping - they exist!
+      console.log(`[LANGCHAIN] Using OpenAI model: ${model}`);
+      
+      return new ChatOpenAI({
+        ...commonOptions,
+        modelName: model,
+      });
 
     case 'anthropic':
       return new ChatAnthropic({
@@ -175,8 +183,31 @@ export function initializeLLM(
       });
 
     case 'gemini':
-      // Note: Gemini support would require @langchain/google-genai package
-      throw new Error('Gemini provider not yet implemented. Please use OpenAI or Anthropic.');
+      return new ChatGoogleGenerativeAI({
+        apiKey,
+        model,
+        temperature: options?.temperature ?? 0.3,
+        maxOutputTokens: options?.maxTokens ?? 2000,
+        // Gemini-specific configurations
+        safetySettings: [
+          {
+            category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+            threshold: HarmBlockThreshold.BLOCK_NONE,
+          },
+          {
+            category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+            threshold: HarmBlockThreshold.BLOCK_NONE,
+          },
+          {
+            category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+            threshold: HarmBlockThreshold.BLOCK_NONE,
+          },
+          {
+            category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+            threshold: HarmBlockThreshold.BLOCK_NONE,
+          },
+        ],
+      });
 
     default:
       throw new Error(`Unsupported AI provider: ${provider}`);
@@ -184,7 +215,7 @@ export function initializeLLM(
 }
 
 // Create categorization chain
-export function createCategorizationChain(llm: ChatOpenAI | ChatAnthropic, provider: AIProvider) {
+export function createCategorizationChain(llm: ChatOpenAI | ChatAnthropic | ChatGoogleGenerativeAI, provider: AIProvider) {
   const parser = StructuredOutputParser.fromZodSchema(BatchCategorizationResultSchema);
   const prompt = CATEGORIZATION_PROMPTS[provider];
 
@@ -242,18 +273,34 @@ export async function processBatchWithLangChain(
     | z.infer<typeof ProductCategorizationErrorSchema>
   >
 > {
+  console.log(`🚀 [LANGCHAIN] ========== STARTING BATCH PROCESSING ==========`);
+  console.log(`📊 [LANGCHAIN] Products: ${products.length}`);
+  console.log(`🏷️ [LANGCHAIN] Categories: ${categories.length}`);
+  console.log(`🤖 [LANGCHAIN] Provider: ${provider}, Model: ${model}`);
+  // Only log API key info in development with minimal exposure
+  if (process.env.NODE_ENV === 'development') {
+    console.debug(`🔑 [LANGCHAIN] API Key configured (${apiKey.length} chars)`);
+  }
+  console.log(`🌡️ [LANGCHAIN] Options:`, options);
+  
   const maxRetries = options?.maxRetries ?? 3;
   let lastError: Error | null = null;
 
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
+      console.log(`🔄 [LANGCHAIN] Attempt ${attempt + 1}/${maxRetries}`);
+      
       // Initialize LLM with exponential backoff on temperature for retries
       const temperature = (options?.temperature ?? 0.3) + attempt * 0.1;
+      console.log(`🌡️ [LANGCHAIN] Initializing LLM with temperature: ${temperature}`);
+      
       const llm = initializeLLM(provider, apiKey, model, {
         ...options,
         temperature: Math.min(temperature, 0.7),
       });
 
+      console.log(`✅ [LANGCHAIN] LLM initialized successfully`);
+      
       // Create the categorization chain
       const chain = createCategorizationChain(llm, provider);
       const parser = StructuredOutputParser.fromZodSchema(BatchCategorizationResultSchema);
@@ -265,9 +312,22 @@ export async function processBatchWithLangChain(
         custom_prompt: customPrompt || 'Focus on accuracy and provide detailed rationale.',
         format_instructions: parser.getFormatInstructions(),
       };
+      
+      console.log(`📝 [LANGCHAIN] Input prepared:`, {
+        productCount: products.length,
+        categoryCount: categories.length,
+        promptLength: customPrompt.length
+      });
 
       // Execute the chain
+      console.log(`🌐 [LANGCHAIN] Calling ${provider} API with model ${model}...`);
+      const apiStart = Date.now();
+      
       const result = await chain.invoke(input);
+      
+      const apiDuration = Date.now() - apiStart;
+      console.log(`✅ [LANGCHAIN] API call completed in ${apiDuration}ms`);
+      console.log(`📊 [LANGCHAIN] Raw result:`, JSON.stringify(result).substring(0, 200) + '...');
 
       // Validate results match input products
       const productIds = new Set(products.map((p) => p._id));
@@ -287,8 +347,8 @@ export async function processBatchWithLangChain(
       const missingResults: z.infer<typeof ProductCategorizationErrorSchema>[] =
         missingProducts.map((p) => ({
           productId: p._id,
-          suggestions: [],
-          newCategorySuggestions: [],
+          suggestions: [] as never[],
+          newCategorySuggestions: [] as never[],
           status: 'error' as const,
           error: 'Product was not processed by AI',
         }));
@@ -310,8 +370,8 @@ export async function processBatchWithLangChain(
   console.error('All retry attempts failed:', lastError);
   return products.map((product) => ({
     productId: product._id,
-    suggestions: [],
-    newCategorySuggestions: [],
+    suggestions: [] as never[],
+    newCategorySuggestions: [] as never[],
     status: 'error' as const,
     error: lastError?.message || 'Failed to process after multiple retries',
   }));
@@ -331,12 +391,24 @@ export function estimateCost(
 ): { inputCost: number; outputCost: number; totalCost: number } {
   // Cost per 1K tokens (approximate as of 2024)
   const pricing: Record<string, { input: number; output: number }> = {
-    'openai:gpt-4': { input: 0.03, output: 0.06 },
-    'openai:gpt-4-turbo-preview': { input: 0.01, output: 0.03 },
-    'openai:gpt-3.5-turbo': { input: 0.0005, output: 0.0015 },
-    'anthropic:claude-3-opus': { input: 0.015, output: 0.075 },
-    'anthropic:claude-3-sonnet': { input: 0.003, output: 0.015 },
-    'anthropic:claude-3-haiku': { input: 0.00025, output: 0.00125 },
+    // OpenAI Models (using actual model names)
+    'openai:gpt-4-turbo-preview': { input: 0.01, output: 0.03 },  // GPT-4 Turbo
+    'openai:gpt-4o': { input: 0.005, output: 0.015 },  // GPT-4o
+    'openai:gpt-4o-mini': { input: 0.00015, output: 0.0006 },  // GPT-4o mini
+    'openai:gpt-4': { input: 0.03, output: 0.06 },  // GPT-4
+    'openai:gpt-3.5-turbo': { input: 0.0005, output: 0.0015 },  // GPT-3.5 Turbo
+    // Map custom names to actual pricing
+    'openai:o3': { input: 0.01, output: 0.03 },  // Maps to GPT-4 Turbo
+    'openai:o3-mini': { input: 0.00015, output: 0.0006 },  // Maps to GPT-4o mini
+    'openai:o4-mini': { input: 0.00015, output: 0.0006 },  // Maps to GPT-4o mini
+    'openai:o1': { input: 0.005, output: 0.015 },  // Maps to GPT-4o
+    // Anthropic Claude 4
+    'anthropic:claude-opus-4': { input: 0.02, output: 0.1 },  // Most powerful
+    'anthropic:claude-sonnet-4': { input: 0.01, output: 0.05 },  // High performance
+    // Gemini (for future)
+    'gemini:gemini-1.5-flash': { input: 0.000075, output: 0.0003 },
+    'gemini:gemini-1.5-pro': { input: 0.0035, output: 0.0105 },
+    'gemini:gemini-1.0-pro': { input: 0.0005, output: 0.0015 },
   };
 
   const key = `${provider}:${model}`;

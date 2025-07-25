@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./apps/web/src/*"],
+      "~/*": ["./apps/web/*"],
+      "@convex/*": ["./convex/*"],
+      "@bulk-grillers-pride/shared-types": ["./packages/shared-types/src"],
+      "@bulk-grillers-pride/utils": ["./packages/utils/src"],
+      "@bulk-grillers-pride/test-factories": ["./packages/test-factories/src"],
+      "@bulk-grillers-pride/convex-test-helpers": ["./packages/convex-test-helpers/src"],
+      "convex/*": ["./node_modules/convex/dist/esm/*", "./node_modules/convex/dist/cjs/*"]
+    },
+    "types": ["jest", "@testing-library/jest-dom", "jest-axe", "node"],
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true,
+    "noEmit": true
+  },
+  "include": [
+    "**/*.ts", 
+    "**/*.tsx", 
+    "**/*.js", 
+    "**/*.jsx",
+    "apps/web/next-env.d.ts",
+    "apps/web/.next/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules", 
+    ".next", 
+    "dist", 
+    "coverage", 
+    "**/build/**", 
+    "**/_generated/**",
+    "*.min.js",
+    ".turbo"
+  ]
+}

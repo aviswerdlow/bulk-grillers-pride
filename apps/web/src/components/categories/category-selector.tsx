@@ -1,10 +1,10 @@
 'use client';
 
 import * as React from 'react';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useQuery } from 'convex/react';
-import { api } from '../../../../../convex/_generated/api';
-import { Id } from '../../../../../convex/_generated/dataModel';
+import { api } from '@convex/_generated/api';
+import { Id } from '@convex/_generated/dataModel';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -54,14 +54,13 @@ export function CategorySelector({
   const [showAssignmentDialog, setShowAssignmentDialog] = useState(false);
 
   // Get category tree
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const categoryTree = useQuery((api as any).functions.categories.categories.getCategoryTree, {
     organizationId,
     projectId,
   });
 
   // Get level definitions for friendly names
-  const levelDefinitions = useQuery(api.functions.categories.categoryLevels.getCategoryLevels, {
+  const levelDefinitions = useQuery((api as any).functions.categories.categoryLevels.getCategoryLevels, {
     organizationId,
     projectId,
   });
@@ -106,8 +105,8 @@ export function CategorySelector({
   );
 
   const getLevelName = (level: number) => {
-    const levelDef = levelDefinitions?.find((l) => l.level === level);
-    return levelDef?.friendlyName || `Level ${level}`;
+    const levelDef = levelDefinitions?.find((l: any) => l.level === level);
+    return levelDef?.name || `Level ${level}`;
   };
 
   const handleSelect = (categoryId: Id<'categories'>) => {
@@ -254,7 +253,7 @@ export function CategorySelector({
           </DialogHeader>
 
           <div className="space-y-4">
-            {levelDefinitions.map((levelDef) => {
+            {levelDefinitions.map((levelDef: any) => {
               const levelCategories = allCategories.filter((c) => c.level === levelDef.level);
               const selectedInLevel = selectedCategories.filter(
                 (id) => allCategories.find((c) => c._id === id)?.level === levelDef.level

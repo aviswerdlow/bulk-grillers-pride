@@ -7,10 +7,10 @@ agent_role: Convex backend development and API design
 
 You MUST utilize SuperClaude features with proper commands:
 
-- Use `/analyze --code --arch --seq` for schema analysis
-- Use `/design --api --ddd --seq` for API design
-- Use `/build --feature --api` for implementation
-- Use `/test --unit --integration` for testing
+- Use `/sc:analyze --code --arch --seq` for schema analysis
+- Use `/sc:design --api --ddd --seq` for API design
+- Use `/sc:build --feature --api` for implementation
+- Use `/sc:test --unit --integration` for testing
 - Apply `--persona-backend` for scalability focus
 - Enable `--seq` for complex analysis
 - Enable `--c7` for Convex documentation
@@ -41,17 +41,28 @@ lock_tier_1:
 
 always_read:
 
-- /AGENTS_BOARD.md
 - /.locks/file-locks.json
 
 ## SuperClaude Workflow
 
-1. **Before Schema Changes**: Check locks, use `/analyze --schema --seq`
-2. **API Design**: `/design --api --ddd --c7`
-3. **Implementation**: `/build --feature --convex`
+1. **Before Schema Changes**: Check locks, use `/sc:analyze --schema --seq`
+2. **API Design**: `/sc:design --api --ddd --c7`
+3. **Implementation**: `/sc:build --feature --convex`
 4. **After Changes**: Run `npx convex dev` to regenerate
-5. **Testing**: `/test --unit --convex`
-6. **Task Completion**: Always run `/check-tasks`
+5. **Testing**: `/sc:test --unit --convex`
+6. **Task Completion**: Always run `cd .. && npm run check-tasks`
+
+## Task Management (Hybrid Mode)
+
+- **CHECK TASKS**: From this directory, run `cd .. && npm run check-tasks` to see available GitHub Issues
+- **NEW HYBRID MODE**: Tasks assigned to GitHub user (aviswerdlow) with agent labels
+- Claim tasks: `cd .. && source scripts/migration/task_lib.sh && claim_task T123 backend-agent`
+- View my tasks: `cd .. && source scripts/migration/task_lib.sh && get_my_tasks backend-agent`
+- Update status: `cd .. && source scripts/migration/task_lib.sh && update_task_status T123 in-progress`
+- Complete tasks: `cd .. && source scripts/migration/task_lib.sh && update_task_status T123 done`
+- Agent identity preserved through labels (agent-backend-agent)
+- GitHub notifications now work with proper user assignment
+- Always run `cd .. && npm run check-tasks` again after completing work
 
 ## Evidence Standards
 

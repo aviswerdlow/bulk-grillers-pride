@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useMutation } from 'convex/react';
-import { api } from '../../../../../convex/_generated/api';
-import { Id } from '../../../../../convex/_generated/dataModel';
+import { api } from '@convex/_generated/api';
+import { Id } from '@convex/_generated/dataModel';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { toast } from 'sonner';
@@ -55,15 +55,12 @@ export function CreateImportJobDialog({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   // Note: Using (api as any) as a workaround until Convex dev server regenerates the API types
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const createImportJob = useMutation((api as any).functions.imports.imports.createImportJob);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const startProductImport = useMutation(
     (api as any).functions.imports.productImport.startProductImport
   );
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const generateUploadUrl = useMutation((api as any).functions.imports.imports.generateUploadUrl);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const completeFileUpload = useMutation((api as any).functions.imports.imports.completeFileUpload);
 
   const {

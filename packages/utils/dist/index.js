@@ -1,23 +1,21 @@
-'use strict';
+"use strict";
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __export = (target, all) => {
-  for (var name in all) __defProp(target, name, { get: all[name], enumerable: true });
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
 };
 var __copyProps = (to, from, except, desc) => {
-  if ((from && typeof from === 'object') || typeof from === 'function') {
+  if (from && typeof from === "object" || typeof from === "function") {
     for (let key of __getOwnPropNames(from))
       if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, {
-          get: () => from[key],
-          enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable,
-        });
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
   }
   return to;
 };
-var __toCommonJS = (mod) => __copyProps(__defProp({}, '__esModule', { value: true }), mod);
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
 // src/index.ts
 var index_exports = {};
@@ -47,49 +45,41 @@ __export(index_exports, {
   toCamelCase: () => toCamelCase,
   toPascalCase: () => toPascalCase,
   truncate: () => truncate,
-  unique: () => unique,
+  unique: () => unique
 });
 module.exports = __toCommonJS(index_exports);
 
 // src/string.ts
 function generateHandle(name) {
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-    .trim()
-    .replace(/^-+|-+$/g, '');
+  return name.toLowerCase().replace(/[^a-z0-9\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-").trim().replace(/^-+|-+$/g, "");
 }
 var slugify = generateHandle;
 function capitalize(str) {
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 }
 function capitalizeWords(str) {
-  return str.split(' ').map(capitalize).join(' ');
+  return str.split(" ").map(capitalize).join(" ");
 }
-function truncate(str, length, suffix = '...') {
+function truncate(str, length, suffix = "...") {
   if (str.length <= length) return str;
   return str.slice(0, length - suffix.length) + suffix;
 }
 function cleanWhitespace(str) {
-  return str.trim().replace(/\s+/g, ' ');
+  return str.trim().replace(/\s+/g, " ");
 }
 function isBlank(str) {
   return !str || str.trim().length === 0;
 }
 function randomString(length) {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let result = '';
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  let result = "";
   for (let i = 0; i < length; i++) {
     result += chars.charAt(Math.floor(Math.random() * chars.length));
   }
   return result;
 }
 function toCamelCase(str) {
-  return str
-    .replace(/[^a-zA-Z0-9]+(.)/g, (_, chr) => chr.toUpperCase())
-    .replace(/^[A-Z]/, (chr) => chr.toLowerCase());
+  return str.replace(/[^a-zA-Z0-9]+(.)/g, (_, chr) => chr.toUpperCase()).replace(/^[A-Z]/, (chr) => chr.toLowerCase());
 }
 function toPascalCase(str) {
   const camel = toCamelCase(str);
@@ -97,21 +87,21 @@ function toPascalCase(str) {
 }
 
 // src/formatting.ts
-function formatCurrency(amount, currency = 'USD', locale = 'en-US') {
+function formatCurrency(amount, currency = "USD", locale = "en-US") {
   return new Intl.NumberFormat(locale, {
-    style: 'currency',
-    currency,
+    style: "currency",
+    currency
   }).format(amount);
 }
-function formatNumber(num, locale = 'en-US', options) {
+function formatNumber(num, locale = "en-US", options) {
   return new Intl.NumberFormat(locale, options).format(num);
 }
-function formatDate(date, locale = 'en-US', options) {
-  const d = typeof date === 'string' || typeof date === 'number' ? new Date(date) : date;
+function formatDate(date, locale = "en-US", options) {
+  const d = typeof date === "string" || typeof date === "number" ? new Date(date) : date;
   return new Intl.DateTimeFormat(locale, options).format(d);
 }
 function formatRelativeTime(date) {
-  const d = typeof date === 'string' || typeof date === 'number' ? new Date(date) : date;
+  const d = typeof date === "string" || typeof date === "number" ? new Date(date) : date;
   const now = /* @__PURE__ */ new Date();
   const diffMs = now.getTime() - d.getTime();
   const diffSecs = Math.floor(diffMs / 1e3);
@@ -119,34 +109,34 @@ function formatRelativeTime(date) {
   const diffHours = Math.floor(diffMins / 60);
   const diffDays = Math.floor(diffHours / 24);
   if (diffDays > 30) {
-    return formatDate(d, 'en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    return formatDate(d, "en-US", { month: "short", day: "numeric", year: "numeric" });
   } else if (diffDays > 0) {
-    return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+    return `${diffDays} day${diffDays > 1 ? "s" : ""} ago`;
   } else if (diffHours > 0) {
-    return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+    return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
   } else if (diffMins > 0) {
-    return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
+    return `${diffMins} minute${diffMins > 1 ? "s" : ""} ago`;
   } else {
-    return 'just now';
+    return "just now";
   }
 }
 function formatBytes(bytes, decimals = 2) {
-  if (bytes === 0) return '0 Bytes';
+  if (bytes === 0) return "0 Bytes";
   const k = 1024;
   const dm = decimals < 0 ? 0 : decimals;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB'];
+  const sizes = ["Bytes", "KB", "MB", "GB", "TB", "PB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + " " + sizes[i];
 }
 function formatPercentage(value, decimals = 0, includeSign = true) {
   const formatted = (value * 100).toFixed(decimals);
   return includeSign ? `${formatted}%` : formatted;
 }
 function formatPhoneNumber(phone) {
-  const cleaned = phone.replace(/\D/g, '');
+  const cleaned = phone.replace(/\D/g, "");
   const match = cleaned.match(/^(\d{3})(\d{3})(\d{4})$/);
   if (match) {
-    return '(' + match[1] + ') ' + match[2] + '-' + match[3];
+    return "(" + match[1] + ") " + match[2] + "-" + match[3];
   }
   return phone;
 }
@@ -180,12 +170,12 @@ function throttle(func, limit) {
     if (!inThrottle) {
       func(...args);
       inThrottle = true;
-      setTimeout(() => (inThrottle = false), limit);
+      setTimeout(() => inThrottle = false, limit);
     }
   };
 }
 function deepClone(obj) {
-  if (obj === null || typeof obj !== 'object') return obj;
+  if (obj === null || typeof obj !== "object") return obj;
   if (obj instanceof Date) return new Date(obj.getTime());
   if (obj instanceof Array) return obj.map((item) => deepClone(item));
   if (obj instanceof Object) {
@@ -203,7 +193,7 @@ function deepEqual(a, b) {
   if (a === b) return true;
   if (a == null || b == null) return false;
   if (typeof a !== typeof b) return false;
-  if (typeof a === 'object') {
+  if (typeof a === "object") {
     const keysA = Object.keys(a);
     const keysB = Object.keys(b);
     if (keysA.length !== keysB.length) return false;
@@ -216,12 +206,15 @@ function deepEqual(a, b) {
   return false;
 }
 function groupBy(array, key) {
-  return array.reduce((groups, item) => {
-    const groupKey = typeof key === 'function' ? key(item) : String(item[key]);
-    if (!groups[groupKey]) groups[groupKey] = [];
-    groups[groupKey].push(item);
-    return groups;
-  }, {});
+  return array.reduce(
+    (groups, item) => {
+      const groupKey = typeof key === "function" ? key(item) : String(item[key]);
+      if (!groups[groupKey]) groups[groupKey] = [];
+      groups[groupKey].push(item);
+      return groups;
+    },
+    {}
+  );
 }
 function unique(array, key) {
   if (!key) {
@@ -229,7 +222,7 @@ function unique(array, key) {
   }
   const seen = /* @__PURE__ */ new Set();
   return array.filter((item) => {
-    const k = typeof key === 'function' ? key(item) : item[key];
+    const k = typeof key === "function" ? key(item) : item[key];
     if (seen.has(k)) return false;
     seen.add(k);
     return true;
@@ -256,32 +249,31 @@ async function retry(fn, options = {}) {
   throw lastError;
 }
 // Annotate the CommonJS export names for ESM import in node:
-0 &&
-  (module.exports = {
-    capitalize,
-    capitalizeWords,
-    cleanWhitespace,
-    debounce,
-    deepClone,
-    deepEqual,
-    formatBytes,
-    formatCurrency,
-    formatDate,
-    formatDuration,
-    formatNumber,
-    formatPercentage,
-    formatPhoneNumber,
-    formatRelativeTime,
-    generateHandle,
-    groupBy,
-    isBlank,
-    randomString,
-    retry,
-    sleep,
-    slugify,
-    throttle,
-    toCamelCase,
-    toPascalCase,
-    truncate,
-    unique,
-  });
+0 && (module.exports = {
+  capitalize,
+  capitalizeWords,
+  cleanWhitespace,
+  debounce,
+  deepClone,
+  deepEqual,
+  formatBytes,
+  formatCurrency,
+  formatDate,
+  formatDuration,
+  formatNumber,
+  formatPercentage,
+  formatPhoneNumber,
+  formatRelativeTime,
+  generateHandle,
+  groupBy,
+  isBlank,
+  randomString,
+  retry,
+  sleep,
+  slugify,
+  throttle,
+  toCamelCase,
+  toPascalCase,
+  truncate,
+  unique
+});

@@ -7,8 +7,8 @@ export default function SignUpPage() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-slate-50 to-white">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">Get started with Bulk</h1>
-          <p className="text-gray-600 mt-2">Create your account and start managing products</p>
+          <h1 className="text-2xl font-bold text-foreground">Get started with Bulk</h1>
+          <p className="text-muted-foreground mt-2">Create your account and start managing products</p>
         </div>
 
         <Suspense fallback={<AuthLoading text="Loading sign up..." />}>
@@ -26,7 +26,7 @@ export default function SignUpPage() {
           />
         </Suspense>
 
-        <div className="text-center mt-6 text-sm text-gray-500">
+        <div className="text-center mt-6 text-sm text-muted-foreground">
           By signing up, you agree to our Terms of Service and Privacy Policy
         </div>
       </div>

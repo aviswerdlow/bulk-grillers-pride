@@ -1,4 +1,4 @@
-const React = require('react');
+import React from 'react';
 
 // Create a generic component factory
 const createComponent = (displayName, element = 'div') => {
@@ -50,8 +50,9 @@ Command.Item = Item;
 Command.Separator = Separator;
 Command.Loading = Loading;
 
-// Export as both default and named export
-module.exports = {
-  Command,
-  default: Command,
-};
+// Export as both default and named export to match cmdk's actual exports
+export { Command };
+
+// Export object with Command property as default
+const cmdkExports = { Command };
+export default cmdkExports;

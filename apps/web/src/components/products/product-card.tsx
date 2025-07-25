@@ -3,21 +3,23 @@
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import Image from 'next/image';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Package, MoreVertical, Edit, Eye, Archive, Tag, Store } from 'lucide-react';
+import { Package, MoreVertical, Edit, Eye, Archive, Tag, Store, Hash } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Product } from '@/types/models';
+import { SkuCopyButton } from '@/components/ui/sku-copy-button';
 
 interface ProductCardProps {
-  product: Product;
-  onEdit?: (product: Product) => void;
-  onView?: (product: Product) => void;
-  onArchive?: (product: Product) => void;
+  product: Doc<'products'>;
+  onEdit?: (product: Doc<'products'>) => void;
+  onView?: (product: Doc<'products'>) => void;
+  onArchive?: (product: Doc<'products'>) => void;
   className?: string;
 }
 
@@ -52,19 +54,24 @@ export function ProductCard({ product, onEdit, onView, onArchive, className }: P
 
       <CardHeader className="pb-3">
         {/* Product Image Placeholder */}
-        <div className="relative w-full aspect-square bg-gray-100 rounded-lg overflow-hidden mb-4">
+        <div className="relative w-full aspect-square bg-muted rounded-lg overflow-hidden mb-4">
           {product.image ? (
-            <img src={product.image} alt={product.title} className="object-cover w-full h-full" />
+            <Image 
+              src={product.image} 
+              alt={product.title} 
+              fill
+              className="object-cover" 
+            />
           ) : (
             <div className="flex items-center justify-center h-full">
-              <Package className="w-16 h-16 text-gray-300" />
+              <Package className="w-16 h-16 text-muted-foreground/30" />
             </div>
           )}
         </div>
 
         {/* Product Title & Handle */}
         <div className="space-y-1">
-          <h3 className="font-semibold text-lg leading-tight line-clamp-2 group-hover:text-blue-600 transition-colors">
+          <h3 className="font-semibold text-lg leading-tight line-clamp-2 group-hover:text-primary transition-colors">
             {product.title}
           </h3>
           <p className="text-sm text-muted-foreground">{product.handle}</p>
@@ -85,6 +92,14 @@ export function ProductCard({ product, onEdit, onView, onArchive, className }: P
             <div className="flex items-center gap-2 text-sm">
               <Tag className="w-4 h-4 text-muted-foreground" />
               <span className="text-muted-foreground">{product.productType}</span>
+            </div>
+          )}
+
+          {product.sku && (
+            <div className="flex items-center gap-2 text-sm">
+              <Hash className="w-4 h-4 text-muted-foreground" />
+              <span className="text-muted-foreground font-mono">{product.sku}</span>
+              <SkuCopyButton sku={product.sku} variant="icon" />
             </div>
           )}
         </div>
