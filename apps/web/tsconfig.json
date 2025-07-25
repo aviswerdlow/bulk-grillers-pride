@@ -4,22 +4,12 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@/*": [
-        "./src/*"
-      ],
-      "~/*": [
-        "./*"
-      ],
-      "@convex/*": [
-        "../../convex/*"
-      ]
+      "@/*": ["./src/*"],
+      "~/*": ["./*"],
+      "@convex/*": ["../../convex/*"]
     },
     "allowSyntheticDefaultImports": true,
-    "types": [
-      "jest",
-      "@testing-library/jest-dom",
-      "jest-axe"
-    ],
+    "types": ["jest", "@testing-library/jest-dom", "jest-axe", "node"],
     "skipLibCheck": true,
     "allowJs": true,
     "noImplicitAny": false,
@@ -44,9 +34,5 @@
     "src/types/jest-dom.d.ts",
     "src/types/**/*.d.ts"
   ],
-  "exclude": [
-    "node_modules",
-    "coverage",
-    ".next/server"
-  ]
+  "exclude": ["node_modules", "coverage", ".next/server"]
 }
