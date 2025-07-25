@@ -28,7 +28,7 @@ const resetMockState = () => {
 const createChainableQuery = (tableName, initialData) => {
   let data = [...initialData];
   let _indexApplied = false;
-  
+
   const chainable = {
     withIndex: jest.fn((indexName, queryFn) => {
       if (queryFn) {
@@ -53,15 +53,15 @@ const createChainableQuery = (tableName, initialData) => {
           lte: (field, value) => {
             conditions.push({ field, value, op: 'lte' });
             return mockQuery;
-          }
+          },
         };
         queryFn(mockQuery);
-        
+
         // Apply index filtering - handle 'null' parentId for root categories
-        data = data.filter(doc => {
+        data = data.filter((doc) => {
           return conditions.every(({ field, value, op = 'eq' }) => {
             const docValue = doc[field];
-            
+
             // Special handling for null values (root categories)
             if (op === 'eq') {
               if (value === null) {
@@ -69,13 +69,13 @@ const createChainableQuery = (tableName, initialData) => {
               }
               return docValue === value;
             }
-            
+
             // Comparison operators
             if (op === 'gt') return docValue > value;
             if (op === 'gte') return docValue >= value;
             if (op === 'lt') return docValue < value;
             if (op === 'lte') return docValue <= value;
-            
+
             return true;
           });
         });
@@ -83,7 +83,7 @@ const createChainableQuery = (tableName, initialData) => {
       }
       return chainable;
     }),
-    
+
     filter: jest.fn((predicate) => {
       const filterContext = {
         eq: (field, value) => {
@@ -99,7 +99,7 @@ const createChainableQuery = (tableName, initialData) => {
         field: (name) => name,
         and: (...conditions) => {
           return (doc) => {
-            return conditions.every(condition => {
+            return conditions.every((condition) => {
               if (typeof condition === 'function') {
                 return condition(doc);
               }
@@ -172,17 +172,7 @@ const createChainableQuery = (tableName, initialData) => {
         },
         or: (...conditions) => {
           return (doc) => {
-            return conditions.some(condition => {
-              if (typeof condition === 'function') {
-                return condition(doc);
-              }
-              return true;
-            });
-          };
-        },
-        and: (...conditions) => {
-          return (doc) => {
-            return conditions.every(condition => {
+            return conditions.some((condition) => {
               if (typeof condition === 'function') {
                 return condition(doc);
               }
@@ -191,9 +181,9 @@ const createChainableQuery = (tableName, initialData) => {
           };
         },
       };
-      
+
       // Apply the filter
-      data = data.filter(doc => {
+      data = data.filter((doc) => {
         try {
           const predicateResult = predicate(filterContext);
           if (typeof predicateResult === 'function') {
@@ -205,10 +195,10 @@ const createChainableQuery = (tableName, initialData) => {
           return true;
         }
       });
-      
+
       return chainable;
     }),
-    
+
     order: jest.fn((direction) => {
       // Sort by _creationTime
       if (direction === 'desc') {
@@ -218,33 +208,33 @@ const createChainableQuery = (tableName, initialData) => {
       }
       return chainable;
     }),
-    
+
     collect: jest.fn(async () => {
       return [...data];
     }),
-    
+
     first: jest.fn(async () => {
       return data[0] || null;
     }),
-    
+
     unique: jest.fn(async () => {
       return data[0] || null;
     }),
-    
+
     take: jest.fn((limit) => {
       data = data.slice(0, limit);
       return chainable;
     }),
-    
+
     paginate: jest.fn(async (opts) => {
-      return { 
-        page: data.slice(0, opts?.numItems || 10), 
-        isDone: true, 
-        continueCursor: '' 
+      return {
+        page: data.slice(0, opts?.numItems || 10),
+        isDone: true,
+        continueCursor: '',
       };
     }),
   };
-  
+
   return chainable;
 };
 
@@ -253,40 +243,40 @@ const mockDb = {
     const tableData = dbStorage.get(tableName) || [];
     return createChainableQuery(tableName, tableData);
   }),
-  
+
   get: jest.fn(async (id) => {
     // Look through all tables to find the document
-    for (const [tableName, documents] of dbStorage.entries()) {
-      const doc = documents.find(d => d._id === id);
+    for (const [_tableName, documents] of dbStorage.entries()) {
+      const doc = documents.find((d) => d._id === id);
       if (doc) {
         return doc;
       }
     }
     return null;
   }),
-  
+
   insert: jest.fn(async (tableName, doc) => {
     const id = doc._id || `${tableName}_${Math.random().toString(36).substr(2, 9)}`;
     const newDoc = { ...doc, _id: id, _creationTime: Date.now() };
-    
+
     // Store in our mock storage
     if (!dbStorage.has(tableName)) {
       dbStorage.set(tableName, []);
     }
     dbStorage.get(tableName).push(newDoc);
-    
+
     // Track organizations for duplicate checking
     if (tableName === 'organizations' && doc.slug) {
       organizations.set(doc.slug, newDoc);
     }
-    
+
     return id;
   }),
-  
+
   patch: jest.fn(async (id, updates) => {
     // Find the table that contains this ID
     for (const [tableName, docs] of dbStorage.entries()) {
-      const docIndex = docs.findIndex(doc => doc._id === id);
+      const docIndex = docs.findIndex((doc) => doc._id === id);
       if (docIndex >= 0) {
         // Update the document
         dbStorage.get(tableName)[docIndex] = {
@@ -300,12 +290,12 @@ const mockDb = {
     }
     return undefined;
   }),
-  
+
   replace: jest.fn(async () => undefined),
   delete: jest.fn(async (id) => {
     // Find and remove the document
     for (const [tableName, docs] of dbStorage.entries()) {
-      const docIndex = docs.findIndex(doc => doc._id === id);
+      const docIndex = docs.findIndex((doc) => doc._id === id);
       if (docIndex >= 0) {
         dbStorage.get(tableName).splice(docIndex, 1);
         return undefined;
@@ -330,7 +320,7 @@ module.exports = {
     // Reset state for each test
     organizations.clear();
     dbStorage = new Map();
-    
+
     // Create a context object that matches Convex's structure
     const ctx = {
       db: mockDb,
@@ -340,25 +330,25 @@ module.exports = {
       runMutation: jest.fn(),
       runAction: jest.fn(),
       scheduler: {
-        runAfter: jest.fn(async (delay, fn, args) => {
+        runAfter: jest.fn(async (_delay, _fn, _args) => {
           // Mock implementation that returns a job ID
           const jobId = `job_${Math.random().toString(36).substr(2, 9)}`;
-          console.log(`Scheduler: runAfter(${delay}ms) scheduled job ${jobId}`);
+          // Mock scheduling: runAfter scheduled job ${jobId}
           return { jobId };
         }),
-        runAt: jest.fn(async (timestamp, fn, args) => {
+        runAt: jest.fn(async (_timestamp, _fn, _args) => {
           // Mock implementation that returns a job ID
           const jobId = `job_${Math.random().toString(36).substr(2, 9)}`;
-          console.log(`Scheduler: runAt(${new Date(timestamp).toISOString()}) scheduled job ${jobId}`);
+          // Mock scheduling: runAt scheduled job ${jobId}
           return { jobId };
         }),
-        cancel: jest.fn(async (jobId) => {
-          console.log(`Scheduler: cancelled job ${jobId}`);
+        cancel: jest.fn(async (_jobId) => {
+          // Mock scheduling: cancelled job
           return undefined;
         }),
       },
     };
-    
+
     // Return a mock test context
     return {
       // Include the context properties directly
@@ -366,7 +356,7 @@ module.exports = {
       auth: mockAuth,
       storage: mockStorage,
       scheduler: ctx.scheduler,
-      
+
       query: jest.fn(async (fn) => {
         if (typeof fn === 'function') {
           return await fn(ctx);
@@ -385,17 +375,17 @@ module.exports = {
         }
         return fn;
       }),
-      
+
       // Run methods that also accept args
       runQuery: jest.fn((query, args) => {
-        // If query is a string (like 'organizations.getUserOrganizations'), 
+        // If query is a string (like 'organizations.getUserOrganizations'),
         // just return mock data for now
         if (typeof query === 'string') {
           // Handle specific queries
           if (query === 'getCategorizationJob' && args?.jobId) {
             // Try to find the job in the database
             const jobs = dbStorage.get('aiCategorizationJobs') || [];
-            const job = jobs.find(j => j._id === args.jobId);
+            const job = jobs.find((j) => j._id === args.jobId);
             return Promise.resolve(job || null);
           }
           return Promise.resolve(null);
@@ -403,7 +393,7 @@ module.exports = {
         return query(ctx, args);
       }),
       runMutation: jest.fn((mutation, args) => {
-        // If mutation is a string (like 'organizations.create'), 
+        // If mutation is a string (like 'organizations.create'),
         // just return mock data for now
         if (typeof mutation === 'string') {
           // Handle organization mutations
@@ -414,7 +404,9 @@ module.exports = {
             }
             // Check for duplicate slug
             if (organizations.has(args?.slug)) {
-              return Promise.reject(new Error(`Organization with slug "${args.slug}" already exists`));
+              return Promise.reject(
+                new Error(`Organization with slug "${args.slug}" already exists`)
+              );
             }
             // Create the organization
             const newOrg = {
@@ -432,7 +424,7 @@ module.exports = {
               ...args,
             };
             organizations.set(args.slug, newOrg);
-            
+
             // Also create the membership record
             const membership = {
               _id: 'member_' + Math.random().toString(36).substr(2, 9),
@@ -442,16 +434,16 @@ module.exports = {
               role: 'owner',
               joinedAt: Date.now(),
             };
-            
+
             // Store in our mock storage
             if (!dbStorage.has('organizationMembers')) {
               dbStorage.set('organizationMembers', []);
             }
             dbStorage.get('organizationMembers').push(membership);
-            
+
             return Promise.resolve(newOrg);
           }
-          
+
           if (mutation === 'organizations.update') {
             // Simple mock update
             return Promise.resolve({
@@ -461,7 +453,7 @@ module.exports = {
               ...args,
             });
           }
-          
+
           if (mutation === 'organizations.addMember') {
             // Simple mock for adding member
             return Promise.resolve({
@@ -470,7 +462,7 @@ module.exports = {
               role: args?.role,
             });
           }
-          
+
           if (mutation === 'applyCategorization') {
             // Create the category assignment
             const assignmentId = 'assign_' + Math.random().toString(36).substr(2, 9);
@@ -484,17 +476,17 @@ module.exports = {
               rationale: args?.rationale || '',
               assignedAt: Date.now(),
             };
-            
+
             // Store in our mock storage
             if (!dbStorage.has('categoryProductAssignments')) {
               dbStorage.set('categoryProductAssignments', []);
             }
             dbStorage.get('categoryProductAssignments').push(assignment);
-            
+
             // Return the productId as expected
             return Promise.resolve(args?.productId);
           }
-          
+
           // Default: return success
           return Promise.resolve({ success: true });
         }
@@ -506,7 +498,7 @@ module.exports = {
         }
         return action(ctx, args);
       }),
-      
+
       // Run method for test context
       run: jest.fn(async (fn) => {
         if (typeof fn === 'function') {
@@ -516,13 +508,13 @@ module.exports = {
       }),
     };
   },
-  
+
   // Mock database object
   mockDb: mockDb,
-  
+
   // Mock auth object
   mockAuth: mockAuth,
-  
+
   // Helper to reset mock state
   resetMockState: resetMockState,
 };

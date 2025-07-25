@@ -1,18 +1,24 @@
 import React from 'react';
 
 // Mock Popover components
-export const Popover = ({ children, open, onOpenChange }: any) => {
+interface PopoverProps {
+  children: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
+export const Popover = ({ children, open, onOpenChange }: PopoverProps) => {
   const [isOpen, setIsOpen] = React.useState(open || false);
-  
+
   React.useEffect(() => {
     setIsOpen(open || false);
   }, [open]);
 
   return (
     <div data-testid="popover" data-open={isOpen}>
-      {React.Children.map(children, child => {
+      {React.Children.map(children, (child) => {
         if (React.isValidElement(child)) {
-          return React.cloneElement(child as any, { isOpen, setIsOpen, onOpenChange });
+          return React.cloneElement(child, { isOpen, setIsOpen, onOpenChange });
         }
         return child;
       })}
@@ -22,7 +28,12 @@ export const Popover = ({ children, open, onOpenChange }: any) => {
 
 export const PopoverTrigger = React.forwardRef<
   HTMLButtonElement,
-  React.ButtonHTMLAttributes<HTMLButtonElement> & { isOpen?: boolean; setIsOpen?: any; onOpenChange?: any; asChild?: boolean }
+  React.ButtonHTMLAttributes<HTMLButtonElement> & {
+    isOpen?: boolean;
+    setIsOpen?: (open: boolean) => void;
+    onOpenChange?: (open: boolean) => void;
+    asChild?: boolean;
+  }
 >(({ children, onClick, isOpen, setIsOpen, onOpenChange, asChild, ...props }, ref) => {
   const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     const newState = !isOpen;
@@ -33,8 +44,8 @@ export const PopoverTrigger = React.forwardRef<
 
   if (asChild && React.isValidElement(children)) {
     // Clone the child element and add the trigger props
-    const childProps = (children as any).props || {};
-    return React.cloneElement(children as any, {
+    const childProps = (children as React.ReactElement).props || {};
+    return React.cloneElement(children as React.ReactElement, {
       ...props,
       ...childProps,
       ref,
@@ -46,7 +57,7 @@ export const PopoverTrigger = React.forwardRef<
   }
 
   return (
-    <button 
+    <button
       ref={ref}
       data-testid="popover-trigger"
       onClick={handleClick}
@@ -65,14 +76,9 @@ export const PopoverContent = React.forwardRef<
   React.HTMLAttributes<HTMLDivElement> & { isOpen?: boolean }
 >(({ children, isOpen, ...props }, ref) => {
   if (!isOpen) return null;
-  
+
   return (
-    <div 
-      ref={ref}
-      data-testid="popover-content"
-      role="dialog"
-      {...props}
-    >
+    <div ref={ref} data-testid="popover-content" role="dialog" {...props}>
       {children}
     </div>
   );
