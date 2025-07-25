@@ -84,7 +84,7 @@ module.exports = {
         '^.+\\.(ts|js)$': [
           'ts-jest',
           {
-            tsconfig: '<rootDir>/convex/tsconfig.json',
+            tsconfig: '<rootDir>/convex/tsconfig.test.json',
             isolatedModules: true,
             useESM: false,
           },
