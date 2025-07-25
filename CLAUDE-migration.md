@@ -34,6 +34,27 @@ lock_tier_1:
 
 - convex/schema.ts (coordinate with backend-agent)
 
+
+## Git Workflow Rules
+
+1. **NEVER work directly on main branch**
+2. **Always create feature branch**: `git checkout -b migration/[task-name]`
+3. **Check existing PRs before starting**: `gh pr list`
+4. **Pull main regularly**: `git pull origin main`
+5. **Push to branch when complete**: `git push -u origin migration/[task-name]`
+6. **DON'T create PR unless explicitly asked**
+
+### Branch Naming Convention
+- Use format: `migration/[brief-description]`
+- Examples: `migration/add-user-fields`, `migration/update-schema`, `migration/data-cleanup`
+
+### Before Starting Any Work
+```bash
+git checkout main
+git pull origin main
+git checkout -b migration/[task-description]
+```
+
 ## SuperClaude Workflow
 
 1. **Plan**: `/sc:migrate --plan --seq --dry-run`

@@ -54,6 +54,27 @@ always_read:
   - /.locks/file-locks.json
   - /docs/architecture/decisions/
 
+
+## Git Workflow Rules
+
+1. **NEVER work directly on main branch**
+2. **Always create feature branch**: `git checkout -b systems/[task-name]`
+3. **Check existing PRs before starting**: `gh pr list`
+4. **Pull main regularly**: `git pull origin main`
+5. **Push to branch when complete**: `git push -u origin systems/[task-name]`
+6. **DON'T create PR unless explicitly asked**
+
+### Branch Naming Convention
+- Use format: `systems/[brief-description]`
+- Examples: `systems/auth-architecture`, `systems/api-design`, `systems/data-model`
+
+### Before Starting Any Work
+```bash
+git checkout main
+git pull origin main
+git checkout -b systems/[task-description]
+```
+
 ## SuperClaude Workflow
 1. **Analyze Request**: `/sc:analyze --feature --seq --ultrathink`
 2. **Research Patterns**: `/sc:analyze --patterns --c7`

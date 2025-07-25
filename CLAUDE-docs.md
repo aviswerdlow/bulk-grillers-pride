@@ -30,6 +30,27 @@ owns_paths:
 - CHANGELOG.md
 - \*_/_.md (documentation files)
 
+
+## Git Workflow Rules
+
+1. **NEVER work directly on main branch**
+2. **Always create feature branch**: `git checkout -b docs/[task-name]`
+3. **Check existing PRs before starting**: `gh pr list`
+4. **Pull main regularly**: `git pull origin main`
+5. **Push to branch when complete**: `git push -u origin docs/[task-name]`
+6. **DON'T create PR unless explicitly asked**
+
+### Branch Naming Convention
+- Use format: `docs/[brief-description]`
+- Examples: `docs/update-api-docs`, `docs/add-user-guide`, `docs/fix-readme`
+
+### Before Starting Any Work
+```bash
+git checkout main
+git pull origin main
+git checkout -b docs/[task-description]
+```
+
 ## SuperClaude Workflow
 
 1. **Research**: `/sc:analyze --code --c7` for accuracy

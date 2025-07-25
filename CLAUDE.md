@@ -66,6 +66,26 @@ always_read:
 - /.agent-metrics/metrics.json
 - Run `npm run check-tasks` or `node scripts/check-tasks` to see GitHub Issues
 
+## Git Workflow Rules
+
+1. **NEVER work directly on main branch**
+2. **Always create feature branch**: `git checkout -b infra/[task-name]`
+3. **Check existing PRs before starting**: `gh pr list`
+4. **Pull main regularly**: `git pull origin main`
+5. **Push to branch when complete**: `git push -u origin infra/[task-name]`
+6. **DON'T create PR unless explicitly asked**
+
+### Branch Naming Convention
+- Use format: `infra/[brief-description]`
+- Examples: `infra/fix-jest-config`, `infra/upgrade-turbo`, `infra/add-ci-caching`
+
+### Before Starting Any Work
+```bash
+git checkout main
+git pull origin main
+git checkout -b infra/[task-description]
+```
+
 ## SuperClaude Workflow
 
 1. **Analysis First**: Always run `/sc:analyze --arch --c7` before making changes
