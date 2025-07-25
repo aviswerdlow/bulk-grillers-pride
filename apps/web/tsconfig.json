@@ -33,8 +33,6 @@
     "../../jest-dom.d.ts",
     "src/types/globals.d.ts",
     "src/types/jest-dom.d.ts",
-    "src/types/jest-dom-global.d.ts",
-    "src/types/jest-globals-augment.d.ts",
     "src/types/**/*.d.ts"
   ],
   "exclude": ["node_modules", "coverage", ".next/server"]
