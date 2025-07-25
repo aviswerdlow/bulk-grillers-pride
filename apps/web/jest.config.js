@@ -113,5 +113,8 @@ module.exports = {
     // Mock accessibility context
     '^@/contexts/accessibility/AccessibilityContext$':
       '<rootDir>/apps/web/src/__tests__/__mocks__/contexts/accessibility/AccessibilityContext.tsx',
+    // Mock ConvexClientProvider
+    '^@/components/convex-client-provider$':
+      '<rootDir>/apps/web/src/__tests__/__mocks__/components/convex-client-provider.tsx',
   },
 };

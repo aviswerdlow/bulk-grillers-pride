@@ -32,7 +32,6 @@ import { X } from 'lucide-react';
 import { BaseDialogProps } from '@/types/ui';
 
 // Product edit form schema
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const editProductSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   description: z.string().optional(),
@@ -99,7 +98,6 @@ export function EditProductDialog({ open, onOpenChange, product }: EditProductDi
   }, [product, reset]);
 
   // Helper functions for form handling
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const generateHandle = (title: string) => {
     return title
       .toLowerCase()

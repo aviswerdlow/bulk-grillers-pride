@@ -1,5 +1,4 @@
 // Mock for @radix-ui/react-select
-// eslint-disable-next-line @typescript-eslint/no-require-imports
 const React = require('react');
 
 // Select Context
@@ -118,6 +117,18 @@ const SelectSeparator = (props) => React.createElement('hr', { ...props, role: '
 const SelectScrollUpButton = ({ children, ...props }) => React.createElement('button', { ...props, type: 'button' }, children);
 const SelectScrollDownButton = ({ children, ...props }) => React.createElement('button', { ...props, type: 'button' }, children);
 
+// Icon component
+const SelectIcon = ({ children, asChild, ...props }) => {
+  if (asChild && React.isValidElement(children)) {
+    return React.cloneElement(children, props);
+  }
+  return React.createElement('span', { ...props, 'data-testid': 'select-icon' }, children);
+};
+
+// ItemIndicator component
+const SelectItemIndicator = ({ children, ...props }) => 
+  React.createElement('span', { ...props, 'data-testid': 'select-item-indicator' }, children);
+
 // Export all components
 module.exports = {
   Root: Select,
@@ -146,4 +157,8 @@ module.exports = {
   SelectScrollUpButton,
   ScrollDownButton: SelectScrollDownButton,
   SelectScrollDownButton,
+  Icon: SelectIcon,
+  SelectIcon,
+  ItemIndicator: SelectItemIndicator,
+  SelectItemIndicator,
 };

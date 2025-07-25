@@ -2,13 +2,14 @@ import { t } from '../../test.setup';
 import { describe, it, expect, beforeEach, jest, afterEach } from '@jest/globals';
 import {
   createConvexTest,
-  createQueryContext,
-  createMutationContext,
-  setupAuth,
-  seedDatabase,
-  clearDatabase,
-  getTableData,
-  convexTest
+  createQueryContextLegacy,
+  createMutationContextLegacy,
+  setupAuthLegacy,
+  seedDatabaseLegacy,
+  clearDatabaseLegacy,
+  getTableDataLegacy,
+  convexTest,
+  adaptLegacyTestContext
 } from '../convex-test-standard';
 import { ConvexTestContext } from '../convex-test-standard';
 import {
@@ -26,13 +27,13 @@ describe('auth/users', () => {
     });
 
   afterEach(() => {
-    clearDatabase(t);
+    clearDatabaseLegacy(t);
   });
 
   describe('store mutation', () => {
     it('should create a new user when authenticated', async () => {
       // Setup auth with Clerk identity
-      setupAuth(t, {
+      setupAuthLegacy(t, {
         tokenIdentifier: 'clerk_test_123',
         subject: 'clerk_test_123',
         email: 'test@example.com',
@@ -50,11 +51,11 @@ describe('auth/users', () => {
         issuer: 'clerk',
       });
 
-      const ctx = createMutationContext(t);
+      const ctx = createMutationContextLegacy(t);
       const userId = await storeHandler(ctx);
 
       // Verify user was created
-      const users = getTableData(test, 'users');
+      const users = await getTableDataLegacy(t, 'users');
       expect(users).toHaveLength(1);
       expect(users[0]).toMatchObject({
         clerkId: 'clerk_test_123',
@@ -69,7 +70,7 @@ describe('auth/users', () => {
 
     it('should update existing user on subsequent calls', async () => {
       // Seed existing user
-      await seedDatabase(t, {
+      await seedDatabaseLegacy(t, {
         users: [{
           _id: 'user_1',
           clerkId: 'clerk_test_123',
@@ -93,7 +94,7 @@ describe('auth/users', () => {
         issuer: 'clerk',
       });
 
-      const ctx = createMutationContext(t);
+      const ctx = createMutationContextLegacy(t);
       const userId = await storeHandler(ctx);
 
       // Verify user was updated
@@ -138,7 +139,7 @@ describe('auth/users', () => {
         issuer: 'clerk',
       });
 
-      const ctx = createMutationContext(t);
+      const ctx = createMutationContextLegacy(t);
       await storeHandler(ctx);
 
       const users = getTableData(test, 'users');
@@ -153,7 +154,7 @@ describe('auth/users', () => {
   describe('current query', () => {
     it('should return current authenticated user', async () => {
       // Seed user
-      await seedDatabase(t, {
+      await seedDatabaseLegacy(t, {
         users: [{
           _id: 'user_1',
           clerkId: 'clerk_test_123',
@@ -164,12 +165,12 @@ describe('auth/users', () => {
         }],
       });
 
-      setupAuth(t, {
+      setupAuthLegacy(t, {
         tokenIdentifier: 'clerk_test_123',
         subject: 'clerk_test_123',
       });
 
-      const ctx = createQueryContext(t);
+      const ctx = createQueryContextLegacy(t);
       const user = await currentHandler(ctx);
 
       expect(user).toMatchObject({
@@ -180,21 +181,21 @@ describe('auth/users', () => {
     });
 
     it('should return null when not authenticated', async () => {
-      setupAuth(t, null);
+      setupAuthLegacy(t, null);
 
-      const ctx = createQueryContext(t);
+      const ctx = createQueryContextLegacy(t);
       const user = await currentHandler(ctx);
 
       expect(user).toBeNull();
     });
 
     it('should return null when user does not exist', async () => {
-      setupAuth(t, {
+      setupAuthLegacy(t, {
         tokenIdentifier: 'clerk_test_123',
         subject: 'clerk_test_123',
       });
 
-      const ctx = createQueryContext(t);
+      const ctx = createQueryContextLegacy(t);
       const user = await currentHandler(ctx);
 
       expect(user).toBeNull();
@@ -213,7 +214,7 @@ describe('auth/users', () => {
         issuer: 'clerk',
       });
 
-      const ctx = createMutationContext(t);
+      const ctx = createMutationContextLegacy(t);
       const userId = await ensureUserHandler(ctx);
 
       const users = getTableData(test, 'users');
@@ -222,7 +223,7 @@ describe('auth/users', () => {
     });
 
     it('should return existing user ID if user exists', async () => {
-      await seedDatabase(t, {
+      await seedDatabaseLegacy(t, {
         users: [{
           _id: 'user_1',
           clerkId: 'clerk_test_123',
@@ -230,12 +231,12 @@ describe('auth/users', () => {
         }],
       });
 
-      setupAuth(t, {
+      setupAuthLegacy(t, {
         tokenIdentifier: 'clerk_test_123',
         subject: 'clerk_test_123',
       });
 
-      const ctx = createMutationContext(t);
+      const ctx = createMutationContextLegacy(t);
       const userId = await ensureUserHandler(ctx);
 
       expect(userId).toBe('user_1');
@@ -247,7 +248,7 @@ describe('auth/users', () => {
   describe('currentWithOrganizations query', () => {
     it('should return user with organization memberships', async () => {
       // Seed data
-      await seedDatabase(t, {
+      await seedDatabaseLegacy(t, {
         users: [{
           _id: 'user_1',
           clerkId: 'clerk_test_123',
@@ -283,12 +284,12 @@ describe('auth/users', () => {
         }],
       });
 
-      setupAuth(t, {
+      setupAuthLegacy(t, {
         tokenIdentifier: 'clerk_test_123',
         subject: 'clerk_test_123',
       });
 
-      const ctx = createQueryContext(t);
+      const ctx = createQueryContextLegacy(t);
       const result = await currentWithOrganizationsHandler(ctx);
 
       expect(result).toBeDefined();
@@ -320,7 +321,7 @@ describe('auth/users', () => {
     });
 
     it('should only return active memberships', async () => {
-      await seedDatabase(t, {
+      await seedDatabaseLegacy(t, {
         users: [{
           _id: 'user_1',
           clerkId: 'clerk_test_123',
@@ -351,12 +352,12 @@ describe('auth/users', () => {
         }],
       });
 
-      setupAuth(t, {
+      setupAuthLegacy(t, {
         tokenIdentifier: 'clerk_test_123',
         subject: 'clerk_test_123',
       });
 
-      const ctx = createQueryContext(t);
+      const ctx = createQueryContextLegacy(t);
       const result = await currentWithOrganizationsHandler(ctx);
 
       expect(result?.organizations).toHaveLength(1);
@@ -366,7 +367,7 @@ describe('auth/users', () => {
 
   describe('getUserById query', () => {
     beforeEach(async () => {
-      await seedDatabase(t, {
+      await seedDatabaseLegacy(t, {
         users: [{
           _id: 'user_1',
           clerkId: 'clerk_test_123',
@@ -399,12 +400,12 @@ describe('auth/users', () => {
     });
 
     it('should return full user info when users share an organization', async () => {
-      setupAuth(t, {
+      setupAuthLegacy(t, {
         tokenIdentifier: 'clerk_test_123',
         subject: 'clerk_test_123',
       });
 
-      const ctx = createQueryContext(t);
+      const ctx = createQueryContextLegacy(t);
       const user = await getUserByIdHandler(ctx, { userId: 'user_2' as any });
 
       expect(user).toMatchObject({
@@ -417,7 +418,7 @@ describe('auth/users', () => {
 
     it('should return limited info when users do not share organizations', async () => {
       // Add user_3 without shared org
-      await seedDatabase(t, {
+      await seedDatabaseLegacy(t, {
         users: [{
           _id: 'user_3',
           clerkId: 'clerk_test_789',
@@ -428,12 +429,12 @@ describe('auth/users', () => {
         }],
       });
 
-      setupAuth(t, {
+      setupAuthLegacy(t, {
         tokenIdentifier: 'clerk_test_123',
         subject: 'clerk_test_123',
       });
 
-      const ctx = createQueryContext(t);
+      const ctx = createQueryContextLegacy(t);
       const user = await getUserByIdHandler(ctx, { userId: 'user_3' as any });
 
       expect(user).toEqual({
@@ -446,12 +447,12 @@ describe('auth/users', () => {
     });
 
     it('should return null when user does not exist', async () => {
-      setupAuth(t, {
+      setupAuthLegacy(t, {
         tokenIdentifier: 'clerk_test_123',
         subject: 'clerk_test_123',
       });
 
-      const ctx = createQueryContext(t);
+      const ctx = createQueryContextLegacy(t);
       const user = await getUserByIdHandler(ctx, { userId: 'nonexistent' as any });
 
       expect(user).toBeNull();
@@ -460,7 +461,7 @@ describe('auth/users', () => {
 
   describe('getOrganizationUsers query', () => {
     beforeEach(async () => {
-      await seedDatabase(t, {
+      await seedDatabaseLegacy(t, {
         users: [{
           _id: 'user_1',
           clerkId: 'clerk_test_123',
@@ -503,12 +504,12 @@ describe('auth/users', () => {
     });
 
     it('should return all active users in organization', async () => {
-      setupAuth(t, {
+      setupAuthLegacy(t, {
         tokenIdentifier: 'clerk_test_123',
         subject: 'clerk_test_123',
       });
 
-      const ctx = createQueryContext(t);
+      const ctx = createQueryContextLegacy(t);
       const users = await getOrganizationUsersHandler(ctx, { 
         organizationId: 'org_1' as any,
         includeInvited: false,
@@ -541,7 +542,7 @@ describe('auth/users', () => {
 
     it('should handle pending invitations when includeInvited is true', async () => {
       // Add pending invitation
-      await seedDatabase(t, {
+      await seedDatabaseLegacy(t, {
         organizationMemberships: [{
           _id: 'mem_3',
           organizationId: 'org_1',
@@ -554,12 +555,12 @@ describe('auth/users', () => {
         }],
       });
 
-      setupAuth(t, {
+      setupAuthLegacy(t, {
         tokenIdentifier: 'clerk_test_123',
         subject: 'clerk_test_123',
       });
 
-      const ctx = createQueryContext(t);
+      const ctx = createQueryContextLegacy(t);
       const users = await getOrganizationUsersHandler(ctx, { 
         organizationId: 'org_1' as any,
         includeInvited: true,
@@ -578,20 +579,20 @@ describe('auth/users', () => {
     });
 
     it('should return empty array when user lacks access', async () => {
-      setupAuth(t, {
+      setupAuthLegacy(t, {
         tokenIdentifier: 'clerk_test_789',
         subject: 'clerk_test_789',
       });
 
       // Add user without membership
-      await seedDatabase(t, {
+      await seedDatabaseLegacy(t, {
         users: [{
           _id: 'user_3',
           clerkId: 'clerk_test_789',
         }],
       });
 
-      const ctx = createQueryContext(t);
+      const ctx = createQueryContextLegacy(t);
       const users = await getOrganizationUsersHandler(ctx, { 
         organizationId: 'org_1' as any,
       });
@@ -602,7 +603,7 @@ describe('auth/users', () => {
 
   describe('searchUsers query', () => {
     beforeEach(async () => {
-      await seedDatabase(t, {
+      await seedDatabaseLegacy(t, {
         users: [{
           _id: 'user_1',
           clerkId: 'clerk_test_123',
@@ -654,12 +655,12 @@ describe('auth/users', () => {
     });
 
     it('should search users by email within organization', async () => {
-      setupAuth(t, {
+      setupAuthLegacy(t, {
         tokenIdentifier: 'clerk_test_123',
         subject: 'clerk_test_123',
       });
 
-      const ctx = createQueryContext(t);
+      const ctx = createQueryContextLegacy(t);
       const results = await searchUsersHandler(ctx, { 
         query: 'jane',
         organizationId: 'org_1' as any,
@@ -673,12 +674,12 @@ describe('auth/users', () => {
     });
 
     it('should search users by name across shared organizations', async () => {
-      setupAuth(t, {
+      setupAuthLegacy(t, {
         tokenIdentifier: 'clerk_test_123',
         subject: 'clerk_test_123',
       });
 
-      const ctx = createQueryContext(t);
+      const ctx = createQueryContextLegacy(t);
       const results = await searchUsersHandler(ctx, { 
         query: 'john',
       });
@@ -696,7 +697,7 @@ describe('auth/users', () => {
 
     it('should not return users from unshared organizations', async () => {
       // User 4 is only in org_3
-      await seedDatabase(t, {
+      await seedDatabaseLegacy(t, {
         users: [{
           _id: 'user_4',
           clerkId: 'clerk_test_999',
@@ -716,12 +717,12 @@ describe('auth/users', () => {
         }],
       });
 
-      setupAuth(t, {
+      setupAuthLegacy(t, {
         tokenIdentifier: 'clerk_test_123',
         subject: 'clerk_test_123',
       });
 
-      const ctx = createQueryContext(t);
+      const ctx = createQueryContextLegacy(t);
       const results = await searchUsersHandler(ctx, { 
         query: 'john',
       });
@@ -731,12 +732,12 @@ describe('auth/users', () => {
     });
 
     it('should handle case-insensitive search', async () => {
-      setupAuth(t, {
+      setupAuthLegacy(t, {
         tokenIdentifier: 'clerk_test_123',
         subject: 'clerk_test_123',
       });
 
-      const ctx = createQueryContext(t);
+      const ctx = createQueryContextLegacy(t);
       const results = await searchUsersHandler(ctx, { 
         query: 'JANE',
         organizationId: 'org_1' as any,
@@ -747,19 +748,19 @@ describe('auth/users', () => {
     });
 
     it('should return empty array when no access to organization', async () => {
-      setupAuth(t, {
+      setupAuthLegacy(t, {
         tokenIdentifier: 'clerk_test_999',
         subject: 'clerk_test_999',
       });
 
-      await seedDatabase(t, {
+      await seedDatabaseLegacy(t, {
         users: [{
           _id: 'user_5',
           clerkId: 'clerk_test_999',
         }],
       });
 
-      const ctx = createQueryContext(t);
+      const ctx = createQueryContextLegacy(t);
       const results = await searchUsersHandler(ctx, { 
         query: 'jane',
         organizationId: 'org_1' as any,

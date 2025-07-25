@@ -22,7 +22,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
 // Category creation form schema
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const createCategorySchema = z.object({
   name: z.string().min(1, "Name is required"),
   description: z.string().optional(),

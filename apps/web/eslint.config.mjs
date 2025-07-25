@@ -17,6 +17,17 @@ const eslintConfig = [
       "@typescript-eslint/no-unused-vars": "off",
       "import/no-anonymous-default-export": "off",
     }
+  },
+  {
+    files: ["src/__tests__/__mocks__/**/*"],
+    rules: {
+      "@typescript-eslint/no-require-imports": "off",
+      "react/display-name": "off",
+      "@next/next/no-img-element": "off",
+      "jsx-a11y/alt-text": "off",
+      "jsx-a11y/role-has-required-aria-props": "off",
+      "jsx-a11y/label-has-associated-control": "off",
+    }
   }
 ];
 

@@ -13,7 +13,6 @@
  */
 
 import { Id } from '../_generated/dataModel';
-import { t } from '../../test.setup';
 import { QueryCtx, MutationCtx, ActionCtx } from '../_generated/server';
 
 // ============================================================================
@@ -143,11 +142,11 @@ export function debugMockCalls(test: ConvexTestContext): void {
   console.log('\n=== Mock Function Calls ===');
   
   const mocks = {
-    'db.query': t.db.query,
-    'db.insert': t.db.insert,
-    'db.get': t.db.get,
-    'db.patch': t.db.patch,
-    'db.delete': t.db.delete,
+    'db.query': test.db.query,
+    'db.insert': test.db.insert,
+    'db.get': test.db.get,
+    'db.patch': test.db.patch,
+    'db.delete': test.db.delete,
     'auth.getUserIdentity': test.auth.getUserIdentity,
     'runQuery': test.runQuery,
     'runMutation': test.runMutation,
@@ -537,7 +536,7 @@ export function createConvexTest(): ConvexTestContext {
  */
 export function createQueryContext(test: ConvexTestContext): QueryCtx {
   return {
-    db: t.db,
+    db: test.db,
     auth: test.auth,
   } as unknown as QueryCtx;
 }
@@ -547,7 +546,7 @@ export function createQueryContext(test: ConvexTestContext): QueryCtx {
  */
 export function createMutationContext(test: ConvexTestContext): MutationCtx {
   return {
-    db: t.db,
+    db: test.db,
     auth: test.auth,
     scheduler: test.scheduler,
   } as unknown as MutationCtx;
@@ -608,7 +607,7 @@ export async function seedDatabase(test: ConvexTestContext, data: {
         });
       } else {
         // Otherwise, use the insert method to generate an ID
-        await t.db.insert(table, doc);
+        await test.db.insert(table, doc);
       }
     }
   }
@@ -683,6 +682,130 @@ export function t() {
     runAction: test.runAction,
   };
 }
+
+// ============================================================================
+// Legacy Adapters for existing tests
+// ============================================================================
+
+/**
+ * Adapts the legacy t object to work with our new helper functions
+ * This allows existing tests to work without major refactoring
+ */
+export function adaptLegacyTestContext(t: any): ConvexTestContext {
+  // Create storage and idGenerator that tracks the mock's internal state
+  const storage = new Map<string, Map<string, any>>();
+  const idGenerator = new Map<string, number>();
+  
+  // The legacy t object doesn't expose storage directly, so we'll track it
+  // through the mock calls
+  return {
+    storage,
+    idGenerator,
+    auth: t.auth,
+    scheduler: t.scheduler || {
+      runAfter: jest.fn(),
+      runAt: jest.fn(),
+      cancel: jest.fn(),
+    },
+    db: t.db,
+    runQuery: t.runQuery,
+    runMutation: t.runMutation,
+    runAction: t.runAction,
+    subscriptions: createMockSubscriptions(),
+  };
+}
+
+// Override helper functions to work with legacy t object directly
+export function clearDatabaseLegacy(t: any): void {
+  // Reset all mocks
+  if (t.db) {
+    Object.values(t.db).forEach((mock: any) => {
+      if (mock && typeof mock.mockClear === 'function') {
+        mock.mockClear();
+      }
+    });
+  }
+  if (t.auth && t.auth.getUserIdentity) {
+    t.auth.getUserIdentity.mockClear();
+  }
+}
+
+export function setupAuthLegacy(t: any, user: {
+  tokenIdentifier: string;
+  email?: string;
+  subject?: string;
+} | null): void {
+  if (t.auth && t.auth.getUserIdentity) {
+    t.auth.getUserIdentity.mockResolvedValue(
+      user ? {
+        tokenIdentifier: user.tokenIdentifier,
+        subject: user.subject || user.tokenIdentifier,
+        email: user.email || 'test@example.com',
+        emailVerified: true,
+        issuer: 'test',
+      } : null
+    );
+  }
+}
+
+export function createQueryContextLegacy(t: any): QueryCtx {
+  return {
+    db: t.db,
+    auth: t.auth,
+  } as unknown as QueryCtx;
+}
+
+export function createMutationContextLegacy(t: any): MutationCtx {
+  return {
+    db: t.db,
+    auth: t.auth,
+    scheduler: t.scheduler || {
+      runAfter: jest.fn(),
+      runAt: jest.fn(),
+      cancel: jest.fn(),
+    },
+  } as unknown as MutationCtx;
+}
+
+export function createActionContextLegacy(t: any): ActionCtx {
+  return {
+    auth: t.auth,
+    scheduler: t.scheduler || {
+      runAfter: jest.fn(),
+      runAt: jest.fn(),
+      cancel: jest.fn(),
+    },
+    runQuery: t.runQuery,
+    runMutation: t.runMutation,
+    runAction: t.runAction,
+  } as unknown as ActionCtx;
+}
+
+export async function seedDatabaseLegacy(t: any, data: {
+  [table: string]: any[];
+}): Promise<void> {
+  for (const [table, documents] of Object.entries(data)) {
+    for (const doc of documents) {
+      if (doc._id) {
+        // For legacy t object, we'll use insert with the _id included
+        // The mock should handle this appropriately
+        await t.db.insert(table, doc);
+      } else {
+        await t.db.insert(table, doc);
+      }
+    }
+  }
+}
+
+export async function getTableDataLegacy(t: any, table: string): Promise<any[]> {
+  // Access the query result directly from the mock
+  // The legacy mock stores data internally, so we'll query it
+  const queryBuilder = t.db.query(table);
+  return await queryBuilder.collect();
+}
+
+// Export convexTest for backward compatibility
+export { convexTest } from './test-helpers';
 
 // Re-export data factories from the original test-helpers
 export {

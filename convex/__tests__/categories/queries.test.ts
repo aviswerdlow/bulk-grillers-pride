@@ -2,11 +2,11 @@ import { t } from '../../test.setup';
 import { describe, it, expect, beforeEach } from '@jest/globals';
 import {
   createConvexTest,
-  createQueryContext,
-  createMutationContext,
-  createActionContext,
-  setupAuth,
-  seedDatabase,
+  createQueryContextLegacy,
+  createMutationContextLegacy,
+  createActionContextLegacy,
+  setupAuthLegacy,
+  seedDatabaseLegacy,
   assertDocumentExists,
   assertDocumentNotExists,
   type ConvexTestContext,
@@ -38,14 +38,14 @@ describe('queries', () => {
           role: 'owner',
         });
 
-        await seedDatabase(t, {
+        await seedDatabaseLegacy(t, {
           users: [user],
           organizations: [org],
           organizationMemberships: [membership],
         });
 
-        setupAuth(t, { tokenIdentifier: user.clerkId });
-        const ctx = createQueryContext(t);
+        setupAuthLegacy(t, { tokenIdentifier: user.clerkId });
+        const ctx = createQueryContextLegacy(t);
 
         // Act
         const args = {
@@ -66,8 +66,8 @@ describe('queries', () => {
     describe('Authorization', () => {
       it('should fail for unauthenticated user', async () => {
         // Arrange
-        setupAuth(t, null);
-        const ctx = createQueryContext(t);
+        setupAuthLegacy(t, null);
+        const ctx = createQueryContextLegacy(t);
 
         // Act & Assert
         await expect(getProjectCategories(ctx, {} as any)).rejects.toThrow();
@@ -79,13 +79,13 @@ describe('queries', () => {
         const org = createMockOrganization();
         // Note: No membership created
 
-        await seedDatabase(t, {
+        await seedDatabaseLegacy(t, {
           users: [user],
           organizations: [org],
         });
 
-        setupAuth(t, { tokenIdentifier: user.clerkId });
-        const ctx = createQueryContext(t);
+        setupAuthLegacy(t, { tokenIdentifier: user.clerkId });
+        const ctx = createQueryContextLegacy(t);
 
         // Act & Assert
         const args = {
@@ -99,8 +99,8 @@ describe('queries', () => {
       it('should fail with invalid arguments', async () => {
         // Arrange
         const user = createMockUser();
-        setupAuth(t, { tokenIdentifier: user.clerkId });
-        const ctx = createQueryContext(t);
+        setupAuthLegacy(t, { tokenIdentifier: user.clerkId });
+        const ctx = createQueryContextLegacy(t);
 
         // Act & Assert
         await expect(getProjectCategories(ctx, {} as any)).rejects.toThrow();
@@ -126,14 +126,14 @@ describe('queries', () => {
           role: 'owner',
         });
 
-        await seedDatabase(t, {
+        await seedDatabaseLegacy(t, {
           users: [user],
           organizations: [org],
           organizationMemberships: [membership],
         });
 
-        setupAuth(t, { tokenIdentifier: user.clerkId });
-        const ctx = createQueryContext(t);
+        setupAuthLegacy(t, { tokenIdentifier: user.clerkId });
+        const ctx = createQueryContextLegacy(t);
 
         // Act
         const args = {
@@ -153,8 +153,8 @@ describe('queries', () => {
     describe('Authorization', () => {
       it('should fail for unauthenticated user', async () => {
         // Arrange
-        setupAuth(t, null);
-        const ctx = createQueryContext(t);
+        setupAuthLegacy(t, null);
+        const ctx = createQueryContextLegacy(t);
 
         // Act & Assert
         await expect(getCategoryTree(ctx, {} as any)).rejects.toThrow();
@@ -166,13 +166,13 @@ describe('queries', () => {
         const org = createMockOrganization();
         // Note: No membership created
 
-        await seedDatabase(t, {
+        await seedDatabaseLegacy(t, {
           users: [user],
           organizations: [org],
         });
 
-        setupAuth(t, { tokenIdentifier: user.clerkId });
-        const ctx = createQueryContext(t);
+        setupAuthLegacy(t, { tokenIdentifier: user.clerkId });
+        const ctx = createQueryContextLegacy(t);
 
         // Act & Assert
         const args = {
@@ -186,8 +186,8 @@ describe('queries', () => {
       it('should fail with invalid arguments', async () => {
         // Arrange
         const user = createMockUser();
-        setupAuth(t, { tokenIdentifier: user.clerkId });
-        const ctx = createQueryContext(t);
+        setupAuthLegacy(t, { tokenIdentifier: user.clerkId });
+        const ctx = createQueryContextLegacy(t);
 
         // Act & Assert
         await expect(getCategoryTree(ctx, {} as any)).rejects.toThrow();
@@ -213,14 +213,14 @@ describe('queries', () => {
           role: 'owner',
         });
 
-        await seedDatabase(t, {
+        await seedDatabaseLegacy(t, {
           users: [user],
           organizations: [org],
           organizationMemberships: [membership],
         });
 
-        setupAuth(t, { tokenIdentifier: user.clerkId });
-        const ctx = createQueryContext(t);
+        setupAuthLegacy(t, { tokenIdentifier: user.clerkId });
+        const ctx = createQueryContextLegacy(t);
 
         // Act
         const args = {
@@ -239,8 +239,8 @@ describe('queries', () => {
     describe('Authorization', () => {
       it('should fail for unauthenticated user', async () => {
         // Arrange
-        setupAuth(t, null);
-        const ctx = createQueryContext(t);
+        setupAuthLegacy(t, null);
+        const ctx = createQueryContextLegacy(t);
 
         // Act & Assert
         await expect(getCategory(ctx, {} as any)).rejects.toThrow();
@@ -252,13 +252,13 @@ describe('queries', () => {
         const org = createMockOrganization();
         // Note: No membership created
 
-        await seedDatabase(t, {
+        await seedDatabaseLegacy(t, {
           users: [user],
           organizations: [org],
         });
 
-        setupAuth(t, { tokenIdentifier: user.clerkId });
-        const ctx = createQueryContext(t);
+        setupAuthLegacy(t, { tokenIdentifier: user.clerkId });
+        const ctx = createQueryContextLegacy(t);
 
         // Act & Assert
         const args = {
@@ -271,8 +271,8 @@ describe('queries', () => {
       it('should fail with invalid arguments', async () => {
         // Arrange
         const user = createMockUser();
-        setupAuth(t, { tokenIdentifier: user.clerkId });
-        const ctx = createQueryContext(t);
+        setupAuthLegacy(t, { tokenIdentifier: user.clerkId });
+        const ctx = createQueryContextLegacy(t);
 
         // Act & Assert
         await expect(getCategory(ctx, {} as any)).rejects.toThrow();

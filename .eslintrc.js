@@ -84,6 +84,26 @@ module.exports = {
         'no-console': 'off',
       },
     },
+    {
+      // Mock files - more lenient rules
+      files: [
+        '**/__mocks__/**/*',
+        '**/src/__tests__/__mocks__/**/*',
+        'src/__tests__/__mocks__/**/*',
+        '**/src/__tests__/__mocks__/**/*.js',
+        '**/src/__tests__/__mocks__/**/*.tsx'
+      ],
+      rules: {
+        '@typescript-eslint/no-require-imports': 'off', // Allow require in mocks
+        'react/display-name': 'off', // Mock components don't need display names
+        '@next/next/no-img-element': 'off', // Mocks can use img elements
+        'jsx-a11y/alt-text': 'off', // Mock images don't need alt text
+        'jsx-a11y/role-has-required-aria-props': 'off', // Mock components may not have full ARIA
+        'jsx-a11y/label-has-associated-control': 'off', // Mock labels may not have controls
+        '@typescript-eslint/no-explicit-any': 'warn', // Be more lenient with any in mocks
+        '@typescript-eslint/no-unused-vars': 'off', // Mock variables may appear unused
+      },
+    },
   ],
   ignorePatterns: [
     'node_modules/',

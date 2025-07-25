@@ -6,6 +6,10 @@ test-utils/
 setup/
 *.spec.ts
 *.spec.js
+tests/
+
+# Ignore scripts
+scripts/
 
 # Ignore other development files
 *.md

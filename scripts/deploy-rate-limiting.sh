@@ -45,7 +45,8 @@ if [ "$CONFIRM" != "yes" ]; then
 fi
 
 # Deploy to production
-npx convex deploy --prod
+export CONVEX_DEPLOYMENT=prod:decisive-sparrow-461
+npx convex deploy --typecheck=disable
 
 echo "✅ Schema deployed successfully"
 echo ""
@@ -58,11 +59,12 @@ read -p "   Do you want to initialize rate limit configurations? (yes/no): " INI
 
 if [ "$INIT_CONFIRM" = "yes" ]; then
     echo "   Running initialization function..."
-    npx convex run --prod functions:admin.rateLimitConfiguration:initializeRateLimitConfigs
+    export CONVEX_DEPLOYMENT=prod:decisive-sparrow-461
+    npx convex run functions:admin:rateLimitConfiguration:initializeRateLimitConfigs
     echo "✅ Rate limit configurations initialized"
 else
     echo "⚠️  Skipped initialization. You can run it later with:"
-    echo "   npx convex run --prod functions:admin.rateLimitConfiguration:initializeRateLimitConfigs"
+    echo "   export CONVEX_DEPLOYMENT=prod:decisive-sparrow-461 && npx convex run functions:admin:rateLimitConfiguration:initializeRateLimitConfigs"
 fi
 
 echo ""

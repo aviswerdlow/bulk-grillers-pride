@@ -2,11 +2,11 @@ import { t } from '../../test.setup';
 import { describe, it, expect, beforeEach } from '@jest/globals';
 import {
   createConvexTest,
-  createQueryContext,
-  createMutationContext,
-  createActionContext,
-  setupAuth,
-  seedDatabase,
+  createQueryContextLegacy,
+  createMutationContextLegacy,
+  createActionContextLegacy,
+  setupAuthLegacy,
+  seedDatabaseLegacy,
   assertDocumentExists,
   assertDocumentNotExists,
   type ConvexTestContext,
@@ -42,14 +42,14 @@ describe('mutations', () => {
           role: 'owner',
         });
 
-        await seedDatabase(t, {
+        await seedDatabaseLegacy(t, {
           users: [user],
           organizations: [org],
           organizationMemberships: [membership],
         });
 
-        setupAuth(t, { tokenIdentifier: user.clerkId });
-        const ctx = createMutationContext(t);
+        setupAuthLegacy(t, { tokenIdentifier: user.clerkId });
+        const ctx = createMutationContextLegacy(t);
 
         // Act
         const args = {
@@ -78,8 +78,8 @@ describe('mutations', () => {
     describe('Authorization', () => {
       it('should fail for unauthenticated user', async () => {
         // Arrange
-        setupAuth(t, null);
-        const ctx = createMutationContext(t);
+        setupAuthLegacy(t, null);
+        const ctx = createMutationContextLegacy(t);
 
         // Act & Assert
         await expect(createCategoryHandler(ctx, {} as any)).rejects.toThrow();
@@ -91,13 +91,13 @@ describe('mutations', () => {
         const org = createMockOrganization();
         // Note: No membership created
 
-        await seedDatabase(t, {
+        await seedDatabaseLegacy(t, {
           users: [user],
           organizations: [org],
         });
 
-        setupAuth(t, { tokenIdentifier: user.clerkId });
-        const ctx = createMutationContext(t);
+        setupAuthLegacy(t, { tokenIdentifier: user.clerkId });
+        const ctx = createMutationContextLegacy(t);
 
         // Act & Assert
         const args = {
@@ -111,8 +111,8 @@ describe('mutations', () => {
       it('should fail with invalid arguments', async () => {
         // Arrange
         const user = createMockUser();
-        setupAuth(t, { tokenIdentifier: user.clerkId });
-        const ctx = createMutationContext(t);
+        setupAuthLegacy(t, { tokenIdentifier: user.clerkId });
+        const ctx = createMutationContextLegacy(t);
 
         // Act & Assert
         await expect(createCategoryHandler(ctx, {} as any)).rejects.toThrow();
@@ -138,14 +138,14 @@ describe('mutations', () => {
           role: 'owner',
         });
 
-        await seedDatabase(t, {
+        await seedDatabaseLegacy(t, {
           users: [user],
           organizations: [org],
           organizationMemberships: [membership],
         });
 
-        setupAuth(t, { tokenIdentifier: user.clerkId });
-        const ctx = createMutationContext(t);
+        setupAuthLegacy(t, { tokenIdentifier: user.clerkId });
+        const ctx = createMutationContextLegacy(t);
 
         // Act
         const args = {
@@ -172,8 +172,8 @@ describe('mutations', () => {
     describe('Authorization', () => {
       it('should fail for unauthenticated user', async () => {
         // Arrange
-        setupAuth(t, null);
-        const ctx = createMutationContext(t);
+        setupAuthLegacy(t, null);
+        const ctx = createMutationContextLegacy(t);
 
         // Act & Assert
         await expect(updateCategoryHandler(ctx, {} as any)).rejects.toThrow();
@@ -185,13 +185,13 @@ describe('mutations', () => {
         const org = createMockOrganization();
         // Note: No membership created
 
-        await seedDatabase(t, {
+        await seedDatabaseLegacy(t, {
           users: [user],
           organizations: [org],
         });
 
-        setupAuth(t, { tokenIdentifier: user.clerkId });
-        const ctx = createMutationContext(t);
+        setupAuthLegacy(t, { tokenIdentifier: user.clerkId });
+        const ctx = createMutationContextLegacy(t);
 
         // Act & Assert
         const args = {
@@ -204,8 +204,8 @@ describe('mutations', () => {
       it('should fail with invalid arguments', async () => {
         // Arrange
         const user = createMockUser();
-        setupAuth(t, { tokenIdentifier: user.clerkId });
-        const ctx = createMutationContext(t);
+        setupAuthLegacy(t, { tokenIdentifier: user.clerkId });
+        const ctx = createMutationContextLegacy(t);
 
         // Act & Assert
         await expect(updateCategoryHandler(ctx, {} as any)).rejects.toThrow();
@@ -231,14 +231,14 @@ describe('mutations', () => {
           role: 'owner',
         });
 
-        await seedDatabase(t, {
+        await seedDatabaseLegacy(t, {
           users: [user],
           organizations: [org],
           organizationMemberships: [membership],
         });
 
-        setupAuth(t, { tokenIdentifier: user.clerkId });
-        const ctx = createMutationContext(t);
+        setupAuthLegacy(t, { tokenIdentifier: user.clerkId });
+        const ctx = createMutationContextLegacy(t);
 
         // Act
         const args = {
@@ -257,8 +257,8 @@ describe('mutations', () => {
     describe('Authorization', () => {
       it('should fail for unauthenticated user', async () => {
         // Arrange
-        setupAuth(t, null);
-        const ctx = createMutationContext(t);
+        setupAuthLegacy(t, null);
+        const ctx = createMutationContextLegacy(t);
 
         // Act & Assert
         await expect(deleteCategoryHandler(ctx, {} as any)).rejects.toThrow();
@@ -270,13 +270,13 @@ describe('mutations', () => {
         const org = createMockOrganization();
         // Note: No membership created
 
-        await seedDatabase(t, {
+        await seedDatabaseLegacy(t, {
           users: [user],
           organizations: [org],
         });
 
-        setupAuth(t, { tokenIdentifier: user.clerkId });
-        const ctx = createMutationContext(t);
+        setupAuthLegacy(t, { tokenIdentifier: user.clerkId });
+        const ctx = createMutationContextLegacy(t);
 
         // Act & Assert
         const args = {
@@ -289,8 +289,8 @@ describe('mutations', () => {
       it('should fail with invalid arguments', async () => {
         // Arrange
         const user = createMockUser();
-        setupAuth(t, { tokenIdentifier: user.clerkId });
-        const ctx = createMutationContext(t);
+        setupAuthLegacy(t, { tokenIdentifier: user.clerkId });
+        const ctx = createMutationContextLegacy(t);
 
         // Act & Assert
         await expect(deleteCategoryHandler(ctx, {} as any)).rejects.toThrow();

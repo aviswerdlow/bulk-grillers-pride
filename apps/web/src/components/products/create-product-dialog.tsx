@@ -32,7 +32,6 @@ import { X } from 'lucide-react';
 import { BaseDialogProps } from '@/types/ui';
 
 // Product creation form schema
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const createProductSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   description: z.string().optional(),

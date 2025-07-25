@@ -59,7 +59,8 @@ git checkout infra/deploy-rate-limiting
 ### Commands for Emergency Disable:
 ```bash
 # Disable all rate limit configurations
-npx convex run --prod functions:admin.rateLimitConfiguration:disableAllRateLimits
+export CONVEX_DEPLOYMENT=prod:decisive-sparrow-461
+npx convex run functions:admin:rateLimitConfiguration:disableAllRateLimits
 ```
 
 ## Testing Plan

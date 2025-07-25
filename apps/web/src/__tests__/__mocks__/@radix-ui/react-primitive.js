@@ -1,5 +1,4 @@
 // Mock for @radix-ui/react-primitive
-// eslint-disable-next-line @typescript-eslint/no-require-imports
 const React = require('react');
 
 // Re-export react-slot functionality for compatibility

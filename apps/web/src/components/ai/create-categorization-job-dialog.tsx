@@ -31,7 +31,6 @@ import { Badge } from '@/components/ui/badge';
 import { Bot, Zap } from 'lucide-react';
 
 // Categorization job form schema
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const createJobSchema = z.object({
   jobType: z.enum(['bulk_categorization', 'single_product', 'validation']),
   prompt: z.string().min(1, 'Prompt is required'),
