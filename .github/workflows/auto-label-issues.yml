@@ -82,7 +82,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.issue && contains(github.event.issue.labels.*.name, 'status-')
     steps:
-      - uses: actions/add-to-project@v0.5.0
+      - uses: actions/add-to-project@v1.0.2
         with:
           project-url: https://github.com/users/${{ github.repository_owner }}/projects/${{ vars.MIGRATION_PROJECT_NUMBER }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
