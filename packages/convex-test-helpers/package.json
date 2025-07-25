@@ -27,7 +27,7 @@
   "license": "MIT",
   "dependencies": {
     "@jest/globals": "^29.7.0",
-    "convex": "^1.17.3"
+    "convex": "^1.25.4"
   },
   "devDependencies": {
     "@types/jest": "^29.5.13",
