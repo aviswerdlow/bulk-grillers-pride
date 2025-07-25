@@ -1,5 +1,5 @@
 // Mock for @radix-ui/react-dropdown-menu
-const React = require('react');
+import React from 'react';
 
 const DropdownMenu = ({ children }) => children;
 const DropdownMenuTrigger = ({ children, asChild }) => {
@@ -18,11 +18,11 @@ const DropdownMenuContent = ({ children }) => {
 const DropdownMenuItem = ({ children, onClick, disabled }) => {
   return React.createElement(
     'div',
-    { 
+    {
       role: 'menuitem',
       onClick: disabled ? undefined : onClick,
       'aria-disabled': disabled,
-      style: { cursor: disabled ? 'not-allowed' : 'pointer' }
+      style: { cursor: disabled ? 'not-allowed' : 'pointer' },
     },
     children
   );

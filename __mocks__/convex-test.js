@@ -16,9 +16,64 @@ const dbStorage = new Map();
 const mockDb = {
   query: jest.fn((tableName) => {
     const tableData = dbStorage.get(tableName) || [];
-    return {
+    
+    const chainMethods = {
       ...mockQueryChain,
       collect: jest.fn().mockResolvedValue(tableData),
+      withIndex: jest.fn((indexName, indexPredicate) => {
+        // For index queries, we need to filter based on the index fields
+        let filtered = tableData;
+        
+        if (indexPredicate) {
+          // Create a query builder object that tracks eq() calls
+          const conditions = {};
+          const queryBuilder = {
+            eq: (field, value) => {
+              conditions[field] = value;
+              return queryBuilder;
+            },
+          };
+          
+          // Call the index predicate to collect conditions
+          indexPredicate(queryBuilder);
+          
+          // Filter based on collected conditions
+          filtered = tableData.filter(doc => {
+            return Object.entries(conditions).every(([field, value]) => doc[field] === value);
+          });
+        }
+        
+        return {
+          ...chainMethods,
+          collect: jest.fn().mockResolvedValue(filtered),
+          first: jest.fn().mockResolvedValue(filtered[0] || null),
+          unique: jest.fn().mockResolvedValue(filtered[0] || null),
+          filter: jest.fn((predicate) => {
+            // Apply additional filter on top of index results
+            const filterContext = {
+              eq: (field, value) => {
+                return (doc) => doc[field] === value;
+              },
+              field: (name) => name,
+            };
+            
+            const doubleFiltered = filtered.filter(doc => {
+              try {
+                return predicate(filterContext)(doc);
+              } catch (_e) {
+                return true;
+              }
+            });
+            
+            return {
+              ...chainMethods,
+              collect: jest.fn().mockResolvedValue(doubleFiltered),
+              first: jest.fn().mockResolvedValue(doubleFiltered[0] || null),
+              unique: jest.fn().mockResolvedValue(doubleFiltered[0] || null),
+            };
+          }),
+        };
+      }),
       filter: jest.fn((predicate) => {
         // Create a mock filter context with eq method
         const filterContext = {
@@ -45,7 +100,7 @@ const mockDb = {
         });
         
         return {
-          ...mockQueryChain,
+          ...chainMethods,
           collect: jest.fn().mockResolvedValue(filtered),
           first: jest.fn().mockResolvedValue(filtered[0] || null),
           unique: jest.fn().mockResolvedValue(filtered[0] || null),
@@ -54,8 +109,17 @@ const mockDb = {
       first: jest.fn().mockResolvedValue(tableData[0] || null),
       unique: jest.fn().mockResolvedValue(tableData[0] || null),
     };
+    
+    return chainMethods;
   }),
-  get: jest.fn().mockResolvedValue(null),
+  get: jest.fn((id) => {
+    // Search through all tables for the document with this ID
+    for (const [_tableName, docs] of dbStorage.entries()) {
+      const doc = docs.find(d => d._id === id);
+      if (doc) return Promise.resolve(doc);
+    }
+    return Promise.resolve(null);
+  }),
   insert: jest.fn((tableName, doc) => {
     const id = doc._id || `${tableName}_${Math.random().toString(36).substr(2, 9)}`;
     const newDoc = { ...doc, _id: id, _creationTime: Date.now() };
@@ -79,7 +143,14 @@ const mockDb = {
 };
 
 const mockAuth = {
-  getUserIdentity: jest.fn().mockResolvedValue(null),
+  getUserIdentity: jest.fn().mockResolvedValue({
+    tokenIdentifier: 'test-user|123',
+    subject: 'test-user|123',
+    name: 'Test User',
+    email: 'test@example.com',
+    pictureUrl: 'https://example.com/picture.jpg',
+    emailVerified: true,
+  }),
 };
 
 const mockStorage = {
@@ -189,10 +260,10 @@ module.exports = {
             };
             
             // Store in our mock storage
-            if (!dbStorage.has('organizationMembers')) {
-              dbStorage.set('organizationMembers', []);
+            if (!dbStorage.has('organizationMemberships')) {
+              dbStorage.set('organizationMemberships', []);
             }
-            dbStorage.get('organizationMembers').push(membership);
+            dbStorage.get('organizationMemberships').push(membership);
             
             return Promise.resolve(newOrg);
           }

@@ -9,6 +9,6 @@
       "@bulk-grillers-pride/convex-test-helpers": ["./packages/convex-test-helpers/src"]
     }
   },
-  "include": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx", "types/**/*.d.ts"],
+  "include": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx", "types/**/*.d.ts", "jest-dom.d.ts"],
   "exclude": ["node_modules", ".next", "dist", "coverage", "**/build/**", "**/_generated/**"]
 }

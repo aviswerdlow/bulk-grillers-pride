@@ -1,5 +1,5 @@
 // Mock for @radix-ui/react-tabs
-const Tabs = ({ children, defaultValue, value, onValueChange }) => (
+const Tabs = ({ children, defaultValue, value, _onValueChange }) => (
   <div data-testid="tabs-root" data-value={value || defaultValue}>
     {children}
   </div>
