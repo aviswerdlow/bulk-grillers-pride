@@ -405,8 +405,8 @@ export function estimateCost(
     'openai:o4-mini': { input: 0.00015, output: 0.0006 },  // Maps to GPT-4o mini
     'openai:o1': { input: 0.005, output: 0.015 },  // Maps to GPT-4o
     // Anthropic Claude 4
-    'anthropic:claude-opus-4': { input: 0.02, output: 0.1 },  // Most powerful
-    'anthropic:claude-sonnet-4': { input: 0.01, output: 0.05 },  // High performance
+    'anthropic:claude-3-5-sonnet-20241022': { input: 0.003, output: 0.015 },  // Most powerful current model
+    'anthropic:claude-3-5-haiku-20241022': { input: 0.0008, output: 0.004 },  // Fast and efficient
     // Gemini (for future)
     'gemini:gemini-1.5-flash': { input: 0.000075, output: 0.0003 },
     'gemini:gemini-1.5-pro': { input: 0.0035, output: 0.0105 },

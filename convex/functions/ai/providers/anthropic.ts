@@ -187,27 +187,27 @@ export class AnthropicProvider implements IProvider {
     return [
       {
         provider: 'anthropic',
-        modelId: 'claude-opus-4',
-        displayName: 'Claude Opus 4',
+        modelId: 'claude-3-5-sonnet-20241022',
+        displayName: 'Claude 3.5 Sonnet',
         capabilities: ['text-generation', 'structured-output', 'code-generation', 'vision'],
         contextWindow: 200000,
-        maxOutputTokens: 4096,
-        costPer1kInputTokens: 0.02,
-        costPer1kOutputTokens: 0.1,
+        maxOutputTokens: 8192,
+        costPer1kInputTokens: 0.003,
+        costPer1kOutputTokens: 0.015,
         latencyMs: 1500,
         successRate: 0.99,
         tier: 'premium'
       },
       {
         provider: 'anthropic',
-        modelId: 'claude-sonnet-4',
-        displayName: 'Claude Sonnet 4',
+        modelId: 'claude-3-5-haiku-20241022',
+        displayName: 'Claude 3.5 Haiku',
         capabilities: ['text-generation', 'structured-output', 'code-generation'],
         contextWindow: 200000,
-        maxOutputTokens: 4096,
-        costPer1kInputTokens: 0.01,
-        costPer1kOutputTokens: 0.05,
-        latencyMs: 1000,
+        maxOutputTokens: 8192,
+        costPer1kInputTokens: 0.0008,
+        costPer1kOutputTokens: 0.004,
+        latencyMs: 500,
         successRate: 0.98,
         tier: 'performance'
       },
@@ -234,10 +234,9 @@ export class AnthropicProvider implements IProvider {
 
   private calculateCost(model: string, inputTokens: number, outputTokens: number) {
     const pricing: Record<string, { input: number; output: number }> = {
-      'claude-opus-4': { input: 0.02, output: 0.1 },
-      'claude-sonnet-4': { input: 0.01, output: 0.05 },
-      'claude-3-opus-20240229': { input: 0.015, output: 0.075 },
-      'claude-3-sonnet-20240229': { input: 0.003, output: 0.015 },
+      'claude-3-5-sonnet-20241022': { input: 0.003, output: 0.015 },
+      'claude-3-5-sonnet-20240620': { input: 0.003, output: 0.015 },
+      'claude-3-5-haiku-20241022': { input: 0.0008, output: 0.004 },
       'claude-3-haiku-20240307': { input: 0.00025, output: 0.00125 },
     };
 

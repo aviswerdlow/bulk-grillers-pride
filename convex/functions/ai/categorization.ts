@@ -107,13 +107,17 @@ const isModelAvailable = (provider: AIProvider, model: string): { available: boo
       default: 'gpt-4o-mini'
     },
     anthropic: {
-      models: ['claude-opus-4', 'claude-sonnet-4', 'claude-3-opus-20240229', 'claude-3-sonnet-20240229', 'claude-3-haiku-20240307'],
+      models: ['claude-3-5-sonnet-20241022', 'claude-3-5-sonnet-20240620', 'claude-3-5-haiku-20241022', 'claude-3-haiku-20240307'],
       deprecated: ['claude-2.1', 'claude-2.0', 'claude-instant-1.2'],
       suggestions: {
-        'claude-2': 'claude-3-sonnet-20240229',
+        'claude-2': 'claude-3-5-sonnet-20241022',
         'claude-instant': 'claude-3-haiku-20240307',
+        'claude-opus-4': 'claude-3-5-sonnet-20241022',
+        'claude-sonnet-4': 'claude-3-5-sonnet-20241022',
+        'claude-3-opus-20240229': 'claude-3-5-sonnet-20241022',
+        'claude-3-sonnet-20240229': 'claude-3-5-sonnet-20240620',
       },
-      default: 'claude-sonnet-4'
+      default: 'claude-3-5-sonnet-20241022'
     },
     gemini: {
       models: ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-1.0-pro'],

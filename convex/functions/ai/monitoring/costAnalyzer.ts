@@ -35,13 +35,17 @@ const COST_MODELS = {
     },
   },
   anthropic: {
-    'claude-opus-4': {
-      inputCost: 0.015,
-      outputCost: 0.075,
-    },
-    'claude-sonnet-4': {
+    'claude-3-5-sonnet-20241022': {
       inputCost: 0.003,
       outputCost: 0.015,
+    },
+    'claude-3-5-sonnet-20240620': {
+      inputCost: 0.003,
+      outputCost: 0.015,
+    },
+    'claude-3-5-haiku-20241022': {
+      inputCost: 0.0008,
+      outputCost: 0.004,
     },
     'claude-3-opus-20240229': {
       inputCost: 0.015,
