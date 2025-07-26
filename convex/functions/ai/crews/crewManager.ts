@@ -48,10 +48,10 @@ export const processBatchWithCrewAI = internalAction({
     try {
       // Fetch products and categories
       const products = await Promise.all(
-        productIds.map(id => ctx.runQuery(internal.products.getById, { productId: id }))
+        productIds.map(id => ctx.runQuery(internal.functions.products.products.getById, { productId: id }))
       );
       const categories = await Promise.all(
-        categoryIds.map(id => ctx.runQuery(internal.categories.getById, { categoryId: id }))
+        categoryIds.map(id => ctx.runQuery(internal.functions.categories.queries.getById, { categoryId: id }))
       );
       
       // Filter out any null results
@@ -92,6 +92,7 @@ export const processBatchWithCrewAI = internalAction({
         metrics: result.metrics,
         crewId: result.crewId,
         sessionId: result.sessionId,
+        products: result.products, // Include the actual product results
       };
       
     } catch (error) {

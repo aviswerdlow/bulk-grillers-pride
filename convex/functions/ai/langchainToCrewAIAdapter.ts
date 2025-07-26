@@ -215,6 +215,7 @@ export class LangChainToCrewAIAdapter {
     options?: ProcessingOptions
   ) {
     console.log(`🔄 [ADAPTER] Transforming request to CrewAI format`);
+    console.log(`🔄 [ADAPTER] Categories provided: ${categories.length}`);
     
     // Get organization ID from the first product
     const firstProduct = products[0];
@@ -276,10 +277,30 @@ export class LangChainToCrewAIAdapter {
     products: Doc<'products'>[]
   ): Promise<ConcurrentProcessingResult> {
     console.log(`🚀 [ADAPTER] Executing CrewAI processing`);
+    console.log(`🚀 [ADAPTER] CrewAI request:`, {
+      organizationId: crewRequest.organizationId,
+      productCount: crewRequest.productIds.length,
+      categoryCount: crewRequest.categoryIds.length,
+      options: crewRequest.options
+    });
     
     try {
       // Call the CrewAI internal action
       const result = await ctx.runAction(internal.functions.ai.crews.crewManager.processBatchWithCrewAI, crewRequest);
+      
+      console.log(`✅ [ADAPTER] CrewAI returned result:`, {
+        success: result.success,
+        processedCount: result.processedCount,
+        successCount: result.successCount,
+        failureCount: result.failureCount,
+        hasCrew: !!result.crewId,
+        hasSession: !!result.sessionId
+      });
+      
+      // Handle the case where result might not have the expected structure
+      if (!result.success) {
+        throw new Error(`CrewAI processing failed: ${result.error || 'Unknown error'}`);
+      }
       
       // The result from the action needs to be mapped to ConcurrentProcessingResult
       return {
@@ -355,6 +376,13 @@ export class LangChainToCrewAIAdapter {
     categories: CategoryContext[]
   ): ProductCategorizationResult | ProductCategorizationError {
     try {
+      console.log(`🔄 [ADAPTER] Transforming result for product ${product._id}:`, {
+        hasAnalyzer: !!crewResult.analysisResult,
+        hasMatcher: !!crewResult.matchingResult,
+        hasValidator: !!crewResult.validationResult,
+        hasError: !!crewResult.error
+      });
+      
       const matcherResult = crewResult.matchingResult as MatcherResult;
       const analyzerResult = crewResult.analysisResult as AnalyzerResult;
       const validatorResult = crewResult.validationResult as ValidatorResult;
@@ -365,6 +393,8 @@ export class LangChainToCrewAIAdapter {
         confidence: suggestion.confidence,
         rationale: suggestion.reasoning,
       })) || [];
+      
+      console.log(`📊 [ADAPTER] Found ${suggestions.length} category suggestions for product ${product._id}`);
       
       // Extract new category suggestions
       const newCategorySuggestions = matcherResult?.newCategoryRecommendations?.map(name => ({

@@ -1,5 +1,5 @@
 import { v } from 'convex/values';
-import { mutation, query } from '../../_generated/server';
+import { mutation, query, internalQuery } from '../../_generated/server';
 import { Doc, Id } from '../../_generated/dataModel';
 import { authenticateAndAuthorize, requireRole } from '../../lib/auth';
 
@@ -835,5 +835,13 @@ export const createProductVariant = mutation({
     });
 
     return variantId;
+  },
+});
+
+// Internal query for CrewAI to get a product by ID
+export const getById = internalQuery({
+  args: { productId: v.id('products') },
+  handler: async (ctx, { productId }) => {
+    return await ctx.db.get(productId);
   },
 });

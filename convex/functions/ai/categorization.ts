@@ -879,10 +879,7 @@ export const processCategorizationJob = internalAction({
             console.log(`🚀 [AI-CAT] Making ${systemDecision.system === 'crewai' ? 'CrewAI (via adapter)' : 'LangChain'} API call NOW... (${systemDecision.reason})`);
             const aiCallStart = Date.now();
             
-            // Temporarily disable CrewAI and use direct LangChain until CrewAI is fixed
-            const useDirectLangChain = true; // Force direct LangChain for now
-            
-            const aiResults = (systemDecision.system === 'crewai' && !useDirectLangChain)
+            const aiResults = systemDecision.system === 'crewai'
               ? await langchainToCrewAIAdapter.processBatchWithLangChain(
                   ctx,
                   uncachedProducts,

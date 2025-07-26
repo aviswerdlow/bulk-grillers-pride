@@ -339,38 +339,59 @@ export class ConcurrentProcessor {
   }
 
   private async runAgentLogic(task: Task, agent: Agent): Promise<any> {
-    // This would call the actual LLM-based agent logic
-    // For now, returning placeholder implementation
+    console.log(`🤖 [CREW] Running agent logic for ${agent.role} on product ${task.context.productId}`);
+    
+    // Import agent implementations
+    const { ProductAnalyzerAgent, CategoryMatcherAgent, QualityValidatorAgent } = await import('./agents');
     
     switch (agent.role) {
       case 'analyzer':
+        const analyzer = new ProductAnalyzerAgent();
+        if (agent.llmConfig) {
+          analyzer.llmConfig = agent.llmConfig;
+        }
+        const analysisResult = await analyzer.analyze(
+          this.ctx,
+          task.context.productData,
+          this.config.organizationId
+        );
         return {
           productId: task.context.productId,
-          features: ['feature1', 'feature2'],
-          characteristics: { type: 'example' },
-          keyAttributes: ['attr1'],
-          confidence: 0.9,
+          ...analysisResult,
         };
         
       case 'matcher':
+        const matcher = new CategoryMatcherAgent();
+        if (agent.llmConfig) {
+          matcher.llmConfig = agent.llmConfig;
+        }
+        const matchingResult = await matcher.match(
+          this.ctx,
+          task.context.productData,
+          task.context.categories,
+          task.context.previousResults?.analyzer || {},
+          this.config.organizationId
+        );
         return {
           productId: task.context.productId,
-          suggestedCategories: [
-            {
-              categoryId: task.context.categories[0]?._id,
-              confidence: 0.85,
-              reasoning: 'Best match based on features',
-            },
-          ],
+          ...matchingResult,
         };
         
       case 'validator':
+        const validator = new QualityValidatorAgent();
+        if (agent.llmConfig) {
+          validator.llmConfig = agent.llmConfig;
+        }
+        const validationResult = await validator.validate(
+          this.ctx,
+          task.context.productData,
+          task.context.previousResults?.matcher || {},
+          task.context.previousResults?.analyzer || {},
+          this.config.organizationId
+        );
         return {
           productId: task.context.productId,
-          isValid: true,
-          finalCategory: task.context.categories[0]?._id,
-          confidence: 0.9,
-          qualityScore: 0.95,
+          ...validationResult,
         };
         
       default:

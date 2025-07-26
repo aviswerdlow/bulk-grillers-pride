@@ -1,5 +1,5 @@
 import { v } from 'convex/values';
-import { query } from '../../_generated/server';
+import { query, internalQuery } from '../../_generated/server';
 import { Doc } from '../../_generated/dataModel';
 import { getUserAndVerifyAccess } from './helpers';
 
@@ -104,5 +104,13 @@ export const getCategory = query({
 
     await getUserAndVerifyAccess(ctx, category.organizationId);
     return category;
+  },
+});
+
+// Internal query for CrewAI to get a category by ID
+export const getById = internalQuery({
+  args: { categoryId: v.id('categories') },
+  handler: async (ctx, { categoryId }) => {
+    return await ctx.db.get(categoryId);
   },
 });
