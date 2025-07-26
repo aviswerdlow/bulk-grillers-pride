@@ -42,7 +42,7 @@ export const processCategorizationJobWithDecryption = internalAction({
     try {
       // Get the job
       const job = await ctx.runQuery(
-        internal.ai.categorization.getCategorizationJobInternal,
+        internal.functions.ai.categorization.getCategorizationJobInternal,
         { jobId }
       );
       if (!job) {
@@ -55,7 +55,7 @@ export const processCategorizationJobWithDecryption = internalAction({
       }
       
       // Update job status to running
-      await ctx.runMutation(internal.ai.categorization.updateJobStatusInternal, {
+      await ctx.runMutation(internal.functions.ai.categorization.updateJobStatusInternal, {
         jobId,
         status: 'running',
         startedAt: Date.now(),
@@ -63,7 +63,7 @@ export const processCategorizationJobWithDecryption = internalAction({
       
       // Get organization with encrypted keys
       const organization = await ctx.runQuery(
-        internal.ai.categorization.getOrganizationWithKeys,
+        internal.functions.ai.categorization.getOrganizationWithKeys,
         { organizationId: job.organizationId }
       );
       
@@ -94,7 +94,7 @@ export const processCategorizationJobWithDecryption = internalAction({
       
       // Now call the original internal action with the decrypted key
       // We'll need to pass the decrypted key through a modified version
-      await ctx.runAction(internal.ai.categorization.processCategorizationJobWithKey, {
+      await ctx.runAction(internal.functions.ai.categorization.processCategorizationJobWithKey, {
         jobId,
         apiKey: decryptedKey,
       });
@@ -103,7 +103,7 @@ export const processCategorizationJobWithDecryption = internalAction({
       console.error(`Error processing job ${jobId}:`, error);
       
       // Update job with error
-      await ctx.runMutation(internal.ai.categorization.updateCategorizationJob, {
+      await ctx.runMutation(internal.functions.ai.categorization.updateCategorizationJob, {
         jobId,
         updates: {
           status: 'failed',
