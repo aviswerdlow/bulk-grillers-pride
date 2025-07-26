@@ -576,10 +576,9 @@ export const createCategorizationJob = mutation({
     if (!apiKey) {
       throw new Error(`No API key configured for ${args.aiProvider}. Please add your API key in organization settings.`);
     }
-    const keyValidation = validateApiKey(apiKey, args.aiProvider as AIProvider);
-    if (!keyValidation.valid) {
-      throw new Error(keyValidation.error);
-    }
+    
+    // Skip API key format validation here since it's encrypted
+    // The decrypted key will be validated during job processing
 
     // Validate model availability
     const modelCheck = isModelAvailable(args.aiProvider as AIProvider, args.aiModel);
