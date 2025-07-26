@@ -617,6 +617,11 @@ export const createCategorizationJob = mutation({
       path: cat.path,
       description: cat.description,
     }));
+    
+    console.log(`[AI-CAT] Found ${categories.length} active categories for organization ${args.organizationId}, project ${args.projectId}`);
+    if (categories.length === 0) {
+      console.warn(`[AI-CAT] WARNING: No active categories found! AI will only suggest new categories.`);
+    }
 
     const now = Date.now();
     const jobId = await ctx.db.insert('aiCategorizationJobs', {
@@ -874,7 +879,10 @@ export const processCategorizationJob = internalAction({
             console.log(`🚀 [AI-CAT] Making ${systemDecision.system === 'crewai' ? 'CrewAI (via adapter)' : 'LangChain'} API call NOW... (${systemDecision.reason})`);
             const aiCallStart = Date.now();
             
-            const aiResults = systemDecision.system === 'crewai' 
+            // Temporarily disable CrewAI and use direct LangChain until CrewAI is fixed
+            const useDirectLangChain = true; // Force direct LangChain for now
+            
+            const aiResults = (systemDecision.system === 'crewai' && !useDirectLangChain)
               ? await langchainToCrewAIAdapter.processBatchWithLangChain(
                   ctx,
                   uncachedProducts,
@@ -1226,6 +1234,9 @@ export const processCategorizationJobWithKey = internalAction({
             });
 
             // Call the AI service with the decrypted API key
+            console.log(`[AI-CAT] Calling processWithProvider for product: ${product.title}`);
+            console.log(`[AI-CAT] Category context has ${job.categoryContext?.length || 0} categories`);
+            
             const result = await processWithProvider({
               provider: job.aiProvider as AIProvider,
               model: job.aiModel,
@@ -1235,6 +1246,7 @@ export const processCategorizationJobWithKey = internalAction({
               prompt: job.prompt,
             });
 
+            console.log(`[AI-CAT] AI result for ${product.title}:`, JSON.stringify(result, null, 2));
             results.push(result);
             
             if (result.status === 'success' && result.suggestions.length > 0) {
@@ -1249,6 +1261,8 @@ export const processCategorizationJobWithKey = internalAction({
                 timestamp: Date.now(),
               });
               console.error(`❌ [AI-CAT] Product ${product.title} categorization failed: ${result.error}`);
+            } else if (result.status === 'success' && result.suggestions.length === 0) {
+              console.warn(`⚠️ [AI-CAT] Product ${product.title} got success status but no suggestions!`);
             }
             
             processedCount++;

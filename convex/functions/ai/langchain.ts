@@ -327,7 +327,9 @@ export async function processBatchWithLangChain(
       
       const apiDuration = Date.now() - apiStart;
       console.log(`✅ [LANGCHAIN] API call completed in ${apiDuration}ms`);
-      console.log(`📊 [LANGCHAIN] Raw result:`, JSON.stringify(result).substring(0, 200) + '...');
+      console.log(`📊 [LANGCHAIN] Raw result:`, JSON.stringify(result, null, 2));
+      console.log(`📊 [LANGCHAIN] Result type:`, typeof result);
+      console.log(`📊 [LANGCHAIN] Is array:`, Array.isArray(result));
 
       // Validate results match input products
       const productIds = new Set(products.map((p) => p._id));
