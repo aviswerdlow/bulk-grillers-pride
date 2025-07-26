@@ -20,8 +20,6 @@ import { providerRegistry } from './registry';
 import { OpenAIProvider } from './openai';
 import { AnthropicProvider } from './anthropic';
 import { GeminiProvider } from './gemini';
-import { EventEmitter } from 'events';
-
 interface RetryOptions {
   maxRetries: number;
   retryDelay: number;
@@ -29,7 +27,10 @@ interface RetryOptions {
   maxRetryDelay: number;
 }
 
-export class MultiProviderManager extends EventEmitter {
+type EventListener = (event: any) => void;
+
+export class MultiProviderManager {
+  private eventListeners: EventListener[] = [];
   private providers: Map<ProviderName, IProvider> = new Map();
   private budgetConfig: BudgetConfig | null = null;
   private usage: {
@@ -49,10 +50,30 @@ export class MultiProviderManager extends EventEmitter {
   };
 
   constructor() {
-    super();
     this.lastResetDaily = new Date();
     this.lastResetMonthly = new Date();
     this.startUsageResetTimer();
+  }
+  
+  private emitEvent(event: string, data: any): void {
+    this.eventListeners.forEach(listener => {
+      try {
+        listener({ type: event, ...data });
+      } catch (error) {
+        console.error('Error in event listener:', error);
+      }
+    });
+  }
+  
+  public addEventListener(listener: EventListener): void {
+    this.eventListeners.push(listener);
+  }
+  
+  public removeEventListener(listener: EventListener): void {
+    const index = this.eventListeners.indexOf(listener);
+    if (index > -1) {
+      this.eventListeners.splice(index, 1);
+    }
   }
 
   /**
@@ -153,7 +174,7 @@ export class MultiProviderManager extends EventEmitter {
         );
 
         // Emit success event
-        this.emit('request_success', {
+        this.emitEvent('request_success', {
           provider: model.provider,
           model: model.modelId,
           latencyMs: response.latencyMs,
@@ -177,7 +198,7 @@ export class MultiProviderManager extends EventEmitter {
         );
 
         // Emit failure event
-        this.emit('request_failure', {
+        this.emitEvent('request_failure', {
           provider: model.provider,
           model: model.modelId,
           error: error.message
@@ -357,7 +378,7 @@ export class MultiProviderManager extends EventEmitter {
         this.budgetConfig.monthlyLimit ? (status.monthlySpent / this.budgetConfig.monthlyLimit) * 100 : 0
       );
       
-      this.emit('budget_warning', {
+      this.emitEvent('budget_warning', {
         spent: Math.max(status.dailySpent, status.monthlySpent),
         limit: this.budgetConfig.dailyLimit || this.budgetConfig.monthlyLimit || 0,
         percentage

@@ -1,7 +1,7 @@
 import { v } from 'convex/values';
-import { query } from '../_generated/server';
-import { authenticateAndAuthorize } from '../lib/auth';
-import { Id } from '../_generated/dataModel';
+import { query } from '../../_generated/server';
+import { authenticateAndAuthorize } from '../../lib/auth';
+import { Id } from '../../_generated/dataModel';
 
 // Helper function for consistent logging
 const log = (level: 'info' | 'warn' | 'error', component: string, message: string, data?: any) => {

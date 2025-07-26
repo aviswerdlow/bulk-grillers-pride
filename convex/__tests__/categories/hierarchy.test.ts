@@ -1,16 +1,13 @@
 import { t } from '../../test.setup';
 import { describe, it, expect, beforeEach } from '@jest/globals';
 import {
-  createConvexTest,
-  createQueryContext,
-  createMutationContext,
-  createActionContext,
-  setupAuth,
-  seedDatabase,
-  assertDocumentExists,
-  assertDocumentNotExists,
-  type ConvexTestContext,
-  convexTest
+  createQueryContextLegacy,
+  createMutationContextLegacy,
+  createActionContextLegacy,
+  setupAuthLegacy,
+  seedDatabaseLegacy,
+  clearDatabaseLegacy,
+  getTableDataLegacy
 } from '../convex-test-standard';
 import {
   createMockUser,

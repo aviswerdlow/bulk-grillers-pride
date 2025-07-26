@@ -1,6 +1,6 @@
 import React from 'react';
 import { fireEvent } from '@testing-library/react';
-import { resetAllMocks, renderWithProviders, mockUseQuery, mockUseMutation, screen, waitFor, createMockUser } from '@/__tests__/test-helpers';
+import { resetAllMocks, renderWithProviders, mockUseQuery, mockUseMutation, screen, waitFor, createMockUser, createMockMutation } from '@/__tests__/test-helpers';
 import { UserProfile } from '@/components/auth/user-profile';
 import { toast } from 'sonner';
 import { useUser } from '@clerk/nextjs';
@@ -49,8 +49,10 @@ describe('UserProfile', () => {
     // Mock Convex queries
     mockUseQuery.mockReturnValue(mockCurrentUser);
 
-    // Mock updateProfile mutation
-    mockUseMutation.mockImplementation(() => mockUpdateProfile);
+    // Mock updateProfile mutation with withOptimisticUpdate
+    const mockMutation = createMockMutation();
+    mockMutation.mockImplementation(mockUpdateProfile);
+    mockUseMutation.mockReturnValue(mockMutation);
   });
 
   it('renders user profile information', () => {

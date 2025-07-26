@@ -1,4 +1,4 @@
-import { internal } from "@convex/_generated/api";
+import { internal } from "../../_generated/api";
 /**
  * Cache service implementation for Convex
  * 

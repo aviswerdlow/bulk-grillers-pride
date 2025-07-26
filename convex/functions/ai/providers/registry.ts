@@ -15,8 +15,6 @@ import {
   ProviderEvent,
   CostCalculator
 } from './types';
-import { EventEmitter } from 'events';
-
 interface ModelScore {
   model: ModelConfig;
   score: number;
@@ -28,7 +26,10 @@ interface ModelScore {
   };
 }
 
-export class ProviderRegistry extends EventEmitter {
+type EventListener = (event: ProviderEvent) => void;
+
+export class ProviderRegistry {
+  private eventListeners: EventListener[] = [];
   private providers: Map<ProviderName, IProvider> = new Map();
   private models: Map<string, ModelConfig> = new Map();
   private metrics: Map<string, ProviderMetrics> = new Map();
@@ -148,9 +149,29 @@ export class ProviderRegistry extends EventEmitter {
   ];
 
   constructor() {
-    super();
     this.initializeModels();
     this.startHealthChecking();
+  }
+  
+  private emitEvent(event: ProviderEvent): void {
+    this.eventListeners.forEach(listener => {
+      try {
+        listener(event);
+      } catch (error) {
+        console.error('Error in event listener:', error);
+      }
+    });
+  }
+  
+  public addEventListener(listener: EventListener): void {
+    this.eventListeners.push(listener);
+  }
+  
+  public removeEventListener(listener: EventListener): void {
+    const index = this.eventListeners.indexOf(listener);
+    if (index > -1) {
+      this.eventListeners.splice(index, 1);
+    }
   }
 
   private initializeModels(): void {
@@ -178,13 +199,13 @@ export class ProviderRegistry extends EventEmitter {
         // Emit events on status change
         if (previousStatus !== status) {
           if (status === 'degraded') {
-            this.emit('provider_event', {
+            this.emitEvent({
               type: 'provider_degraded',
               provider: name,
               reason: 'Health check detected degraded performance'
             });
           } else if (status === 'available' && previousStatus !== 'available') {
-            this.emit('provider_event', {
+            this.emitEvent({
               type: 'provider_recovered',
               provider: name
             });

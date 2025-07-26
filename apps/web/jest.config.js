@@ -8,6 +8,9 @@ module.exports = {
   ...webProjectConfig,
   rootDir: '../..',
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js', '<rootDir>/apps/web/jest-setup.ts'],
+  // Memory management settings
+  maxWorkers: 1, // Run tests sequentially to reduce memory usage
+  workerIdleMemoryLimit: '512MB', // Limit memory per worker
   // Override paths to be relative to this file
   testMatch: ['<rootDir>/apps/web/**/__tests__/**/*.(test|spec).(ts|tsx|js|jsx)'],
   coverageDirectory: '<rootDir>/apps/web/coverage',
@@ -25,12 +28,18 @@ module.exports = {
   transformIgnorePatterns: ['node_modules/(?!(convex|@radix-ui|cmdk)/)', '!convex/_generated/'],
   // Transform JS files from convex
   transform: {
-    ...webProjectConfig.transform,
+    '^.+\\.(ts|tsx)$': [
+      'ts-jest',
+      {
+        tsconfig: '<rootDir>/apps/web/tsconfig.test.json',
+      },
+    ],
     '^.+\\.(js|jsx)$': [
       'ts-jest',
       {
         tsconfig: {
-          jsx: 'react',
+          jsx: 'react-jsx',
+          jsxImportSource: 'react',
           allowJs: true,
           esModuleInterop: true,
         },
