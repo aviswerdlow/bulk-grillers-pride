@@ -1,16 +1,17 @@
 import { t } from '../../test.setup';
 import { describe, it, expect, beforeEach } from '@jest/globals';
 import {
-  createConvexTest,
+  createQueryContextLegacy,
   createQueryContextLegacy,
   createMutationContextLegacy,
   createActionContextLegacy,
   setupAuthLegacy,
   seedDatabaseLegacy,
-  assertDocumentExists,
-  assertDocumentNotExists,
-  type ConvexTestContext,
-  convexTest
+  
+  
+  
+  clearDatabaseLegacy,
+  getTableDataLegacy
 } from '../convex-test-standard';
 import {
   createMockUser,
@@ -19,7 +20,7 @@ import {
   createMockProject,
   createMockProduct,
   createMockCategory,
-} from '../../test-helpers';
+} from '../test-helpers';
 import { getProjectCategories, getCategoryTree, getCategory } from '../../functions/categories/queries';
 
 describe('queries', () => {

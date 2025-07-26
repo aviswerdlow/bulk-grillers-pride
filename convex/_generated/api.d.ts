@@ -16,6 +16,7 @@ import type {
 import type * as __tests___convex_test_standard from "../__tests__/convex-test-standard.js";
 import type * as __tests___helpers_deletion from "../__tests__/helpers/deletion.js";
 import type * as __tests___test_helpers from "../__tests__/test-helpers.js";
+import type * as __tests___update_tests_to_legacy from "../__tests__/update-tests-to-legacy.js";
 import type * as crons from "../crons.js";
 import type * as encryptApiKeysMigration from "../encryptApiKeysMigration.js";
 import type * as functions_accessibility_deletionSessions from "../functions/accessibility/deletionSessions.js";
@@ -92,6 +93,7 @@ import type * as functions_imports_handlers_queries from "../functions/imports/h
 import type * as functions_imports_imports from "../functions/imports/imports.js";
 import type * as functions_imports_index from "../functions/imports/index.js";
 import type * as functions_imports_productImport from "../functions/imports/productImport.js";
+import type * as functions_lib_encryption from "../functions/lib/encryption.js";
 import type * as functions_migrations_addProductSKUs from "../functions/migrations/addProductSKUs.js";
 import type * as functions_migrations_cleanupStuckJobs from "../functions/migrations/cleanupStuckJobs.js";
 import type * as functions_migrations_encryptApiKeys from "../functions/migrations/encryptApiKeys.js";
@@ -121,7 +123,6 @@ import type * as functions_projects_handlers_queries from "../functions/projects
 import type * as functions_projects_projects from "../functions/projects/projects.js";
 import type * as lib_auth from "../lib/auth.js";
 import type * as lib_distributedLock from "../lib/distributedLock.js";
-import type * as lib_encryption from "../lib/encryption.js";
 import type * as lib_organizationUtils from "../lib/organizationUtils.js";
 import type * as lib_rateLimit from "../lib/rateLimit.js";
 import type * as lib_slugValidation from "../lib/slugValidation.js";
@@ -136,13 +137,6 @@ import type * as migrations_schema_additions_001 from "../migrations/schema_addi
 import type * as migrations_testSchema from "../migrations/testSchema.js";
 import type * as migrations_validateMigration001 from "../migrations/validateMigration001.js";
 import type * as schema_crewai from "../schema/crewai.js";
-import type * as scripts_final_test_fix from "../scripts/final-test-fix.js";
-import type * as scripts_fix_remaining_tests from "../scripts/fix-remaining-tests.js";
-import type * as scripts_fix_test_syntax_comprehensive from "../scripts/fix-test-syntax-comprehensive.js";
-import type * as scripts_fix_test_syntax_errors from "../scripts/fix-test-syntax-errors.js";
-import type * as scripts_fix_test_syntax from "../scripts/fix-test-syntax.js";
-import type * as scripts_skip_all_backend_tests from "../scripts/skip-all-backend-tests.js";
-import type * as scripts_skip_failing_tests from "../scripts/skip-failing-tests.js";
 import type * as simpleMigration from "../simpleMigration.js";
 import type * as test_helpers from "../test-helpers.js";
 import type * as testFunction from "../testFunction.js";
@@ -164,6 +158,7 @@ declare const fullApi: ApiFromModules<{
   "__tests__/convex-test-standard": typeof __tests___convex_test_standard;
   "__tests__/helpers/deletion": typeof __tests___helpers_deletion;
   "__tests__/test-helpers": typeof __tests___test_helpers;
+  "__tests__/update-tests-to-legacy": typeof __tests___update_tests_to_legacy;
   crons: typeof crons;
   encryptApiKeysMigration: typeof encryptApiKeysMigration;
   "functions/accessibility/deletionSessions": typeof functions_accessibility_deletionSessions;
@@ -240,6 +235,7 @@ declare const fullApi: ApiFromModules<{
   "functions/imports/imports": typeof functions_imports_imports;
   "functions/imports/index": typeof functions_imports_index;
   "functions/imports/productImport": typeof functions_imports_productImport;
+  "functions/lib/encryption": typeof functions_lib_encryption;
   "functions/migrations/addProductSKUs": typeof functions_migrations_addProductSKUs;
   "functions/migrations/cleanupStuckJobs": typeof functions_migrations_cleanupStuckJobs;
   "functions/migrations/encryptApiKeys": typeof functions_migrations_encryptApiKeys;
@@ -269,7 +265,6 @@ declare const fullApi: ApiFromModules<{
   "functions/projects/projects": typeof functions_projects_projects;
   "lib/auth": typeof lib_auth;
   "lib/distributedLock": typeof lib_distributedLock;
-  "lib/encryption": typeof lib_encryption;
   "lib/organizationUtils": typeof lib_organizationUtils;
   "lib/rateLimit": typeof lib_rateLimit;
   "lib/slugValidation": typeof lib_slugValidation;
@@ -284,13 +279,6 @@ declare const fullApi: ApiFromModules<{
   "migrations/testSchema": typeof migrations_testSchema;
   "migrations/validateMigration001": typeof migrations_validateMigration001;
   "schema/crewai": typeof schema_crewai;
-  "scripts/final-test-fix": typeof scripts_final_test_fix;
-  "scripts/fix-remaining-tests": typeof scripts_fix_remaining_tests;
-  "scripts/fix-test-syntax-comprehensive": typeof scripts_fix_test_syntax_comprehensive;
-  "scripts/fix-test-syntax-errors": typeof scripts_fix_test_syntax_errors;
-  "scripts/fix-test-syntax": typeof scripts_fix_test_syntax;
-  "scripts/skip-all-backend-tests": typeof scripts_skip_all_backend_tests;
-  "scripts/skip-failing-tests": typeof scripts_skip_failing_tests;
   simpleMigration: typeof simpleMigration;
   "test-helpers": typeof test_helpers;
   testFunction: typeof testFunction;

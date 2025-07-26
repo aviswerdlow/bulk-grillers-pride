@@ -19,7 +19,7 @@ import {
   createMockProject,
   createMockProduct,
   createMockCategory,
-} from '../../test-helpers';
+} from '../test-helpers';
 import { createCategoryLevelDefinitions, importCategory, bulkImportCategories } from '../../functions/categories/imports';
 
 describe('imports', () => {

@@ -1,4 +1,3 @@
-import { internal } from "@convex/_generated/api";
 /**
  * Memory Manager for CrewAI Agents
  * 
@@ -6,9 +5,9 @@ import { internal } from "@convex/_generated/api";
  * concurrency control, and automatic cleanup.
  */
 
-import { api, internal } from "../../../_generated/api";
-import { Id } from "../../../_generated/dataModel";
-import { ActionCtx, MutationCtx, QueryCtx } from "../../../_generated/server";
+import { api, internal } from "../../../../_generated/api";
+import { Id } from "../../../../_generated/dataModel";
+import { ActionCtx, MutationCtx, QueryCtx } from "../../../../_generated/server";
 import { ConvexError } from "convex/values";
 
 export type MemoryType = 'shortTerm' | 'longTerm' | 'episodic' | 'semantic' | 'working';

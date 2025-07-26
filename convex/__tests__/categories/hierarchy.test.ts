@@ -19,7 +19,7 @@ import {
   createMockProject,
   createMockProduct,
   createMockCategory,
-} from '../../test-helpers';
+} from '../test-helpers';
 import { moveCategory } from '../../functions/categories/hierarchy';
 
 describe('hierarchy', () => {
