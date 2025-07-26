@@ -18,7 +18,7 @@ export const Popover = ({ children, open, onOpenChange }: PopoverProps) => {
     <div data-testid="popover" data-open={isOpen}>
       {React.Children.map(children, (child) => {
         if (React.isValidElement(child)) {
-          return React.cloneElement(child, { isOpen, setIsOpen, onOpenChange });
+          return React.cloneElement(child as React.ReactElement<any>, { isOpen, setIsOpen, onOpenChange });
         }
         return child;
       })}
@@ -45,15 +45,22 @@ export const PopoverTrigger = React.forwardRef<
   if (asChild && React.isValidElement(children)) {
     // Clone the child element and add the trigger props
     const childProps = (children as React.ReactElement).props || {};
-    return React.cloneElement(children as React.ReactElement, {
+    const spreadableChildProps = typeof childProps === 'object' && childProps !== null ? childProps : {};
+    const mergedProps = {
       ...props,
-      ...childProps,
-      ref,
+      ...spreadableChildProps,
       onClick: handleClick,
       'aria-expanded': isOpen,
       'aria-haspopup': 'true',
       'data-testid': 'popover-trigger',
-    });
+    };
+    
+    // Handle ref separately to avoid TypeScript errors
+    if (ref) {
+      (mergedProps as any).ref = ref;
+    }
+    
+    return React.cloneElement(children as React.ReactElement, mergedProps);
   }
 
   return (

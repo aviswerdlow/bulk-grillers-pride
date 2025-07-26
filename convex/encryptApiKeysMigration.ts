@@ -35,10 +35,12 @@ export const run = mutation({
               // Encrypt the key
               try {
                 const encryptedKey = encryptApiKey(key);
-                updatedApiKeys[provider] = encryptedKey;
-                needsUpdate = true;
-                encryptedCount++;
-                console.log(`Organization ${org._id}: ${provider} key encrypted successfully`);
+                if (encryptedKey) {
+                  updatedApiKeys[provider] = encryptedKey;
+                  needsUpdate = true;
+                  encryptedCount++;
+                  console.log(`Organization ${org._id}: ${provider} key encrypted successfully`);
+                }
               } catch (error) {
                 errorCount++;
                 console.error(`Failed to encrypt ${provider} key for organization ${org._id}:`, error);
