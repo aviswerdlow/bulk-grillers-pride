@@ -53,6 +53,7 @@ import { ProductCardSkeleton } from '@/components/products/product-card-skeleton
 import { Loading } from '@/components/loading';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Product } from '@/types/models';
+import { Doc } from '@convex/_generated/dataModel';
 
 export default function ProductsPage() {
   const params = useParams();
@@ -65,35 +66,45 @@ export default function ProductsPage() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [currentCursor, setCurrentCursor] = useState<string | undefined>(undefined);
+  const [pageHistory, setPageHistory] = useState<string[]>([]);
 
   // Get organization
-  const organization = useQuery((api as any).functions.organizations.organizations.getOrganizationBySlug, {
+  const organization = useQuery(api.functions.organizations.organizations.getOrganizationBySlug, {
     slug: orgSlug,
   });
 
   // Get projects for this organization
   const projects = useQuery(
-    (api as any).functions.projects.projects.getOrganizationProjects,
+    api.functions.projects.projects.getOrganizationProjects,
     organization ? { organizationId: organization._id } : 'skip'
   );
 
   // Use first project for now (TODO: add project selection)
   const currentProject = projects?.[0];
 
-  // Get products for the current project
+  // Get dashboard stats for total counts
+  const dashboardStats = useQuery(
+    api.functions.dashboard.dashboard.getDashboardStats,
+    organization ? { organizationId: organization._id } : 'skip'
+  );
+
+  // Get products for the current project with pagination
   const productsResult = useQuery(
-    (api as any).functions.products.products.getProjectProducts,
+    api.functions.products.products.getProjectProducts,
     currentProject
       ? {
-          organizationId: organization!._id,
+          organizationId: organization._id,
           projectId: currentProject._id,
           status:
             statusFilter === 'all' ? undefined : (statusFilter as 'active' | 'draft' | 'archived'),
+          limit: 50,
+          cursor: currentCursor,
         }
       : 'skip'
   );
 
-  if (organization === undefined || projects === undefined) {
+  if (organization === undefined || projects === undefined || dashboardStats === undefined) {
     return <Loading size="lg" text="Loading products..." />;
   }
 
@@ -117,8 +128,32 @@ export default function ProductsPage() {
     );
   }
 
-  const products = (productsResult?.page as Product[]) || [];
+  const products = productsResult?.page || [];
   const isLoading = productsResult === undefined;
+  const hasNextPage = productsResult?.continueCursor !== null;
+  const hasPreviousPage = pageHistory.length > 0;
+
+  // Pagination handlers
+  const goToNextPage = () => {
+    if (productsResult?.continueCursor) {
+      setPageHistory([...pageHistory, currentCursor || '']);
+      setCurrentCursor(productsResult.continueCursor);
+    }
+  };
+
+  const goToPreviousPage = () => {
+    if (pageHistory.length > 0) {
+      const newHistory = [...pageHistory];
+      const previousCursor = newHistory.pop();
+      setPageHistory(newHistory);
+      setCurrentCursor(previousCursor || undefined);
+    }
+  };
+
+  const goToFirstPage = () => {
+    setCurrentCursor(undefined);
+    setPageHistory([]);
+  };
 
   // Filter products based on search term
   const filteredProducts = products.filter(
@@ -145,7 +180,9 @@ export default function ProductsPage() {
 
   const handleDeleteProduct = async (productIds: string[], permanentDelete: boolean) => {
     // TODO: Implement actual delete mutation when backend is ready
-    console.log('Deleting product:', productIds, 'Permanent:', permanentDelete);
+    // For now, just acknowledge the parameters
+    void productIds;
+    void permanentDelete;
     
     // Close dialog and clear state
     setShowDeleteDialog(false);
@@ -184,7 +221,7 @@ export default function ProductsPage() {
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{products.length}</div>
+            <div className="text-2xl font-bold">{dashboardStats?.productsCount || 0}</div>
           </CardContent>
         </Card>
         <Card>
@@ -196,7 +233,7 @@ export default function ProductsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {products.filter((p) => p.status === 'active').length}
+              {dashboardStats?.productsByStatus?.active || 0}
             </div>
           </CardContent>
         </Card>
@@ -209,7 +246,7 @@ export default function ProductsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {products.filter((p) => p.status === 'draft').length}
+              {dashboardStats?.productsByStatus?.draft || 0}
             </div>
           </CardContent>
         </Card>
@@ -220,7 +257,7 @@ export default function ProductsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {new Set(products.flatMap((p) => p.categories)).size}
+              {dashboardStats?.uncategorizedProducts || 0}
             </div>
           </CardContent>
         </Card>
@@ -235,11 +272,21 @@ export default function ProductsPage() {
               <Input
                 placeholder="Search by name, handle, SKU..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  // Reset pagination when searching
+                  setCurrentCursor(undefined);
+                  setPageHistory([]);
+                }}
                 className="pl-10"
               />
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <Select value={statusFilter} onValueChange={(value) => {
+              setStatusFilter(value);
+              // Reset pagination when changing filter
+              setCurrentCursor(undefined);
+              setPageHistory([]);
+            }}>
               <SelectTrigger className="w-[180px]">
                 <Filter className="h-4 w-4 mr-2" />
                 <SelectValue />
@@ -304,9 +351,12 @@ export default function ProductsPage() {
               {filteredProducts.map((product: Doc<'products'>) => (
                 <ProductCard
                   key={product._id}
-                  product={product as any}
+                  product={product}
                   onEdit={() => setEditingProduct(product as Product)}
-                  onView={() => console.log('View product:', product._id)}
+                  onView={() => {
+                    // TODO: Implement view product functionality
+                    void product._id;
+                  }}
                   onArchive={() => {
                     setProductToDelete(product as Product);
                     setShowDeleteDialog(true);
@@ -414,6 +464,49 @@ export default function ProductsPage() {
             </Table>
           )}
         </CardContent>
+        
+        {/* Pagination Controls */}
+        {(dashboardStats?.productsCount || 0) > 50 && (
+          <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-4 border-t gap-4">
+            <div className="text-sm text-muted-foreground order-2 sm:order-1">
+              Showing {Math.min(products.length, 50)} of {dashboardStats?.productsCount || 0} products
+            </div>
+            
+            <div className="flex items-center gap-2 order-1 sm:order-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={goToFirstPage}
+                disabled={!hasPreviousPage}
+                className="hidden sm:flex"
+              >
+                First
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={goToPreviousPage}
+                disabled={!hasPreviousPage}
+              >
+                <span className="hidden sm:inline">Previous</span>
+                <span className="sm:hidden">Prev</span>
+              </Button>
+              
+              <div className="px-3 py-1 text-sm font-medium bg-muted rounded-md">
+                Page {pageHistory.length + 1} of {Math.ceil((dashboardStats?.productsCount || 0) / 50)}
+              </div>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={goToNextPage}
+                disabled={!hasNextPage}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+        )}
       </Card>
 
       {/* Dialogs */}
