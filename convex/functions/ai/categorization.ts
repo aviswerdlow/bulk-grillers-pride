@@ -18,6 +18,39 @@ import {
   estimateCost,
   AIProvider,
 } from './langchain';
+
+// Helper to process single product with provider
+async function processWithProvider(params: {
+  provider: AIProvider;
+  model: string;
+  apiKey: string;
+  product: Doc<'products'>;
+  categoryContext: CategoryContext[];
+  prompt: string;
+}) {
+  // Process single product as a batch of one
+  const results = await processBatchWithLangChain(
+    [params.product],
+    params.categoryContext,
+    params.prompt,
+    params.provider,
+    params.apiKey,
+    params.model,
+    {
+      maxRetries: 3,
+      temperature: 0.3,
+      streaming: false,
+    }
+  );
+  
+  return results[0] || {
+    productId: params.product._id,
+    suggestions: [],
+    newCategorySuggestions: [],
+    status: 'error' as const,
+    error: 'No result returned from AI',
+  };
+}
 import { langchainToCrewAIAdapter } from './langchainToCrewAIAdapter';
 import { determineSystem, recordABTestMetrics } from './monitoring/abTestingController';
 
@@ -535,14 +568,14 @@ export const createCategorizationJob = mutation({
     const organization = await ctx.db.get(args.organizationId);
     if (!organization) throw new Error('Organization not found');
 
-    // Validate AI provider and model
+    // Validate AI provider has an API key configured
     const aiSettings = organization.settings;
-    if (args.aiProvider !== aiSettings.aiProvider) {
-      throw new Error('AI provider does not match organization settings');
-    }
-
-    // Validate API key exists and has proper format
+    
+    // Check if the requested provider has an API key
     const apiKey = aiSettings.apiKeys[args.aiProvider as keyof typeof aiSettings.apiKeys];
+    if (!apiKey) {
+      throw new Error(`No API key configured for ${args.aiProvider}. Please add your API key in organization settings.`);
+    }
     const keyValidation = validateApiKey(apiKey, args.aiProvider as AIProvider);
     if (!keyValidation.valid) {
       throw new Error(keyValidation.error);
@@ -641,8 +674,8 @@ export const createCategorizationJob = mutation({
       isRollbackable: false,
     });
 
-    // Schedule the job for processing
-    await ctx.scheduler.runAfter(0, internal.ai.categorization.processCategorizationJob, {
+    // Schedule the job for processing (using action that handles API key decryption)
+    await ctx.scheduler.runAfter(0, internal.actions.aiCategorization.processCategorizationJobWithDecryption, {
       jobId,
     });
 
@@ -1092,6 +1125,184 @@ export const processCategorizationJob = internalAction({
         completedAt: Date.now(),
         error: error instanceof Error ? error.message : 'Unknown error',
       });
+    }
+  },
+});
+
+// Process categorization job with decrypted API key
+export const processCategorizationJobWithKey = internalAction({
+  args: { 
+    jobId: v.id('aiCategorizationJobs'),
+    apiKey: v.string(),
+  },
+  handler: async (ctx, { jobId, apiKey }) => {
+    // This is a modified version of processCategorizationJob that accepts a decrypted API key
+    // The rest of the logic remains the same but we skip the API key retrieval and decryption
+    
+    console.log(`🚀 [AI-CAT] ========== STARTING AI CATEGORIZATION JOB ${jobId} ==========`);
+    const startTime = Date.now();
+
+    try {
+      // Get the job
+      const job = await ctx.runQuery(
+        internal.ai.categorization.getCategorizationJobInternal,
+        { jobId }
+      );
+      if (!job) {
+        throw new Error('Job not found');
+      }
+
+      console.log(`✅ [AI-CAT] Job found: status=${job.status}, products=${job.productIds.length}, provider=${job.aiProvider}, model=${job.aiModel}`);
+
+      if (job.status !== 'running') {
+        console.log(`⚠️ [AI-CAT] Job ${jobId} is not running (status: ${job.status}), skipping processing`);
+        return;
+      }
+
+      // Validate the decrypted API key
+      const keyValidation = validateApiKey(apiKey, job.aiProvider as AIProvider);
+      if (!keyValidation.valid) {
+        throw new Error(keyValidation.error);
+      }
+
+      console.log(`✅ [AI-CAT] API key validated for provider: ${job.aiProvider}`);
+
+      // Process in batches
+      const batchSize = job.batchSize || 10;
+      const totalBatches = Math.ceil(job.productIds.length / batchSize);
+      
+      console.log(`📦 [AI-CAT] Processing ${job.productIds.length} products in ${totalBatches} batches of ${batchSize}`);
+
+      // Get current progress
+      let processedCount = job.progress.processed;
+      let successCount = job.progress.successful;
+      let failedCount = job.progress.failed;
+      let results = [...job.results];
+      let errors = [...job.errors];
+
+      // Process each batch
+      for (let batchIndex = job.currentBatch || 0; batchIndex < totalBatches; batchIndex++) {
+        const start = batchIndex * batchSize;
+        const end = Math.min(start + batchSize, job.productIds.length);
+        const batchProductIds = job.productIds.slice(start, end);
+
+        console.log(`🔄 [AI-CAT] Processing batch ${batchIndex + 1}/${totalBatches} (products ${start + 1}-${end})`);
+
+        // Update current batch
+        await ctx.runMutation(internal.ai.categorization.updateRealtimeProgress, {
+          jobId,
+          currentBatch: batchIndex,
+        });
+
+        // Get products for this batch
+        const products = await ctx.runQuery(internal.ai.categorization.getProductsByIds, {
+          productIds: batchProductIds,
+        });
+
+        // Process each product in the batch
+        for (const product of products) {
+          try {
+            console.log(`📦 [AI-CAT] Processing product: ${product.title} (${product._id})`);
+
+            // Update last processed product
+            await ctx.runMutation(internal.ai.categorization.updateRealtimeProgress, {
+              jobId,
+              lastProcessedProduct: {
+                productId: product._id,
+                title: product.title,
+                timestamp: Date.now(),
+              },
+            });
+
+            // Call the AI service with the decrypted API key
+            const result = await processWithProvider({
+              provider: job.aiProvider as AIProvider,
+              model: job.aiModel,
+              apiKey: apiKey, // Use the decrypted key
+              product,
+              categoryContext: job.categoryContext,
+              prompt: job.prompt,
+            });
+
+            results.push(result);
+            
+            if (result.status === 'success' && result.suggestions.length > 0) {
+              successCount++;
+              console.log(`✅ [AI-CAT] Product ${product.title} categorized successfully with ${result.suggestions.length} suggestions`);
+            } else if (result.status === 'error') {
+              failedCount++;
+              errors.push({
+                type: 'CATEGORIZATION_ERROR',
+                message: result.error || 'Unknown error',
+                productId: product._id,
+                timestamp: Date.now(),
+              });
+              console.error(`❌ [AI-CAT] Product ${product.title} categorization failed: ${result.error}`);
+            }
+            
+            processedCount++;
+
+            // Update progress after each product
+            await ctx.runMutation(internal.ai.categorization.updateJobProgressInternal, {
+              jobId,
+              progress: {
+                total: job.productIds.length,
+                processed: processedCount,
+                successful: successCount,
+                failed: failedCount,
+                skipped: 0,
+              },
+              results: [result],
+            });
+
+          } catch (error) {
+            console.error(`❌ [AI-CAT] Error processing product ${product._id}:`, error);
+            failedCount++;
+            processedCount++;
+            
+            errors.push({
+              type: 'PROCESSING_ERROR',
+              message: error instanceof Error ? error.message : 'Unknown error',
+              productId: product._id,
+              timestamp: Date.now(),
+            });
+
+            // Continue with next product
+          }
+        }
+      }
+
+      // Complete the job
+      const executionTime = Date.now() - startTime;
+      console.log(`🎉 [AI-CAT] Job ${jobId} completed in ${executionTime}ms`);
+      console.log(`📊 [AI-CAT] Final stats: ${successCount} successful, ${failedCount} failed, ${processedCount} total`);
+
+      await ctx.runMutation(internal.ai.categorization.completeJobInternal, {
+        jobId,
+        status: failedCount === 0 ? 'completed' : 'completed',
+        completedAt: Date.now(),
+        executionTime,
+      });
+
+    } catch (error) {
+      console.error(`❌ [AI-CAT] Fatal error in job ${jobId}:`, error);
+      
+      await ctx.runMutation(internal.ai.categorization.updateCategorizationJob, {
+        jobId,
+        updates: {
+          status: 'failed',
+          errors: [{
+            type: 'FATAL_ERROR',
+            message: error instanceof Error ? error.message : 'Unknown error',
+            productId: undefined,
+            timestamp: Date.now(),
+          }],
+          completedAt: Date.now(),
+          executionTime: Date.now() - startTime,
+        },
+      });
+      
+      throw error;
     }
   },
 });

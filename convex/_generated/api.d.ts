@@ -13,6 +13,7 @@ import type {
   FilterApi,
   FunctionReference,
 } from "convex/server";
+import type * as actions_aiCategorization from "../actions/aiCategorization.js";
 import type * as actions_apiKeys from "../actions/apiKeys.js";
 import type * as actions_encryption from "../actions/encryption.js";
 import type * as crons from "../crons.js";
@@ -150,6 +151,7 @@ import type * as types_deletion from "../types/deletion.js";
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  "actions/aiCategorization": typeof actions_aiCategorization;
   "actions/apiKeys": typeof actions_apiKeys;
   "actions/encryption": typeof actions_encryption;
   crons: typeof crons;
