@@ -1,5 +1,4 @@
 // Mock for @radix-ui/react-label
-// eslint-disable-next-line @typescript-eslint/no-require-imports
 const React = require('react');
 
 // Label component that forwards ref and renders a label element

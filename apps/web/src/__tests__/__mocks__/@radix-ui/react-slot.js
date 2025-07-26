@@ -1,5 +1,4 @@
 // Mock for @radix-ui/react-slot
-// eslint-disable-next-line @typescript-eslint/no-require-imports
 const React = require('react');
 
 // Slot component that merges props and renders children

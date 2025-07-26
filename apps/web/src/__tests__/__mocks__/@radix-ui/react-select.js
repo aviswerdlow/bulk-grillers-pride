@@ -1,5 +1,4 @@
 // Mock for @radix-ui/react-select
-// eslint-disable-next-line @typescript-eslint/no-require-imports
 const React = require('react');
 
 // Select Context

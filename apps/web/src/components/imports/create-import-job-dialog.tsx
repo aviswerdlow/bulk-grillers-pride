@@ -30,7 +30,6 @@ import { Upload, FileText, Package, FolderTree, Tag } from 'lucide-react';
 import { BaseDialogProps } from '@/types/ui';
 
 // Import job form schema
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const createImportJobSchema = z.object({
   importType: z.enum(['products', 'categories', 'variants']),
   duplicateHandling: z.enum(['skip', 'update', 'create']),

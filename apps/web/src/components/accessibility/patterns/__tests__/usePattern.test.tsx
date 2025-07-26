@@ -3,6 +3,7 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import { cleanupTest, mockUseQuery, mockUseMutation, renderWithProviders, setupTest, renderHookWithProviders } from '@/__tests__/test-helpers';
 import { usePattern, usePatterns } from '../usePattern';
 import { AccessibilityProvider, usePatternTheme } from '@/contexts/accessibility';
+import * as accessibilityModule from '@/contexts/accessibility';
 
 describe('usePattern', () => {
   beforeEach(() => {
@@ -48,7 +49,7 @@ describe('usePattern', () => {
 
   it('returns high contrast config when enabled', () => {
     // Mock high contrast mode
-    jest.spyOn(require('@/contexts/accessibility'), 'usePatternTheme').mockReturnValue({ highContrast: true, reducedMotion: false });
+    jest.spyOn(accessibilityModule, 'usePatternTheme').mockReturnValue({ highContrast: true, reducedMotion: false });
 
     const { result } = renderHookWithProviders(() => usePattern('info'));
 
@@ -88,7 +89,7 @@ describe('usePatterns', () => {
   });
 
   it('updates when high contrast changes', () => {
-    const mockUsePatternTheme = jest.spyOn(require('@/contexts/accessibility'), 'usePatternTheme');
+    const mockUsePatternTheme = jest.spyOn(accessibilityModule, 'usePatternTheme');
     mockUsePatternTheme.mockReturnValue({ highContrast: false, reducedMotion: false });
 
     const severities = ['info'] as const;
