@@ -3,49 +3,53 @@ import { internal } from './_generated/api';
 
 const crons = cronJobs();
 
-// Schedule daily cleanup of expired trash items at midnight UTC
-crons.daily(
-  'cleanupExpiredTrash',
-  { hourUTC: 0, minuteUTC: 0 },
-  internal.functions.products.deletion.cleanupExpiredTrash
-);
+// TODO: Fix cron job path resolution issues before enabling
+// The functions exist but the path resolution is not working properly in production
 
-// Schedule cleanup of expired deletion sessions every 5 minutes
-crons.interval(
-  'cleanupExpiredDeletionSessions',
-  { minutes: 5 },
-  internal.functions.accessibility.deletionSessions.cleanupExpiredSessions
-);
+// // Schedule daily cleanup of expired trash items at midnight UTC
+// crons.daily(
+//   'cleanupExpiredTrash',
+//   { hourUTC: 0, minuteUTC: 0 },
+//   internal.products.deletion.cleanupExpiredTrash
+// );
 
-// Schedule image cleanup from queue every 5 minutes
-crons.interval(
-  'processImageCleanupQueue',
-  { minutes: 5 },
-  internal.migrations.imageCleanupCron.processImageCleanupQueue,
-  { batchSize: 100 } // Process up to 100 images per run
-);
+// // Schedule cleanup of expired deletion sessions every 5 minutes
+// crons.interval(
+//   'cleanupExpiredDeletionSessions',
+//   { minutes: 5 },
+//   internal.accessibility.deletionSessions.cleanupExpiredSessions
+// );
 
-// Schedule daily maintenance of image cleanup queue at 3 AM UTC
-crons.daily(
-  'imageCleanupQueueMaintenance',
-  { hourUTC: 3, minuteUTC: 0 },
-  internal.migrations.imageCleanupCron.cleanupQueueHistory,
-  { daysToKeep: 30 }
-);
+// // Schedule image cleanup from queue every 5 minutes
+// crons.interval(
+//   'processImageCleanupQueue',
+//   { minutes: 5 },
+//   internal.migrations.imageCleanupCron.processImageCleanupQueue,
+//   { batchSize: 100 } // Process up to 100 images per run
+// );
 
-// Schedule hourly consistency validation for cascade deletion system
-crons.hourly(
-  'cascadeDeletionConsistencyCheck',
-  { minuteUTC: 0 },
-  internal.migrations.consistencyValidator.runConsistencyValidation,
-  { fix: true } // Automatically fix safe issues
-);
+// // Schedule daily maintenance of image cleanup queue at 3 AM UTC
+// crons.daily(
+//   'imageCleanupQueueMaintenance',
+//   { hourUTC: 3, minuteUTC: 0 },
+//   internal.migrations.imageCleanupCron.cleanupQueueHistory,
+//   { daysToKeep: 30 }
+// );
 
-// Schedule daily comprehensive consistency report at 2 AM UTC
-crons.daily(
-  'cascadeDeletionConsistencyReport',
-  { hourUTC: 2, minuteUTC: 0 },
-  internal.migrations.consistencyValidator.generateConsistencyReport
-);
+// // Schedule hourly consistency validation for cascade deletion system
+// crons.hourly(
+//   'cascadeDeletionConsistencyCheck',
+//   { minuteUTC: 0 },
+//   internal.migrations.consistencyValidator.runConsistencyValidation,
+//   { fix: true } // Automatically fix safe issues
+// );
+
+// // Schedule daily comprehensive consistency report at 2 AM UTC
+// // TODO: Convert generateConsistencyReport to a mutation or action before enabling
+// // crons.daily(
+// //   'cascadeDeletionConsistencyReport',
+// //   { hourUTC: 2, minuteUTC: 0 },
+// //   internal.migrations.consistencyValidator.generateConsistencyReport
+// // );
 
 export default crons;

@@ -432,7 +432,7 @@ describe('Category API Contracts', () => {
     it('should validate category tree response shape', () => {
       const mockTree = {
         category: categoryFactory.create(),
-        children: [] as Category[],
+        children: [] as z.infer<typeof categorySchema>[],
         productCount: 10,
       };
       expectResponseShape(mockTree, categoryTreeSchema);

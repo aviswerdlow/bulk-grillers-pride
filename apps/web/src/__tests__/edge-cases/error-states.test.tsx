@@ -1,7 +1,7 @@
 import React from 'react';
 
 import userEvent from '@testing-library/user-event';
-import { cleanupTest, createMockProduct, mockUseMutation, mockUseQuery, render, screen, setupTest, waitFor, renderWithProviders } from '@/__tests__/test-helpers';
+import { cleanupTest, createMockProduct, createMockMutation, mockUseMutation, mockUseQuery, render, screen, setupTest, waitFor, renderWithProviders } from '@/__tests__/test-helpers';
 import { CategorySelector } from '@/components/categories/category-selector';
 import { CreateCategoryDialog } from '@/components/categories/create-category-dialog';
 import { CreateProductDialog } from '@/components/products/create-product-dialog';
@@ -52,7 +52,9 @@ describe('Error States and Edge Cases', () => {
         )
       );
       
-      mockUseMutation.mockReturnValue(mockCreateProduct);
+      const mockCreateProductMutation = createMockMutation();
+      mockCreateProductMutation.mockImplementation(mockCreateProduct);
+      mockUseMutation.mockReturnValue(mockCreateProductMutation);
       
       renderWithProviders(<CreateProductDialog
           open={true}
@@ -82,7 +84,7 @@ describe('Error States and Edge Cases', () => {
         message: 'Too many requests. Please try again later.',
       });
       
-      mockUseMutation.mockReturnValue(mockUpdateProduct);
+      mockUseMutation.mockReturnValue(() => mockUpdateProduct);
       
       const product = createMockProduct();
       
@@ -162,7 +164,9 @@ describe('Error States and Edge Cases', () => {
     it('sanitizes HTML in user input', async () => {
       const user = userEvent.setup();
       const mockCreateProduct = jest.fn();
-      mockUseMutation.mockReturnValue(mockCreateProduct);
+      const mockCreateProductMutation = createMockMutation();
+      mockCreateProductMutation.mockImplementation(mockCreateProduct);
+      mockUseMutation.mockReturnValue(mockCreateProductMutation);
       
       renderWithProviders(<CreateProductDialog
           open={true}
@@ -212,7 +216,9 @@ describe('Error States and Edge Cases', () => {
         .mockResolvedValueOnce({ _id: 'prod_1' })
         .mockRejectedValueOnce({ code: 'DUPLICATE_HANDLE' });
       
-      mockUseMutation.mockReturnValue(mockCreateProduct);
+      const mockCreateProductMutation = createMockMutation();
+      mockCreateProductMutation.mockImplementation(mockCreateProduct);
+      mockUseMutation.mockReturnValue(mockCreateProductMutation);
       
       const { rerender } = renderWithProviders(<CreateProductDialog
           open={true}
@@ -257,7 +263,9 @@ describe('Error States and Edge Cases', () => {
         () => new Promise(resolve => setTimeout(resolve, 1000))
       );
       
-      mockUseMutation.mockReturnValue(mockCreateProduct);
+      const mockCreateProductMutation = createMockMutation();
+      mockCreateProductMutation.mockImplementation(mockCreateProduct);
+      mockUseMutation.mockReturnValue(mockCreateProductMutation);
       
       renderWithProviders(<CreateProductDialog
           open={true}

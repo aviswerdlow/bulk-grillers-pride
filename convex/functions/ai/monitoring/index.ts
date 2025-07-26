@@ -12,36 +12,6 @@ export * from './alertManager';
 export * from './optimizationEngine';
 export * from './costAnalyzer';
 
-// Re-export key functions for easy access
-export {
-  // Metrics Collection
-  collectCrewAIMetrics,
-  aggregateMetrics,
-  getDashboardData,
-  
-  // Alerts
-  getActiveAlerts,
-  acknowledgeAlert,
-  resolveAlert,
-  processAlertPatterns,
-  
-  // Optimization
-  analyzePerformance,
-  getOptimizationRecommendations,
-  implementOptimization,
-  runABTest,
-  trackOptimizationResults,
-  
-  // Cost Analysis
-  getCostAnalysis,
-  getJobCostBreakdown,
-  getCostProjections,
-  trackJobCost,
-  
-  // Utilities
-  MetricsCollector,
-  withMetricsCollection,
-} from './index';
 
 /**
  * Monitoring System Overview

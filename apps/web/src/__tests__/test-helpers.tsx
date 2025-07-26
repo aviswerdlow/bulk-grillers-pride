@@ -32,7 +32,7 @@ mockUseQuery.mockImplementation((query: any) => {
 });
 // Create a mock mutation that includes withOptimisticUpdate
 export const createMockMutation = () => {
-  const mockFn = jest.fn();
+  const mockFn = jest.fn() as any;
   mockFn.withOptimisticUpdate = jest.fn().mockReturnValue(mockFn);
   return mockFn;
 };

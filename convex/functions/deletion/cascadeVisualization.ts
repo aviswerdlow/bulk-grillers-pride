@@ -276,7 +276,13 @@ export const getCascadeStatistics = query({
     
     analyzeNode(result.cascadeTree);
     
-    const maxDepth = await ctx.runQuery(internal.functions.deletion.cascadeVisualization.getCascadeTreeDepth, args);
+    // Calculate maxDepth directly instead of using internal query
+    let maxDepth = 0;
+    function calculateDepth(node: CascadeNode, depth: number = 0): void {
+      maxDepth = Math.max(maxDepth, depth);
+      node.children.forEach(child => calculateDepth(child, depth + 1));
+    }
+    calculateDepth(result.cascadeTree);
     
     return {
       totalNodes,

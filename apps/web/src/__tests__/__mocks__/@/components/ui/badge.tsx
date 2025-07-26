@@ -27,11 +27,17 @@ const Slot = React.forwardRef<HTMLElement, React.HTMLAttributes<HTMLElement>>(
   ({ children, ...props }, ref) => {
     if (React.isValidElement(children)) {
       const childProps = (children.props as React.HTMLAttributes<HTMLElement>) || {};
-      return React.cloneElement(children, {
+      const mergedProps = {
         ...props,
         ...childProps,
-        ref,
-      } as React.ReactElement);
+      };
+      
+      // Handle ref separately to avoid TypeScript errors
+      if (ref) {
+        (mergedProps as any).ref = ref;
+      }
+      
+      return React.cloneElement(children as React.ReactElement, mergedProps);
     }
     return null;
   }

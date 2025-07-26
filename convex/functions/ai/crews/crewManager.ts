@@ -1,4 +1,3 @@
-import { internal } from "../../_generated/api";
 /**
  * CrewAI Manager
  * 
@@ -167,7 +166,7 @@ export const estimateCrewProcessingCost = action({
 
 // Helper functions
 
-function createCrewConfig(
+export function createCrewConfig(
   organizationId: Id<'organizations'>,
   options: any
 ): CrewConfig {
