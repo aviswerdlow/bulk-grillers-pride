@@ -290,8 +290,8 @@ function getCostPer1KTokens(provider: string, model: string): number {
       'gpt-3.5-turbo': 0.0015,
     },
     anthropic: {
-      'claude-3-5-sonnet-20241022': 0.009,
-      'claude-3-5-haiku-20241022': 0.0024,
+      'claude-opus-4-20250514': 0.045,
+      'claude-sonnet-4-20250514': 0.009,
       'claude-3-opus-20240229': 0.0225,
       'claude-3-sonnet-20240229': 0.009,
       'claude-3-haiku-20240307': 0.00075,

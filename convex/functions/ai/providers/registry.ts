@@ -81,13 +81,13 @@ export class ProviderRegistry {
     // Anthropic Models
     {
       provider: 'anthropic',
-      modelId: 'claude-3-5-sonnet-20241022',
-      displayName: 'Claude 3.5 Sonnet',
+      modelId: 'claude-opus-4-20250514',
+      displayName: 'Claude Opus 4',
       capabilities: ['text-generation', 'structured-output', 'code-generation', 'vision'],
       contextWindow: 200000,
-      maxOutputTokens: 8192,
-      costPer1kInputTokens: 0.003,
-      costPer1kOutputTokens: 0.015,
+      maxOutputTokens: 4096,
+      costPer1kInputTokens: 0.015,
+      costPer1kOutputTokens: 0.075,
       latencyMs: 1500,
       successRate: 0.99,
       tier: 'premium'
