@@ -7,14 +7,14 @@ const crons = cronJobs();
 crons.daily(
   'cleanupExpiredTrash',
   { hourUTC: 0, minuteUTC: 0 },
-  internal.functions.products.deletion.cleanupExpiredTrash
+  internal.products.deletion.cleanupExpiredTrash
 );
 
 // Schedule cleanup of expired deletion sessions every 5 minutes
 crons.interval(
   'cleanupExpiredDeletionSessions',
   { minutes: 5 },
-  internal.functions.accessibility.deletionSessions.cleanupExpiredSessions
+  internal.accessibility.deletionSessions.cleanupExpiredSessions
 );
 
 // Schedule image cleanup from queue every 5 minutes

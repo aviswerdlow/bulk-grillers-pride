@@ -9,6 +9,7 @@ import { v } from 'convex/values';
 import { 
   internalAction,
   internalMutation,
+  internalQuery,
   query,
   mutation
 } from '../../../_generated/server';

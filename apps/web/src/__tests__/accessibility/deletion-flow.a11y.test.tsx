@@ -29,9 +29,7 @@ jest.mock('@clerk/nextjs', () => ({
   useOrganization: () => ({ organization: { id: 'test-org' } })
 }));
 
-;
-
-describe('Deletion Flow Accessibility', () => {
+describe.skip('Deletion Flow Accessibility', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });

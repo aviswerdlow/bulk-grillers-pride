@@ -13,9 +13,7 @@ import type {
   FilterApi,
   FunctionReference,
 } from "convex/server";
-import type * as __tests___convex_test_standard from "../__tests__/convex-test-standard.js";
-import type * as __tests___helpers_deletion from "../__tests__/helpers/deletion.js";
-import type * as __tests___test_helpers from "../__tests__/test-helpers.js";
+import type * as actions_encryption from "../actions/encryption.js";
 import type * as crons from "../crons.js";
 import type * as encryptApiKeysMigration from "../encryptApiKeysMigration.js";
 import type * as functions_accessibility_deletionSessions from "../functions/accessibility/deletionSessions.js";
@@ -111,8 +109,8 @@ import type * as functions_organizations_handlers_mutations from "../functions/o
 import type * as functions_organizations_handlers_queries from "../functions/organizations/handlers/queries.js";
 import type * as functions_organizations_organizations from "../functions/organizations/organizations.js";
 import type * as functions_organizations_rateLimitStatus from "../functions/organizations/rateLimitStatus.js";
-import type * as functions_products_deletion_monitored from "../functions/products/deletion-monitored.js";
 import type * as functions_products_deletion from "../functions/products/deletion.js";
+import type * as functions_products_deletion_monitored from "../functions/products/deletion_monitored.js";
 import type * as functions_products_handlers_mutations from "../functions/products/handlers/mutations.js";
 import type * as functions_products_handlers_queries from "../functions/products/handlers/queries.js";
 import type * as functions_products_products from "../functions/products/products.js";
@@ -136,18 +134,8 @@ import type * as migrations_schema_additions_001 from "../migrations/schema_addi
 import type * as migrations_testSchema from "../migrations/testSchema.js";
 import type * as migrations_validateMigration001 from "../migrations/validateMigration001.js";
 import type * as schema_crewai from "../schema/crewai.js";
-import type * as scripts_final_test_fix from "../scripts/final-test-fix.js";
-import type * as scripts_fix_remaining_tests from "../scripts/fix-remaining-tests.js";
-import type * as scripts_fix_test_syntax_comprehensive from "../scripts/fix-test-syntax-comprehensive.js";
-import type * as scripts_fix_test_syntax_errors from "../scripts/fix-test-syntax-errors.js";
-import type * as scripts_fix_test_syntax from "../scripts/fix-test-syntax.js";
-import type * as scripts_skip_all_backend_tests from "../scripts/skip-all-backend-tests.js";
-import type * as scripts_skip_failing_tests from "../scripts/skip-failing-tests.js";
 import type * as simpleMigration from "../simpleMigration.js";
-import type * as test_helpers from "../test-helpers.js";
 import type * as testFunction from "../testFunction.js";
-import type * as tests_helpers_convexTestCtx from "../tests/helpers/convexTestCtx.js";
-import type * as tests_helpers_mockAuth from "../tests/helpers/mockAuth.js";
 import type * as types_accessibility from "../types/accessibility.js";
 import type * as types_cascadeCalculation from "../types/cascadeCalculation.js";
 import type * as types_deletion from "../types/deletion.js";
@@ -161,9 +149,7 @@ import type * as types_deletion from "../types/deletion.js";
  * ```
  */
 declare const fullApi: ApiFromModules<{
-  "__tests__/convex-test-standard": typeof __tests___convex_test_standard;
-  "__tests__/helpers/deletion": typeof __tests___helpers_deletion;
-  "__tests__/test-helpers": typeof __tests___test_helpers;
+  "actions/encryption": typeof actions_encryption;
   crons: typeof crons;
   encryptApiKeysMigration: typeof encryptApiKeysMigration;
   "functions/accessibility/deletionSessions": typeof functions_accessibility_deletionSessions;
@@ -259,8 +245,8 @@ declare const fullApi: ApiFromModules<{
   "functions/organizations/handlers/queries": typeof functions_organizations_handlers_queries;
   "functions/organizations/organizations": typeof functions_organizations_organizations;
   "functions/organizations/rateLimitStatus": typeof functions_organizations_rateLimitStatus;
-  "functions/products/deletion-monitored": typeof functions_products_deletion_monitored;
   "functions/products/deletion": typeof functions_products_deletion;
+  "functions/products/deletion_monitored": typeof functions_products_deletion_monitored;
   "functions/products/handlers/mutations": typeof functions_products_handlers_mutations;
   "functions/products/handlers/queries": typeof functions_products_handlers_queries;
   "functions/products/products": typeof functions_products_products;
@@ -284,18 +270,8 @@ declare const fullApi: ApiFromModules<{
   "migrations/testSchema": typeof migrations_testSchema;
   "migrations/validateMigration001": typeof migrations_validateMigration001;
   "schema/crewai": typeof schema_crewai;
-  "scripts/final-test-fix": typeof scripts_final_test_fix;
-  "scripts/fix-remaining-tests": typeof scripts_fix_remaining_tests;
-  "scripts/fix-test-syntax-comprehensive": typeof scripts_fix_test_syntax_comprehensive;
-  "scripts/fix-test-syntax-errors": typeof scripts_fix_test_syntax_errors;
-  "scripts/fix-test-syntax": typeof scripts_fix_test_syntax;
-  "scripts/skip-all-backend-tests": typeof scripts_skip_all_backend_tests;
-  "scripts/skip-failing-tests": typeof scripts_skip_failing_tests;
   simpleMigration: typeof simpleMigration;
-  "test-helpers": typeof test_helpers;
   testFunction: typeof testFunction;
-  "tests/helpers/convexTestCtx": typeof tests_helpers_convexTestCtx;
-  "tests/helpers/mockAuth": typeof tests_helpers_mockAuth;
   "types/accessibility": typeof types_accessibility;
   "types/cascadeCalculation": typeof types_cascadeCalculation;
   "types/deletion": typeof types_deletion;

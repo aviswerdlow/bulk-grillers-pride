@@ -1,14 +1,26 @@
 # Ignore test files
 __tests__/
+**/tests/
+**/test/
 *.test.ts
 *.test.js
 test-utils/
+test-helpers.*
+test_helpers.*
+test.setup.ts
+testFunction.ts
+testSchema.ts
 setup/
 *.spec.ts
 *.spec.js
+*-test-*.ts
+*-test-*.js
+convex-test-standard.*
+tsconfig.test.json
 
 # Ignore scripts
 scripts/
+*.sh
 
 # Ignore other development files
 *.md

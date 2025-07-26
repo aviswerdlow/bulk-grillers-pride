@@ -10,6 +10,7 @@ import {
   mutation, 
   query, 
   internalMutation,
+  internalQuery,
   internalAction,
   DatabaseWriter
 } from '../../../_generated/server';

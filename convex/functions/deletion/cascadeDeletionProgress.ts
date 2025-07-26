@@ -40,8 +40,8 @@ export const trackDeletionProgress = internalMutation({
       await ctx.db.patch(transaction._id, {
         metrics: {
           ...transaction.metrics,
-          averageOperationTime: args.progress.performanceMetrics.averageOperationTime,
-          operationsPerSecond: args.progress.performanceMetrics.operationsPerSecond,
+          totalDuration: Date.now() - transaction.startedAt,
+          operationCount: args.progress.completedOperations,
         },
       });
     }
@@ -172,10 +172,15 @@ export const getActiveDeleteOperations = query({
     const enrichedTransactions = await Promise.all(
       activeTransactions.map(async (transaction) => {
         const user = await ctx.db.get(transaction.executedBy);
-        const progress = transaction.progress || {
-          phase: 'pending',
-          currentOperation: 'Waiting to start',
-          completedOperations: 0,
+        // Calculate progress from operations
+        const completedOps = transaction.operations.filter(op => op.status === 'completed').length;
+        const currentOp = transaction.operations.find(op => op.status === 'pending');
+        
+        const progress = {
+          phase: transaction.status === 'completed' ? 'completed' : 
+                 transaction.status === 'in_progress' ? 'in_progress' : 'pending',
+          currentOperation: currentOp?.operation || 'Waiting to start',
+          completedOperations: completedOps,
           totalOperations: transaction.operations.length,
           estimatedTimeRemaining: 0,
         };
