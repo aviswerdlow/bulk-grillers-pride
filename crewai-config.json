@@ -1,0 +1,31 @@
+{
+  "testName": "crewai_migration",
+  "enabled": true,
+  "trafficPercentage": {
+    "crewAI": 100,
+    "langchain": 0
+  },
+  "rolloutSchedule": [],
+  "componentFlags": {
+    "productAnalyzer": true,
+    "categoryMatcher": true,
+    "qualityValidator": true,
+    "memorySystem": true,
+    "caching": true,
+    "monitoring": true
+  },
+  "userTargeting": {
+    "enabled": false,
+    "targetedOrganizations": [],
+    "excludedOrganizations": [],
+    "betaUsers": []
+  },
+  "performanceThresholds": {
+    "maxResponseTime": 10000,
+    "minAccuracy": 70,
+    "maxErrorRate": 5,
+    "maxCostIncrease": 50
+  },
+  "createdAt": 1735511000000,
+  "updatedAt": 1735511000000
+}
