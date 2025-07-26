@@ -708,7 +708,7 @@ export const processCategorizationJob = internalAction({
       console.log(`📋 [AI-CAT] Step 1: Fetching job details for ${jobId}`);
       // Get the job using internal API
       const job = await ctx.runQuery(
-        internal.ai.categorization.getCategorizationJobInternal,
+        internal.functions.ai.categorization.getCategorizationJobInternal,
         { jobId }
       );
       if (!job) {
@@ -726,7 +726,7 @@ export const processCategorizationJob = internalAction({
 
       console.log(`📋 [AI-CAT] Step 2: Updating job status to running`);
       // Update job status to running
-      await ctx.runMutation(internal.ai.categorization.updateJobStatusInternal, {
+      await ctx.runMutation(internal.functions.ai.categorization.updateJobStatusInternal, {
         jobId,
         status: 'running',
         startedAt: Date.now(),
@@ -737,7 +737,7 @@ export const processCategorizationJob = internalAction({
       console.log(`📋 [AI-CAT] Step 3: Fetching organization and API keys`);
       // Get organization with API keys
       const organization = await ctx.runQuery(
-        internal.ai.categorization.getOrganizationWithKeys,
+        internal.functions.ai.categorization.getOrganizationWithKeys,
         {
           organizationId: job.organizationId,
         }
@@ -767,7 +767,7 @@ export const processCategorizationJob = internalAction({
         };
         
         // Update job with error
-        await ctx.runMutation(internal.ai.categorization.updateCategorizationJob, {
+        await ctx.runMutation(internal.functions.ai.categorization.updateCategorizationJob, {
           jobId,
           updates: {
             status: 'failed',
@@ -788,7 +788,7 @@ export const processCategorizationJob = internalAction({
       }
 
       // Get products to categorize
-      const products = await ctx.runQuery(internal.ai.categorization.getProductsByIds, {
+      const products = await ctx.runQuery(internal.functions.ai.categorization.getProductsByIds, {
         productIds: job.productIds,
       });
 
@@ -814,7 +814,7 @@ export const processCategorizationJob = internalAction({
         const batchNumber = Math.floor(i / batchSize) + 1;
 
         // Update current batch in real-time
-        await ctx.runMutation(internal.ai.categorization.updateRealtimeProgress, {
+        await ctx.runMutation(internal.functions.ai.categorization.updateRealtimeProgress, {
           jobId,
           currentBatch: batchNumber,
         });
@@ -860,7 +860,7 @@ export const processCategorizationJob = internalAction({
             console.log(`🔢 [AI-CAT] Category context: ${job.categoryContext?.length || 0} categories provided`);
             
             // Add AI thought about batch processing
-            await ctx.runMutation(internal.ai.categorization.addAIThought, {
+            await ctx.runMutation(internal.functions.ai.categorization.addAIThought, {
               jobId,
               thought: `Processing batch ${batchNumber} with ${uncachedProducts.length} products using ${job.aiModel}`,
             });
@@ -908,7 +908,7 @@ export const processCategorizationJob = internalAction({
             console.log(`📊 [AI-CAT] Results: ${aiResults.length} items processed`);
 
             // Add AI thought about results
-            await ctx.runMutation(internal.ai.categorization.addAIThought, {
+            await ctx.runMutation(internal.functions.ai.categorization.addAIThought, {
               jobId,
               thought: `Analyzed ${aiResults.length} products in ${aiCallDuration}ms. Found ${aiResults.filter(r => r.status === 'success').length} successful categorizations.`,
               confidence: aiResults.filter(r => r.status === 'success').length / aiResults.length,
@@ -961,7 +961,7 @@ export const processCategorizationJob = internalAction({
                   categorizationCache.set(cacheKey, result);
                   
                   // Update last processed product
-                  await ctx.runMutation(internal.ai.categorization.updateRealtimeProgress, {
+                  await ctx.runMutation(internal.functions.ai.categorization.updateRealtimeProgress, {
                     jobId,
                     lastProcessedProduct: {
                       productId: product._id,
@@ -974,7 +974,7 @@ export const processCategorizationJob = internalAction({
                   if (result.suggestions && result.suggestions.length > 0) {
                     const topSuggestion = result.suggestions[0];
                     if (topSuggestion) {
-                      await ctx.runMutation(internal.ai.categorization.addAIThought, {
+                      await ctx.runMutation(internal.functions.ai.categorization.addAIThought, {
                         jobId,
                         thought: `Categorized "${product.title}" with ${result.suggestions.length} suggestions. Top match: confidence ${topSuggestion.confidence.toFixed(2)}`,
                         productId: product._id,
@@ -1000,7 +1000,7 @@ export const processCategorizationJob = internalAction({
           allResults.push(...batchResults);
 
           // Update progress
-          await ctx.runMutation(internal.ai.categorization.updateJobProgressInternal, {
+          await ctx.runMutation(internal.functions.ai.categorization.updateJobProgressInternal, {
             jobId,
             progress: {
               total: products.length,
@@ -1074,7 +1074,7 @@ export const processCategorizationJob = internalAction({
             timestamp: Date.now(),
           };
 
-          await ctx.runMutation(internal.ai.categorization.updateCategorizationJob, {
+          await ctx.runMutation(internal.functions.ai.categorization.updateCategorizationJob, {
             jobId,
             updates: {
               errors: [errorDetails],
@@ -1082,14 +1082,14 @@ export const processCategorizationJob = internalAction({
           });
           
           // Add AI thought about the error
-          await ctx.runMutation(internal.ai.categorization.addAIThought, {
+          await ctx.runMutation(internal.functions.ai.categorization.addAIThought, {
             jobId,
             thought: `Error in batch ${batchNumber}: ${errorType} - ${errorMessage}`,
             confidence: 0,
           });
 
           // Update progress with failures
-          await ctx.runMutation(internal.ai.categorization.updateJobProgressInternal, {
+          await ctx.runMutation(internal.functions.ai.categorization.updateJobProgressInternal, {
             jobId,
             progress: {
               total: products.length,
@@ -1113,7 +1113,7 @@ export const processCategorizationJob = internalAction({
 
       // Complete the job
       const executionTime = Date.now() - startTime;
-      await ctx.runMutation(internal.ai.categorization.completeJobInternal, {
+      await ctx.runMutation(internal.functions.ai.categorization.completeJobInternal, {
         jobId,
         status: 'completed',
         completedAt: Date.now(),
@@ -1130,7 +1130,7 @@ export const processCategorizationJob = internalAction({
       console.error(`[AI-CAT] Fatal error processing job ${jobId}:`, error);
 
       // Mark job as failed
-      await ctx.runMutation(internal.ai.categorization.updateJobStatusInternal, {
+      await ctx.runMutation(internal.functions.ai.categorization.updateJobStatusInternal, {
         jobId,
         status: 'failed',
         completedAt: Date.now(),
@@ -1156,7 +1156,7 @@ export const processCategorizationJobWithKey = internalAction({
     try {
       // Get the job
       const job = await ctx.runQuery(
-        internal.ai.categorization.getCategorizationJobInternal,
+        internal.functions.ai.categorization.getCategorizationJobInternal,
         { jobId }
       );
       if (!job) {
@@ -1200,13 +1200,13 @@ export const processCategorizationJobWithKey = internalAction({
         console.log(`🔄 [AI-CAT] Processing batch ${batchIndex + 1}/${totalBatches} (products ${start + 1}-${end})`);
 
         // Update current batch
-        await ctx.runMutation(internal.ai.categorization.updateRealtimeProgress, {
+        await ctx.runMutation(internal.functions.ai.categorization.updateRealtimeProgress, {
           jobId,
           currentBatch: batchIndex,
         });
 
         // Get products for this batch
-        const products = await ctx.runQuery(internal.ai.categorization.getProductsByIds, {
+        const products = await ctx.runQuery(internal.functions.ai.categorization.getProductsByIds, {
           productIds: batchProductIds,
         });
 
@@ -1216,7 +1216,7 @@ export const processCategorizationJobWithKey = internalAction({
             console.log(`📦 [AI-CAT] Processing product: ${product.title} (${product._id})`);
 
             // Update last processed product
-            await ctx.runMutation(internal.ai.categorization.updateRealtimeProgress, {
+            await ctx.runMutation(internal.functions.ai.categorization.updateRealtimeProgress, {
               jobId,
               lastProcessedProduct: {
                 productId: product._id,
@@ -1254,7 +1254,7 @@ export const processCategorizationJobWithKey = internalAction({
             processedCount++;
 
             // Update progress after each product
-            await ctx.runMutation(internal.ai.categorization.updateJobProgressInternal, {
+            await ctx.runMutation(internal.functions.ai.categorization.updateJobProgressInternal, {
               jobId,
               progress: {
                 total: job.productIds.length,
@@ -1288,7 +1288,7 @@ export const processCategorizationJobWithKey = internalAction({
       console.log(`🎉 [AI-CAT] Job ${jobId} completed in ${executionTime}ms`);
       console.log(`📊 [AI-CAT] Final stats: ${successCount} successful, ${failedCount} failed, ${processedCount} total`);
 
-      await ctx.runMutation(internal.ai.categorization.completeJobInternal, {
+      await ctx.runMutation(internal.functions.ai.categorization.completeJobInternal, {
         jobId,
         status: failedCount === 0 ? 'completed' : 'completed',
         completedAt: Date.now(),
@@ -1298,7 +1298,7 @@ export const processCategorizationJobWithKey = internalAction({
     } catch (error) {
       console.error(`❌ [AI-CAT] Fatal error in job ${jobId}:`, error);
       
-      await ctx.runMutation(internal.ai.categorization.updateCategorizationJob, {
+      await ctx.runMutation(internal.functions.ai.categorization.updateCategorizationJob, {
         jobId,
         updates: {
           status: 'failed',
@@ -1785,7 +1785,7 @@ export const exportJobResults = action({
     const { jobId, format } = args;
 
     // Get job details using the query we just created
-    const jobDetails = await ctx.runQuery(api.ai.categorization.getJobDetails, { jobId });
+    const jobDetails = await ctx.runQuery(api.functions.ai.categorization.getJobDetails, { jobId });
 
     if (!jobDetails) {
       throw new Error('Job not found or access denied');
