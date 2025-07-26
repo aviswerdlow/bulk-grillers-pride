@@ -94,7 +94,7 @@ const validateApiKey = (apiKey: string | undefined, provider: AIProvider): { val
 
 // Model availability checking
 const isModelAvailable = (provider: AIProvider, model: string): { available: boolean; error?: string; suggestion?: string } => {
-  const availableModels: Record<AIProvider, { models: string[]; deprecated?: string[]; suggestions: Record<string, string> }> = {
+  const availableModels: Record<AIProvider, { models: string[]; deprecated?: string[]; suggestions: Record<string, string>; default: string }> = {
     openai: {
       models: ['gpt-4-turbo-preview', 'gpt-4o', 'gpt-4o-mini', 'gpt-4', 'gpt-3.5-turbo'],
       deprecated: ['text-davinci-003', 'text-davinci-002'],
@@ -103,7 +103,8 @@ const isModelAvailable = (provider: AIProvider, model: string): { available: boo
         'o3-mini': 'gpt-4o-mini',
         'o4-mini': 'gpt-4o-mini',
         'o1': 'gpt-4o',
-      }
+      },
+      default: 'gpt-4o-mini'
     },
     anthropic: {
       models: ['claude-opus-4', 'claude-sonnet-4', 'claude-3-opus-20240229', 'claude-3-sonnet-20240229', 'claude-3-haiku-20240307'],
@@ -111,7 +112,8 @@ const isModelAvailable = (provider: AIProvider, model: string): { available: boo
       suggestions: {
         'claude-2': 'claude-3-sonnet-20240229',
         'claude-instant': 'claude-3-haiku-20240307',
-      }
+      },
+      default: 'claude-sonnet-4'
     },
     gemini: {
       models: ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-1.0-pro'],
@@ -119,13 +121,23 @@ const isModelAvailable = (provider: AIProvider, model: string): { available: boo
       suggestions: {
         'gemini-pro': 'gemini-1.5-pro',
         'gemini': 'gemini-1.5-flash',
-      }
+      },
+      default: 'gemini-1.5-flash'
     }
   };
 
   const providerModels = availableModels[provider];
   if (!providerModels) {
     return { available: false, error: `Unsupported AI provider: ${provider}` };
+  }
+
+  // Handle empty model - suggest using default
+  if (!model || model.trim() === '') {
+    return { 
+      available: false, 
+      error: `No model specified for ${provider}.`,
+      suggestion: `Please select a model. Recommended: "${providerModels.default}". Available models: ${providerModels.models.join(', ')}`
+    };
   }
 
   // Check if model is directly available
