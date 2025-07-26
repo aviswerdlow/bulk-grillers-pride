@@ -1,4 +1,4 @@
-import { internal } from "@convex/_generated/api";
+import { internal } from "../../_generated/api";
 import { t } from '../../../../test.setup';
 /**
  * Tests for CrewAI Shared Memory System

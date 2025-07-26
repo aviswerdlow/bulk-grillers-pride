@@ -13,7 +13,7 @@
  */
 
 import { Id } from '../_generated/dataModel';
-import { t } from '../../test.setup';
+import { t } from '../test.setup';
 import { QueryCtx, MutationCtx, ActionCtx } from '../_generated/server';
 
 // ============================================================================
@@ -692,4 +692,97 @@ export {
   createMockProduct,
   createMockCategory,
   createMockOrganizationMembership,
+  convexTest,
 } from './test-helpers';
+
+// ============================================================================
+// Legacy Adapter Functions
+// ============================================================================
+
+/**
+ * Legacy adapter for createQueryContext
+ * @deprecated Use createQueryContext(test) instead
+ */
+export function createQueryContextLegacy(t: any): QueryCtx {
+  return {
+    db: t.db,
+    auth: t.auth,
+  } as unknown as QueryCtx;
+}
+
+/**
+ * Legacy adapter for createMutationContext
+ * @deprecated Use createMutationContext(test) instead
+ */
+export function createMutationContextLegacy(t: any): MutationCtx {
+  return {
+    db: t.db,
+    auth: t.auth,
+    scheduler: t.scheduler || { runAfter: jest.fn(), runAt: jest.fn() },
+  } as unknown as MutationCtx;
+}
+
+/**
+ * Legacy adapter for createActionContext
+ * @deprecated Use createActionContext(test) instead
+ */
+export function createActionContextLegacy(t: any): ActionCtx {
+  return {
+    auth: t.auth,
+    scheduler: t.scheduler || { runAfter: jest.fn(), runAt: jest.fn() },
+    runQuery: t.runQuery || jest.fn(),
+    runMutation: t.runMutation || jest.fn(),
+    runAction: t.runAction || jest.fn(),
+  } as unknown as ActionCtx;
+}
+
+/**
+ * Legacy adapter for setupAuth
+ * @deprecated Use setupAuth(test, user) instead
+ */
+export function setupAuthLegacy(t: any, user: any) {
+  if (!t.auth) {
+    t.auth = { getUserIdentity: jest.fn() };
+  }
+  t.auth.getUserIdentity.mockResolvedValue(
+    user ? {
+      tokenIdentifier: user.tokenIdentifier,
+      subject: user.subject || user.tokenIdentifier,
+      email: user.email || 'test@example.com',
+      emailVerified: true,
+      issuer: 'test',
+    } : null
+  );
+}
+
+/**
+ * Legacy adapter for seedDatabase
+ * @deprecated Use seedDatabase(test, data) instead
+ */
+export async function seedDatabaseLegacy(t: any, data: { [table: string]: any[] }) {
+  for (const [table, documents] of Object.entries(data)) {
+    for (const doc of documents) {
+      await t.db.insert(table, doc);
+    }
+  }
+}
+
+/**
+ * Legacy adapter for clearDatabase
+ * @deprecated Use clearDatabase(test) instead
+ */
+export function clearDatabaseLegacy(t: any) {
+  // Mock implementation - not all legacy tests have clearDatabase
+  if (t.db && t.db.clear) {
+    t.db.clear();
+  }
+}
+
+/**
+ * Legacy adapter for getTableData
+ * @deprecated Use getTableData(test, table) instead
+ */
+export function getTableDataLegacy(t: any, table: string): any[] {
+  // Mock implementation - not all legacy tests have getTableData
+  return [];
+}

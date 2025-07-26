@@ -1,4 +1,4 @@
-import { internal } from "@convex/_generated/api";
+import { internal } from "../../_generated/api";
 import { v } from 'convex/values';
 import { internalMutation, internalQuery } from '../../_generated/server';
 import { Id } from '../../_generated/dataModel';

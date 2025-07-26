@@ -1,4 +1,8 @@
+"use node";
+
 import crypto from 'crypto';
+import { action } from '../_generated/server';
+import { v } from 'convex/values';
 
 /**
  * Encryption utilities for API keys and sensitive data
@@ -24,104 +28,148 @@ const getEncryptionKey = (): string => {
  * Encrypts a string using AES-256-GCM
  * Returns base64 encoded string containing: iv:authTag:encryptedData
  */
-export function encrypt(plaintext: string): string {
-  const key = Buffer.from(getEncryptionKey(), 'hex');
-  
-  // Generate a random initialization vector
-  const iv = crypto.randomBytes(16);
-  
-  // Create cipher
-  const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
-  
-  // Encrypt the plaintext
-  const encrypted = Buffer.concat([
-    cipher.update(plaintext, 'utf8'),
-    cipher.final()
-  ]);
-  
-  // Get the authentication tag
-  const authTag = cipher.getAuthTag();
-  
-  // Combine iv, authTag, and encrypted data
-  const combined = Buffer.concat([iv, authTag, encrypted]);
-  
-  // Return base64 encoded string
-  return combined.toString('base64');
-}
+export const encryptAction = action({
+  args: { plaintext: v.string() },
+  handler: async (ctx, { plaintext }) => {
+    const key = Buffer.from(getEncryptionKey(), 'hex');
+    
+    // Generate a random initialization vector
+    const iv = crypto.randomBytes(16);
+    
+    // Create cipher
+    const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
+    
+    // Encrypt the plaintext
+    const encrypted = Buffer.concat([
+      cipher.update(plaintext, 'utf8'),
+      cipher.final()
+    ]);
+    
+    // Get the authentication tag
+    const authTag = cipher.getAuthTag();
+    
+    // Combine iv, authTag, and encrypted data
+    const combined = Buffer.concat([iv, authTag, encrypted]);
+    
+    // Return base64 encoded string
+    return combined.toString('base64');
+  }
+});
 
 /**
  * Decrypts a string encrypted with encrypt()
  * Expects base64 encoded string containing: iv:authTag:encryptedData
  */
-export function decrypt(encryptedData: string): string {
-  const key = Buffer.from(getEncryptionKey(), 'hex');
-  
-  // Decode from base64
-  const combined = Buffer.from(encryptedData, 'base64');
-  
-  // Extract components
-  const iv = combined.subarray(0, 16);
-  const authTag = combined.subarray(16, 32);
-  const encrypted = combined.subarray(32);
-  
-  // Create decipher
-  const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
-  decipher.setAuthTag(authTag);
-  
-  // Decrypt
-  const decrypted = Buffer.concat([
-    decipher.update(encrypted),
-    decipher.final()
-  ]);
-  
-  return decrypted.toString('utf8');
-}
+export const decryptAction = action({
+  args: { encryptedData: v.string() },
+  handler: async (ctx, { encryptedData }) => {
+    const key = Buffer.from(getEncryptionKey(), 'hex');
+    
+    // Decode from base64
+    const combined = Buffer.from(encryptedData, 'base64');
+    
+    // Extract components
+    const iv = combined.subarray(0, 16);
+    const authTag = combined.subarray(16, 32);
+    const encrypted = combined.subarray(32);
+    
+    // Create decipher
+    const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
+    decipher.setAuthTag(authTag);
+    
+    // Decrypt
+    const decrypted = Buffer.concat([
+      decipher.update(encrypted),
+      decipher.final()
+    ]);
+    
+    return decrypted.toString('utf8');
+  }
+});
 
 /**
  * Generates a new encryption key for initial setup
  * This should be run once and the result stored securely
  */
-export function generateEncryptionKey(): string {
-  return crypto.randomBytes(32).toString('hex');
-}
+export const generateEncryptionKeyAction = action({
+  args: {},
+  handler: async () => {
+    return crypto.randomBytes(32).toString('hex');
+  }
+});
 
 /**
  * Validates that a string can be decrypted
  */
-export function isEncrypted(value: string): boolean {
-  try {
-    // Check if it's a valid base64 string
-    const decoded = Buffer.from(value, 'base64');
-    // Check minimum length (16 bytes IV + 16 bytes auth tag + at least 1 byte data)
-    return decoded.length >= 33;
-  } catch {
-    return false;
+export const isEncryptedAction = action({
+  args: { value: v.string() },
+  handler: async (ctx, { value }) => {
+    try {
+      // Check if it's a valid base64 string
+      const decoded = Buffer.from(value, 'base64');
+      // Check minimum length (16 bytes IV + 16 bytes auth tag + at least 1 byte data)
+      return decoded.length >= 33;
+    } catch {
+      return false;
+    }
   }
-}
+});
 
 /**
  * Safely encrypts a value, handling null/undefined
  */
-export function encryptApiKey(apiKey: string | null | undefined): string | null {
-  if (!apiKey) return null;
-  return encrypt(apiKey);
-}
+export const encryptApiKeyAction = action({
+  args: { apiKey: v.union(v.string(), v.null()) },
+  handler: async (ctx, { apiKey }) => {
+    if (!apiKey) return null;
+    return ctx.runAction(encryptAction, { plaintext: apiKey });
+  }
+});
 
 /**
  * Safely decrypts a value, handling null/undefined
  */
-export function decryptApiKey(encryptedKey: string | null | undefined): string | null {
-  if (!encryptedKey) return null;
-  
-  try {
-    return decrypt(encryptedKey);
-  } catch (error) {
-    console.error('Failed to decrypt API key:', error);
-    // Check if it's an unencrypted legacy key
-    if (!isEncrypted(encryptedKey)) {
-      // Return as-is for migration purposes
-      return encryptedKey;
+export const decryptApiKeyAction = action({
+  args: { encryptedKey: v.union(v.string(), v.null()) },
+  handler: async (ctx, { encryptedKey }) => {
+    if (!encryptedKey) return null;
+    
+    try {
+      return await ctx.runAction(decryptAction, { encryptedData: encryptedKey });
+    } catch (error) {
+      console.error('Failed to decrypt API key:', error);
+      // Check if it's an unencrypted legacy key
+      const isEncrypted = await ctx.runAction(isEncryptedAction, { value: encryptedKey });
+      if (!isEncrypted) {
+        // Return as-is for migration purposes
+        return encryptedKey;
+      }
+      throw error;
     }
-    throw error;
   }
+});
+
+// Helper functions for use within mutations/queries (synchronous versions)
+export function encrypt(plaintext: string): string {
+  throw new Error('Use encryptAction instead - encryption requires Node.js runtime');
+}
+
+export function decrypt(encryptedData: string): string {
+  throw new Error('Use decryptAction instead - decryption requires Node.js runtime');
+}
+
+export function generateEncryptionKey(): string {
+  throw new Error('Use generateEncryptionKeyAction instead - key generation requires Node.js runtime');
+}
+
+export function isEncrypted(value: string): boolean {
+  throw new Error('Use isEncryptedAction instead - validation requires Node.js runtime');
+}
+
+export function encryptApiKey(apiKey: string | null | undefined): string | null {
+  throw new Error('Use encryptApiKeyAction instead - encryption requires Node.js runtime');
+}
+
+export function decryptApiKey(encryptedKey: string | null | undefined): string | null {
+  throw new Error('Use decryptApiKeyAction instead - decryption requires Node.js runtime');
 }
