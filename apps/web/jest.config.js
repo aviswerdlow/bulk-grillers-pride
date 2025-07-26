@@ -8,6 +8,9 @@ module.exports = {
   ...webProjectConfig,
   rootDir: '../..',
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js', '<rootDir>/apps/web/jest-setup.ts'],
+  // Memory management settings
+  maxWorkers: 1, // Run tests sequentially to reduce memory usage
+  workerIdleMemoryLimit: '512MB', // Limit memory per worker
   // Override paths to be relative to this file
   testMatch: ['<rootDir>/apps/web/**/__tests__/**/*.(test|spec).(ts|tsx|js|jsx)'],
   coverageDirectory: '<rootDir>/apps/web/coverage',
