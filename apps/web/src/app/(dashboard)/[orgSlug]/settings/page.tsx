@@ -271,7 +271,7 @@ function ApiKeysSettings({ organizationId }: { organizationId: Id<'organizations
   const removeApiKey = useMutation((api as any).functions.organizations.apiKeys.removeApiKey);
   
   // Action for updating API keys (handles encryption)
-  const updateApiKeys = useAction((api as any).functions.organizations.apiKeys.updateApiKeysAction);
+  const updateApiKeys = useAction((api as any).actions.apiKeys.updateApiKeysAction);
   
   // Transform the masked API keys into the format we need for display
   const apiKeys = maskedApiKeys?.apiKeys
