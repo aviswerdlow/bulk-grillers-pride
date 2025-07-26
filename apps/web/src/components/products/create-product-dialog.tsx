@@ -32,7 +32,7 @@ import { X } from 'lucide-react';
 import { BaseDialogProps } from '@/types/ui';
 
 // Product creation form schema
-const createProductSchema = z.object({
+const _createProductSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   description: z.string().optional(),
   vendor: z.string().optional(),
@@ -45,7 +45,7 @@ const createProductSchema = z.object({
   status: z.enum(['active', 'draft', 'archived']).default('draft'),
 });
 
-type CreateProductForm = z.infer<typeof createProductSchema>;
+type CreateProductForm = z.infer<typeof _createProductSchema>;
 
 interface CreateProductDialogProps extends BaseDialogProps {
   organizationId: Id<'organizations'>;

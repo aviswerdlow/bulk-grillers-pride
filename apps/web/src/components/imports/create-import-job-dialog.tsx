@@ -30,14 +30,14 @@ import { Upload, FileText, Package, FolderTree, Tag } from 'lucide-react';
 import { BaseDialogProps } from '@/types/ui';
 
 // Import job form schema
-const createImportJobSchema = z.object({
+const _createImportJobSchema = z.object({
   importType: z.enum(['products', 'categories', 'variants']),
   duplicateHandling: z.enum(['skip', 'update', 'create']),
   hasHeaders: z.boolean(),
   delimiter: z.string(),
 });
 
-type CreateImportJobForm = z.infer<typeof createImportJobSchema>;
+type CreateImportJobForm = z.infer<typeof _createImportJobSchema>;
 
 interface CreateImportJobDialogProps extends BaseDialogProps {
   organizationId: Id<'organizations'>;

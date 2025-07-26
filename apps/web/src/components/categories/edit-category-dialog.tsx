@@ -22,7 +22,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
 // Category edit form schema
-const editCategorySchema = z.object({
+const _editCategorySchema = z.object({
   name: z.string().min(1, "Name is required"),
   description: z.string().optional(),
   handle: z.string().optional(),
@@ -33,7 +33,7 @@ const editCategorySchema = z.object({
   isVisible: z.boolean().optional(),
 });
 
-type EditCategoryForm = z.infer<typeof editCategorySchema>;
+type EditCategoryForm = z.infer<typeof _editCategorySchema>;
 
 const logger = createLogger('EditCategoryDialog');
 

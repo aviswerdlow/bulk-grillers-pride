@@ -22,7 +22,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
 // Category creation form schema
-const createCategorySchema = z.object({
+const _createCategorySchema = z.object({
   name: z.string().min(1, "Name is required"),
   description: z.string().optional(),
   handle: z.string().optional(),
@@ -32,7 +32,7 @@ const createCategorySchema = z.object({
   seoDescription: z.string().optional(),
 });
 
-type CreateCategoryForm = z.infer<typeof createCategorySchema>;
+type CreateCategoryForm = z.infer<typeof _createCategorySchema>;
 
 interface CreateCategoryDialogProps {
   open: boolean;

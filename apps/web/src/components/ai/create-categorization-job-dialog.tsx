@@ -31,7 +31,7 @@ import { Badge } from '@/components/ui/badge';
 import { Bot, Zap } from 'lucide-react';
 
 // Categorization job form schema
-const createJobSchema = z.object({
+const _createJobSchema = z.object({
   jobType: z.enum(['bulk_categorization', 'single_product', 'validation']),
   prompt: z.string().min(1, 'Prompt is required'),
   batchSize: z.number().min(1).max(50).optional(),
@@ -39,7 +39,7 @@ const createJobSchema = z.object({
   aiModel: z.string().min(1, 'AI model is required'),
 });
 
-type CreateJobForm = z.infer<typeof createJobSchema>;
+type CreateJobForm = z.infer<typeof _createJobSchema>;
 
 interface CreateCategorizationJobDialogProps {
   open: boolean;

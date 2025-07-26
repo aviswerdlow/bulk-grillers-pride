@@ -32,7 +32,7 @@ import { X } from 'lucide-react';
 import { BaseDialogProps } from '@/types/ui';
 
 // Product edit form schema
-const editProductSchema = z.object({
+const _editProductSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   description: z.string().optional(),
   vendor: z.string().optional(),
@@ -45,7 +45,7 @@ const editProductSchema = z.object({
   status: z.enum(['active', 'draft', 'archived']),
 });
 
-type EditProductForm = z.infer<typeof editProductSchema>;
+type EditProductForm = z.infer<typeof _editProductSchema>;
 
 interface EditProductDialogProps extends BaseDialogProps {
   product: Doc<'products'>;
@@ -98,7 +98,7 @@ export function EditProductDialog({ open, onOpenChange, product }: EditProductDi
   }, [product, reset]);
 
   // Helper functions for form handling
-  const generateHandle = (title: string) => {
+  const _generateHandle = (title: string) => {
     return title
       .toLowerCase()
       .replace(/[^a-z0-9\s-]/g, '')
