@@ -7,6 +7,9 @@ setup/
 *.spec.ts
 *.spec.js
 
+# Ignore scripts
+scripts/
+
 # Ignore other development files
 *.md
 .env*

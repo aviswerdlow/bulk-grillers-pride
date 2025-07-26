@@ -122,7 +122,7 @@ export const updateSchemaVersion = mutation({
       changes: [
         {
           field: 'schemaVersion',
-          oldValue: org.settings?.schemaVersion || 'unknown',
+          oldValue: (org.settings as any)?.schemaVersion || 'unknown',
           newValue: version,
           changeType: 'modified' as const,
         },
@@ -138,7 +138,7 @@ export const updateSchemaVersion = mutation({
       },
       metadata: {
         version,
-        previousVersion: org.settings?.schemaVersion,
+        previousVersion: (org.settings as any)?.schemaVersion,
       },
       timestamp: Date.now(),
       isRollbackable: false,
@@ -146,7 +146,7 @@ export const updateSchemaVersion = mutation({
 
     return {
       success: true,
-      previousVersion: org.settings?.schemaVersion || 'unknown',
+      previousVersion: (org.settings as any)?.schemaVersion || 'unknown',
       newVersion: version,
     };
   },

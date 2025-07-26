@@ -1,7 +1,8 @@
 import { v } from 'convex/values';
 import { mutation, query, internalQuery, internalMutation } from '../../_generated/server';
 import { Id } from '../../_generated/dataModel';
-import { encryptApiKey, decryptApiKey, isEncrypted } from '../../lib/encryption';
+import { api } from '../../_generated/api';
+import { isEncrypted } from '../../lib/encryption';
 
 /**
  * Update API keys for an organization
