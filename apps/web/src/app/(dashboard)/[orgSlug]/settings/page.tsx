@@ -27,7 +27,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { useMutation } from 'convex/react';
+import { useMutation, useAction } from 'convex/react';
 import { Organization } from '@/types/models';
 import {
   AlertDialog,
@@ -270,8 +270,8 @@ function ApiKeysSettings({ organizationId }: { organizationId: Id<'organizations
   // Mutation for removing API keys
   const removeApiKey = useMutation((api as any).functions.organizations.apiKeys.removeApiKey);
   
-  // Mutation for updating API keys
-  const updateApiKeys = useMutation((api as any).functions.organizations.apiKeys.updateApiKeys);
+  // Action for updating API keys (handles encryption)
+  const updateApiKeys = useAction((api as any).functions.organizations.apiKeys.updateApiKeysAction);
   
   // Transform the masked API keys into the format we need for display
   const apiKeys = maskedApiKeys?.apiKeys
