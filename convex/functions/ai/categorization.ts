@@ -598,8 +598,16 @@ export const createCategorizationJob = mutation({
     // Skip API key format validation here since it's encrypted
     // The decrypted key will be validated during job processing
 
-    // Validate model availability
-    const modelCheck = isModelAvailable(args.aiProvider as AIProvider, args.aiModel);
+    // Auto-convert model names if there's a suggestion
+    const providerConfig = AI_PROVIDER_CONFIG[args.aiProvider as AIProvider];
+    let finalModel = args.aiModel;
+    if (providerConfig && providerConfig.suggestions[args.aiModel]) {
+      finalModel = providerConfig.suggestions[args.aiModel];
+      console.log(`[AI-CAT] Auto-converting model name from "${args.aiModel}" to "${finalModel}"`);
+    }
+
+    // Validate model availability with the final model name
+    const modelCheck = isModelAvailable(args.aiProvider as AIProvider, finalModel);
     if (!modelCheck.available) {
       const errorMessage = modelCheck.suggestion 
         ? `${modelCheck.error} ${modelCheck.suggestion}`
@@ -636,7 +644,7 @@ export const createCategorizationJob = mutation({
       jobType: args.jobType,
       batchSize: args.batchSize || aiSettings.categorization.batchSize,
       aiProvider: args.aiProvider,
-      aiModel: args.aiModel,
+      aiModel: finalModel,
       prompt: args.prompt,
       productIds: args.productIds,
       categoryContext,
