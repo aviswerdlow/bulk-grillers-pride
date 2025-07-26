@@ -585,7 +585,7 @@ export const createCategorizationJob = mutation({
     if (!modelCheck.available) {
       const errorMessage = modelCheck.suggestion 
         ? `${modelCheck.error} ${modelCheck.suggestion}`
-        : modelCheck.error;
+        : modelCheck.error || 'Unknown model error';
       throw new Error(errorMessage);
     }
 
