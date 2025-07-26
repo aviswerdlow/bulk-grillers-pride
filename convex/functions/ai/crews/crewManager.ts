@@ -1,4 +1,3 @@
-import { internal } from "../../_generated/api";
 /**
  * CrewAI Manager
  * 

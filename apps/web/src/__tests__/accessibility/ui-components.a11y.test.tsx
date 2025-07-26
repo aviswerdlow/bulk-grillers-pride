@@ -1,7 +1,7 @@
 import React from 'react';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import { cleanupTest, mockUseQuery, mockUseMutation, renderWithProviders, setupTest } from '@/__tests__/test-helpers';
-import { A11yTestUtils } from '../utils/A11yTestUtils';
+// import { cleanupTest, mockUseQuery, mockUseMutation, renderWithProviders, setupTest } from '@/__tests__/test-helpers';
+// import { A11yTestUtils } from '../utils/A11yTestUtils';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -60,13 +60,13 @@ import {
   TableRow,
 } from '@/components/ui/table';
 
-describe.skip('UI Components Accessibility', () => {
+describe('UI Components Accessibility', () => {
   beforeEach(() => {
-    setupTest();
+    // setupTest();
   });
 
   afterEach(() => {
-    cleanupTest();
+    // cleanupTest();
   });
 
   describe('Dialog Accessibility', () => {
@@ -101,7 +101,7 @@ describe.skip('UI Components Accessibility', () => {
         );
       };
 
-      const { container } = renderWithProviders(<TestDialog />);
+      const { container } = render(<TestDialog />);
       
       // Open the dialog first
       const openButton = screen.getByText('Open Dialog');
