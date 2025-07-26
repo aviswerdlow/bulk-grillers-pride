@@ -48,6 +48,8 @@
     "turbo:daemon:monitor": "node scripts/turbo-daemon-monitor.js monitor",
     "check-tasks": "node scripts/check-tasks",
     "generate:test": "node scripts/generate-convex-test.js",
+    "enable-crewai": "npx tsx scripts/enable-crewai.ts",
+    "disable-crewai": "npx tsx scripts/disable-crewai.ts",
     "benchmark:quick": "node scripts/run-benchmark.js --type quick",
     "benchmark:standard": "node scripts/run-benchmark.js --type standard",
     "benchmark:full": "node scripts/run-benchmark.js --type full",
@@ -91,6 +93,7 @@
     "playwright": "^1.54.1",
     "prettier": "^3.6.2",
     "ts-jest": "^29.4.0",
+    "tsx": "^4.20.3",
     "turbo": "^2.5.5",
     "typescript": "^5.2.2"
   },

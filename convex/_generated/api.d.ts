@@ -16,6 +16,7 @@ import type {
 import type * as __tests___convex_test_standard from "../__tests__/convex-test-standard.js";
 import type * as __tests___helpers_deletion from "../__tests__/helpers/deletion.js";
 import type * as __tests___test_helpers from "../__tests__/test-helpers.js";
+import type * as actions_encryption from "../actions/encryption.js";
 import type * as crons from "../crons.js";
 import type * as encryptApiKeysMigration from "../encryptApiKeysMigration.js";
 import type * as functions_accessibility_deletionSessions from "../functions/accessibility/deletionSessions.js";
@@ -164,6 +165,7 @@ declare const fullApi: ApiFromModules<{
   "__tests__/convex-test-standard": typeof __tests___convex_test_standard;
   "__tests__/helpers/deletion": typeof __tests___helpers_deletion;
   "__tests__/test-helpers": typeof __tests___test_helpers;
+  "actions/encryption": typeof actions_encryption;
   crons: typeof crons;
   encryptApiKeysMigration: typeof encryptApiKeysMigration;
   "functions/accessibility/deletionSessions": typeof functions_accessibility_deletionSessions;
