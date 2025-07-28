@@ -18,7 +18,7 @@
     "bundle:check": "node ../../scripts/check-bundle-size.js"
   },
   "dependencies": {
-    "@clerk/nextjs": "^6.22.0",
+    "@clerk/nextjs": "^6.27.1",
     "@hookform/resolvers": "^5.1.1",
     "@langchain/anthropic": "^0.3.24",
     "@langchain/core": "^0.3.66",
