@@ -217,3 +217,4 @@ regression-report.json
 security-reports/
 dependency-check-report/
 reports/
+.worktrees

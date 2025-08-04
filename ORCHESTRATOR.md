@@ -128,6 +128,75 @@ Assignment_Justification:
 gh issue list --state open # View all open tasks
 gh issue list --assignee agent-name # View agent's tasks
 /validate-assignments     # Ensure proper skill matching
+
+# Worktree monitoring (when ENABLE_WORKTREES=true)
+/worktree-status          # Show all agent worktrees and health
+/worktree-cleanup         # Generate cleanup script for stale worktrees
+/worktree-report          # Detailed worktree health report
+```
+
+## Worktree Management
+
+### Worktree Commands
+
+```bash
+# Setup worktrees for all agents
+./scripts/setup-agent-worktrees.sh setup
+
+# List all agent worktrees
+./scripts/setup-agent-worktrees.sh list
+
+# Monitor worktree health
+./scripts/monitor-worktrees.sh report
+
+# Generate cleanup recommendations
+./scripts/monitor-worktrees.sh cleanup
+
+# Get worktree statistics
+./scripts/monitor-worktrees.sh summary
+```
+
+### Worktree Integration
+
+When `ENABLE_WORKTREES=true`, orchestrator can:
+
+1. **Monitor Worktree Health**:
+   - Track disk usage per agent
+   - Identify stale worktrees
+   - Detect uncommitted/unpushed work
+   - Generate cleanup recommendations
+
+2. **Coordinate Worktree Creation**:
+   - Create worktrees on task assignment
+   - Ensure proper branch naming
+   - Track worktree-to-task mapping
+
+3. **Manage Lifecycle**:
+   - Auto-cleanup completed task worktrees
+   - Prevent worktree sprawl
+   - Monitor resource usage
+
+### Worktree Monitoring Workflow
+
+```yaml
+Daily_Monitoring:
+  - Run: ./scripts/monitor-worktrees.sh report
+  - Review: Critical and warning worktrees
+  - Action: Notify agents about cleanup needs
+  - Execute: Cleanup script if safe
+
+Task_Assignment_With_Worktrees:
+  - Create issue: gh issue create ...
+  - Enable worktree: export ENABLE_WORKTREES=true
+  - Agent claims: claim_task_with_worktree T123 agent-name
+  - Auto-creates: .worktrees/agent-name/T123
+  - Agent works: In isolated worktree
+
+Task_Completion_With_Cleanup:
+  - Agent completes: update_task_status T123 done
+  - Push changes: git push -u origin HEAD
+  - Cleanup: cleanup_task_worktree T123 agent-name
+  - Verify: ./scripts/monitor-worktrees.sh summary
 ```
 
 ## GitHub Issues Management
