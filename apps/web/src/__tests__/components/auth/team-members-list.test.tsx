@@ -112,8 +112,7 @@ describe('TeamMembersList', () => {
     it('shows loading state when members are loading', () => {
       mockUseQuery.mockReturnValue(undefined as any);
 
-      const { container } = renderWithProviders(<TeamMembersList organizationId="org_123" currentUserRole="owner" />
-      );
+      const { container } = renderWithProviders(<TeamMembersList organizationId="org_123" currentUserRole="owner" />);
 
       const loader = container.querySelector('.animate-spin');
       expect(loader).toBeInTheDocument();
@@ -150,8 +149,7 @@ describe('TeamMembersList', () => {
     });
 
     it('shows join dates', () => {
-      const { container } = renderWithProviders(<TeamMembersList organizationId="org_123" currentUserRole="owner" />
-      );
+      const { container } = renderWithProviders(<TeamMembersList organizationId="org_123" currentUserRole="owner" />);
 
       // Find date cells in the table
       const cells = container.querySelectorAll('td.text-muted-foreground');
@@ -193,7 +191,7 @@ describe('TeamMembersList', () => {
       renderWithProviders(<TeamMembersList organizationId="org_123" currentUserRole="owner" />);
 
       const searchInput = screen.getByPlaceholderText('Search by name or email...');
-      fireEvent.change(searchInput, { target: { value: 'jane'  } } as any);
+      fireEvent.change(searchInput, { target: { value: 'jane' } } as any);
 
       expect(screen.getByText('Jane Smith')).toBeInTheDocument();
       expect(screen.queryByText('John Doe')).not.toBeInTheDocument();
@@ -204,7 +202,7 @@ describe('TeamMembersList', () => {
       renderWithProviders(<TeamMembersList organizationId="org_123" currentUserRole="owner" />);
 
       const searchInput = screen.getByPlaceholderText('Search by name or email...');
-      fireEvent.change(searchInput, { target: { value: 'Smith'  } } as any);
+      fireEvent.change(searchInput, { target: { value: 'Smith' } } as any);
 
       expect(screen.getByText('Jane Smith')).toBeInTheDocument();
       expect(screen.queryByText('John Doe')).not.toBeInTheDocument();
@@ -214,7 +212,7 @@ describe('TeamMembersList', () => {
       renderWithProviders(<TeamMembersList organizationId="org_123" currentUserRole="owner" />);
 
       const searchInput = screen.getByPlaceholderText('Search by name or email...');
-      fireEvent.change(searchInput, { target: { value: 'nonexistent'  } } as any);
+      fireEvent.change(searchInput, { target: { value: 'nonexistent' } } as any);
 
       expect(screen.getByText('No members found matching your search')).toBeInTheDocument();
     });
@@ -251,8 +249,7 @@ describe('TeamMembersList', () => {
     });
 
     it('shows role dropdown for admin users', () => {
-      const { container } = renderWithProviders(<TeamMembersList organizationId="org_123" currentUserRole="admin" />
-      );
+      const { container } = renderWithProviders(<TeamMembersList organizationId="org_123" currentUserRole="admin" />);
 
       // Should see select components for non-owner users
       const selectElements = container.querySelectorAll('[data-slot="select"]');
@@ -416,8 +413,8 @@ describe('TeamMembersList', () => {
 
       const inviteButton = screen.getByText('Invite Member');
       if (inviteButton) {
-      fireEvent.click(inviteButton as HTMLElement);
-    }
+        fireEvent.click(inviteButton as HTMLElement);
+      }
 
       expect(screen.getByTestId('invite-dialog')).toBeInTheDocument();
     });
@@ -430,8 +427,8 @@ describe('TeamMembersList', () => {
 
       const closeButton = screen.getByText('Close Dialog');
       if (closeButton) {
-      fireEvent.click(closeButton as HTMLElement);
-    }
+        fireEvent.click(closeButton as HTMLElement);
+      }
 
       expect(screen.queryByTestId('invite-dialog')).not.toBeInTheDocument();
     });

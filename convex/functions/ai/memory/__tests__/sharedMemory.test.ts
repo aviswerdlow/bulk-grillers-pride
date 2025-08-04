@@ -18,7 +18,7 @@ describe('SharedMemory', () => {
 
   beforeEach(async () => {
     
-    tes// t is already imported from test.setup
+    // test is already imported from test.setup
     // Create test organization
     organizationId = await test.mutation(async (ctx) => {
       return await ctx.db.insert('organizations', {

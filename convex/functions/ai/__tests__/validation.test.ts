@@ -39,7 +39,7 @@ jest.mock('../langchain', () => ({
 describe('API Key Validation', () => {
   let ctx: any;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     
     ctx = await t.run(async (ctx) => ctx);
   });
