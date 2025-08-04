@@ -1,257 +1,297 @@
+import { defineTable } from 'convex/server';
+import { v } from 'convex/values';
+import { timestampFields } from './common';
+
 /**
- * CrewAI Schema Additions
- * 
- * This file contains schema definitions for the CrewAI shared memory system
- * and agent orchestration components.
+ * CrewAI agent registry and session management
+ * These are imported from the existing schema/crewai.ts file
  */
 
-import { defineTable } from "convex/server";
-import { v } from "convex/values";
-
-// ================================
-// CREWAI AGENT MANAGEMENT
-// ================================
-
+// Agent Registry
 export const agentRegistry = defineTable({
-  // Organization scope
-  organizationId: v.id('organizations'),
-  
-  // Agent identification
-  agentId: v.string(), // Unique agent identifier (e.g., "product-analyzer-1")
-  agentType: v.union(
-    v.literal('ProductAnalyzer'),
-    v.literal('CategoryMatcher'),
-    v.literal('QualityValidator'),
-    v.literal('Orchestrator')
-  ),
-  
-  // Agent configuration
-  capabilities: v.array(v.string()), // List of capabilities
-  model: v.string(), // LLM model to use
-  temperature: v.number(), // Model temperature setting
-  maxTokens: v.optional(v.number()), // Max tokens per request
-  
-  // Agent status
-  status: v.union(
-    v.literal('active'),
-    v.literal('idle'),
-    v.literal('working'),
-    v.literal('error'),
-    v.literal('disabled')
-  ),
-  
-  // Performance tracking
-  tasksCompleted: v.number(),
-  totalTokensUsed: v.number(),
-  averageResponseTime: v.number(), // in milliseconds
-  errorRate: v.number(), // percentage
-  
-  // Timestamps
-  lastActiveAt: v.number(),
+  name: v.string(),
+  role: v.string(),
+  goal: v.string(),
+  backstory: v.string(),
+  tools: v.array(v.string()),
+  llmConfig: v.object({
+    provider: v.string(),
+    model: v.string(),
+    temperature: v.number(),
+    maxTokens: v.optional(v.number()),
+  }),
+  capabilities: v.object({
+    canAnalyze: v.boolean(),
+    canCategorize: v.boolean(),
+    canValidate: v.boolean(),
+    canGenerateReports: v.boolean(),
+  }),
+  performance: v.object({
+    tasksCompleted: v.number(),
+    successRate: v.number(),
+    avgExecutionTime: v.number(),
+    lastActiveAt: v.optional(v.number()),
+  }),
+  status: v.string(), // 'active' | 'inactive' | 'maintenance'
   createdAt: v.number(),
   updatedAt: v.number(),
-  
-  // Metadata
-  metadata: v.optional(v.any()),
 })
-  .index('by_organization', ['organizationId'])
-  .index('by_agent_id', ['organizationId', 'agentId'])
-  .index('by_type', ['organizationId', 'agentType'])
-  .index('by_status', ['organizationId', 'status'])
-  .index('by_activity', ['lastActiveAt']);
+  .index('by_status', ['status'])
+  .index('by_name', ['name']);
 
-// ================================
-// SHARED MEMORY SYSTEM
-// ================================
-
+// Agent Memory
 export const agentMemory = defineTable({
-  // Organization and scope
-  organizationId: v.id('organizations'),
-  
-  // Memory identification
-  memoryKey: v.string(), // Hierarchical key (e.g., "crew.session.123.product.analysis")
-  memoryType: v.union(
-    v.literal('shortTerm'),    // Session-specific, expires quickly
-    v.literal('longTerm'),     // Persistent knowledge
-    v.literal('episodic'),     // Event-based memories
-    v.literal('semantic'),     // Knowledge and facts
-    v.literal('working')       // Current task context
-  ),
-  
-  // Memory content
-  content: v.any(), // Flexible storage for different memory types
-  contentHash: v.string(), // Hash for deduplication
-  compressed: v.boolean(), // Whether content is compressed
-  sizeBytes: v.number(), // Size of content in bytes
-  
-  // Memory ownership and sharing
-  agentId: v.optional(v.string()), // Specific to an agent
-  crewId: v.optional(v.string()), // Specific to a crew
-  sessionId: v.optional(v.string()), // Session-scoped
-  
-  // Memory importance and relevance
-  importance: v.number(), // 0-1 importance score
-  relevanceScore: v.number(), // 0-1 relevance to current context
-  accessCount: v.number(), // Number of times accessed
-  updateCount: v.number(), // Number of times updated
-  
-  // Access tracking
-  lastAccessedAt: v.number(),
-  lastAccessedBy: v.optional(v.string()), // Agent ID
-  accessHistory: v.optional(v.array(v.object({
-    agentId: v.string(),
-    timestamp: v.number(),
-    operation: v.union(v.literal('read'), v.literal('write'), v.literal('update')),
-  }))),
-  
-  // Versioning and concurrency
-  version: v.number(), // For optimistic concurrency control
-  locked: v.boolean(), // Whether memory is locked for writing
-  lockedBy: v.optional(v.string()), // Agent holding the lock
-  lockExpiresAt: v.optional(v.number()), // Lock expiration time
-  
-  // TTL and lifecycle
-  expiresAt: v.optional(v.number()), // When memory expires
-  summarizedAt: v.optional(v.number()), // When last summarized
+  agentId: v.string(),
+  memoryType: v.string(), // 'short_term' | 'long_term' | 'episodic'
+  key: v.string(),
+  value: v.any(),
+  importance: v.number(),
+  lastAccessed: v.number(),
+  accessCount: v.number(),
   createdAt: v.number(),
-  updatedAt: v.number(),
-  
-  // Related memories
-  parentMemoryId: v.optional(v.id('agentMemory')), // For hierarchical memories
-  relatedMemories: v.optional(v.array(v.id('agentMemory'))), // Related memory IDs
+  expiresAt: v.optional(v.number()),
 })
-  .index('by_organization', ['organizationId'])
-  .index('by_key', ['organizationId', 'memoryKey'])
-  .index('by_type', ['organizationId', 'memoryType'])
-  .index('by_agent', ['organizationId', 'agentId'])
-  .index('by_crew', ['organizationId', 'crewId'])
-  .index('by_session', ['organizationId', 'sessionId'])
-  .index('by_importance', ['organizationId', 'importance'])
-  .index('by_access', ['organizationId', 'lastAccessedAt'])
-  .index('by_expiry', ['expiresAt'])
-  .index('by_lock', ['locked', 'lockExpiresAt']);
+  .index('by_agent', ['agentId'])
+  .index('by_agent_type', ['agentId', 'memoryType'])
+  .index('by_importance', ['agentId', 'importance']);
 
-// ================================
-// AGENT TASK COORDINATION
-// ================================
-
+// Agent Tasks
 export const agentTasks = defineTable({
-  // Organization scope
-  organizationId: v.id('organizations'),
-  
-  // Task identification
-  taskId: v.string(), // Unique task identifier
-  taskType: v.union(
-    v.literal('analyze_product'),
-    v.literal('match_category'),
-    v.literal('validate_quality'),
-    v.literal('orchestrate_crew')
-  ),
-  
-  // Task assignment
-  crewId: v.string(), // Crew handling this task
-  assignedAgent: v.string(), // Agent ID assigned to task
-  
-  // Task status
-  status: v.union(
-    v.literal('pending'),
-    v.literal('queued'),
-    v.literal('in_progress'),
-    v.literal('completed'),
-    v.literal('failed'),
-    v.literal('cancelled'),
-    v.literal('retrying')
-  ),
-  
-  // Task data
-  input: v.any(), // Input data for the task
-  output: v.optional(v.any()), // Task result
-  error: v.optional(v.object({
-    message: v.string(),
-    code: v.optional(v.string()),
-    stack: v.optional(v.string()),
-    retryable: v.boolean(),
-  })),
-  
-  // Task dependencies
-  dependencies: v.array(v.string()), // Other task IDs this depends on
-  dependents: v.array(v.string()), // Tasks that depend on this
-  
-  // Performance metrics
-  retryCount: v.number(),
-  maxRetries: v.number(),
-  processingTimeMs: v.optional(v.number()),
-  tokensUsed: v.optional(v.number()),
-  
-  // Timestamps
-  createdAt: v.number(),
-  queuedAt: v.optional(v.number()),
+  agentId: v.string(),
+  taskType: v.string(),
+  description: v.string(),
+  input: v.any(),
+  output: v.optional(v.any()),
+  status: v.string(), // 'pending' | 'in_progress' | 'completed' | 'failed'
+  priority: v.number(),
+  dependencies: v.array(v.string()),
   startedAt: v.optional(v.number()),
   completedAt: v.optional(v.number()),
-  
-  // Priority and scheduling
-  priority: v.number(), // Higher = more important
-  deadline: v.optional(v.number()), // Task deadline
-  
-  // Metadata
-  metadata: v.optional(v.any()),
+  executionTime: v.optional(v.number()),
+  error: v.optional(v.string()),
+  retryCount: v.number(),
+  maxRetries: v.number(),
+  createdAt: v.number(),
 })
-  .index('by_organization', ['organizationId'])
-  .index('by_task_id', ['organizationId', 'taskId'])
-  .index('by_crew', ['organizationId', 'crewId'])
-  .index('by_agent', ['organizationId', 'assignedAgent'])
-  .index('by_status', ['organizationId', 'status'])
-  .index('by_priority', ['organizationId', 'priority'])
-  .index('by_created', ['organizationId', 'createdAt']);
+  .index('by_agent', ['agentId'])
+  .index('by_status', ['status'])
+  .index('by_priority', ['priority']);
 
-// ================================
-// CREW ORCHESTRATION
-// ================================
-
+// Crew Sessions
 export const crewSessions = defineTable({
-  // Organization scope
-  organizationId: v.id('organizations'),
-  
-  // Crew identification
-  crewId: v.string(), // Unique crew identifier
-  sessionId: v.string(), // Session identifier
-  
-  // Crew configuration
-  agents: v.array(v.object({
-    agentId: v.string(),
-    role: v.string(),
-    status: v.string(),
-  })),
-  
-  // Session status
-  status: v.union(
-    v.literal('initializing'),
-    v.literal('active'),
-    v.literal('completed'),
-    v.literal('failed'),
-    v.literal('terminated')
-  ),
-  
-  // Performance tracking
-  tasksProcessed: v.number(),
-  totalProcessingTime: v.number(), // milliseconds
-  totalTokensUsed: v.number(),
-  memoryUsageBytes: v.number(),
-  
-  // Resource limits
-  maxMemoryBytes: v.number(), // 512MB per crew as per requirements
-  maxConcurrentTasks: v.number(),
-  
-  // Timestamps
-  startedAt: v.number(),
-  lastActiveAt: v.number(),
+  name: v.string(),
+  agents: v.array(v.string()),
+  tasks: v.array(v.string()),
+  status: v.string(), // 'initializing' | 'running' | 'completed' | 'failed'
+  config: v.object({
+    processType: v.string(), // 'sequential' | 'parallel' | 'hierarchical'
+    maxIterations: v.number(),
+    timeoutMs: v.number(),
+    verbose: v.boolean(),
+  }),
+  metrics: v.object({
+    totalTasks: v.number(),
+    completedTasks: v.number(),
+    failedTasks: v.number(),
+    totalDuration: v.optional(v.number()),
+    avgTaskDuration: v.optional(v.number()),
+  }),
+  result: v.optional(v.any()),
+  error: v.optional(v.string()),
+  startedAt: v.optional(v.number()),
   completedAt: v.optional(v.number()),
-  
-  // Metadata
-  metadata: v.optional(v.any()),
+  createdAt: v.number(),
 })
-  .index('by_organization', ['organizationId'])
-  .index('by_crew', ['organizationId', 'crewId'])
-  .index('by_session', ['organizationId', 'sessionId'])
-  .index('by_status', ['organizationId', 'status'])
-  .index('by_activity', ['organizationId', 'lastActiveAt']);
+  .index('by_status', ['status'])
+  .index('by_created', ['createdAt']);
+
+/**
+ * CrewAI monitoring and optimization tables
+ */
+
+export const crewAITables = {
+  // CrewAI Metrics
+  crewAIMetrics: defineTable({
+    jobId: v.string(),
+    organizationId: v.string(),
+    timestamp: v.number(),
+    metricType: v.string(),
+    metricName: v.string(),
+    value: v.number(),
+    unit: v.string(),
+    tags: v.any(),
+    metadata: v.optional(v.any()),
+  })
+    .index('by_job', ['jobId'])
+    .index('by_organization_time', ['organizationId', 'timestamp'])
+    .index('by_timestamp', ['timestamp'])
+    .index('by_metric_name', ['metricName', 'timestamp']),
+
+  // Aggregated Metrics
+  crewAIAggregatedMetrics: defineTable({
+    organizationId: v.string(),
+    period: v.string(),
+    startTime: v.number(),
+    endTime: v.number(),
+    metricName: v.string(),
+    count: v.number(),
+    sum: v.number(),
+    min: v.number(),
+    max: v.number(),
+    avg: v.number(),
+    p50: v.number(),
+    p95: v.number(),
+    p99: v.number(),
+    tags: v.any(),
+  })
+    .index('by_organization_time', ['organizationId', 'startTime'])
+    .index('by_metric_period', ['metricName', 'period', 'startTime']),
+
+  // Alerts
+  crewAIAlerts: defineTable({
+    organizationId: v.string(),
+    jobId: v.optional(v.string()),
+    severity: v.string(),
+    type: v.string(),
+    message: v.string(),
+    metric: v.string(),
+    threshold: v.number(),
+    actualValue: v.number(),
+    timestamp: v.number(),
+    acknowledged: v.boolean(),
+    acknowledgedBy: v.optional(v.string()),
+    acknowledgedAt: v.optional(v.number()),
+    resolved: v.boolean(),
+    resolvedAt: v.optional(v.number()),
+    resolvedBy: v.optional(v.string()),
+    resolution: v.optional(v.string()),
+    actions: v.array(v.string()),
+    correlationId: v.optional(v.string()),
+    metadata: v.optional(v.any()),
+    notes: v.optional(v.string()),
+    occurrenceCount: v.optional(v.number()),
+    lastOccurrence: v.optional(v.number()),
+    remediationAttempts: v.optional(v.number()),
+    lastRemediationAt: v.optional(v.number()),
+    lastRemediationSuccess: v.optional(v.boolean()),
+  })
+    .index('by_organization_status', ['organizationId', 'resolved'])
+    .index('by_organization_time', ['organizationId', 'timestamp'])
+    .index('by_organization_type', ['organizationId', 'type'])
+    .index('by_job', ['jobId']),
+
+  // Alert History
+  crewAIAlertHistory: defineTable({
+    alertId: v.string(),
+    action: v.string(),
+    userId: v.string(),
+    notes: v.optional(v.string()),
+    timestamp: v.number(),
+  })
+    .index('by_alert', ['alertId', 'timestamp']),
+
+  // Optimizations
+  crewAIOptimizations: defineTable({
+    organizationId: v.string(),
+    type: v.string(),
+    priority: v.string(),
+    title: v.string(),
+    description: v.string(),
+    expectedImpact: v.object({
+      metric: v.string(),
+      currentValue: v.number(),
+      expectedValue: v.number(),
+      improvementPercent: v.number(),
+    }),
+    implementation: v.object({
+      effort: v.string(),
+      risk: v.string(),
+      steps: v.array(v.string()),
+      duration: v.optional(v.number()),
+    }),
+    status: v.string(),
+    createdAt: v.number(),
+    completedAt: v.optional(v.number()),
+    implementationStarted: v.optional(v.number()),
+    implementationNotes: v.optional(v.string()),
+    actualImpact: v.optional(v.any()),
+    successMetrics: v.optional(v.any()),
+    resultsUpdatedAt: v.optional(v.number()),
+    estimatedValue: v.optional(v.number()),
+    estimatedCost: v.optional(v.number()),
+    estimatedROI: v.optional(v.number()),
+    paybackPeriod: v.optional(v.number()),
+    targetMetric: v.optional(v.string()),
+    relevanceScore: v.optional(v.number()),
+    expectedGapReduction: v.optional(v.number()),
+    tactics: v.optional(v.array(v.string())),
+  })
+    .index('by_organization_status', ['organizationId', 'status'])
+    .index('by_organization_priority', ['organizationId', 'priority'])
+    .index('by_type', ['type', 'status']),
+
+  // Cost Tracking
+  crewAICostTracking: defineTable({
+    jobId: v.string(),
+    organizationId: v.string(),
+    timestamp: v.number(),
+    provider: v.string(),
+    model: v.string(),
+    inputTokens: v.number(),
+    outputTokens: v.number(),
+    inputCost: v.number(),
+    outputCost: v.number(),
+    totalCost: v.number(),
+    productCount: v.number(),
+    costPerCategorization: v.number(),
+    cacheHits: v.optional(v.number()),
+  })
+    .index('by_job', ['jobId'])
+    .index('by_organization_time', ['organizationId', 'timestamp'])
+    .index('by_provider_model', ['provider', 'model', 'timestamp']),
+
+  // Monthly Reports
+  crewAIMonthlyReports: defineTable({
+    organizationId: v.string(),
+    month: v.number(),
+    year: v.number(),
+    stats: v.any(),
+    comparison: v.any(),
+    trends: v.any(),
+    insights: v.any(),
+    createdAt: v.number(),
+  })
+    .index('by_organization_period', ['organizationId', 'year', 'month']),
+
+  // A/B Tests
+  crewAIABTests: defineTable({
+    organizationId: v.string(),
+    optimizationId: v.string(),
+    config: v.any(),
+    status: v.string(),
+    createdAt: v.number(),
+    completedAt: v.optional(v.number()),
+    results: v.optional(v.any()),
+  })
+    .index('by_organization_status', ['organizationId', 'status'])
+    .index('by_optimization', ['optimizationId']),
+
+  // Learnings
+  crewAILearnings: defineTable({
+    organizationId: v.string(),
+    optimizationType: v.string(),
+    learnings: v.any(),
+    createdAt: v.number(),
+  })
+    .index('by_organization_type', ['organizationId', 'optimizationType']),
+
+  // Remediation Log
+  crewAIRemediationLog: defineTable({
+    alertId: v.string(),
+    action: v.string(),
+    success: v.boolean(),
+    result: v.string(),
+    timestamp: v.number(),
+  })
+    .index('by_alert', ['alertId', 'timestamp']),
+};

@@ -318,7 +318,6 @@ describe('OrganizationDashboard', () => {
 
   describe('Empty States', () => {
     it('should show empty state for projects', () => {
-      const mockUseQuery = useQuery as jest.Mock;
       mockUseQuery.mockImplementation((query, args) => {
         void args;
         if (query.toString().includes('getOrganizationBySlug')) {
@@ -345,7 +344,6 @@ describe('OrganizationDashboard', () => {
     });
 
     it('should show empty state for recent activity', () => {
-      const mockUseQuery = useQuery as jest.Mock;
       mockUseQuery.mockImplementation((query, args) => {
         void args;
         if (query.toString().includes('getOrganizationBySlug')) {
@@ -374,7 +372,6 @@ describe('OrganizationDashboard', () => {
 
   describe('Error Handling', () => {
     it('should handle Convex query errors gracefully', async () => {
-      const mockUseQuery = useQuery as jest.Mock;
       const convexError = new Error('Convex query failed');
 
       mockUseQuery.mockImplementation((query) => {
@@ -389,7 +386,6 @@ describe('OrganizationDashboard', () => {
     });
 
     it('should handle missing data gracefully', () => {
-      const mockUseQuery = useQuery as jest.Mock;
       mockUseQuery.mockImplementation((query, args) => {
         void args;
         if (query.toString().includes('getOrganizationBySlug')) {
