@@ -63,9 +63,11 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .turbo
-          key: turbo-${{ github.sha }}
+          key: turbo-${{ hashFiles('turbo.json', 'package-lock.json') }}-${{ github.sha }}
           restore-keys: |
-            turbo-
+            turbo-${{ hashFiles('turbo.json', 'package-lock.json') }}-
+            turbo-${{ github.base_ref }}-
+            turbo-main-
 
   lint:
     name: Lint
@@ -94,9 +96,11 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .turbo
-          key: turbo-${{ github.sha }}
+          key: turbo-${{ hashFiles('turbo.json', 'package-lock.json') }}-${{ github.sha }}
           restore-keys: |
-            turbo-
+            turbo-${{ hashFiles('turbo.json', 'package-lock.json') }}-
+            turbo-${{ github.base_ref }}-
+            turbo-main-
 
       - name: Install dependencies if cache miss
         run: |
@@ -144,9 +148,11 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .turbo
-          key: turbo-${{ github.sha }}
+          key: turbo-${{ hashFiles('turbo.json', 'package-lock.json') }}-${{ github.sha }}
           restore-keys: |
-            turbo-
+            turbo-${{ hashFiles('turbo.json', 'package-lock.json') }}-
+            turbo-${{ github.base_ref }}-
+            turbo-main-
 
       - name: Install dependencies if cache miss
         run: |
@@ -198,9 +204,11 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .turbo
-          key: turbo-${{ github.sha }}
+          key: turbo-${{ hashFiles('turbo.json', 'package-lock.json') }}-${{ github.sha }}
           restore-keys: |
-            turbo-
+            turbo-${{ hashFiles('turbo.json', 'package-lock.json') }}-
+            turbo-${{ github.base_ref }}-
+            turbo-main-
 
       - name: Install dependencies if cache miss
         run: |
@@ -284,9 +292,11 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .turbo
-          key: turbo-${{ github.sha }}
+          key: turbo-${{ hashFiles('turbo.json', 'package-lock.json') }}-${{ github.sha }}
           restore-keys: |
-            turbo-
+            turbo-${{ hashFiles('turbo.json', 'package-lock.json') }}-
+            turbo-${{ github.base_ref }}-
+            turbo-main-
 
       - name: Install dependencies if cache miss
         run: |
@@ -418,9 +428,11 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .turbo
-          key: turbo-${{ github.sha }}
+          key: turbo-${{ hashFiles('turbo.json', 'package-lock.json') }}-${{ github.sha }}
           restore-keys: |
-            turbo-
+            turbo-${{ hashFiles('turbo.json', 'package-lock.json') }}-
+            turbo-${{ github.base_ref }}-
+            turbo-main-
 
       - name: Install dependencies if cache miss
         run: |
