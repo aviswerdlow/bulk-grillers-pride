@@ -8,7 +8,13 @@
     },
     "declaration": false,
     "declarationMap": false,
-    "noEmit": true
+    "noEmit": true,
+    // TypeScript optimization flags
+    "incremental": true,
+    "tsBuildInfoFile": ".tsbuildinfo",
+    "disableSourceOfProjectReferenceRedirect": true,
+    "disableSolutionSearching": true,
+    "disableReferencedProjectLoad": true
   },
   "include": [
     "**/*.ts",

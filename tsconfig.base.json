@@ -38,7 +38,12 @@
     "isolatedModules": true,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
-    "incremental": true
+    "incremental": true,
+    // TypeScript optimization flags
+    "moduleDetection": "force",
+    "allowImportingTsExtensions": false,
+    "noEmitOnError": false,
+    "assumeChangesOnlyAffectDirectDependencies": true
   },
   "exclude": [
     "node_modules",

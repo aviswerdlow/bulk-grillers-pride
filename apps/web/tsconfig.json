@@ -22,7 +22,13 @@
     "alwaysStrict": false,
     "noUncheckedIndexedAccess": false,
     "checkJs": false,
-    "jsx": "preserve"
+    "jsx": "preserve",
+    // TypeScript optimization flags
+    "incremental": true,
+    "tsBuildInfoFile": ".tsbuildinfo",
+    "disableSourceOfProjectReferenceRedirect": true,
+    "disableSolutionSearching": true,
+    "disableReferencedProjectLoad": true
   },
   "include": [
     "next-env.d.ts",
