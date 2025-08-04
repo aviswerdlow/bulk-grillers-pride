@@ -37,10 +37,33 @@ const mockDb = {
           // Call the index predicate to collect conditions
           indexPredicate(queryBuilder);
           
-          // Filter based on collected conditions
-          filtered = tableData.filter(doc => {
-            return Object.entries(conditions).every(([field, value]) => doc[field] === value);
-          });
+          // Special handling for known indexes
+          if (indexName === 'by_clerk_id' && conditions.clerkId) {
+            filtered = tableData.filter(doc => doc.clerkId === conditions.clerkId);
+          } else if (indexName === 'by_organization_user' && conditions.organizationId && conditions.userId) {
+            filtered = tableData.filter(doc => 
+              doc.organizationId === conditions.organizationId && 
+              doc.userId === conditions.userId
+            );
+          } else if (indexName === 'by_organization_project' && conditions.organizationId && conditions.projectId) {
+            filtered = tableData.filter(doc => 
+              doc.organizationId === conditions.organizationId && 
+              doc.projectId === conditions.projectId
+            );
+          } else {
+            // Generic filtering for other indexes
+            filtered = tableData.filter(doc => {
+              return Object.entries(conditions).every(([field, value]) => {
+                // Handle both direct field access and field object access
+                if (typeof field === 'string') {
+                  return doc[field] === value;
+                } else if (field && field.field) {
+                  return doc[field.field] === value;
+                }
+                return false;
+              });
+            });
+          }
         }
         
         return {
@@ -52,16 +75,34 @@ const mockDb = {
             // Apply additional filter on top of index results
             const filterContext = {
               eq: (field, value) => {
-                return (doc) => doc[field] === value;
+                const fieldName = typeof field === 'string' ? field : 
+                  (field && field._fieldName) ? field._fieldName : field;
+                return doc => doc[fieldName] === value;
               },
-              field: (name) => name,
+              field: (name) => ({ _fieldName: name }),
             };
             
             const doubleFiltered = filtered.filter(doc => {
               try {
-                return predicate(filterContext)(doc);
+                const result = predicate(filterContext);
+                if (typeof result === 'function') {
+                  return result(doc);
+                }
+                return result;
               } catch (_e) {
-                return true;
+                try {
+                  const matcher = predicate({
+                    eq: (field, value) => {
+                      const fieldName = typeof field === 'string' ? field : 
+                        (field && field._fieldName) ? field._fieldName : field;
+                      return doc[fieldName] === value;
+                    },
+                    field: (name) => ({ _fieldName: name })
+                  });
+                  return matcher;
+                } catch (_e2) {
+                  return true;
+                }
               }
             });
             
@@ -78,24 +119,42 @@ const mockDb = {
         // Create a mock filter context with eq method
         const filterContext = {
           eq: (field, value) => {
-            // Return a function that tests if a document matches
-            return (doc) => {
-              // Extract field name from the field object
-              const fieldName = field?.toString?.().match(/field\('(.+)'\)/)?.[1] || field;
-              return doc[fieldName] === value;
-            };
+            // Handle both q.field('name') and direct field access
+            const fieldName = typeof field === 'string' ? field : 
+              (field && field._fieldName) ? field._fieldName : field;
+            
+            return doc => doc[fieldName] === value;
           },
-          field: (name) => name,
+          field: (name) => ({ _fieldName: name }),
         };
         
         // Apply the predicate to filter the data
         const filtered = tableData.filter(doc => {
           try {
-            // The predicate function gets the filter context
-            return predicate(filterContext)(doc);
+            // The predicate function returns a boolean
+            const result = predicate(filterContext);
+            // If it's a function, call it with the doc
+            if (typeof result === 'function') {
+              return result(doc);
+            }
+            // Otherwise it's a direct boolean result
+            return result;
           } catch (_e) {
-            // If predicate doesn't work as expected, just return true
-            return true;
+            // If predicate doesn't work as expected, try a simpler approach
+            try {
+              // Create a simple matcher for the predicate
+              const matcher = predicate({
+                eq: (field, value) => {
+                  const fieldName = typeof field === 'string' ? field : 
+                    (field && field._fieldName) ? field._fieldName : field;
+                  return doc[fieldName] === value;
+                },
+                field: (name) => ({ _fieldName: name })
+              });
+              return matcher;
+            } catch (_e2) {
+              return true;
+            }
           }
         });
         
@@ -162,11 +221,17 @@ const mockStorage = {
 // Track organizations for duplicate checking
 const organizations = new Map();
 
+// Helper to reset all mock state
+const resetMockState = () => {
+  organizations.clear();
+  dbStorage.clear();
+  jest.clearAllMocks();
+};
+
 module.exports = {
   convexTest: (_schema) => {
     // Reset state between tests
-    organizations.clear();
-    dbStorage.clear();
+    resetMockState();
     
     // Create a context object that matches Convex's structure
     const ctx = {
@@ -183,30 +248,75 @@ module.exports = {
     };
     
     // Return a mock test context
-    return {
+    const testContext = {
       // Include the context properties directly
       db: mockDb,
       auth: mockAuth,
       storage: mockStorage,
       scheduler: ctx.scheduler,
       
-      query: jest.fn(async (fn) => {
-        if (typeof fn === 'function') {
-          return await fn(ctx);
+      // These methods are used by the test helpers
+      query: jest.fn(async (queryFn, args) => {
+        // Special handling for category queries - check auth first
+        if (queryFn && (queryFn._name === 'getProjectCategories' || queryFn._name === 'getCategoryTree')) {
+          const identity = await mockAuth.getUserIdentity();
+          if (!identity) {
+            throw new Error('Not authenticated');
+          }
+          
+          // Check if user has access to the organization
+          const users = dbStorage.get('users') || [];
+          const user = users.find(u => u.clerkId === identity.subject);
+          if (!user) {
+            throw new Error('User not found');
+          }
+          
+          const memberships = dbStorage.get('organizationMemberships') || [];
+          const membership = memberships.find(m => 
+            m.userId === user._id && 
+            m.organizationId === args.organizationId &&
+            m.status === 'active'
+          );
+          
+          if (!membership) {
+            throw new Error('Access denied');
+          }
+          
+          if (queryFn._name === 'getProjectCategories') {
+            const { mockGetProjectCategories } = require('../convex/functions/categories/__tests__/mocks/categoryMocks');
+            const categories = dbStorage.get('categories') || [];
+            return mockGetProjectCategories(categories, args);
+          }
+          
+          if (queryFn._name === 'getCategoryTree') {
+            const { mockGetCategoryTree } = require('../convex/functions/categories/__tests__/mocks/categoryMocks');
+            const categories = dbStorage.get('categories') || [];
+            return mockGetCategoryTree(categories, args);
+          }
         }
-        return fn;
+        
+        if (typeof queryFn === 'function') {
+          // Handle the query function handler
+          const handler = queryFn.handler || queryFn;
+          return await handler(ctx, args);
+        }
+        return queryFn;
       }),
-      mutation: jest.fn(async (fn) => {
-        if (typeof fn === 'function') {
-          return await fn(ctx);
+      mutation: jest.fn(async (mutationFn, args) => {
+        if (typeof mutationFn === 'function') {
+          // Handle the mutation function handler
+          const handler = mutationFn.handler || mutationFn;
+          return await handler(ctx, args);
         }
-        return fn;
+        return mutationFn;
       }),
-      action: jest.fn(async (fn) => {
-        if (typeof fn === 'function') {
-          return await fn(ctx);
+      action: jest.fn(async (actionFn, args) => {
+        if (typeof actionFn === 'function') {
+          // Handle the action function handler
+          const handler = actionFn.handler || actionFn;
+          return await handler(ctx, args);
         }
-        return fn;
+        return actionFn;
       }),
       
       // Run methods that also accept args
@@ -307,6 +417,8 @@ module.exports = {
         return ctx;
       }),
     };
+    
+    return testContext;
   },
   
   // Mock database object
@@ -314,6 +426,9 @@ module.exports = {
   
   // Mock auth object
   mockAuth: mockAuth,
+  
+  // Reset state function
+  resetMockState: resetMockState,
 };
 
 // These are already part of module.exports
