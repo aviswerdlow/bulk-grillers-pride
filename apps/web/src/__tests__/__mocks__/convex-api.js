@@ -104,3 +104,6 @@ export const api = {
     },
   },
 };
+
+// The module should have a default export that contains functions directly
+export default api;
