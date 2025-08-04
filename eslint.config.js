@@ -159,6 +159,25 @@ export default [
       'jsx-a11y/label-has-associated-control': 'off',
     },
   },
+  
+  // CommonJS configuration files
+  {
+    files: ['.lintstagedrc.js', 'jest.config.js', '*.config.js', 'babel.config.js'],
+    languageOptions: {
+      sourceType: 'commonjs',
+      globals: {
+        module: true,
+        require: true,
+        __dirname: true,
+        __filename: true,
+        process: true,
+      },
+    },
+    rules: {
+      '@typescript-eslint/no-require-imports': 'off',
+      'no-undef': 'off', // CommonJS globals are defined above
+    },
+  },
 
   // Prettier should be last to override conflicting rules
   prettier,
