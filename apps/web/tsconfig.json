@@ -22,7 +22,15 @@
     "alwaysStrict": false,
     "noUncheckedIndexedAccess": false,
     "checkJs": false,
-    "jsx": "preserve"
+    "jsx": "preserve",
+    // TypeScript optimization flags
+    "incremental": true,
+    "tsBuildInfoFile": ".tsbuildinfo",
+    "disableSourceOfProjectReferenceRedirect": true,
+    "disableSolutionSearching": true,
+    "disableReferencedProjectLoad": true,
+    "moduleDetection": "force",
+    "assumeChangesOnlyAffectDirectDependencies": true
   },
   "include": [
     "next-env.d.ts",
@@ -35,5 +43,5 @@
     "src/types/jest-dom.d.ts",
     "src/types/**/*.d.ts"
   ],
-  "exclude": ["node_modules", "coverage", ".next/server"]
+  "exclude": ["node_modules", "coverage", ".next/server", ".tsbuildinfo"]
 }
