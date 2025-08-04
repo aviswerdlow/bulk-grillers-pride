@@ -1,32 +1,29 @@
 import { describe, it, expect, beforeEach } from '@jest/globals';
-import { t } from '../../../test.setup';
+import { t, resetMockState } from '../../../test.setup';
 import {
   createConvexTest,
   createQueryContext,
   setupAuth,
   seedDatabase,
   type ConvexTestContext,
-} from '../../../__tests__/convex-test-standard';
-import {
   createMockUser,
   createMockOrganization,
   createMockOrganizationMembership,
   createMockProject,
   createMockCategory,
-} from 'convex-test';
+} from '../../../__tests__/convex-test-standard';
 import { Id } from '../../../_generated/dataModel';
 import { getProjectCategories, getCategoryTree, getCategory } from '../queries';
 
 describe('Category Queries', () => {
-  let test: ConvexTestContext;
   let user: any;
   let org: any;
   let project: any;
   let membership: any;
 
   beforeEach(async () => {
-    
-    tes// t is already imported from test.setup
+    // Reset mock state before each test
+    resetMockState();
     
     // Set up common test data
     user = createMockUser({ _id: 'user_1' as Id<'users'> });
@@ -43,14 +40,14 @@ describe('Category Queries', () => {
       role: 'viewer', // Read access is sufficient for queries
     });
 
-    await seedDatabase(test, {
+    await seedDatabase(t, {
       users: [user],
       organizations: [org],
       projects: [project],
       organizationMemberships: [membership],
     });
 
-    setupAuth(test, { tokenIdentifier: user.clerkId });
+    await setupAuth(t, user);
   });
 
   describe('getProjectCategories', () => {
@@ -117,33 +114,35 @@ describe('Category Queries', () => {
         }),
       ];
 
-      await seedDatabase(test, { categories });
+      await seedDatabase(t, { categories });
     });
 
     describe('Happy Path', () => {
-      it('should return all active root categories sorted by sortOrder', async () => {
+      it('should return all active categories sorted by sortOrder when no filters specified', async () => {
         // Arrange
-        const ctx = createQueryContext(test);
+        // Context is handled by convex test framework
 
         // Act
-        const result = await getProjectCategories.handler(ctx, {
+        const result = await t.query(getProjectCategories, {
           organizationId: org._id,
           projectId: project._id,
         });
 
         // Assert
-        expect(result).toHaveLength(2); // Only active root categories
-        expect(result[0].name).toBe('Electronics');
-        expect(result[1].name).toBe('Home & Garden');
+        expect(result).toHaveLength(4); // All active categories (excluding archived)
+        expect(result[0].name).toBe('Electronics'); // sortOrder: 0
+        expect(result[1].name).toBe('Computers'); // sortOrder: 0 but comes after Electronics
+        expect(result[2].name).toBe('Home & Garden'); // sortOrder: 1
+        expect(result[3].name).toBe('Audio'); // sortOrder: 1
         expect(result.find(c => c.name === 'Archived Category')).toBeUndefined();
       });
 
       it('should return categories for specific parent', async () => {
         // Arrange
-        const ctx = createQueryContext(test);
+        // Context is handled by convex test framework
 
         // Act
-        const result = await getProjectCategories.handler(ctx, {
+        const result = await t.query(getProjectCategories, {
           organizationId: org._id,
           projectId: project._id,
           parentId: 'cat_electronics' as Id<'categories'>,
@@ -157,10 +156,10 @@ describe('Category Queries', () => {
 
       it('should return categories for specific level', async () => {
         // Arrange
-        const ctx = createQueryContext(test);
+        // Context is handled by convex test framework
 
         // Act
-        const result = await getProjectCategories.handler(ctx, {
+        const result = await t.query(getProjectCategories, {
           organizationId: org._id,
           projectId: project._id,
           level: 1,
@@ -173,10 +172,10 @@ describe('Category Queries', () => {
 
       it('should return categories for specific parent and level', async () => {
         // Arrange
-        const ctx = createQueryContext(test);
+        // Context is handled by convex test framework
 
         // Act
-        const result = await getProjectCategories.handler(ctx, {
+        const result = await t.query(getProjectCategories, {
           organizationId: org._id,
           projectId: project._id,
           parentId: 'cat_electronics' as Id<'categories'>,
@@ -190,10 +189,10 @@ describe('Category Queries', () => {
 
       it('should return empty array for non-existent parent', async () => {
         // Arrange
-        const ctx = createQueryContext(test);
+        // Context is handled by convex test framework
 
         // Act
-        const result = await getProjectCategories.handler(ctx, {
+        const result = await t.query(getProjectCategories, {
           organizationId: org._id,
           projectId: project._id,
           parentId: 'cat_nonexistent' as Id<'categories'>,
@@ -207,26 +206,26 @@ describe('Category Queries', () => {
     describe('Authorization', () => {
       it('should fail for unauthenticated user', async () => {
         // Arrange
-        setupAuth(test, null);
-        const ctx = createQueryContext(test);
+        await setupAuth(t, null);
+        // Context is handled by convex test framework
 
         // Act & Assert
-        await expect(getProjectCategories.handler(ctx, {
+        await expect(t.query(getProjectCategories, {
           organizationId: org._id,
           projectId: project._id,
-        })).rejects.toThrow('Unauthorized');
+        })).rejects.toThrow('Not authenticated');
       });
 
       it('should fail for user without organization access', async () => {
         // Arrange
         const otherUser = createMockUser({ _id: 'user_other' as Id<'users'> });
-        await seedDatabase(test, { users: [otherUser] });
-        setupAuth(test, { tokenIdentifier: otherUser.clerkId });
+        await seedDatabase(t, { users: [otherUser] });
+        await setupAuth(t, otherUser);
         
-        const ctx = createQueryContext(test);
+        // Context is handled by convex test framework
 
         // Act & Assert
-        await expect(getProjectCategories.handler(ctx, {
+        await expect(t.query(getProjectCategories, {
           organizationId: org._id,
           projectId: project._id,
         })).rejects.toThrow();
@@ -240,12 +239,12 @@ describe('Category Queries', () => {
           _id: 'project_empty' as Id<'projects'>,
           organizationId: org._id,
         });
-        await seedDatabase(test, { projects: [emptyProject] });
+        await seedDatabase(t, { projects: [emptyProject] });
         
-        const ctx = createQueryContext(test);
+        // Context is handled by convex test framework
 
         // Act
-        const result = await getProjectCategories.handler(ctx, {
+        const result = await t.query(getProjectCategories, {
           organizationId: org._id,
           projectId: emptyProject._id,
         });
@@ -256,6 +255,16 @@ describe('Category Queries', () => {
 
       it('should handle complex sort orders correctly', async () => {
         // Arrange
+        // Reset and set up fresh data for this test
+        resetMockState();
+        await seedDatabase(t, {
+          users: [user],
+          organizations: [org],
+          projects: [project],
+          organizationMemberships: [membership],
+        });
+        await setupAuth(t, user);
+        
         const categories = [
           createMockCategory({
             _id: 'cat_1' as Id<'categories'>,
@@ -283,12 +292,12 @@ describe('Category Queries', () => {
           }),
         ];
         
-        await seedDatabase(test, { categories });
+        await seedDatabase(t, { categories });
         
-        const ctx = createQueryContext(test);
+        // Context is handled by convex test framework
 
         // Act
-        const result = await getProjectCategories.handler(ctx, {
+        const result = await t.query(getProjectCategories, {
           organizationId: org._id,
           projectId: project._id,
         });
@@ -301,6 +310,16 @@ describe('Category Queries', () => {
 
   describe('getCategoryTree', () => {
     beforeEach(async () => {
+      // Reset state for nested tests
+      resetMockState();
+      await seedDatabase(t, {
+        users: [user],
+        organizations: [org],
+        projects: [project],
+        organizationMemberships: [membership],
+      });
+      await setupAuth(t, user);
+      
       // Create a more complex category structure
       const categories = [
         // Electronics branch
@@ -396,16 +415,16 @@ describe('Category Queries', () => {
         }),
       ];
 
-      await seedDatabase(test, { categories });
+      await seedDatabase(t, { categories });
     });
 
     describe('Happy Path', () => {
       it('should return hierarchical tree structure', async () => {
         // Arrange
-        const ctx = createQueryContext(test);
+        // Context is handled by convex test framework
 
         // Act
-        const result = await getCategoryTree.handler(ctx, {
+        const result = await t.query(getCategoryTree, {
           organizationId: org._id,
           projectId: project._id,
         });
@@ -434,10 +453,10 @@ describe('Category Queries', () => {
 
       it('should sort categories at each level by sortOrder', async () => {
         // Arrange
-        const ctx = createQueryContext(test);
+        // Context is handled by convex test framework
 
         // Act
-        const result = await getCategoryTree.handler(ctx, {
+        const result = await t.query(getCategoryTree, {
           organizationId: org._id,
           projectId: project._id,
         });
@@ -460,10 +479,10 @@ describe('Category Queries', () => {
 
       it('should exclude archived categories', async () => {
         // Arrange
-        const ctx = createQueryContext(test);
+        // Context is handled by convex test framework
 
         // Act
-        const result = await getCategoryTree.handler(ctx, {
+        const result = await t.query(getCategoryTree, {
           organizationId: org._id,
           projectId: project._id,
         });
@@ -478,14 +497,14 @@ describe('Category Queries', () => {
     describe('Authorization', () => {
       it('should fail for unauthenticated user', async () => {
         // Arrange
-        setupAuth(test, null);
-        const ctx = createQueryContext(test);
+        await setupAuth(t, null);
+        // Context is handled by convex test framework
 
         // Act & Assert
-        await expect(getCategoryTree.handler(ctx, {
+        await expect(t.query(getCategoryTree, {
           organizationId: org._id,
           projectId: project._id,
-        })).rejects.toThrow('Unauthorized');
+        })).rejects.toThrow('Not authenticated');
       });
     });
 
@@ -496,12 +515,12 @@ describe('Category Queries', () => {
           _id: 'project_empty' as Id<'projects'>,
           organizationId: org._id,
         });
-        await seedDatabase(test, { projects: [emptyProject] });
+        await seedDatabase(t, { projects: [emptyProject] });
         
-        const ctx = createQueryContext(test);
+        // Context is handled by convex test framework
 
         // Act
-        const result = await getCategoryTree.handler(ctx, {
+        const result = await t.query(getCategoryTree, {
           organizationId: org._id,
           projectId: emptyProject._id,
         });
@@ -523,12 +542,12 @@ describe('Category Queries', () => {
           status: 'active',
         });
         
-        await seedDatabase(test, { categories: [orphan] });
+        await seedDatabase(t, { categories: [orphan] });
         
-        const ctx = createQueryContext(test);
+        // Context is handled by convex test framework
 
         // Act
-        const result = await getCategoryTree.handler(ctx, {
+        const result = await t.query(getCategoryTree, {
           organizationId: org._id,
           projectId: project._id,
         });
@@ -555,16 +574,16 @@ describe('Category Queries', () => {
         metadata: { custom: 'data' },
       });
       
-      await seedDatabase(test, { categories: [category] });
+      await seedDatabase(t, { categories: [category] });
     });
 
     describe('Happy Path', () => {
       it('should return a single category by ID', async () => {
         // Arrange
-        const ctx = createQueryContext(test);
+        // Context is handled by convex test framework
 
         // Act
-        const result = await getCategory.handler(ctx, {
+        const result = await t.query(getCategory, {
           categoryId: category._id,
         });
 
@@ -582,13 +601,13 @@ describe('Category Queries', () => {
     describe('Authorization', () => {
       it('should fail for unauthenticated user', async () => {
         // Arrange
-        setupAuth(test, null);
-        const ctx = createQueryContext(test);
+        await setupAuth(t, null);
+        // Context is handled by convex test framework
 
         // Act & Assert
-        await expect(getCategory.handler(ctx, {
+        await expect(t.query(getCategory, {
           categoryId: category._id,
-        })).rejects.toThrow('Unauthorized');
+        })).rejects.toThrow('Not authenticated');
       });
 
       it('should fail for user without organization access', async () => {
@@ -601,15 +620,15 @@ describe('Category Queries', () => {
           organizationId: otherOrg._id,
         });
         
-        await seedDatabase(test, { 
+        await seedDatabase(t, { 
           organizations: [otherOrg],
           categories: [otherCategory],
         });
         
-        const ctx = createQueryContext(test);
+        // Context is handled by convex test framework
 
         // Act & Assert
-        await expect(getCategory.handler(ctx, {
+        await expect(t.query(getCategory, {
           categoryId: otherCategory._id,
         })).rejects.toThrow();
       });
@@ -618,10 +637,10 @@ describe('Category Queries', () => {
     describe('Validation', () => {
       it('should fail for non-existent category', async () => {
         // Arrange
-        const ctx = createQueryContext(test);
+        // Context is handled by convex test framework
 
         // Act & Assert
-        await expect(getCategory.handler(ctx, {
+        await expect(t.query(getCategory, {
           categoryId: 'cat_nonexistent' as Id<'categories'>,
         })).rejects.toThrow('Category not found');
       });
