@@ -26,10 +26,10 @@ export const testNewTables = query(async (ctx) => {
       tablesExist: results,
       message: 'Schema test completed'
     };
-  } catch (error: any) {
+  } catch (error) {
     return {
       success: false,
-      error: error.message
+      error: error instanceof Error ? error.message : 'Unknown error'
     };
   }
 });

@@ -37,9 +37,9 @@ export const validateSchemaDeployment = query({
       try {
         await ctx.db.query(table).take(1);
         validation.checks[table] = true;
-      } catch (error: any) {
+      } catch (error) {
         validation.passed = false;
-        validation.errors.push(`Table ${table} not found: ${error.message}`);
+        validation.errors.push(`Table ${table} not found: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     }
 
@@ -112,7 +112,7 @@ export const validateTransactionIntegrity = query({
         }
 
         // 2. Check for incomplete operations
-        const incompleteOps = txn.operations.filter(op => op.status === 'pending');
+        const incompleteOps = txn.operations.filter((op: any) => op.status === 'pending');
         if (txn.status === 'completed' && incompleteOps.length > 0) {
           validation.issues.push({
             transactionId: txn.transactionId,
@@ -150,10 +150,10 @@ export const validateTransactionIntegrity = query({
       }
 
       return validation;
-    } catch (error: any) {
+    } catch (error) {
       return {
         passed: false,
-        error: error.message,
+        error: error instanceof Error ? error.message : 'Unknown error',
         totalTransactions: 0,
         issues: [],
         stats: validation.stats,
@@ -225,7 +225,7 @@ export const validateCategoryAssignmentPreservation = query({
         // Verify transaction exists
         const transaction = await ctx.db
           .query('cascadeTransactions')
-          .withIndex('by_transaction_id', (q) => 
+          .withIndex('by_transaction_id', (q: any) => 
             q.eq('transactionId', entry.cascadeTransactionId)
           )
           .first();
@@ -242,7 +242,7 @@ export const validateCategoryAssignmentPreservation = query({
 
         // Check if category still exists (for recoverable entries)
         if (entry.recoverable) {
-          const category = await ctx.db.get(entry.categoryId);
+          const category = await ctx.db.get(entry.categoryId as any);
           if (!category) {
             validation.issues.push({
               assignmentId: entry._id,
@@ -255,10 +255,10 @@ export const validateCategoryAssignmentPreservation = query({
       }
 
       return validation;
-    } catch (error: any) {
+    } catch (error) {
       return {
         passed: false,
-        error: error.message,
+        error: error instanceof Error ? error.message : 'Unknown error',
         totalInTrash: 0,
         recoverableCount: 0,
         issues: [],
@@ -360,10 +360,10 @@ export const validateImageCleanupQueue = query({
       }
 
       return validation;
-    } catch (error: any) {
+    } catch (error) {
       return {
         passed: false,
-        error: error.message,
+        error: error instanceof Error ? error.message : 'Unknown error',
         stats: validation.stats,
         issues: [],
       };
