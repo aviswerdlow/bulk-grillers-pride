@@ -1,6 +1,5 @@
 // Mock for Convex generated API
-module.exports = {
-  api: {
+const api = {
   functions: {
     auth: {
       users: {
@@ -94,6 +93,15 @@ module.exports = {
     },
     dashboard: {
       getDashboardStats: 'dashboard.getDashboardStats',
+      dashboard: {
+        getDashboardStats: 'dashboard.dashboard.getDashboardStats',
+        getRecentActivity: 'dashboard.dashboard.getRecentActivity',
+      },
+    },
+    activityLogs: {
+      activityLogs: {
+        getRecentActivity: 'activityLogs.activityLogs.getRecentActivity',
+      },
     },
     accessibility: {
       preferences: {
@@ -102,5 +110,6 @@ module.exports = {
       },
     },
   },
-  },
 };
+
+module.exports = { api };

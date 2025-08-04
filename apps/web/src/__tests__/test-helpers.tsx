@@ -12,10 +12,104 @@ export const mockUseQuery = convexUseQuery as jest.MockedFunction<typeof convexU
 export const mockUseMutation = convexUseMutation as jest.MockedFunction<typeof convexUseMutation>;
 export const mockUseAction = convexUseAction as jest.MockedFunction<typeof convexUseAction>;
 
-// Set default mock implementations
-mockUseQuery.mockImplementation((query: any) => {
-  // Return appropriate defaults for accessibility preferences
-  if (query?.toString().includes('getAccessibilityPreferences')) {
+// Comprehensive mock implementations for dashboard and auth
+const mockDashboardStats = {
+  totalProducts: 150,
+  totalCategories: 25,
+  activeProjects: 5,
+  recentActivityCount: 10,
+  organizationStats: {
+    totalMembers: 8,
+    totalProjects: 5,
+    activeProducts: 120,
+    storageUsed: 1024 * 1024 * 500, // 500MB
+  }
+};
+
+const mockRecentActivity = [
+  {
+    _id: 'activity_1',
+    _creationTime: Date.now() - 1000 * 60 * 5, // 5 minutes ago
+    type: 'product.created',
+    entityId: 'prod_123',
+    entityType: 'product',
+    entityName: 'Test Product',
+    userId: 'user_123',
+    userName: 'Test User',
+    organizationId: 'org_123',
+    timestamp: Date.now() - 1000 * 60 * 5,
+    metadata: {}
+  },
+  {
+    _id: 'activity_2',
+    _creationTime: Date.now() - 1000 * 60 * 30, // 30 minutes ago
+    type: 'category.updated',
+    entityId: 'cat_456',
+    entityType: 'category',
+    entityName: 'Electronics',
+    userId: 'user_456',
+    userName: 'Another User',
+    organizationId: 'org_123',
+    timestamp: Date.now() - 1000 * 60 * 30,
+    metadata: {}
+  }
+];
+
+const mockProjects = [
+  {
+    _id: 'proj_123',
+    _creationTime: Date.now(),
+    name: 'Main Project',
+    slug: 'main-project',
+    organizationId: 'org_123',
+    status: 'active',
+    settings: {},
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  }
+];
+
+const mockProducts = [
+  {
+    _id: 'prod_123',
+    _creationTime: Date.now(),
+    handle: 'test-product',
+    title: 'Test Product',
+    description: 'A test product',
+    vendor: 'Test Vendor',
+    productType: 'Electronics',
+    status: 'active',
+    categories: [],
+    tags: [],
+    organizationId: 'org_123',
+    projectId: 'proj_123',
+    createdBy: 'user_123',
+    updatedAt: Date.now(),
+  }
+];
+
+const mockOrganization = {
+  _id: 'org_123',
+  _creationTime: Date.now(),
+  name: 'Test Organization',
+  slug: 'test-org',
+  clerkOrganizationId: 'org_clerk_123',
+  status: 'active',
+  settings: {
+    defaultProductStatus: 'active',
+    requireProductApproval: false,
+    enableAiCategorization: true,
+  },
+  createdAt: Date.now(),
+  updatedAt: Date.now(),
+};
+
+// Set default mock implementations with comprehensive data
+mockUseQuery.mockImplementation((query: any, args?: any) => {
+  const queryString = query?.toString() || '';
+  
+  // Accessibility preferences
+  if (queryString.includes('getAccessibilityPreferences')) {
     return {
       preferences: {
         reducedMotion: false,
@@ -28,6 +122,50 @@ mockUseQuery.mockImplementation((query: any) => {
       }
     };
   }
+  
+  // Dashboard stats
+  if (queryString.includes('getDashboardStats')) {
+    return mockDashboardStats;
+  }
+  
+  // Recent activity
+  if (queryString.includes('getRecentActivity')) {
+    return mockRecentActivity;
+  }
+  
+  // Organizations
+  if (queryString.includes('getOrganization')) {
+    return mockOrganization;
+  }
+  
+  if (queryString.includes('getOrganizations')) {
+    return [mockOrganization];
+  }
+  
+  // Projects
+  if (queryString.includes('getProjects')) {
+    return mockProjects;
+  }
+  
+  if (queryString.includes('getProject')) {
+    return mockProjects[0];
+  }
+  
+  // Products
+  if (queryString.includes('getProducts')) {
+    return mockProducts;
+  }
+  
+  if (queryString.includes('getProduct')) {
+    return mockProducts[0];
+  }
+  
+  // Categories
+  if (queryString.includes('getCategories')) {
+    return [];
+  }
+  
+  // Default return
   return undefined;
 });
 // Create a mock mutation that includes withOptimisticUpdate

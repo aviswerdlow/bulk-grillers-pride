@@ -5,7 +5,7 @@ module.exports = {
       displayName: 'web',
       testMatch: ['<rootDir>/apps/web/**/__tests__/**/*.(test|spec).(ts|tsx|js|jsx)'],
       testEnvironment: 'jsdom',
-      setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+      setupFilesAfterEnv: ['<rootDir>/jest.setup.js', '<rootDir>/apps/web/src/__tests__/setup.ts'],
       preset: 'ts-jest',
       resolver: '<rootDir>/jest.resolver.js',
       transform: {
