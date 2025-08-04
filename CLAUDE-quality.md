@@ -3,6 +3,12 @@
 agent_id: quality-agent
 agent_role: Code review, testing, performance, and security
 
+## Worktree Configuration
+
+worktree_enabled: true
+worktree_path: .worktrees/quality-agent
+default_branch_prefix: quality/
+
 ## SuperClaude Integration
 
 You MUST utilize SuperClaude features:
@@ -32,26 +38,43 @@ owns_paths:
 - \*_/_.spec.ts
 - .github/workflows/test.yml
 
-## Git Workflow Rules
+## Git Workflow with Worktrees
 
-1. **NEVER work directly on main branch**
-2. **Always create feature branch**: `git checkout -b quality/[task-name]`
-3. **Check existing PRs before starting**: `gh pr list`
-4. **Pull main regularly**: `git pull origin main`
-5. **Push to branch when complete**: `git push -u origin quality/[task-name]`
-6. **DON'T create PR unless explicitly asked**
+### When Worktrees are Enabled (ENABLE_WORKTREES=true)
 
-### Branch Naming Convention
-- Use format: `quality/[brief-description]`
-- Examples: `quality/improve-test-coverage`, `quality/add-e2e-tests`, `quality/security-audit`
+1. **Your dedicated worktree**: `.worktrees/quality-agent`
+2. **Task-specific worktrees**: `.worktrees/quality-agent/[task-id]`
+3. **No manual branch switching needed** - worktrees handle isolation
+4. **Push changes**: `git push -u origin HEAD`
 
-### Before Starting Any Work
+### Workflow Commands
+
 ```bash
-git checkout main
-git pull origin main
-git checkout -b quality/[task-description]
+# Enable worktrees
+export ENABLE_WORKTREES=true
+
+# Source task library
+source scripts/migration/task_lib.sh
+
+# Claim task with worktree
+claim_task_with_worktree T123 quality-agent
+
+# You're automatically in the task worktree
+# Do your work...
+
+# Complete task
+complete_task_with_cleanup T123 "Task summary"
+
+# Clean up worktree after pushing
+git push -u origin HEAD
+cleanup_task_worktree T123 quality-agent
 ```
 
+### Fallback (When Worktrees Disabled)
+
+1. **Create feature branch**: `git checkout -b quality/[task-name]`
+2. **Follow standard git workflow**
+3. **Push to branch**: `git push -u origin quality/[task-name]`
 ## SuperClaude Workflow
 
 1. **Security Audit**: `/sc:scan --security --owasp --strict`
@@ -68,5 +91,58 @@ git checkout -b quality/[task-description]
 
 ## Evidence Standards
 
+## Worktree Management
+
+### List Your Worktrees
+```bash
+source scripts/migration/task_lib.sh
+list_agent_worktrees quality-agent
+```
+
+### Monitor Worktree Health
+```bash
+cd ~/bulk-grillers-pride
+./scripts/monitor-worktrees.sh report | grep quality-agent
+```
+
+### Switch Between Task Worktrees
+```bash
+source scripts/migration/task_lib.sh
+switch_to_task_worktree T123 quality-agent
+```
+
+## Example Task Flow with Worktrees
+
+```bash
+# 1. Check for tasks
+cd ~/bulk-grillers-pride && npm run check-tasks
+
+# 2. Enable worktrees
+export ENABLE_WORKTREES=true
+source scripts/migration/task_lib.sh
+
+# 3. Claim task T456
+claim_task_with_worktree T456 quality-agent
+# Automatically switched to .worktrees/quality-agent/T456
+
+# 4. Work on task
+/sc:analyze --code
+# ... implement changes ...
+/sc:test
+
+# 5. Commit and push
+git add .
+git commit -m "quality: Complete T456 - Brief description"
+git push -u origin HEAD
+
+# 6. Complete and cleanup
+complete_task_with_cleanup T456 "Implemented feature with tests"
+cleanup_task_worktree T456 quality-agent
+
+# 7. Check for more work
+cd ~/bulk-grillers-pride && npm run check-tasks
+```
+
+This workflow ensures complete isolation, prevents conflicts, and maintains clean workspace management.
 - Required: "scan reveals", "testing confirms", "coverage report shows"
 - Never claim: "secure", "bug-free", "perfect coverage"

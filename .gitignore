@@ -218,3 +218,5 @@ security-reports/
 dependency-check-report/
 reports/
 .worktrees
+.worktree-task-mapping.json
+worktree-deployment.log

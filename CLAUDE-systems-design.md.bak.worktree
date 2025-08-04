@@ -3,12 +3,6 @@
 agent_id: systems-design-agent
 agent_role: Technical architecture, feature design, and system planning
 
-## Worktree Configuration
-
-worktree_enabled: true
-worktree_path: .worktrees/systems-design-agent
-default_branch_prefix: systems-design/
-
 ## SuperClaude Integration
 You MUST utilize SuperClaude features:
 - Use `/sc:analyze --arch --seq --ultrathink` for complex feature design
@@ -59,46 +53,28 @@ lock_tier_2_advisory:
 always_read:
   - /.locks/file-locks.json
   - /docs/architecture/decisions/
-- /.worktree-task-mapping.json (when worktrees enabled)
 
 
-## Git Workflow with Worktrees
+## Git Workflow Rules
 
-### When Worktrees are Enabled (ENABLE_WORKTREES=true)
+1. **NEVER work directly on main branch**
+2. **Always create feature branch**: `git checkout -b systems/[task-name]`
+3. **Check existing PRs before starting**: `gh pr list`
+4. **Pull main regularly**: `git pull origin main`
+5. **Push to branch when complete**: `git push -u origin systems/[task-name]`
+6. **DON'T create PR unless explicitly asked**
 
-1. **Your dedicated worktree**: `.worktrees/systems-design-agent`
-2. **Task-specific worktrees**: `.worktrees/systems-design-agent/[task-id]`
-3. **No manual branch switching needed** - worktrees handle isolation
-4. **Push changes**: `git push -u origin HEAD`
+### Branch Naming Convention
+- Use format: `systems/[brief-description]`
+- Examples: `systems/auth-architecture`, `systems/api-design`, `systems/data-model`
 
-### Workflow Commands
-
+### Before Starting Any Work
 ```bash
-# Enable worktrees
-export ENABLE_WORKTREES=true
-
-# Source task library
-source scripts/migration/task_lib.sh
-
-# Claim task with worktree
-claim_task_with_worktree T123 systems-design-agent
-
-# You're automatically in the task worktree
-# Do your work...
-
-# Complete task
-complete_task_with_cleanup T123 "Task summary"
-
-# Clean up worktree after pushing
-git push -u origin HEAD
-cleanup_task_worktree T123 systems-design-agent
+git checkout main
+git pull origin main
+git checkout -b systems/[task-description]
 ```
 
-### Fallback (When Worktrees Disabled)
-
-1. **Create feature branch**: `git checkout -b systems-design/[task-name]`
-2. **Follow standard git workflow**
-3. **Push to branch**: `git push -u origin systems-design/[task-name]`
 ## SuperClaude Workflow
 1. **Analyze Request**: `/sc:analyze --feature --seq --ultrathink`
 2. **Research Patterns**: `/sc:analyze --patterns --c7`
@@ -207,59 +183,6 @@ tasks:
 - Prohibited: "best practice", "optimal solution", "perfect architecture", "always use"
 - Always cite: Architectural patterns (e.g., "Martin Fowler's microservices pattern"), case studies, benchmarks
 
-## Worktree Management
-
-### List Your Worktrees
-```bash
-source scripts/migration/task_lib.sh
-list_agent_worktrees systems-design-agent
-```
-
-### Monitor Worktree Health
-```bash
-cd ~/bulk-grillers-pride
-./scripts/monitor-worktrees.sh report | grep systems-design-agent
-```
-
-### Switch Between Task Worktrees
-```bash
-source scripts/migration/task_lib.sh
-switch_to_task_worktree T123 systems-design-agent
-```
-
-## Example Task Flow with Worktrees
-
-```bash
-# 1. Check for tasks
-cd ~/bulk-grillers-pride && npm run check-tasks
-
-# 2. Enable worktrees
-export ENABLE_WORKTREES=true
-source scripts/migration/task_lib.sh
-
-# 3. Claim task T456
-claim_task_with_worktree T456 systems-design-agent
-# Automatically switched to .worktrees/systems-design-agent/T456
-
-# 4. Work on task
-/sc:analyze --code
-# ... implement changes ...
-/sc:test
-
-# 5. Commit and push
-git add .
-git commit -m "systems-design: Complete T456 - Brief description"
-git push -u origin HEAD
-
-# 6. Complete and cleanup
-complete_task_with_cleanup T456 "Implemented feature with tests"
-cleanup_task_worktree T456 systems-design-agent
-
-# 7. Check for more work
-cd ~/bulk-grillers-pride && npm run check-tasks
-```
-
-This workflow ensures complete isolation, prevents conflicts, and maintains clean workspace management.
 ## Collaboration with Other Agents
 - **With UI/UX Design Agent**: Coordinate on user flows and state management
 - **With Backend Agent**: Provide clear API contracts and data models
@@ -279,3 +202,4 @@ When designing a feature, always structure the output as:
 6. **Technical Considerations** (performance, security, scalability)
 7. **Edge Cases** (failure modes + handling)
 8. **Implementation Tasks** (breakdown + estimates)
+9. **Success Metrics** (measurable criteria)
