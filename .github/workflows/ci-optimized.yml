@@ -94,7 +94,7 @@ jobs:
             apps/*/node_modules
             packages/*/node_modules
           key: ${{ needs.setup.outputs.cache-key }}
-          fail-on-cache-miss: true
+          fail-on-cache-miss: false
 
       - name: Run linting
         run: |
@@ -125,7 +125,7 @@ jobs:
             apps/*/node_modules
             packages/*/node_modules
           key: ${{ needs.setup.outputs.cache-key }}
-          fail-on-cache-miss: true
+          fail-on-cache-miss: false
 
       - name: Run type checking
         run: |
@@ -160,7 +160,7 @@ jobs:
             apps/*/node_modules
             packages/*/node_modules
           key: ${{ needs.setup.outputs.cache-key }}
-          fail-on-cache-miss: true
+          fail-on-cache-miss: false
 
       - name: Run tests for ${{ matrix.project }} (shard ${{ matrix.shard }}/2)
         run: |
@@ -205,7 +205,7 @@ jobs:
             apps/*/node_modules
             packages/*/node_modules
           key: ${{ needs.setup.outputs.cache-key }}
-          fail-on-cache-miss: true
+          fail-on-cache-miss: false
 
       - name: Build application
         run: |
@@ -332,7 +332,7 @@ jobs:
             apps/*/node_modules
             packages/*/node_modules
           key: ${{ needs.setup.outputs.cache-key }}
-          fail-on-cache-miss: true
+          fail-on-cache-miss: false
 
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
@@ -423,7 +423,7 @@ jobs:
             apps/*/node_modules
             packages/*/node_modules
           key: ${{ needs.setup.outputs.cache-key }}
-          fail-on-cache-miss: true
+          fail-on-cache-miss: false
 
       - name: Run npm audit
         run: |
