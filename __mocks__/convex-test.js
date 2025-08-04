@@ -316,4 +316,81 @@ module.exports = {
   mockAuth: mockAuth,
 };
 
-// These are already part of module.exports
+// Mock factory functions
+const createMockUser = (overrides = {}) => ({
+  _id: `users_${Math.random().toString(36).substr(2, 9)}`,
+  _creationTime: Date.now(),
+  clerkId: `user_${Math.random().toString(36).substr(2, 9)}`,
+  email: 'test@example.com',
+  name: 'Test User',
+  firstName: 'Test',
+  lastName: 'User',
+  role: 'admin',
+  status: 'active',
+  createdAt: Date.now(),
+  updatedAt: Date.now(),
+  ...overrides,
+});
+
+const createMockOrganization = (overrides = {}) => ({
+  _id: `organizations_${Math.random().toString(36).substr(2, 9)}`,
+  _creationTime: Date.now(),
+  name: 'Test Organization',
+  slug: `test-org-${Math.random().toString(36).substr(2, 9)}`,
+  clerkOrganizationId: `org_${Math.random().toString(36).substr(2, 9)}`,
+  status: 'active',
+  settings: {
+    defaultProductStatus: 'active',
+    requireProductApproval: false,
+    enableAiCategorization: true,
+  },
+  createdAt: Date.now(),
+  updatedAt: Date.now(),
+  ...overrides,
+});
+
+const createMockOrganizationMembership = (overrides = {}) => ({
+  _id: `organizationMemberships_${Math.random().toString(36).substr(2, 9)}`,
+  _creationTime: Date.now(),
+  userId: `users_${Math.random().toString(36).substr(2, 9)}`,
+  organizationId: `organizations_${Math.random().toString(36).substr(2, 9)}`,
+  role: 'member',
+  joinedAt: Date.now(),
+  ...overrides,
+});
+
+const createMockProject = (overrides = {}) => ({
+  _id: `projects_${Math.random().toString(36).substr(2, 9)}`,
+  _creationTime: Date.now(),
+  name: 'Test Project',
+  slug: `test-project-${Math.random().toString(36).substr(2, 9)}`,
+  organizationId: `organizations_${Math.random().toString(36).substr(2, 9)}`,
+  status: 'active',
+  settings: {},
+  createdAt: Date.now(),
+  updatedAt: Date.now(),
+  ...overrides,
+});
+
+const createMockCategory = (overrides = {}) => ({
+  _id: `categories_${Math.random().toString(36).substr(2, 9)}`,
+  _creationTime: Date.now(),
+  name: 'Test Category',
+  slug: `test-category-${Math.random().toString(36).substr(2, 9)}`,
+  projectId: `projects_${Math.random().toString(36).substr(2, 9)}`,
+  parentId: null,
+  level: 1,
+  status: 'active',
+  sortOrder: 0,
+  metadata: {},
+  createdAt: Date.now(),
+  updatedAt: Date.now(),
+  ...overrides,
+});
+
+// Export the mock factories
+module.exports.createMockUser = createMockUser;
+module.exports.createMockOrganization = createMockOrganization;
+module.exports.createMockOrganizationMembership = createMockOrganizationMembership;
+module.exports.createMockProject = createMockProject;
+module.exports.createMockCategory = createMockCategory;
