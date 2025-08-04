@@ -2,12 +2,15 @@
 # Task Wrapper Library for Multi-Agent System
 # Task: T160 - Create task wrapper library
 # Provides unified interface for agents to work with both AGENTS_BOARD.md and GitHub Issues
+# Enhanced with Git Worktree support for isolated agent development
 
 # Configuration
 TASK_SYSTEM="${TASK_SYSTEM:-board}"
 BOARD_FILE="${BOARD_FILE:-AGENTS_BOARD.md}"
 MAPPING_FILE="${MAPPING_FILE:-.task_mappings.json}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+WORKTREE_BASE="${WORKTREE_BASE:-.worktrees}"
+ENABLE_WORKTREES="${ENABLE_WORKTREES:-false}"
 
 # Colors for output
 RED='\033[0;31m'
@@ -331,6 +334,189 @@ list_all_tasks() {
     esac
 }
 
+# ========== Git Worktree Functions ==========
+
+# Check if worktrees are enabled
+worktrees_enabled() {
+    [ "$ENABLE_WORKTREES" = "true" ] || [ "$ENABLE_WORKTREES" = "1" ]
+}
+
+# Get worktree path for a task
+get_task_worktree_path() {
+    local task_id="$1"
+    local agent_name="$2"
+    echo "$WORKTREE_BASE/$agent_name/$task_id"
+}
+
+# Create worktree for a specific task
+create_task_worktree() {
+    local task_id="$1"
+    local agent_name="$2"
+    local base_branch="${3:-main}"
+    
+    if ! worktrees_enabled; then
+        echo -e "${YELLOW}Worktrees disabled. Set ENABLE_WORKTREES=true to enable${NC}" >&2
+        return 0
+    fi
+    
+    local branch_name="$agent_name/$task_id"
+    local worktree_path=$(get_task_worktree_path "$task_id" "$agent_name")
+    
+    echo -e "${BLUE}Creating worktree for task $task_id...${NC}"
+    
+    # Check if worktree already exists
+    if git worktree list | grep -q "$worktree_path"; then
+        echo -e "${YELLOW}Worktree already exists at $worktree_path${NC}"
+        return 0
+    fi
+    
+    # Ensure parent directory exists
+    mkdir -p "$(dirname "$worktree_path")"
+    
+    # Create the worktree
+    if git worktree add -b "$branch_name" "$worktree_path" "$base_branch" 2>/dev/null; then
+        echo -e "${GREEN}✓ Created worktree at $worktree_path${NC}"
+        echo -e "${GREEN}✓ Branch: $branch_name${NC}"
+        
+        # Create task info file in worktree
+        cat > "$worktree_path/TASK_INFO.md" <<EOF
+# Task: $task_id
+Agent: $agent_name
+Branch: $branch_name
+Created: $(date)
+
+## Task Details
+Run \`get_task_details $task_id\` to see full task information.
+
+## Commands
+- Work in this directory: \`cd $worktree_path\`
+- Push changes: \`git push -u origin HEAD\`
+- Update status: \`update_task_status $task_id in-progress\`
+- Complete task: \`update_task_status $task_id done\`
+EOF
+        
+        return 0
+    else
+        echo -e "${RED}✗ Failed to create worktree for task $task_id${NC}" >&2
+        return 1
+    fi
+}
+
+# Switch to task worktree
+switch_to_task_worktree() {
+    local task_id="$1"
+    local agent_name="$2"
+    
+    if ! worktrees_enabled; then
+        return 0
+    fi
+    
+    local worktree_path=$(get_task_worktree_path "$task_id" "$agent_name")
+    
+    if [ -d "$worktree_path" ]; then
+        echo -e "${GREEN}Switching to worktree: $worktree_path${NC}"
+        cd "$worktree_path"
+    else
+        echo -e "${YELLOW}Worktree not found. Create it with: create_task_worktree $task_id $agent_name${NC}" >&2
+    fi
+}
+
+# Clean up task worktree after completion
+cleanup_task_worktree() {
+    local task_id="$1"
+    local agent_name="$2"
+    local force="${3:-false}"
+    
+    if ! worktrees_enabled; then
+        return 0
+    fi
+    
+    local worktree_path=$(get_task_worktree_path "$task_id" "$agent_name")
+    
+    echo -e "${BLUE}Cleaning up worktree for task $task_id...${NC}"
+    
+    # Check if worktree exists
+    if ! git worktree list | grep -q "$worktree_path"; then
+        echo -e "${YELLOW}Worktree not found${NC}"
+        return 0
+    fi
+    
+    # Check for uncommitted changes unless forced
+    if [ "$force" != "true" ]; then
+        if [ -d "$worktree_path" ]; then
+            cd "$worktree_path"
+            if ! git diff --quiet || ! git diff --cached --quiet; then
+                echo -e "${RED}✗ Uncommitted changes in worktree. Commit or stash changes first.${NC}" >&2
+                echo -e "${YELLOW}  Use 'cleanup_task_worktree $task_id $agent_name true' to force removal${NC}" >&2
+                return 1
+            fi
+            cd - > /dev/null
+        fi
+    fi
+    
+    # Remove the worktree
+    if git worktree remove "$worktree_path" ${force:+--force} 2>/dev/null; then
+        echo -e "${GREEN}✓ Removed worktree for task $task_id${NC}"
+        return 0
+    else
+        echo -e "${RED}✗ Failed to remove worktree${NC}" >&2
+        return 1
+    fi
+}
+
+# List all task worktrees for an agent
+list_agent_worktrees() {
+    local agent_name="$1"
+    
+    if ! worktrees_enabled; then
+        echo -e "${YELLOW}Worktrees disabled${NC}"
+        return 0
+    fi
+    
+    echo -e "${BLUE}Worktrees for $agent_name:${NC}"
+    git worktree list | grep "$WORKTREE_BASE/$agent_name" | while read -r line; do
+        local path=$(echo "$line" | awk '{print $1}')
+        local commit=$(echo "$line" | awk '{print $2}')
+        local branch=$(echo "$line" | awk '{print $3}' | tr -d '[]')
+        echo -e "  ${GREEN}$branch${NC} at $path"
+    done
+}
+
+# Enhanced claim task with worktree creation
+claim_task_with_worktree() {
+    local task_id="$1"
+    local agent_name="$2"
+    
+    # First claim the task normally
+    claim_task "$task_id" "$agent_name"
+    
+    # Then create worktree if enabled
+    if worktrees_enabled; then
+        create_task_worktree "$task_id" "$agent_name"
+        switch_to_task_worktree "$task_id" "$agent_name"
+    fi
+}
+
+# Enhanced task completion with worktree cleanup
+complete_task_with_cleanup() {
+    local task_id="$1"
+    local summary="$2"
+    local agent_name="${3:-$(get_agent_name)}"
+    
+    # Update task status
+    update_task_status "$task_id" "done"
+    
+    if [ -n "$summary" ]; then
+        add_task_comment "$task_id" "Task completed: $summary"
+    fi
+    
+    # Cleanup worktree if enabled
+    if worktrees_enabled; then
+        echo -e "${YELLOW}Remember to push your changes before cleaning up the worktree${NC}"
+        echo -e "To cleanup worktree: cleanup_task_worktree $task_id $agent_name"
+    fi
+}
+
 # Export functions for use by other scripts
 export -f get_task_system
 export -f get_agent_name
@@ -341,17 +527,39 @@ export -f update_task_status
 export -f add_task_comment
 export -f list_all_tasks
 
+# Export worktree functions
+export -f worktrees_enabled
+export -f get_task_worktree_path
+export -f create_task_worktree
+export -f switch_to_task_worktree
+export -f cleanup_task_worktree
+export -f list_agent_worktrees
+export -f claim_task_with_worktree
+export -f complete_task_with_cleanup
+
 # If script is run directly, show usage
 if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
     echo "Task Library Functions:"
-    echo "  get_my_tasks <agent-name>     - Get tasks for an agent"
-    echo "  claim_task <task-id> <agent>  - Claim a task"
+    echo ""
+    echo "Core Task Functions:"
+    echo "  get_my_tasks <agent-name>        - Get tasks for an agent"
+    echo "  claim_task <task-id> <agent>     - Claim a task"
     echo "  update_task_status <id> <status> - Update task status"
-    echo "  get_task_details <task-id>    - Get task details"
-    echo "  add_task_comment <id> <text>  - Add comment to task"
-    echo "  list_all_tasks                - List all tasks"
+    echo "  get_task_details <task-id>       - Get task details"
+    echo "  add_task_comment <id> <text>     - Add comment to task"
+    echo "  list_all_tasks                   - List all tasks"
+    echo ""
+    echo "Worktree Functions (when ENABLE_WORKTREES=true):"
+    echo "  create_task_worktree <task-id> <agent> [base-branch] - Create worktree for task"
+    echo "  switch_to_task_worktree <task-id> <agent>            - Switch to task worktree"
+    echo "  cleanup_task_worktree <task-id> <agent> [force]      - Remove task worktree"
+    echo "  list_agent_worktrees <agent>                         - List agent's worktrees"
+    echo "  claim_task_with_worktree <task-id> <agent>           - Claim task and create worktree"
+    echo "  complete_task_with_cleanup <task-id> <summary>       - Complete task with cleanup hint"
     echo ""
     echo "Environment variables:"
     echo "  TASK_SYSTEM=${TASK_SYSTEM} (board|github|sync)"
     echo "  AGENT_NAME=${AGENT_NAME}"
+    echo "  ENABLE_WORKTREES=${ENABLE_WORKTREES} (true|false)"
+    echo "  WORKTREE_BASE=${WORKTREE_BASE}"
 fi

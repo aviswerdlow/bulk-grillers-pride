@@ -54,11 +54,32 @@ git push -u origin [branch-name]
 - Keep main branch stable at all times
 - Group related changes in single PRs
 
-## Phase 2: Launch the Multi-Agent System (10 Agents Total)
+## Phase 2: Setup Worktrees (Optional but Recommended)
+
+To enable isolated development environments for each agent:
+
+```bash
+# Enable worktree support
+export ENABLE_WORKTREES=true
+
+# Setup worktrees for all agents
+./scripts/setup-agent-worktrees.sh setup
+
+# Verify worktree creation
+./scripts/setup-agent-worktrees.sh list
+
+# Monitor worktree health
+./scripts/monitor-worktrees.sh summary
+```
+
+Each agent will have their own worktree at `.worktrees/[agent-name]` for isolated development.
+
+## Phase 3: Launch the Multi-Agent System (10 Agents Total)
 
 ### **Terminal 1: Frontend Agent**
 
-cd /Users/aviswerdlow/Documents/Coding/bulk-grillers-pride/apps/web
+# If worktrees enabled:
+[ "$ENABLE_WORKTREES" = "true" ] && cd /Users/aviswerdlow/Documents/Coding/bulk-grillers-pride/.worktrees/frontend-agent || cd /Users/aviswerdlow/Documents/Coding/bulk-grillers-pride/apps/web
 
 claude \--dangerously-skip-permissions
 
@@ -80,7 +101,8 @@ Run npm run check-tasks to see what work is appropriate for you.
 
 ### **Terminal 2: Backend Agent**
 
-cd /Users/aviswerdlow/Documents/Coding/bulk-grillers-pride/convex
+# If worktrees enabled:
+[ "$ENABLE_WORKTREES" = "true" ] && cd /Users/aviswerdlow/Documents/Coding/bulk-grillers-pride/.worktrees/backend-agent || cd /Users/aviswerdlow/Documents/Coding/bulk-grillers-pride/convex
 
 claude \--dangerously-skip-permissions
 
@@ -298,7 +320,7 @@ Enforce evidence-based development standards across all agents.
 
 Show the current task board and agent status.
 
-## Phase 3: Using the System
+## Phase 4: Using the System
 
 ### **Specialized Agent Capabilities**
 
@@ -540,6 +562,31 @@ When completing tasks, agents should always run npm run check-tasks again to:
 - Pick up any newly unblocked tasks  
 - Continue working if more tasks are available  
 - Maintain workflow momentum
+
+### **5. Using Worktrees for Task Isolation**
+
+When `ENABLE_WORKTREES=true`, agents can use isolated worktrees:
+
+```bash
+# Source the task library
+source scripts/migration/task_lib.sh
+
+# Claim task with automatic worktree creation
+claim_task_with_worktree T123 frontend-agent
+
+# Work in the isolated worktree
+cd .worktrees/frontend-agent/T123
+
+# Complete task and cleanup
+complete_task_with_cleanup T123 "Fixed navigation bug"
+cleanup_task_worktree T123 frontend-agent
+```
+
+Benefits:
+- Complete isolation between tasks
+- No branch conflicts between agents
+- Easy cleanup after task completion
+- Parallel development without interference
 
 ## Example: All Agents Working Together
 
