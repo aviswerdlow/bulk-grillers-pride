@@ -29,7 +29,7 @@ export const acquireLock = mutation({
     resourceType: v.string(),
     resourceId: v.string(),
     operation: v.string(),
-    lockType: v.optional(v.union(v.literal('exclusive'), v.literal('shared'))),
+    lockType: v.optional(v.string()), // 'exclusive' | 'shared'
     timeoutMs: v.optional(v.number()),
     metadata: v.optional(v.any()),
   },

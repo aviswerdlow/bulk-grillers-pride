@@ -26,17 +26,17 @@ const featureFlagSchema = v.object({
   
   // Rollout configuration
   rolloutPercentage: v.number(), // 0-100
-  rolloutOrganizations: v.array(v.id('organizations')), // Specific orgs for testing
+  rolloutOrganizations: v.array(v.string() /* ID reference to organizations */), // Specific orgs for testing
   
   // Monitoring
   lastUpdated: v.number(),
-  updatedBy: v.id('users'),
+  updatedBy: v.string() /* ID reference to users */,
 });
 
 // Get current feature flags for an organization
 export const getFeatureFlags = query({
   args: {
-    organizationId: v.id('organizations'),
+    organizationId: v.string() /* ID reference to organizations */,
   },
   handler: async (ctx, args) => {
     // Check if organization has specific flag overrides
@@ -110,11 +110,11 @@ export const updateFeatureFlags = mutation({
       BATCH_OPERATIONS: v.optional(v.boolean()),
       PARALLEL_CLEANUP: v.optional(v.boolean()),
       rolloutPercentage: v.optional(v.number()),
-      rolloutOrganizations: v.optional(v.array(v.id('organizations'))),
+      rolloutOrganizations: v.optional(v.array(v.string() /* ID reference to organizations */)),
       lastUpdated: v.optional(v.number()),
-      updatedBy: v.optional(v.id('users')),
+      updatedBy: v.optional(v.string() /* ID reference to users */),
     }),
-    targetOrganizations: v.optional(v.array(v.id('organizations'))),
+    targetOrganizations: v.optional(v.array(v.string() /* ID reference to organizations */)),
     rolloutPercentage: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
@@ -185,7 +185,7 @@ export const updateFeatureFlags = mutation({
 // Enable feature for specific organization
 export const enableForOrganization = mutation({
   args: {
-    organizationId: v.id('organizations'),
+    organizationId: v.string() /* ID reference to organizations */,
     flags: v.array(v.string()), // Which flags to enable
   },
   handler: async (ctx, args) => {
@@ -276,7 +276,7 @@ export const enableForOrganization = mutation({
 // Check migration readiness
 export const checkMigrationReadiness = query({
   args: {
-    organizationId: v.id('organizations'),
+    organizationId: v.string() /* ID reference to organizations */,
   },
   handler: async (ctx, args) => {
     const checks = {

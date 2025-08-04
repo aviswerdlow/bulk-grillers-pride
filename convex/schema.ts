@@ -10,7 +10,7 @@ export default defineSchema({
     name: v.string(),
     slug: v.string(), // URL-friendly identifier
     domain: v.optional(v.string()), // Custom domain support
-    status: v.union(v.literal('active'), v.literal('suspended'), v.literal('trial')),
+    status: v.string() /* active | suspended | trial */,
     subscription: v.object({
       plan: v.string(),
       status: v.string(),
@@ -20,7 +20,7 @@ export default defineSchema({
     }),
     settings: v.object({
       // AI Configuration
-      aiProvider: v.union(v.literal('openai'), v.literal('anthropic'), v.literal('gemini')),
+      aiProvider: v.string() /* openai | anthropic | gemini */,
       aiModel: v.string(),
       apiKeys: v.object({
         openai: v.optional(v.string()),
@@ -57,7 +57,7 @@ export default defineSchema({
     firstName: v.string(),
     lastName: v.string(),
     avatar: v.optional(v.string()),
-    status: v.union(v.literal('active'), v.literal('invited'), v.literal('suspended')),
+    status: v.string() /* active | invited | suspended */,
     lastLogin: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.number(),
@@ -67,14 +67,14 @@ export default defineSchema({
 
   // Organization Memberships with Roles
   organizationMemberships: defineTable({
-    organizationId: v.id('organizations'),
-    userId: v.id('users'),
-    role: v.union(v.literal('owner'), v.literal('admin'), v.literal('editor'), v.literal('viewer')),
+    organizationId: v.string() /* ID reference to organizations */,
+    userId: v.string() /* ID reference to users */,
+    role: v.string() /* owner | admin | editor | viewer */,
     permissions: v.array(v.string()), // Granular permissions
-    invitedBy: v.optional(v.id('users')),
+    invitedBy: v.optional(v.string() /* ID reference to users */),
     invitedAt: v.optional(v.number()),
     joinedAt: v.optional(v.number()),
-    status: v.union(v.literal('active'), v.literal('pending'), v.literal('revoked')),
+    status: v.string() /* active | pending | revoked */,
     createdAt: v.number(),
     updatedAt: v.number(),
   })
@@ -84,21 +84,21 @@ export default defineSchema({
 
   // Project Management
   projects: defineTable({
-    organizationId: v.id('organizations'),
+    organizationId: v.string() /* ID reference to organizations */,
     name: v.string(),
     description: v.optional(v.string()),
     slug: v.string(), // URL-friendly identifier
-    status: v.union(v.literal('active'), v.literal('archived'), v.literal('draft')),
+    status: v.string() /* active | archived | draft */,
     settings: v.object({
       defaultCurrency: v.string(),
       defaultTaxRate: v.optional(v.number()),
       importSettings: v.object({
         autoValidate: v.boolean(),
-        duplicateHandling: v.union(v.literal('skip'), v.literal('update'), v.literal('create')),
+        duplicateHandling: v.string() /* skip | update | create */,
         requiredFields: v.array(v.string()),
       }),
     }),
-    createdBy: v.id('users'),
+    createdBy: v.string() /* ID reference to users */,
     createdAt: v.number(),
     updatedAt: v.number(),
     version: v.number(),
@@ -110,8 +110,8 @@ export default defineSchema({
   // PRODUCT & VARIANT MANAGEMENT
   // ================================
   products: defineTable({
-    organizationId: v.id('organizations'),
-    projectId: v.id('projects'),
+    organizationId: v.string() /* ID reference to organizations */,
+    projectId: v.string() /* ID reference to projects */,
 
     // Core Product Information
     title: v.string(),
@@ -120,7 +120,7 @@ export default defineSchema({
     productType: v.optional(v.string()),
     handle: v.string(), // URL slug
     sku: v.optional(v.string()), // Primary SKU for simple products
-    status: v.union(v.literal('active'), v.literal('draft'), v.literal('archived')),
+    status: v.string() /* active | draft | archived */,
 
     // SEO & Marketing
     seoTitle: v.optional(v.string()),
@@ -128,15 +128,15 @@ export default defineSchema({
     tags: v.array(v.string()),
 
     // Categorization
-    categories: v.array(v.id('categories')), // Assigned categories
+    categories: v.array(v.string() /* ID reference to categories */), // Assigned categories
     aiCategorization: v.optional(
       v.object({
         suggestions: v.array(
           v.object({
-            categoryId: v.id('categories'),
+            categoryId: v.string() /* ID reference to categories */,
             confidence: v.number(),
             rationale: v.string(),
-            status: v.union(v.literal('pending'), v.literal('accepted'), v.literal('rejected')),
+            status: v.string() /* pending | accepted | rejected */,
           })
         ),
         lastProcessed: v.number(),
@@ -160,10 +160,10 @@ export default defineSchema({
 
     // Versioning & Audit
     version: v.number(),
-    createdBy: v.id('users'),
+    createdBy: v.string() /* ID reference to users */,
     createdAt: v.number(),
     updatedAt: v.number(),
-    lastModifiedBy: v.id('users'),
+    lastModifiedBy: v.string() /* ID reference to users */,
   })
     .index('by_organization_project', ['organizationId', 'projectId'])
     .index('by_handle', ['organizationId', 'projectId', 'handle'])
@@ -177,9 +177,9 @@ export default defineSchema({
 
   // Product Variants
   productVariants: defineTable({
-    organizationId: v.id('organizations'),
-    projectId: v.id('projects'),
-    productId: v.id('products'),
+    organizationId: v.string() /* ID reference to organizations */,
+    projectId: v.string() /* ID reference to projects */,
+    productId: v.string() /* ID reference to products */,
 
     // Variant Information
     title: v.optional(v.string()),
@@ -193,7 +193,7 @@ export default defineSchema({
 
     // Inventory
     inventoryQuantity: v.optional(v.number()),
-    inventoryPolicy: v.union(v.literal('deny'), v.literal('continue')), // Out of stock behavior
+    inventoryPolicy: v.string() /* deny | continue */, // Out of stock behavior
     trackQuantity: v.boolean(),
 
     // Physical Properties
@@ -231,13 +231,13 @@ export default defineSchema({
     metadata: v.any(),
 
     // Status
-    status: v.union(v.literal('active'), v.literal('draft'), v.literal('archived')),
+    status: v.string() /* active | draft | archived */,
 
     // Versioning
     version: v.number(),
     createdAt: v.number(),
     updatedAt: v.number(),
-    lastModifiedBy: v.id('users'),
+    lastModifiedBy: v.string() /* ID reference to users */,
   })
     .index('by_product', ['productId'])
     .index('by_sku', ['organizationId', 'sku'])
@@ -249,8 +249,8 @@ export default defineSchema({
 
   // Category Level Definitions (per project)
   categoryLevelDefinitions: defineTable({
-    organizationId: v.id('organizations'),
-    projectId: v.id('projects'),
+    organizationId: v.string() /* ID reference to organizations */,
+    projectId: v.string() /* ID reference to projects */,
 
     // Level Configuration
     level: v.number(), // 0 = root, 1 = first level, etc.
@@ -276,18 +276,18 @@ export default defineSchema({
 
     // Versioning
     version: v.number(),
-    createdBy: v.id('users'),
+    createdBy: v.string() /* ID reference to users */,
     createdAt: v.number(),
     updatedAt: v.number(),
-    lastModifiedBy: v.id('users'),
+    lastModifiedBy: v.string() /* ID reference to users */,
   })
     .index('by_organization_project', ['organizationId', 'projectId'])
     .index('by_project_level', ['projectId', 'level'])
     .index('by_project_order', ['projectId', 'sortOrder']),
 
   categories: defineTable({
-    organizationId: v.id('organizations'),
-    projectId: v.id('projects'),
+    organizationId: v.string() /* ID reference to organizations */,
+    projectId: v.string() /* ID reference to projects */,
 
     // Category Information
     name: v.string(),
@@ -296,7 +296,7 @@ export default defineSchema({
     externalId: v.optional(v.string()), // For import mapping (e.g., from JSON import)
 
     // Hierarchy Management
-    parentId: v.optional(v.id('categories')), // Self-referencing for hierarchy
+    parentId: v.optional(v.string() /* ID reference to categories */), // Self-referencing for hierarchy
     level: v.number(), // 0 = root, 1 = first level, etc.
     path: v.string(), // Full path for efficient queries (e.g., "/electronics/computers/laptops")
     sortOrder: v.number(), // Manual ordering within level
@@ -317,7 +317,7 @@ export default defineSchema({
     seoDescription: v.optional(v.string()),
 
     // Status & Visibility
-    status: v.union(v.literal('active'), v.literal('hidden'), v.literal('archived')),
+    status: v.string() /* active | hidden | archived */,
     isVisible: v.boolean(),
 
     // Metadata
@@ -329,17 +329,17 @@ export default defineSchema({
         suggestedBy: v.string(), // AI model that suggested this
         rationale: v.string(),
         confidence: v.number(),
-        approvedBy: v.optional(v.id('users')),
+        approvedBy: v.optional(v.string() /* ID reference to users */),
         approvedAt: v.optional(v.number()),
       })
     ),
 
     // Versioning
     version: v.number(),
-    createdBy: v.id('users'),
+    createdBy: v.string() /* ID reference to users */,
     createdAt: v.number(),
     updatedAt: v.number(),
-    lastModifiedBy: v.id('users'),
+    lastModifiedBy: v.string() /* ID reference to users */,
   })
     .index('by_organization_project', ['organizationId', 'projectId'])
     .index('by_parent', ['organizationId', 'projectId', 'parentId'])
@@ -354,21 +354,21 @@ export default defineSchema({
 
   // Category Product Assignments (Many-to-Many)
   categoryProductAssignments: defineTable({
-    organizationId: v.id('organizations'),
-    projectId: v.id('projects'),
-    categoryId: v.id('categories'),
-    productId: v.id('products'),
+    organizationId: v.string() /* ID reference to organizations */,
+    projectId: v.string() /* ID reference to projects */,
+    categoryId: v.string() /* ID reference to categories */,
+    productId: v.string() /* ID reference to products */,
 
     // Assignment Details
-    assignedBy: v.union(v.literal('manual'), v.literal('ai'), v.literal('import')),
+    assignedBy: v.string() /* manual | ai | import */,
     confidence: v.optional(v.number()), // For AI assignments
     rationale: v.optional(v.string()), // Why this assignment was made
 
     // Status
-    status: v.union(v.literal('active'), v.literal('pending'), v.literal('rejected')),
+    status: v.string() /* active | pending | rejected */,
 
     // Audit
-    assignedByUser: v.optional(v.id('users')),
+    assignedByUser: v.optional(v.string() /* ID reference to users */),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
@@ -382,16 +382,16 @@ export default defineSchema({
   // ================================
   // AI Categorization Feedback for improving accuracy
   aiCategorizationFeedback: defineTable({
-    organizationId: v.id('organizations'),
-    projectId: v.id('projects'),
-    productId: v.id('products'),
-    jobId: v.id('aiCategorizationJobs'),
-    suggestedCategoryId: v.id('categories'),
-    feedback: v.union(v.literal('accepted'), v.literal('rejected'), v.literal('corrected')),
-    correctedCategoryId: v.optional(v.id('categories')),
+    organizationId: v.string() /* ID reference to organizations */,
+    projectId: v.string() /* ID reference to projects */,
+    productId: v.string() /* ID reference to products */,
+    jobId: v.string() /* ID reference to aiCategorizationJobs */,
+    suggestedCategoryId: v.string() /* ID reference to categories */,
+    feedback: v.string() /* accepted | rejected | corrected */,
+    correctedCategoryId: v.optional(v.string() /* ID reference to categories */),
     reason: v.optional(v.string()),
     confidence: v.number(),
-    userId: v.id('users'),
+    userId: v.string() /* ID reference to users */,
     createdAt: v.number(),
   })
     .index('by_organization', ['organizationId'])
@@ -401,32 +401,22 @@ export default defineSchema({
     .index('by_user', ['userId']),
 
   aiCategorizationJobs: defineTable({
-    organizationId: v.id('organizations'),
-    projectId: v.id('projects'),
+    organizationId: v.string() /* ID reference to organizations */,
+    projectId: v.string() /* ID reference to projects */,
 
     // Job Configuration
-    jobType: v.union(
-      v.literal('bulk_categorization'),
-      v.literal('single_product'),
-      v.literal('validation')
-    ),
+    jobType: v.string() /* bulk_categorization | single_product | validation */,
     batchSize: v.number(),
     aiProvider: v.string(),
     aiModel: v.string(),
     prompt: v.string(),
 
     // Target Products
-    productIds: v.array(v.id('products')), // Products to process
+    productIds: v.array(v.string() /* ID reference to products */), // Products to process
     categoryContext: v.any(), // JSON of available categories
 
     // Job Status
-    status: v.union(
-      v.literal('pending'),
-      v.literal('running'),
-      v.literal('completed'),
-      v.literal('failed'),
-      v.literal('cancelled')
-    ),
+    status: v.string() /* pending | running | completed | failed | cancelled */,
     progress: v.object({
       total: v.number(),
       processed: v.number(),
@@ -438,10 +428,10 @@ export default defineSchema({
     // Results
     results: v.array(
       v.object({
-        productId: v.id('products'),
+        productId: v.string() /* ID reference to products */,
         suggestions: v.array(
           v.object({
-            categoryId: v.id('categories'),
+            categoryId: v.string() /* ID reference to categories */,
             confidence: v.number(),
             rationale: v.string(),
           })
@@ -449,12 +439,12 @@ export default defineSchema({
         newCategorySuggestions: v.array(
           v.object({
             name: v.string(),
-            parentId: v.optional(v.id('categories')),
+            parentId: v.optional(v.string() /* ID reference to categories */),
             rationale: v.string(),
             confidence: v.number(),
           })
         ),
-        status: v.union(v.literal('success'), v.literal('error'), v.literal('skipped')),
+        status: v.string() /* success | error | skipped */,
         error: v.optional(v.string()),
       })
     ),
@@ -472,7 +462,7 @@ export default defineSchema({
     currentBatch: v.optional(v.number()), // Current batch being processed
     lastProcessedProduct: v.optional(
       v.object({
-        productId: v.id('products'),
+        productId: v.string() /* ID reference to products */,
         title: v.string(),
         timestamp: v.number(),
       })
@@ -482,7 +472,7 @@ export default defineSchema({
         v.object({
           timestamp: v.number(),
           thought: v.string(),
-          productId: v.optional(v.id('products')),
+          productId: v.optional(v.string() /* ID reference to products */),
           confidence: v.optional(v.number()),
         })
       )
@@ -493,7 +483,7 @@ export default defineSchema({
       v.object({
         type: v.string(),
         message: v.string(),
-        productId: v.optional(v.id('products')),
+        productId: v.optional(v.string() /* ID reference to products */),
         timestamp: v.number(),
       })
     ),
@@ -507,7 +497,7 @@ export default defineSchema({
     notificationsSent: v.boolean(),
 
     // Audit
-    createdBy: v.id('users'),
+    createdBy: v.string() /* ID reference to users */,
     createdAt: v.number(),
     updatedAt: v.number(),
   })
@@ -517,9 +507,9 @@ export default defineSchema({
 
   // LangGraph Workflow State
   workflowStates: defineTable({
-    organizationId: v.id('organizations'),
+    organizationId: v.string() /* ID reference to organizations */,
     workflowId: v.string(), // LangGraph workflow ID
-    jobId: v.id('aiCategorizationJobs'),
+    jobId: v.string() /* ID reference to aiCategorizationJobs */,
 
     // Workflow State
     currentNode: v.string(),
@@ -537,12 +527,7 @@ export default defineSchema({
     ),
 
     // Status
-    status: v.union(
-      v.literal('running'),
-      v.literal('paused'),
-      v.literal('completed'),
-      v.literal('failed')
-    ),
+    status: v.string() /* running | paused | completed | failed */,
 
     // Human-in-the-loop
     awaitingHumanReview: v.boolean(),
@@ -559,11 +544,11 @@ export default defineSchema({
   // IMPORT/EXPORT & FILE MANAGEMENT
   // ================================
   importJobs: defineTable({
-    organizationId: v.id('organizations'),
-    projectId: v.id('projects'),
+    organizationId: v.string() /* ID reference to organizations */,
+    projectId: v.string() /* ID reference to projects */,
 
     // Import Configuration
-    importType: v.union(v.literal('products'), v.literal('categories'), v.literal('variants')),
+    importType: v.string() /* products | categories | variants */,
     fileName: v.string(),
     fileSize: v.number(),
     fileStorageId: v.string(), // Convex storage ID
@@ -575,10 +560,10 @@ export default defineSchema({
         hasHeaders: v.boolean(),
         delimiter: v.string(),
         skipEmptyRows: v.boolean(),
-        duplicateHandling: v.union(v.literal('skip'), v.literal('update'), v.literal('create')),
+        duplicateHandling: v.string() /* skip | update | create */,
         createMissingCategories: v.optional(v.boolean()),
         defaultStatus: v.optional(
-          v.union(v.literal('active'), v.literal('draft'), v.literal('archived'))
+          v.string() /* active | draft | archived */
         ),
       }),
     }),
@@ -597,13 +582,7 @@ export default defineSchema({
     ),
 
     // Processing Status
-    status: v.union(
-      v.literal('uploaded'),
-      v.literal('validating'),
-      v.literal('importing'),
-      v.literal('completed'),
-      v.literal('failed')
-    ),
+    status: v.string() /* uploaded | validating | importing | completed | failed */,
     progress: v.object({
       totalRows: v.number(),
       processedRows: v.number(),
@@ -620,7 +599,7 @@ export default defineSchema({
         column: v.string(),
         value: v.any(),
         error: v.string(),
-        severity: v.union(v.literal('error'), v.literal('warning')),
+        severity: v.string() /* error | warning */,
       })
     ),
 
@@ -641,7 +620,7 @@ export default defineSchema({
     completedAt: v.optional(v.number()),
 
     // Audit
-    createdBy: v.id('users'),
+    createdBy: v.string() /* ID reference to users */,
     createdAt: v.number(),
     updatedAt: v.number(),
   })
@@ -651,7 +630,7 @@ export default defineSchema({
 
   // File Storage Tracking
   fileStorageEntries: defineTable({
-    organizationId: v.id('organizations'),
+    organizationId: v.string() /* ID reference to organizations */,
 
     // File Details
     fileName: v.string(),
@@ -662,13 +641,7 @@ export default defineSchema({
     url: v.string(),
 
     // File Type & Purpose
-    fileType: v.union(
-      v.literal('product_image'),
-      v.literal('category_image'),
-      v.literal('csv_import'),
-      v.literal('export_file'),
-      v.literal('avatar')
-    ),
+    fileType: v.string() /* product_image | category_image | csv_import | export_file | avatar */,
     purpose: v.string(), // Description of file purpose
 
     // Associated Records
@@ -681,14 +654,14 @@ export default defineSchema({
 
     // Access Control
     isPublic: v.boolean(),
-    allowedUsers: v.array(v.id('users')),
+    allowedUsers: v.array(v.string() /* ID reference to users */),
 
     // Lifecycle
     expiresAt: v.optional(v.number()),
     isTemporary: v.boolean(),
 
     // Audit
-    uploadedBy: v.id('users'),
+    uploadedBy: v.string() /* ID reference to users */,
     createdAt: v.number(),
     lastAccessed: v.optional(v.number()),
   })
@@ -701,7 +674,7 @@ export default defineSchema({
   // AUDIT TRAIL & VERSIONING SYSTEM
   // ================================
   auditLogs: defineTable({
-    organizationId: v.id('organizations'),
+    organizationId: v.string() /* ID reference to organizations */,
 
     // Event Details
     eventType: v.string(), // CREATE, UPDATE, DELETE, etc.
@@ -714,7 +687,7 @@ export default defineSchema({
         field: v.string(),
         oldValue: v.any(),
         newValue: v.any(),
-        changeType: v.union(v.literal('added'), v.literal('modified'), v.literal('removed')),
+        changeType: v.string() /* added | modified | removed */,
       })
     ),
 
@@ -725,7 +698,7 @@ export default defineSchema({
     // Context
     context: v.object({
       action: v.string(), // User action that triggered the change
-      source: v.union(v.literal('web'), v.literal('api'), v.literal('import'), v.literal('ai')),
+      source: v.string() /* web | api | import | ai */,
       userAgent: v.optional(v.string()),
       ipAddress: v.optional(v.string()),
       sessionId: v.optional(v.string()),
@@ -735,7 +708,7 @@ export default defineSchema({
     performedBy: v.union(
       v.object({
         type: v.literal('user'),
-        userId: v.id('users'),
+        userId: v.string() /* ID reference to users */,
         userEmail: v.string(),
       }),
       v.object({
@@ -765,7 +738,7 @@ export default defineSchema({
 
   // Data Versions for Critical Entities
   dataVersions: defineTable({
-    organizationId: v.id('organizations'),
+    organizationId: v.string() /* ID reference to organizations */,
 
     // Version Details
     entityType: v.string(),
@@ -777,7 +750,7 @@ export default defineSchema({
     checksum: v.string(), // Data integrity verification
 
     // Version Metadata
-    versionType: v.union(v.literal('major'), v.literal('minor'), v.literal('patch')),
+    versionType: v.string() /* major | minor | patch */,
     changeDescription: v.optional(v.string()),
     tags: v.array(v.string()), // Version tags (e.g., "stable", "backup")
 
@@ -786,7 +759,7 @@ export default defineSchema({
     childVersions: v.array(v.number()),
 
     // Audit
-    createdBy: v.union(v.id('users'), v.literal('system')),
+    createdBy: v.union(v.string() /* ID reference to users */, v.literal('system')),
     createdAt: v.number(),
 
     // Retention
@@ -801,23 +774,18 @@ export default defineSchema({
   // PRODUCT DELETION & TRASH MANAGEMENT
   // ================================
   productTrash: defineTable({
-    organizationId: v.id('organizations'),
-    projectId: v.id('projects'),
+    organizationId: v.string() /* ID reference to organizations */,
+    projectId: v.string() /* ID reference to projects */,
     
     // Original product data
-    productId: v.id('products'),
+    productId: v.string() /* ID reference to products */,
     productData: v.any(), // Full snapshot at deletion time
     
     // Deletion metadata
     deletedAt: v.number(),
-    deletedBy: v.id('users'),
+    deletedBy: v.string() /* ID reference to users */,
     deletionReason: v.optional(v.string()),
-    deletionType: v.union(
-      v.literal('manual'),
-      v.literal('bulk'),
-      v.literal('cascade'),
-      v.literal('cleanup')
-    ),
+    deletionType: v.string() /* manual | bulk | cascade | cleanup */,
     
     // Recovery period
     expiresAt: v.number(), // deletedAt + 30 days
@@ -828,22 +796,16 @@ export default defineSchema({
     
     // Related data tracking
     relatedData: v.object({
-      variantIds: v.array(v.id('productVariants')),
-      categoryAssignmentIds: v.array(v.id('categoryProductAssignments')),
-      aiJobIds: v.array(v.id('aiCategorizationJobs')),
+      variantIds: v.array(v.string() /* ID reference to productVariants */),
+      categoryAssignmentIds: v.array(v.string() /* ID reference to categoryProductAssignments */),
+      aiJobIds: v.array(v.string() /* ID reference to aiCategorizationJobs */),
       imageStorageIds: v.array(v.string()),
     }),
     
     // Recovery status
-    recoveryStatus: v.union(
-      v.literal('recoverable'),
-      v.literal('recovering'),
-      v.literal('recovered'),
-      v.literal('expired'),
-      v.literal('permanently_deleted')
-    ),
+    recoveryStatus: v.string() /* recoverable | recovering | recovered | expired | permanently_deleted */,
     recoveredAt: v.optional(v.number()),
-    recoveredBy: v.optional(v.id('users')),
+    recoveredBy: v.optional(v.string() /* ID reference to users */),
   })
     .index('by_organization', ['organizationId'])
     .index('by_expiration', ['expiresAt', 'recoveryStatus'])
@@ -859,21 +821,15 @@ export default defineSchema({
 
   // Enhanced deletion audit logs
   deletionAuditLogs: defineTable({
-    organizationId: v.id('organizations'),
-    projectId: v.optional(v.id('projects')),
+    organizationId: v.string() /* ID reference to organizations */,
+    projectId: v.optional(v.string() /* ID reference to projects */),
     
     // Operation details
-    operationType: v.union(
-      v.literal('soft_delete'),
-      v.literal('bulk_delete'),
-      v.literal('restore'),
-      v.literal('permanent_delete'),
-      v.literal('auto_cleanup')
-    ),
+    operationType: v.string() /* soft_delete | bulk_delete | restore | permanent_delete | auto_cleanup */,
     
     // Affected entities
     affectedProducts: v.array(v.object({
-      productId: v.id('products'),
+      productId: v.string() /* ID reference to products */,
       title: v.string(),
       sku: v.optional(v.string()),
       categories: v.array(v.string()),
@@ -885,14 +841,14 @@ export default defineSchema({
       uncategorized: v.number(),
       categorized: v.number(),
       byCategory: v.array(v.object({
-        categoryId: v.id('categories'),
+        categoryId: v.string() /* ID reference to categories */,
         categoryName: v.string(),
         count: v.number(),
       })),
     }),
     
     // User and timestamp
-    performedBy: v.id('users'),
+    performedBy: v.string() /* ID reference to users */,
     performedAt: v.number(),
     userEmail: v.string(),
     userName: v.string(),
@@ -910,8 +866,8 @@ export default defineSchema({
   // MIGRATION TRACKING
   // ================================
   migrationHistory: defineTable({
-    organizationId: v.id('organizations'),
-    projectId: v.optional(v.id('projects')), // Some migrations may be org-level
+    organizationId: v.string() /* ID reference to organizations */,
+    projectId: v.optional(v.string() /* ID reference to projects */), // Some migrations may be org-level
 
     // Migration Details
     migrationName: v.string(), // e.g., "importLegacyCategories", "addProductVariants"
@@ -920,14 +876,7 @@ export default defineSchema({
 
     // Execution Details
     executionId: v.string(), // Unique ID for this execution
-    status: v.union(
-      v.literal('pending'),
-      v.literal('running'),
-      v.literal('completed'),
-      v.literal('failed'),
-      v.literal('rolled_back'),
-      v.literal('partially_completed')
-    ),
+    status: v.string() /* pending | running | completed | failed | rolled_back | partially_completed */,
 
     // Progress Tracking
     totalRecords: v.optional(v.number()),
@@ -958,7 +907,7 @@ export default defineSchema({
     rolledBackAt: v.optional(v.number()),
 
     // Audit
-    executedBy: v.id('users'),
+    executedBy: v.string() /* ID reference to users */,
     executedByEmail: v.string(),
 
     // Metadata
@@ -976,7 +925,7 @@ export default defineSchema({
   // ================================
   performanceMetrics: defineTable({
     // Organization scope
-    organizationId: v.id('organizations'),
+    organizationId: v.string() /* ID reference to organizations */,
     
     // Operation identification
     operation: v.string(), // e.g., "trash.query.list", "dashboard.load", "ai.categorization"
@@ -990,8 +939,8 @@ export default defineSchema({
     memoryUsed: v.optional(v.number()), // bytes (if available)
     
     // Context
-    projectId: v.optional(v.id('projects')),
-    userId: v.optional(v.id('users')),
+    projectId: v.optional(v.string() /* ID reference to projects */),
+    userId: v.optional(v.string() /* ID reference to users */),
     
     // Status
     success: v.boolean(),
@@ -1030,7 +979,7 @@ export default defineSchema({
     lastAccessedAt: v.number(), // Unix timestamp of last access
     
     // Organization scope (optional)
-    organizationId: v.optional(v.id('organizations')),
+    organizationId: v.optional(v.string() /* ID reference to organizations */),
     
     // Metadata
     dataType: v.string(), // Type of data cached (e.g., 'categories', 'products')
@@ -1047,7 +996,7 @@ export default defineSchema({
   // ================================
   accessibilityPreferences: defineTable({
     // User association
-    userId: v.id('users'),
+    userId: v.string() /* ID reference to users */,
     
     // User preferences
     preferences: v.object({
@@ -1055,24 +1004,9 @@ export default defineSchema({
       highContrast: v.boolean(),
       screenReaderActive: v.boolean(),
       keyboardNavigation: v.boolean(),
-      preferredConfirmationMethod: v.union(
-        v.literal('standard_click'),
-        v.literal('hold_to_confirm'),
-        v.literal('type_to_confirm'),
-        v.literal('biometric'),
-        v.literal('voice'),
-        v.literal('pattern_draw')
-      ),
-      focusIndicatorStyle: v.union(
-        v.literal('default'),
-        v.literal('high-visibility'),
-        v.literal('custom')
-      ),
-      announcementVerbosity: v.union(
-        v.literal('minimal'),
-        v.literal('standard'),
-        v.literal('verbose')
-      ),
+      preferredConfirmationMethod: v.string() /* standard_click | hold_to_confirm | type_to_confirm | biometric | voice | pattern_draw */,
+      focusIndicatorStyle: v.string() /* default | high-visibility | custom */,
+      announcementVerbosity: v.string() /* minimal | standard | verbose */,
     }),
     
     // Timestamps
@@ -1085,45 +1019,23 @@ export default defineSchema({
   deletionSessions: defineTable({
     // Session identification
     sessionId: v.string(), // Unique session identifier
-    userId: v.id('users'),
-    organizationId: v.id('organizations'),
+    userId: v.string() /* ID reference to users */,
+    organizationId: v.string() /* ID reference to organizations */,
     
     // Session state
-    state: v.union(
-      v.literal('active'),
-      v.literal('completed'),
-      v.literal('cancelled')
-    ),
-    currentStep: v.union(
-      v.literal('review_consequences'),
-      v.literal('select_options'),
-      v.literal('confirm'),
-      v.literal('processing'),
-      v.literal('complete')
-    ),
+    state: v.string() /* active | completed | cancelled */,
+    currentStep: v.string() /* review_consequences | select_options | confirm | processing | complete */,
     
     // Deletion data
-    selectedProducts: v.array(v.id('products')),
-    confirmationMethod: v.union(
-      v.literal('standard_click'),
-      v.literal('hold_to_confirm'),
-      v.literal('type_to_confirm'),
-      v.literal('biometric'),
-      v.literal('voice'),
-      v.literal('pattern_draw')
-    ),
+    selectedProducts: v.array(v.string() /* ID reference to products */),
+    confirmationMethod: v.string() /* standard_click | hold_to_confirm | type_to_confirm | biometric | voice | pattern_draw */,
     
     // Focus history for accessibility
     focusHistory: v.array(
       v.object({
         elementId: v.string(),
         timestamp: v.number(),
-        context: v.union(
-          v.literal('modal'),
-          v.literal('wizard'),
-          v.literal('table'),
-          v.literal('form')
-        ),
+        context: v.string() /* modal | wizard | table | form */,
         scrollPosition: v.optional(
           v.object({
             x: v.number(),
@@ -1169,13 +1081,7 @@ export default defineSchema({
     description: v.string(),
     
     // Status tracking
-    status: v.union(
-      v.literal('pending'),
-      v.literal('in_progress'),
-      v.literal('completed'),
-      v.literal('failed'),
-      v.literal('rolled_back')
-    ),
+    status: v.string() /* pending | in_progress | completed | failed | rolled_back */,
     
     // Timing
     startedAt: v.number(),
@@ -1203,33 +1109,33 @@ export default defineSchema({
   // Preserve deleted category assignments for recovery
   categoryAssignmentsTrash: defineTable({
     // Original assignment data
-    originalAssignmentId: v.id('categoryProductAssignments'),
-    organizationId: v.id('organizations'),
-    projectId: v.id('projects'),
-    categoryId: v.id('categories'),
-    productId: v.id('products'),
+    originalAssignmentId: v.string() /* ID reference to categoryProductAssignments */,
+    organizationId: v.string() /* ID reference to organizations */,
+    projectId: v.string() /* ID reference to projects */,
+    categoryId: v.string() /* ID reference to categories */,
+    productId: v.string() /* ID reference to products */,
     
     // Assignment metadata (preserved from original)
-    assignedBy: v.union(v.literal('manual'), v.literal('ai'), v.literal('import')),
+    assignedBy: v.string() /* manual | ai | import */,
     confidence: v.optional(v.number()),
     rationale: v.optional(v.string()),
-    status: v.union(v.literal('active'), v.literal('pending'), v.literal('rejected')),
+    status: v.string() /* active | pending | rejected */,
     
     // Assignment audit (preserved)
-    assignedByUser: v.optional(v.id('users')),
+    assignedByUser: v.optional(v.string() /* ID reference to users */),
     assignedAt: v.number(),
-    verifiedBy: v.optional(v.id('users')),
+    verifiedBy: v.optional(v.string() /* ID reference to users */),
     verifiedAt: v.optional(v.number()),
     
     // Deletion tracking
     deletedAt: v.number(),
-    deletedBy: v.id('users'),
+    deletedBy: v.string() /* ID reference to users */,
     cascadeTransactionId: v.string(),
     
     // Recovery
     recoverable: v.boolean(),
     recoveredAt: v.optional(v.number()),
-    recoveredBy: v.optional(v.id('users')),
+    recoveredBy: v.optional(v.string() /* ID reference to users */),
   })
     .index('by_product', ['productId'])
     .index('by_transaction', ['cascadeTransactionId'])
@@ -1239,30 +1145,18 @@ export default defineSchema({
   // Track cascade deletion transactions for atomicity
   cascadeTransactions: defineTable({
     transactionId: v.string(), // Unique transaction identifier
-    organizationId: v.id('organizations'),
+    organizationId: v.string() /* ID reference to organizations */,
     
     // Operation details
-    operationType: v.union(
-      v.literal('single_delete'),
-      v.literal('bulk_delete'),
-      v.literal('cascade_delete'),
-      v.literal('restore'),
-      v.literal('permanent_delete')
-    ),
-    status: v.union(
-      v.literal('pending'),
-      v.literal('in_progress'),
-      v.literal('completed'),
-      v.literal('failed'),
-      v.literal('rolled_back')
-    ),
+    operationType: v.string() /* single_delete | bulk_delete | cascade_delete | restore | permanent_delete */,
+    status: v.string() /* pending | in_progress | completed | failed | rolled_back */,
     
     // Affected entities
-    primaryEntityId: v.id('products'),
+    primaryEntityId: v.string() /* ID reference to products */,
     affectedEntities: v.object({
-      products: v.array(v.id('products')),
-      variants: v.array(v.id('productVariants')),
-      assignments: v.array(v.id('categoryProductAssignments')),
+      products: v.array(v.string() /* ID reference to products */),
+      variants: v.array(v.string() /* ID reference to productVariants */),
+      assignments: v.array(v.string() /* ID reference to categoryProductAssignments */),
       images: v.array(v.string()),
     }),
     
@@ -1272,7 +1166,7 @@ export default defineSchema({
       operation: v.string(),
       targetType: v.string(),
       targetId: v.string(),
-      status: v.union(v.literal('pending'), v.literal('completed'), v.literal('failed')),
+      status: v.string() /* pending | completed | failed */,
       startedAt: v.number(),
       completedAt: v.optional(v.number()),
       error: v.optional(v.string()),
@@ -1281,7 +1175,7 @@ export default defineSchema({
     // Execution tracking
     startedAt: v.number(),
     completedAt: v.optional(v.number()),
-    executedBy: v.id('users'),
+    executedBy: v.string() /* ID reference to users */,
     
     // Error handling
     error: v.optional(v.object({
@@ -1293,13 +1187,9 @@ export default defineSchema({
     
     // Rollback info
     rollbackAt: v.optional(v.number()),
-    rollbackBy: v.optional(v.id('users')),
+    rollbackBy: v.optional(v.string() /* ID reference to users */),
     rollbackReason: v.optional(v.string()),
-    rollbackStatus: v.optional(v.union(
-      v.literal('in_progress'),
-      v.literal('completed'),
-      v.literal('failed')
-    )),
+    rollbackStatus: v.optional(v.string() /* in_progress | completed | failed */),
     
     // Performance metrics
     metrics: v.optional(v.object({
@@ -1316,8 +1206,8 @@ export default defineSchema({
   // Queue for deferred image cleanup
   imageCleanupQueue: defineTable({
     storageId: v.string(),
-    originalProductId: v.id('products'),
-    organizationId: v.id('organizations'),
+    originalProductId: v.string() /* ID reference to products */,
+    organizationId: v.string() /* ID reference to organizations */,
     
     // File metadata
     fileUrl: v.optional(v.string()),
@@ -1327,19 +1217,12 @@ export default defineSchema({
     
     // Queue metadata
     queuedAt: v.number(),
-    queuedBy: v.union(v.literal('deletion'), v.literal('migration'), v.literal('manual')),
+    queuedBy: v.string() /* deletion | migration | manual */,
     cascadeTransactionId: v.optional(v.string()),
-    priority: v.union(v.literal('low'), v.literal('normal'), v.literal('high')),
+    priority: v.string() /* low | normal | high */,
     
     // Processing status
-    status: v.union(
-      v.literal('pending'),
-      v.literal('processing'),
-      v.literal('completed'),
-      v.literal('failed'),
-      v.literal('skipped'),
-      v.literal('cancelled')
-    ),
+    status: v.string() /* pending | processing | completed | failed | skipped | cancelled */,
     processedAt: v.optional(v.number()),
     processingStartedAt: v.optional(v.number()),
     
@@ -1359,11 +1242,7 @@ export default defineSchema({
     
     // Cleanup verification
     verifiedDeleted: v.boolean(),
-    verificationMethod: v.optional(v.union(
-      v.literal('storage_api'),
-      v.literal('manual'),
-      v.literal('automated_scan')
-    )),
+    verificationMethod: v.optional(v.string() /* storage_api | manual | automated_scan */),
   })
     .index('by_status', ['status'])
     .index('by_queued_at', ['queuedAt'])
@@ -1376,7 +1255,7 @@ export default defineSchema({
     // Lock identification
     resourceType: v.string(), // e.g., 'product', 'category', 'bulk_operation'
     resourceId: v.string(), // e.g., product ID, operation ID
-    organizationId: v.id('organizations'),
+    organizationId: v.string() /* ID reference to organizations */,
     
     // Lock metadata
     lockId: v.string(), // Unique lock identifier
@@ -1388,7 +1267,7 @@ export default defineSchema({
     
     // Lock ownership
     ownerId: v.string(), // Transaction ID or user ID
-    ownerType: v.union(v.literal('transaction'), v.literal('user'), v.literal('system')),
+    ownerType: v.string() /* transaction | user | system */,
     
     // Timing
     acquiredAt: v.number(),
@@ -1398,11 +1277,7 @@ export default defineSchema({
     maxRenewals: v.number(), // Prevent infinite locks
     
     // Status
-    status: v.union(
-      v.literal('active'),
-      v.literal('expired'),
-      v.literal('released')
-    ),
+    status: v.string() /* active | expired | released */,
     
     // Additional context
     metadata: v.optional(v.any()), // Additional lock-specific data
@@ -1428,9 +1303,9 @@ export default defineSchema({
   performanceBenchmarks: defineTable({
     name: v.string(),
     description: v.string(),
-    status: v.union(v.literal('pending'), v.literal('running'), v.literal('completed'), v.literal('failed')),
-    systems: v.array(v.union(v.literal('langchain'), v.literal('crewai'))),
-    providers: v.array(v.union(v.literal('openai'), v.literal('anthropic'), v.literal('gemini'))),
+    status: v.string() /* pending | running | completed | failed */,
+    systems: v.array(v.string() /* langchain | crewai */),
+    providers: v.array(v.string() /* openai | anthropic | gemini */),
     
     testParams: v.object({
       productCounts: v.array(v.number()),
@@ -1448,7 +1323,7 @@ export default defineSchema({
       maxCostPerProduct: v.number(),
     }),
     
-    results: v.array(v.id('benchmarkMetrics')),
+    results: v.array(v.string() /* ID reference to benchmarkMetrics */),
     error: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.optional(v.number()),
@@ -1458,10 +1333,10 @@ export default defineSchema({
     .index('by_createdAt', ['createdAt']),
   
   benchmarkMetrics: defineTable({
-    benchmarkId: v.id('performanceBenchmarks'),
+    benchmarkId: v.string() /* ID reference to performanceBenchmarks */,
     timestamp: v.number(),
-    system: v.union(v.literal('langchain'), v.literal('crewai')),
-    provider: v.union(v.literal('openai'), v.literal('anthropic'), v.literal('gemini')),
+    system: v.string() /* langchain | crewai */,
+    provider: v.string() /* openai | anthropic | gemini */,
     
     responseTime: v.object({
       p50: v.number(),
@@ -1511,8 +1386,8 @@ export default defineSchema({
 
   // CrewAI Monitoring Tables
   crewAIMetrics: defineTable({
-    jobId: v.id('aiCategorizationJobs'),
-    organizationId: v.id('organizations'),
+    jobId: v.string() /* ID reference to aiCategorizationJobs */,
+    organizationId: v.string() /* ID reference to organizations */,
     timestamp: v.number(),
     metricType: v.string(),
     metricName: v.string(),
@@ -1527,7 +1402,7 @@ export default defineSchema({
     .index('by_metric_name', ['metricName', 'timestamp']),
 
   crewAIAggregatedMetrics: defineTable({
-    organizationId: v.id('organizations'),
+    organizationId: v.string() /* ID reference to organizations */,
     period: v.string(),
     startTime: v.number(),
     endTime: v.number(),
@@ -1546,8 +1421,8 @@ export default defineSchema({
     .index('by_metric_period', ['metricName', 'period', 'startTime']),
 
   crewAIAlerts: defineTable({
-    organizationId: v.id('organizations'),
-    jobId: v.optional(v.id('aiCategorizationJobs')),
+    organizationId: v.string() /* ID reference to organizations */,
+    jobId: v.optional(v.string() /* ID reference to aiCategorizationJobs */),
     severity: v.string(),
     type: v.string(),
     message: v.string(),
@@ -1556,11 +1431,11 @@ export default defineSchema({
     actualValue: v.number(),
     timestamp: v.number(),
     acknowledged: v.boolean(),
-    acknowledgedBy: v.optional(v.id('users')),
+    acknowledgedBy: v.optional(v.string() /* ID reference to users */),
     acknowledgedAt: v.optional(v.number()),
     resolved: v.boolean(),
     resolvedAt: v.optional(v.number()),
-    resolvedBy: v.optional(v.id('users')),
+    resolvedBy: v.optional(v.string() /* ID reference to users */),
     resolution: v.optional(v.string()),
     actions: v.array(v.string()),
     correlationId: v.optional(v.string()),
@@ -1578,16 +1453,16 @@ export default defineSchema({
     .index('by_job', ['jobId']),
 
   crewAIAlertHistory: defineTable({
-    alertId: v.id('crewAIAlerts'),
+    alertId: v.string() /* ID reference to crewAIAlerts */,
     action: v.string(),
-    userId: v.id('users'),
+    userId: v.string() /* ID reference to users */,
     notes: v.optional(v.string()),
     timestamp: v.number(),
   })
     .index('by_alert', ['alertId', 'timestamp']),
 
   crewAIOptimizations: defineTable({
-    organizationId: v.id('organizations'),
+    organizationId: v.string() /* ID reference to organizations */,
     type: v.string(),
     priority: v.string(),
     title: v.string(),
@@ -1626,8 +1501,8 @@ export default defineSchema({
     .index('by_type', ['type', 'status']),
 
   crewAICostTracking: defineTable({
-    jobId: v.id('aiCategorizationJobs'),
-    organizationId: v.id('organizations'),
+    jobId: v.string() /* ID reference to aiCategorizationJobs */,
+    organizationId: v.string() /* ID reference to organizations */,
     timestamp: v.number(),
     provider: v.string(),
     model: v.string(),
@@ -1645,7 +1520,7 @@ export default defineSchema({
     .index('by_provider_model', ['provider', 'model', 'timestamp']),
 
   crewAIMonthlyReports: defineTable({
-    organizationId: v.id('organizations'),
+    organizationId: v.string() /* ID reference to organizations */,
     month: v.number(),
     year: v.number(),
     stats: v.any(),
@@ -1657,8 +1532,8 @@ export default defineSchema({
     .index('by_organization_period', ['organizationId', 'year', 'month']),
 
   crewAIABTests: defineTable({
-    organizationId: v.id('organizations'),
-    optimizationId: v.id('crewAIOptimizations'),
+    organizationId: v.string() /* ID reference to organizations */,
+    optimizationId: v.string() /* ID reference to crewAIOptimizations */,
     config: v.any(),
     status: v.string(),
     createdAt: v.number(),
@@ -1669,7 +1544,7 @@ export default defineSchema({
     .index('by_optimization', ['optimizationId']),
 
   crewAILearnings: defineTable({
-    organizationId: v.id('organizations'),
+    organizationId: v.string() /* ID reference to organizations */,
     optimizationType: v.string(),
     learnings: v.any(),
     createdAt: v.number(),
@@ -1677,7 +1552,7 @@ export default defineSchema({
     .index('by_organization_type', ['organizationId', 'optimizationType']),
 
   crewAIRemediationLog: defineTable({
-    alertId: v.id('crewAIAlerts'),
+    alertId: v.string() /* ID reference to crewAIAlerts */,
     action: v.string(),
     success: v.boolean(),
     result: v.string(),
@@ -1721,9 +1596,9 @@ export default defineSchema({
     // User targeting
     userTargeting: v.object({
       enabled: v.boolean(),
-      targetedOrganizations: v.array(v.id('organizations')),
-      excludedOrganizations: v.array(v.id('organizations')),
-      betaUsers: v.array(v.id('users')),
+      targetedOrganizations: v.array(v.string() /* ID reference to organizations */),
+      excludedOrganizations: v.array(v.string() /* ID reference to organizations */),
+      betaUsers: v.array(v.string() /* ID reference to users */),
     }),
     
     // Performance thresholds for auto-rollback
@@ -1737,7 +1612,7 @@ export default defineSchema({
     // Metadata
     createdAt: v.number(),
     updatedAt: v.number(),
-    updatedBy: v.id('users'),
+    updatedBy: v.string() /* ID reference to users */,
     lastRollbackAt: v.optional(v.number()),
     rollbackReason: v.optional(v.string()),
   })
@@ -1746,8 +1621,8 @@ export default defineSchema({
 
   // A/B Test Metrics
   abTestMetrics: defineTable({
-    organizationId: v.id('organizations'),
-    system: v.union(v.literal('crewai'), v.literal('langchain')),
+    organizationId: v.string() /* ID reference to organizations */,
+    system: v.string() /* crewai | langchain */,
     
     // Performance metrics
     responseTime: v.number(),
@@ -1763,8 +1638,8 @@ export default defineSchema({
     
     // Context
     timestamp: v.number(),
-    productIds: v.array(v.id('products')),
-    jobId: v.id('aiCategorizationJobs'),
+    productIds: v.array(v.string() /* ID reference to products */),
+    jobId: v.string() /* ID reference to aiCategorizationJobs */,
   })
     .index('by_organization_time', ['organizationId', 'timestamp'])
     .index('by_system_time', ['system', 'timestamp'])
@@ -1773,8 +1648,8 @@ export default defineSchema({
   // A/B Test Alerts
   abTestAlerts: defineTable({
     timestamp: v.number(),
-    system: v.union(v.literal('crewai'), v.literal('langchain')),
-    organizationId: v.id('organizations'),
+    system: v.string() /* crewai | langchain */,
+    organizationId: v.string() /* ID reference to organizations */,
     violations: v.array(v.string()),
     metrics: v.object({
       responseTime: v.number(),
@@ -1786,7 +1661,7 @@ export default defineSchema({
       categoryCount: v.number(),
       cacheHitRate: v.number(),
     }),
-    severity: v.union(v.literal('warning'), v.literal('critical')),
+    severity: v.string() /* warning | critical */,
   })
     .index('by_organization_time', ['organizationId', 'timestamp'])
     .index('by_severity', ['severity'])
@@ -1795,7 +1670,7 @@ export default defineSchema({
   // A/B Test Audit Log
   abTestAuditLog: defineTable({
     action: v.string(),
-    userId: v.union(v.id('users'), v.literal('system')),
+    userId: v.union(v.string() /* ID reference to users */, v.literal('system')),
     timestamp: v.number(),
     changes: v.optional(v.any()),
     previousConfig: v.optional(v.any()),
@@ -1811,8 +1686,8 @@ export default defineSchema({
   // Rate limit tracking per user/organization
   rateLimits: defineTable({
     // Identification
-    organizationId: v.id('organizations'),
-    userId: v.optional(v.id('users')), // Optional for API key-based requests
+    organizationId: v.string() /* ID reference to organizations */,
+    userId: v.optional(v.string() /* ID reference to users */), // Optional for API key-based requests
     identifier: v.string(), // Could be userId, API key, IP address, etc.
     
     // Rate limit configuration
@@ -1883,15 +1758,15 @@ export default defineSchema({
     // Metadata
     createdAt: v.number(),
     updatedAt: v.number(),
-    updatedBy: v.id('users'),
+    updatedBy: v.string() /* ID reference to users */,
   })
     .index('by_resource_plan', ['resource', 'plan'])
     .index('by_enabled', ['isEnabled']),
 
   // Rate limit violations for monitoring
   rateLimitViolations: defineTable({
-    organizationId: v.id('organizations'),
-    userId: v.optional(v.id('users')),
+    organizationId: v.string() /* ID reference to organizations */,
+    userId: v.optional(v.string() /* ID reference to users */),
     identifier: v.string(),
     
     // Violation details
@@ -1929,7 +1804,7 @@ export default defineSchema({
 
   // API key management with rate limits
   apiKeys: defineTable({
-    organizationId: v.id('organizations'),
+    organizationId: v.string() /* ID reference to organizations */,
     
     // Key details
     name: v.string(),
@@ -1953,13 +1828,13 @@ export default defineSchema({
     usageCount: v.number(),
     
     // Status
-    status: v.union(v.literal('active'), v.literal('revoked'), v.literal('expired')),
+    status: v.string() /* active | revoked | expired */,
     expiresAt: v.optional(v.number()),
     
     // Audit
-    createdBy: v.id('users'),
+    createdBy: v.string() /* ID reference to users */,
     createdAt: v.number(),
-    revokedBy: v.optional(v.id('users')),
+    revokedBy: v.optional(v.string() /* ID reference to users */),
     revokedAt: v.optional(v.number()),
     revokeReason: v.optional(v.string()),
   })

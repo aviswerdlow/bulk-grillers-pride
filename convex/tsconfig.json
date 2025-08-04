@@ -8,7 +8,16 @@
     },
     "declaration": false,
     "declarationMap": false,
-    "noEmit": true
+    "noEmit": true,
+    // TypeScript optimization flags to resolve TS2589
+    "incremental": true,
+    "tsBuildInfoFile": ".tsbuildinfo",
+    "disableSourceOfProjectReferenceRedirect": true,
+    "disableSolutionSearching": true,
+    "disableReferencedProjectLoad": true,
+    // Additional optimization for complex types
+    "skipLibCheck": true,
+    "skipDefaultLibCheck": true
   },
   "include": [
     "**/*.ts",
@@ -20,6 +29,7 @@
     "_generated/api.js",
     "**/*.test.ts",
     "**/*.spec.ts",
-    "__tests__/**/*"
+    "__tests__/**/*",
+    ".tsbuildinfo"
   ]
 }

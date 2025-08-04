@@ -20,33 +20,33 @@ export const newTables = {
   // Preserve deleted category assignments for recovery
   categoryAssignmentsTrash: defineTable({
     // Original assignment data
-    originalAssignmentId: v.id('categoryProductAssignments'),
-    organizationId: v.id('organizations'),
-    projectId: v.id('projects'),
-    categoryId: v.id('categories'),
-    productId: v.id('products'),
+    originalAssignmentId: v.string(), // ID reference to categoryProductAssignments
+    organizationId: v.string(), // ID reference to organizations
+    projectId: v.string(), // ID reference to projects
+    categoryId: v.string(), // ID reference to categories
+    productId: v.string(), // ID reference to products
     
     // Assignment metadata (preserved from original)
-    assignedBy: v.union(v.literal('manual'), v.literal('ai'), v.literal('import')),
+    assignedBy: v.string(), // 'manual' | 'ai' | 'import'
     confidence: v.optional(v.number()),
     rationale: v.optional(v.string()),
-    status: v.union(v.literal('active'), v.literal('pending'), v.literal('rejected')),
+    status: v.string(), // 'active' | 'pending' | 'rejected'
     
     // Assignment audit (preserved)
-    assignedByUser: v.optional(v.id('users')),
+    assignedByUser: v.optional(v.string()), // ID reference to users
     assignedAt: v.number(),
-    verifiedBy: v.optional(v.id('users')),
+    verifiedBy: v.optional(v.string()), // ID reference to users
     verifiedAt: v.optional(v.number()),
     
     // Deletion tracking
     deletedAt: v.number(),
-    deletedBy: v.id('users'),
+    deletedBy: v.string(), // ID reference to users
     cascadeTransactionId: v.string(),
     
     // Recovery
     recoverable: v.boolean(),
     recoveredAt: v.optional(v.number()),
-    recoveredBy: v.optional(v.id('users')),
+    recoveredBy: v.optional(v.string()), // ID reference to users
   })
     .index('by_product', ['productId'])
     .index('by_transaction', ['cascadeTransactionId'])
@@ -56,30 +56,18 @@ export const newTables = {
   // Track cascade deletion transactions for atomicity
   cascadeTransactions: defineTable({
     transactionId: v.string(), // Unique transaction identifier
-    organizationId: v.id('organizations'),
+    organizationId: v.string(), // ID reference to organizations
     
     // Operation details
-    operationType: v.union(
-      v.literal('single_delete'),
-      v.literal('bulk_delete'),
-      v.literal('cascade_delete'),
-      v.literal('restore'),
-      v.literal('permanent_delete')
-    ),
-    status: v.union(
-      v.literal('pending'),
-      v.literal('in_progress'),
-      v.literal('completed'),
-      v.literal('failed'),
-      v.literal('rolled_back')
-    ),
+    operationType: v.string(), // 'single_delete' | 'bulk_delete' | 'cascade_delete' | 'restore' | 'permanent_delete'
+    status: v.string(), // 'pending' | 'in_progress' | 'completed' | 'failed' | 'rolled_back'
     
     // Affected entities
-    primaryEntityId: v.id('products'),
+    primaryEntityId: v.string(), // ID reference to products
     affectedEntities: v.object({
-      products: v.array(v.id('products')),
-      variants: v.array(v.id('productVariants')),
-      assignments: v.array(v.id('categoryProductAssignments')),
+      products: v.array(v.string()), // ID references to products
+      variants: v.array(v.string()), // ID references to productVariants
+      assignments: v.array(v.string()), // ID references to categoryProductAssignments
       images: v.array(v.string()),
     }),
     
@@ -89,7 +77,7 @@ export const newTables = {
       operation: v.string(),
       targetType: v.string(),
       targetId: v.string(),
-      status: v.union(v.literal('pending'), v.literal('completed'), v.literal('failed')),
+      status: v.string(), // 'pending' | 'completed' | 'failed'
       startedAt: v.number(),
       completedAt: v.optional(v.number()),
       error: v.optional(v.string()),
@@ -98,7 +86,7 @@ export const newTables = {
     // Execution tracking
     startedAt: v.number(),
     completedAt: v.optional(v.number()),
-    executedBy: v.id('users'),
+    executedBy: v.string(), // ID reference to users
     
     // Error handling
     error: v.optional(v.object({
@@ -110,13 +98,9 @@ export const newTables = {
     
     // Rollback info
     rollbackAt: v.optional(v.number()),
-    rollbackBy: v.optional(v.id('users')),
+    rollbackBy: v.optional(v.string()), // ID reference to users
     rollbackReason: v.optional(v.string()),
-    rollbackStatus: v.optional(v.union(
-      v.literal('in_progress'),
-      v.literal('completed'),
-      v.literal('failed')
-    )),
+    rollbackStatus: v.optional(v.string()), // 'in_progress' | 'completed' | 'failed'
     
     // Performance metrics
     metrics: v.optional(v.object({
@@ -133,8 +117,8 @@ export const newTables = {
   // Queue for deferred image cleanup
   imageCleanupQueue: defineTable({
     storageId: v.string(),
-    originalProductId: v.id('products'),
-    organizationId: v.id('organizations'),
+    originalProductId: v.string(), // ID reference to products
+    organizationId: v.string(), // ID reference to organizations
     
     // File metadata
     fileUrl: v.optional(v.string()),
@@ -144,19 +128,12 @@ export const newTables = {
     
     // Queue metadata
     queuedAt: v.number(),
-    queuedBy: v.union(v.literal('deletion'), v.literal('migration'), v.literal('manual')),
+    queuedBy: v.string(), // 'deletion' | 'migration' | 'manual'
     cascadeTransactionId: v.optional(v.string()),
-    priority: v.union(v.literal('low'), v.literal('normal'), v.literal('high')),
+    priority: v.string(), // 'low' | 'normal' | 'high'
     
     // Processing status
-    status: v.union(
-      v.literal('pending'),
-      v.literal('processing'),
-      v.literal('completed'),
-      v.literal('failed'),
-      v.literal('skipped'),
-      v.literal('cancelled')
-    ),
+    status: v.string(), // 'pending' | 'processing' | 'completed' | 'failed' | 'skipped' | 'cancelled'
     processedAt: v.optional(v.number()),
     processingStartedAt: v.optional(v.number()),
     
@@ -176,11 +153,7 @@ export const newTables = {
     
     // Cleanup verification
     verifiedDeleted: v.boolean(),
-    verificationMethod: v.optional(v.union(
-      v.literal('storage_api'),
-      v.literal('manual'),
-      v.literal('automated_scan')
-    )),
+    verificationMethod: v.optional(v.string()), // 'storage_api' | 'manual' | 'automated_scan'
   })
     .index('by_status', ['status'])
     .index('by_queued_at', ['queuedAt'])
