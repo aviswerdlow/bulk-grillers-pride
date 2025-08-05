@@ -2,6 +2,16 @@
 
 This directory contains all GitHub Actions workflows for the Bulk Grillers Pride project.
 
+## 🛡️ Branch Protection
+
+The `main` branch is protected with strict quality gates. See [BRANCH_PROTECTION.md](../BRANCH_PROTECTION.md) for details.
+
+### Key Protection Features:
+- ✅ Requires PR approval before merging
+- ✅ All CI checks must pass
+- ✅ No direct pushes to main
+- ✅ Tests must actually execute (no false positives)
+
 ## Security Workflow (`security.yml`)
 
 The security workflow implements automated security scanning with multiple layers of protection:
@@ -77,13 +87,32 @@ npm run security:check
 
 ## CI Workflow (`ci.yml`)
 
-Main continuous integration pipeline with:
-- Linting
-- Type checking
-- Unit tests (sharded)
-- E2E tests
-- Build verification
-- Bundle size checks
+Main continuous integration pipeline with enhanced reliability:
+
+### Features
+- **Test Validation**: Ensures tests actually execute (no false positives)
+- **JUnit Reporting**: Tracks test counts and failures
+- **Coverage Validation**: Verifies coverage reports are generated
+- **Sharded Testing**: Parallel test execution for speed
+- **Quality Gates**: Enforces minimum standards before merge
+
+### Jobs
+- **lint**: ESLint code quality checks
+- **type-check**: TypeScript type validation  
+- **test**: Unit/integration tests (sharded for performance)
+- **coverage**: Coverage report generation and validation
+- **build**: Application build verification
+- **e2e**: End-to-end testing with Playwright
+- **security**: Dependency vulnerability scanning
+- **all-checks**: Meta-job ensuring all checks pass
+
+### Test Execution Validation
+The CI now validates that tests run properly by:
+1. Adding `--passWithNoTests=false` to prevent empty test runs
+2. Checking for generated coverage reports
+3. Parsing JUnit XML for test counts and failures
+4. Failing if no tests were executed
+5. Providing detailed test summaries in GitHub UI
 
 ## Other Workflows
 

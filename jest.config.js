@@ -21,7 +21,7 @@ module.exports = {
       testMatch: ['<rootDir>/apps/web/**/__tests__/**/*.(test|spec).(ts|tsx|js|jsx)'],
       roots: ['<rootDir>/apps/web'],
       testEnvironment: 'jsdom',
-      setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+      setupFilesAfterEnv: ['<rootDir>/jest.setup.js', '<rootDir>/apps/web/src/__tests__/setup.ts'],
       preset: 'ts-jest',
       resolver: '<rootDir>/jest.resolver.js',
       transform: {
@@ -171,6 +171,20 @@ module.exports = {
     },
   },
   coverageReporters: ['text', 'lcov', 'html', 'json-summary'],
+  reporters: [
+    'default',
+    [
+      'jest-junit',
+      {
+        outputDirectory: 'coverage',
+        outputName: 'junit.xml',
+        classNameTemplate: '{classname}',
+        titleTemplate: '{title}',
+        ancestorSeparator: ' › ',
+        usePathForSuiteName: 'true',
+      },
+    ],
+  ],
   watchPlugins: ['jest-watch-typeahead/filename', 'jest-watch-typeahead/testname'],
   // Performance optimizations
   cache: true,

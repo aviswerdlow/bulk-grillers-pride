@@ -37,7 +37,7 @@ describe('Category Import Functions', () => {
 
   beforeEach(async () => {
     
-    tes// t is already imported from t.setup
+    // test is already imported from test.setup
     
     // Set up common test data
     user = createMockUser({ _id: 'user_1' as Id<'users'> });

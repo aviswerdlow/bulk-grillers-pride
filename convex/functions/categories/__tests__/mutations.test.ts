@@ -28,8 +28,8 @@ describe('Category Mutations', () => {
   let membership: any;
 
   beforeEach(async () => {
-    
-    tes// t is already imported from t.setup
+    // Initialize test context using the imported t
+    test = t;
     
     // Set up common test data
     user = createMockUser({ _id: 'user_1' as Id<'users'> });
@@ -53,7 +53,7 @@ describe('Category Mutations', () => {
       organizationMemberships: [membership],
     });
 
-    setupAuth(test, { tokenIdentifier: user.clerkId });
+    await setupAuth(test, user.clerkId);
   });
 
   describe('createCategory', () => {
@@ -91,7 +91,7 @@ describe('Category Mutations', () => {
 
         // Assert
         expect(categoryId).toBeDefined();
-        expect(categoryId).toMatch(/^categories_\d+$/);
+        expect(categoryId).toMatch(/^categories_[\w\d]+$/);
 
         const category = await t.db.get(categoryId);
         expect(category).toBeDefined();
@@ -168,7 +168,7 @@ describe('Category Mutations', () => {
         });
 
         // Assert
-        const categories = getTableData(test, 'categories');
+        const categories = await getTableData(test, 'categories');
         const newCategory = categories.find(c => c._id === categoryId);
         expect(newCategory).toMatchObject({
           name: 'Computers',
@@ -386,7 +386,7 @@ describe('Category Mutations', () => {
         }
 
         // Assert
-        const categories = getTableData(test, 'categories');
+        const categories = await getTableData(test, 'categories');
         const deepest = categories.find(c => c.level === 4);
         expect(deepest).toBeDefined();
         expect(deepest.path).toBe('/level-0/level-1/level-2/level-3/level-4');

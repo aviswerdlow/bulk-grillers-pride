@@ -1,12 +1,12 @@
 import { describe, it, expect, beforeEach } from '@jest/globals';
-import { t, resetMockState } from '../../../t.setup';
-import { createTestContext } from '../../../tests/helpers/convexTestCtx';
-import type { TestContext } from '../../../tests/helpers/convexTestCtx';
+import { t, resetMockState } from '../../../test.setup';
+import { createConvexTest, setupAuth, seedDatabase, createMockUser, createMockOrganization, createMockOrganizationMembership, createMockProject, createMockCategory, createMockProduct, type ConvexTestContext } from '../../../__tests__/convex-test-standard';
+
 import type { Id } from '../../../_generated/dataModel';
 
 describe('Dashboard Functions', () => {
   let ctx: any;
-  let testCtx: TestContext;
+  let testCtx: ConvexTestContext;
   let userId: Id<'users'>;
   let orgId: Id<'organizations'>;
   let projectId: Id<'projects'>;
@@ -15,7 +15,7 @@ describe('Dashboard Functions', () => {
   beforeEach(async () => {
     resetMockState();
     ctx = await t.run(async (ctx) => ctx);
-    testCtx = createTestContext();
+    testCtx = t;
 
     // Create test user
     userId = await ctx.db.insert('users', {

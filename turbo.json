@@ -5,67 +5,53 @@
     "enabled": true,
     "signature": true,
     "preflight": true,
-    "timeout": 60,
-    "uploadTimeout": 300
+    "timeout": 30,
+    "uploadTimeout": 120
   },
   "ui": "tui",
   "daemon": true,
   "envMode": "strict",
-  "globalEnv": ["NODE_ENV", "CI", "VERCEL", "VERCEL_ENV", "GITHUB_SHA", "GITHUB_REF", "GITHUB_ACTOR"],
+  "globalEnv": [
+    "NODE_ENV",
+    "CI",
+    "VERCEL",
+    "VERCEL_ENV",
+    "GITHUB_SHA",
+    "GITHUB_REF",
+    "GITHUB_ACTOR"
+  ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": [
-        ".next/**", 
-        "!.next/cache/**", 
-        "dist/**", 
-        ".turbo/**",
-        "*.tsbuildinfo"
-      ],
+      "outputs": [".next/**", "!.next/cache/**", "dist/**", ".turbo/**", "*.tsbuildinfo"],
       "inputs": [
-        "$TURBO_DEFAULT$", 
-        ".env*", 
-        "!README.md", 
-        "!**/*.test.*", 
+        "$TURBO_DEFAULT$",
+        ".env*",
+        "!README.md",
+        "!**/*.test.*",
         "!**/__tests__/**",
         "!**/*.md"
       ],
-      "env": [
-        "NODE_ENV", 
-        "NEXT_PUBLIC_*", 
-        "CLERK_*", 
-        "CONVEX_*", 
-        "VERCEL_*"
-      ],
+      "env": ["NODE_ENV", "NEXT_PUBLIC_*", "CLERK_*", "CONVEX_*", "VERCEL_*"],
       "outputLogs": "new-only",
       "cache": true
     },
     "dev": {
       "cache": false,
       "persistent": true,
-      "env": [
-        "NODE_ENV", 
-        "NEXT_PUBLIC_*", 
-        "CLERK_*", 
-        "CONVEX_*", 
-        "PORT"
-      ]
+      "env": ["NODE_ENV", "NEXT_PUBLIC_*", "CLERK_*", "CONVEX_*", "PORT"]
     },
     "start": {
       "dependsOn": ["build"],
       "cache": false
     },
     "lint": {
-      "dependsOn": ["^build"],
-      "outputs": [
-        ".eslintcache",
-        ".turbo/**"
-      ],
+      "outputs": [".eslintcache", ".turbo/**"],
       "inputs": [
-        "$TURBO_DEFAULT$", 
-        ".eslintrc.*", 
-        ".prettierrc.*", 
-        "!**/*.test.*", 
+        "$TURBO_DEFAULT$",
+        "eslint.config.*",
+        ".prettierrc.*",
+        "!**/*.test.*",
         "!**/__tests__/**",
         "!**/*.md"
       ],
@@ -74,69 +60,63 @@
     },
     "test": {
       "dependsOn": ["^build"],
-      "outputs": [
-        "coverage/**", 
-        "junit.xml",
-        ".turbo/**"
-      ],
+      "outputs": ["coverage/**", "junit.xml", ".turbo/**"],
       "inputs": [
-        "$TURBO_DEFAULT$", 
-        "jest.config.*", 
-        "jest.setup.*", 
-        "**/*.test.*", 
-        "**/__tests__/**", 
+        "$TURBO_DEFAULT$",
+        "jest.config.*",
+        "jest.setup.*",
+        "**/*.test.*",
+        "**/__tests__/**",
         "!coverage/**"
       ],
-      "env": [
-        "NODE_ENV", 
-        "NEXT_PUBLIC_*", 
-        "CLERK_*", 
-        "CONVEX_*", 
-        "TEST_*"
-      ],
+      "env": ["NODE_ENV", "NEXT_PUBLIC_*", "CLERK_*", "CONVEX_*", "TEST_*"],
       "outputLogs": "new-only",
       "cache": true
     },
     "test:ci": {
       "dependsOn": ["^build"],
-      "outputs": [
-        "coverage/**", 
-        "junit.xml", 
-        "test-results/**",
-        ".turbo/**"
-      ],
+      "outputs": ["coverage/**", "junit.xml", "test-results/**", ".turbo/**"],
       "inputs": [
-        "$TURBO_DEFAULT$", 
-        "jest.config.*", 
-        "jest.setup.*", 
-        "**/*.test.*", 
-        "**/__tests__/**", 
+        "$TURBO_DEFAULT$",
+        "jest.config.*",
+        "jest.setup.*",
+        "**/*.test.*",
+        "**/__tests__/**",
         "!coverage/**"
       ],
-      "env": [
-        "NODE_ENV", 
-        "NEXT_PUBLIC_*", 
-        "CLERK_*", 
-        "CONVEX_*", 
-        "TEST_*", 
-        "CI", 
-        "JEST_JUNIT_*"
-      ],
+      "env": ["NODE_ENV", "NEXT_PUBLIC_*", "CLERK_*", "CONVEX_*", "TEST_*", "CI", "JEST_JUNIT_*"],
       "outputLogs": "errors-only",
       "cache": true
     },
-    "type-check": {
-      "outputs": [
-        "*.tsbuildinfo",
-        ".turbo/**"
-      ],
+    "test:watch": {
+      "cache": false,
+      "persistent": true,
       "inputs": [
-        "$TURBO_DEFAULT$", 
-        "tsconfig.*", 
-        "!**/*.test.*", 
-        "!**/__tests__/**",
-        "!**/*.md"
+        "$TURBO_DEFAULT$",
+        "jest.config.*",
+        "jest.setup.*",
+        "**/*.test.*",
+        "**/__tests__/**"
+      ]
+    },
+    "test:coverage": {
+      "dependsOn": ["^build"],
+      "outputs": ["coverage/**", ".turbo/**"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "jest.config.*",
+        "jest.setup.*",
+        "**/*.test.*",
+        "**/__tests__/**",
+        "!coverage/**"
       ],
+      "env": ["NODE_ENV", "NEXT_PUBLIC_*", "CLERK_*", "CONVEX_*", "TEST_*"],
+      "outputLogs": "new-only",
+      "cache": true
+    },
+    "type-check": {
+      "outputs": ["*.tsbuildinfo", ".turbo/**"],
+      "inputs": ["$TURBO_DEFAULT$", "tsconfig.*", "!**/*.test.*", "!**/__tests__/**", "!**/*.md"],
       "outputLogs": "new-only",
       "cache": true
     },
@@ -145,24 +125,18 @@
     },
     "analyze": {
       "dependsOn": ["build"],
-      "outputs": [
-        ".next/analyze/**",
-        ".turbo/**"
-      ],
+      "outputs": [".next/analyze/**", ".turbo/**"],
       "cache": false,
       "env": ["ANALYZE"]
     },
     "//#tsc": {
-      "outputs": [
-        "tsconfig.tsbuildinfo",
-        ".turbo/**"
-      ],
+      "outputs": ["tsconfig.tsbuildinfo", ".turbo/**"],
       "inputs": ["$TURBO_DEFAULT$", "tsconfig.json"],
       "cache": true
     },
     "//#format": {
       "cache": false,
-      "inputs": ["$TURBO_DEFAULT$", ".prettierrc.*", ".eslintrc.*"]
+      "inputs": ["$TURBO_DEFAULT$", ".prettierrc.*", "eslint.config.*"]
     }
   }
 }
