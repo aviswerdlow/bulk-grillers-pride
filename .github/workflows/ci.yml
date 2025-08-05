@@ -214,16 +214,62 @@ jobs:
         run: npm run prepare || true
 
       - name: Run tests for ${{ matrix.project }} (shard ${{ matrix.shard }}/2)
+        id: run-tests
         run: |
+          # Run tests with proper error handling
           if [ "${{ matrix.project }}" = "web" ]; then
-            npm run test:ci -- --selectProjects=web --testPathPatterns="$([ ${{ matrix.shard }} = 1 ] && echo '(components|lib|utils)' || echo '(app|contracts)')"
+            TEST_PATTERN="$([ ${{ matrix.shard }} = 1 ] && echo '(components|lib|utils)' || echo '(app|contracts)')"
+            echo "Running tests for web project with pattern: $TEST_PATTERN"
+            npm run test:ci -- --selectProjects=web --testPathPatterns="$TEST_PATTERN" --passWithNoTests=false || exit 1
           else
-            npm run test:ci -- --selectProjects=convex --testPathPatterns="$([ ${{ matrix.shard }} = 1 ] && echo '(ai|auth|categories)' || echo '(dashboard|imports|organizations|products|projects)')"
+            TEST_PATTERN="$([ ${{ matrix.shard }} = 1 ] && echo '(ai|auth|categories)' || echo '(dashboard|imports|organizations|products|projects)')"
+            echo "Running tests for convex project with pattern: $TEST_PATTERN"
+            npm run test:ci -- --selectProjects=convex --testPathPatterns="$TEST_PATTERN" --passWithNoTests=false || exit 1
           fi
+
+          # Verify tests actually ran
+          if [ ! -f coverage/coverage-summary.json ]; then
+            echo "❌ Error: No coverage report generated. Tests may not have run."
+            exit 1
+          fi
+
+          # Check test count from JUnit report if available
+          if [ -f coverage/junit.xml ]; then
+            TEST_COUNT=$(grep -o 'tests="[0-9]*"' coverage/junit.xml | head -1 | grep -o '[0-9]*' || echo "0")
+            FAILURES=$(grep -o 'failures="[0-9]*"' coverage/junit.xml | head -1 | grep -o '[0-9]*' || echo "0")
+            ERRORS=$(grep -o 'errors="[0-9]*"' coverage/junit.xml | head -1 | grep -o '[0-9]*' || echo "0")
+            
+            echo "✅ Test Summary: $TEST_COUNT tests, $FAILURES failures, $ERRORS errors"
+            
+            if [ "$FAILURES" -gt "0" ] || [ "$ERRORS" -gt "0" ]; then
+              echo "❌ Tests failed!"
+              exit 1
+            fi
+          else
+            # Fallback: just check that coverage was generated
+            TEST_COUNT="unknown"
+            echo "⚠️ JUnit report not found, cannot verify test count"
+          fi
+
+          if [ "$TEST_COUNT" = "0" ]; then
+            echo "❌ Error: No tests were executed!"
+            exit 1
+          fi
+
+          echo "test-count=$TEST_COUNT" >> $GITHUB_OUTPUT
         env:
           NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
           CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
           NEXT_PUBLIC_CONVEX_URL: ${{ secrets.NEXT_PUBLIC_CONVEX_URL }}
+
+      - name: Validate test execution
+        run: |
+          echo "Test execution summary for ${{ matrix.project }} (shard ${{ matrix.shard }}):"
+          echo "- Tests run: ${{ steps.run-tests.outputs.test-count }}"
+
+          # Add to GitHub summary
+          echo "### ${{ matrix.project }} Tests (Shard ${{ matrix.shard }})" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Successfully ran ${{ steps.run-tests.outputs.test-count }} tests" >> $GITHUB_STEP_SUMMARY
 
       - name: Upload coverage reports
         uses: actions/upload-artifact@v4
@@ -251,10 +297,32 @@ jobs:
         run: |
           echo "## Test Coverage Report" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Check if all coverage files exist
+          MISSING_FILES=0
+          for artifact in coverage-web-1 coverage-web-2 coverage-convex-1 coverage-convex-2; do
+            if [ ! -d "coverage/$artifact" ]; then
+              echo "⚠️ Missing coverage from: $artifact" >> $GITHUB_STEP_SUMMARY
+              MISSING_FILES=$((MISSING_FILES + 1))
+            fi
+          done
+
+          if [ $MISSING_FILES -gt 0 ]; then
+            echo "❌ Coverage report incomplete - $MISSING_FILES shards missing" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
           if [ -f coverage/lcov-report/index.html ]; then
-            echo "Coverage report generated successfully." >> $GITHUB_STEP_SUMMARY
+            echo "✅ Coverage report generated successfully." >> $GITHUB_STEP_SUMMARY
+            
+            # Parse and display coverage summary if available
+            if [ -f coverage/coverage-summary.json ]; then
+              TOTAL_TESTS=$(grep -o '"numTotalTests":[0-9]*' coverage/coverage-summary.json | grep -o '[0-9]*' || echo "unknown")
+              echo "📊 Total tests executed: $TOTAL_TESTS" >> $GITHUB_STEP_SUMMARY
+            fi
           else
-            echo "⚠️ Coverage report not found." >> $GITHUB_STEP_SUMMARY
+            echo "❌ Coverage report not found - tests may have failed." >> $GITHUB_STEP_SUMMARY
+            exit 1
           fi
 
   build:
@@ -479,18 +547,40 @@ jobs:
 
   all-checks:
     name: All Checks Passed
-    needs: [lint, type-check, test, build, e2e]
+    needs: [lint, type-check, test, build, e2e, coverage, security]
     runs-on: ubuntu-latest
     if: always()
     steps:
       - name: Check job results
         run: |
+          echo "## CI Status Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Lint | ${{ needs.lint.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Type Check | ${{ needs.type-check.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Test | ${{ needs.test.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Coverage | ${{ needs.coverage.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Build | ${{ needs.build.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| E2E | ${{ needs.e2e.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Security | ${{ needs.security.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Check all required jobs passed
           if [[ "${{ needs.lint.result }}" != "success" || 
                 "${{ needs.type-check.result }}" != "success" || 
                 "${{ needs.test.result }}" != "success" || 
+                "${{ needs.coverage.result }}" != "success" ||
                 "${{ needs.build.result }}" != "success" || 
-                "${{ needs.e2e.result }}" != "success" ]]; then
-            echo "One or more checks failed"
+                "${{ needs.e2e.result }}" != "success" ||
+                "${{ needs.security.result }}" != "success" ]]; then
+            echo "❌ **One or more checks failed**" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Branch Protection Active" >> $GITHUB_STEP_SUMMARY
+            echo "This PR cannot be merged until all checks pass." >> $GITHUB_STEP_SUMMARY
             exit 1
           fi
-          echo "All checks passed successfully! ✅"
+
+          echo "✅ **All checks passed successfully!**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "This PR meets all quality gates and can be merged." >> $GITHUB_STEP_SUMMARY

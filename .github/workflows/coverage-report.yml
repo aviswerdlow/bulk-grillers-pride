@@ -9,58 +9,86 @@ on:
 jobs:
   coverage:
     runs-on: ubuntu-latest
-    
+
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Use Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-        cache: 'npm'
-    
-    - name: Install dependencies
-      run: npm ci
-    
-    - name: Run tests with coverage
-      run: npm run test:coverage
-      continue-on-error: true
-    
-    - name: Upload coverage reports
-      uses: codecov/codecov-action@v5
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-        file: ./coverage/lcov.info
-        flags: unittests
-        name: codecov-umbrella
-        fail_ci_if_error: false
-    
-    - name: Coverage Summary
-      if: github.event_name == 'pull_request'
-      uses: actions/github-script@v7
-      with:
-        script: |
-          const fs = require('fs');
-          const coverage = JSON.parse(fs.readFileSync('./coverage/coverage-summary.json', 'utf8'));
-          const total = coverage.total;
-          
-          const comment = `## 📊 Test Coverage Report
-          
-          | Metric | Coverage | Target |
-          |--------|----------|--------|
-          | Statements | ${total.statements.pct.toFixed(2)}% | 15% |
-          | Branches | ${total.branches.pct.toFixed(2)}% | 15% |
-          | Functions | ${total.functions.pct.toFixed(2)}% | 15% |
-          | Lines | ${total.lines.pct.toFixed(2)}% | 15% |
-          
-          ${total.lines.pct >= 15 ? '✅ Coverage meets current threshold!' : '❌ Coverage below threshold. Please add more tests.'}
-          
-          See [TEST_COVERAGE_ROADMAP.md](https://github.com/${{ github.repository }}/blob/main/TEST_COVERAGE_ROADMAP.md) for improvement plan.
-          `;
-          
-          github.rest.issues.createComment({
-            issue_number: context.issue.number,
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            body: comment
-          });
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests with coverage
+        run: |
+          # Run tests and ensure proper error propagation
+          npm run test:coverage || exit 1
+
+          # Verify coverage report was generated
+          if [ ! -f coverage/coverage-summary.json ]; then
+            echo "❌ Error: Coverage report not generated"
+            exit 1
+          fi
+
+          # Check that tests actually ran using JUnit report
+          if [ -f coverage/junit.xml ]; then
+            TEST_COUNT=$(grep -o 'tests="[0-9]*"' coverage/junit.xml | head -1 | grep -o '[0-9]*' || echo "0")
+            FAILURES=$(grep -o 'failures="[0-9]*"' coverage/junit.xml | head -1 | grep -o '[0-9]*' || echo "0")
+            ERRORS=$(grep -o 'errors="[0-9]*"' coverage/junit.xml | head -1 | grep -o '[0-9]*' || echo "0")
+            
+            echo "✅ Test Summary: $TEST_COUNT tests, $FAILURES failures, $ERRORS errors"
+            
+            if [ "$FAILURES" -gt "0" ] || [ "$ERRORS" -gt "0" ]; then
+              echo "❌ Tests failed!"
+              exit 1
+            fi
+            
+            if [ "$TEST_COUNT" = "0" ]; then
+              echo "❌ Error: No tests were executed!"
+              exit 1
+            fi
+          else
+            echo "⚠️ JUnit report not found, cannot verify test execution"
+          fi
+
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: ./coverage/lcov.info
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
+
+      - name: Coverage Summary
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const coverage = JSON.parse(fs.readFileSync('./coverage/coverage-summary.json', 'utf8'));
+            const total = coverage.total;
+
+            const comment = `## 📊 Test Coverage Report
+
+            | Metric | Coverage | Target |
+            |--------|----------|--------|
+            | Statements | ${total.statements.pct.toFixed(2)}% | 15% |
+            | Branches | ${total.branches.pct.toFixed(2)}% | 15% |
+            | Functions | ${total.functions.pct.toFixed(2)}% | 15% |
+            | Lines | ${total.lines.pct.toFixed(2)}% | 15% |
+
+            ${total.lines.pct >= 15 ? '✅ Coverage meets current threshold!' : '❌ Coverage below threshold. Please add more tests.'}
+
+            See [TEST_COVERAGE_ROADMAP.md](https://github.com/${{ github.repository }}/blob/main/TEST_COVERAGE_ROADMAP.md) for improvement plan.
+            `;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
