@@ -1,0 +1,70 @@
+name: Verify Build Dependencies
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  verify-deps:
+    name: Verify Build Dependencies
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify tsup is available
+        run: |
+          echo "Checking tsup availability..."
+          if ! npx tsup --version; then
+            echo "ERROR: tsup is not available!"
+            echo "Please ensure tsup is installed as a devDependency"
+            exit 1
+          fi
+          echo "✅ tsup is available"
+
+      - name: Verify package build tools
+        run: |
+          echo "Verifying build tools in packages..."
+
+          # Check that packages can access tsup
+          for package_dir in packages/*/; do
+            if [ -f "${package_dir}package.json" ]; then
+              package_name=$(basename "$package_dir")
+              echo "Checking $package_name..."
+              
+              # Check if package uses tsup in build script
+              if grep -q "tsup" "${package_dir}package.json"; then
+                echo "  Package uses tsup, verifying access..."
+                cd "$package_dir"
+                if ! npx tsup --version > /dev/null 2>&1; then
+                  echo "  ❌ ERROR: tsup not accessible in $package_name"
+                  exit 1
+                fi
+                echo "  ✅ tsup accessible in $package_name"
+                cd - > /dev/null
+              else
+                echo "  ℹ️ Package does not use tsup"
+              fi
+            fi
+          done
+
+          echo "✅ All build dependencies verified!"
+
+      - name: Test build
+        run: |
+          echo "Running build to verify all dependencies work..."
+          npm run build
+          echo "✅ Build completed successfully!"

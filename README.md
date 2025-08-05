@@ -30,6 +30,20 @@ A multi-tenant SaaS application for e-commerce product merchandising with AI-pow
 - Clerk account (free tier available)
 - At least one AI provider API key (OpenAI, Anthropic, or Google Gemini)
 
+## 🔧 Build Requirements
+
+This project uses npm workspaces and requires a complete dependency installation before building:
+
+```bash
+# Install all dependencies including build tools
+npm install
+
+# The build system uses tsup for TypeScript compilation
+# tsup is installed as a root dependency and shared across all packages
+```
+
+**Important**: Always run `npm install` after cloning or pulling changes to ensure all build dependencies are available.
+
 ## 🚀 Quick Start
 
 1. **Clone and Install**
