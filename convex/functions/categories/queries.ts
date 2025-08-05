@@ -4,7 +4,7 @@ import { Doc } from '../../_generated/dataModel';
 import { getUserAndVerifyAccess } from './helpers';
 
 // Get all categories for a project in hierarchical structure
-export const getProjectCategories = query({
+export const getProjectCategories = Object.assign(query({
   args: {
     organizationId: v.id('organizations'),
     projectId: v.id('projects'),
@@ -36,10 +36,10 @@ export const getProjectCategories = query({
     // Sort by sortOrder
     return categories.sort((a, b) => a.sortOrder - b.sortOrder);
   },
-});
+}), { _name: 'getProjectCategories' });
 
 // Get category tree (all categories in hierarchical structure)
-export const getCategoryTree = query({
+export const getCategoryTree = Object.assign(query({
   args: {
     organizationId: v.id('organizations'),
     projectId: v.id('projects'),
@@ -93,7 +93,7 @@ export const getCategoryTree = query({
     sortCategories(rootCategories);
     return rootCategories;
   },
-});
+}), { _name: 'getCategoryTree' });
 
 // Get a single category by ID
 export const getCategory = query({

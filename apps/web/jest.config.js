@@ -58,7 +58,9 @@ module.exports = {
     ],
   },
   moduleNameMapper: {
-    // Mock all variations of convex imports - order matters!
+    ...webProjectConfig.moduleNameMapper,
+    // Mock all variations of convex imports - order matters! These must come AFTER the spread
+    '^@convex/_generated/api$': '<rootDir>/apps/web/src/__tests__/__mocks__/convex-api.js',
     '^@/\\.\\./\\.\\./\\.\\./convex/_generated/api(\\.js)?$':
       '<rootDir>/apps/web/src/__tests__/__mocks__/convex-api.js',
     '^@/\\.\\./\\.\\./\\.\\./convex/_generated/dataModel(\\.d?\\.ts)?$':
@@ -88,11 +90,10 @@ module.exports = {
     '^@convex/_generated/api$': '<rootDir>/apps/web/src/__tests__/__mocks__/convex-api.js',
     '^@convex/_generated/dataModel$':
       '<rootDir>/apps/web/src/__tests__/__mocks__/convex-dataModel.ts',
-    ...webProjectConfig.moduleNameMapper,
     // Mock Radix UI packages
     '^@radix-ui/react-icons$': '<rootDir>/apps/web/src/__tests__/__mocks__/lucide-react.js',
     '^@radix-ui/react-dialog$':
-      '<rootDir>/apps/web/src/__tests__/__mocks__/@radix-ui/react-dialog.js',
+      '<rootDir>/apps/web/src/__tests__/__mocks__/@radix-ui/react-dialog.tsx',
     '^@radix-ui/react-popover$':
       '<rootDir>/apps/web/src/__tests__/__mocks__/@radix-ui/react-popover.js',
     '^@radix-ui/react-scroll-area$':
