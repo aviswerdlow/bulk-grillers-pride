@@ -14,6 +14,7 @@ const mockQueryChain = {
 const dbStorage = new Map();
 
 const mockDb = {
+  storage: dbStorage, // Expose the storage for test helpers
   query: jest.fn((tableName) => {
     const tableData = dbStorage.get(tableName) || [];
     

@@ -588,7 +588,7 @@ describe('Imports Functions', () => {
           organizationId: orgId,
           projectId,
           importType: 'products',
-          fileName: 'test.csv',
+          fileName: 't.csv',
           fileSize: 1024,
           fileStorageId: 'storage_test',
           fieldMapping: {
@@ -642,7 +642,7 @@ describe('Imports Functions', () => {
         organizationId: orgId,
         projectId,
         importType: 'products',
-        fileName: 'status-test.csv',
+        fileName: 'status-t.csv',
         fileSize: 3072,
         fileStorageId: 'storage_status',
         status: 'uploaded',
@@ -711,7 +711,7 @@ describe('Imports Functions', () => {
         organizationId: orgId,
         projectId,
         importType: 'products',
-        fileName: 'complete-test.csv',
+        fileName: 'complete-t.csv',
         fileSize: 2048,
         fileStorageId: 'storage_complete',
         status: 'importing',
@@ -846,7 +846,7 @@ describe('Imports Functions', () => {
       await expect(
         testCtx.handlers.completeFileUpload({
           organizationId: orgId,
-          fileName: 'test.csv',
+          fileName: 't.csv',
           fileSize: 1024,
           mimeType: 'text/csv',
           storageId: 'storage_test' as Id<'_storage'>,

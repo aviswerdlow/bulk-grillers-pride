@@ -174,3 +174,44 @@ export function createMockProduct(overrides?: any) {
 export function resetMockState() {
   jest.clearAllMocks();
 }
+
+// Implement the missing test helper functions
+export async function assertDocumentExists(
+  testContext: ConvexTestContext | any,
+  tableName: string,
+  documentId: string
+): Promise<void> {
+  const db = testContext.db || testContext;
+  const doc = await db.get(documentId);
+  if (!doc) {
+    throw new Error(`Expected document ${documentId} to exist in ${tableName}, but it was not found`);
+  }
+}
+
+export async function assertDocumentNotExists(
+  testContext: ConvexTestContext | any,
+  tableName: string,
+  documentId: string
+): Promise<void> {
+  const db = testContext.db || testContext;
+  const doc = await db.get(documentId);
+  if (doc) {
+    throw new Error(`Expected document ${documentId} to not exist in ${tableName}, but it was found`);
+  }
+}
+
+export async function getTableData(
+  testContext: ConvexTestContext | any,
+  tableName: string
+): Promise<any[]> {
+  const db = testContext.db || testContext;
+  
+  // Access the storage directly if available
+  if ((db as any).storage && (db as any).storage instanceof Map) {
+    return (db as any).storage.get(tableName) || [];
+  }
+  
+  // Otherwise use query
+  const result = await db.query(tableName).collect();
+  return result || [];
+}

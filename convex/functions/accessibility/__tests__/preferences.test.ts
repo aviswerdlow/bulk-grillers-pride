@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
-import { t } from '../../../test.setup';
+import { t } from '../../../t.setup';
 import {
   getAccessibilityPreferencesHandler,
   updateAccessibilityPreferencesHandler,

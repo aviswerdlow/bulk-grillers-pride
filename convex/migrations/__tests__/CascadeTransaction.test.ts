@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
-import { t } from '../../test.setup';
+import { t } from '../../t.setup';
 import { CascadeTransaction, withTransaction } from '../CascadeTransaction';
 import { GenericMutationCtx } from 'convex/server';
 import { DataModel, Id } from '../../_generated/dataModel';

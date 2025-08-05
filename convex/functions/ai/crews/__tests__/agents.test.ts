@@ -3,7 +3,7 @@
  */
 
 import { describe, expect, test, jest, beforeEach } from '@jest/globals';
-import { t } from '../../../../test.setup';
+import { t } from '../../../../t.setup';
 import {
   ProductAnalyzerAgent,
   CategoryMatcherAgent,

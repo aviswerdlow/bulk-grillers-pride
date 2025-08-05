@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
-import { t } from '../../../../test.setup';
+import { t } from '../../../../t.setup';
 import { Id } from '../../../../_generated/dataModel';
 import { internal } from '../../../../_generated/api';
 
@@ -16,7 +16,7 @@ describe('CacheIntegration', () => {
   beforeEach(async () => {
     test = t;
     // Create test organization
-    organizationId = await test.mutation(async (ctx) => {
+    organizationId = await t.mutation(async (ctx) => {
       return await ctx.db.insert('organizations', {
         name: 'Test Organization',
         slug: 'test-org',
@@ -57,7 +57,7 @@ describe('CacheIntegration', () => {
     const ctx = await t.mutation(async (ctx) => ctx);
       const testData = { value: 'test data', timestamp: Date.now() };
       
-      await test.mutation(async (ctx) => {
+      await t.mutation(async (ctx) => {
         await ctx.runMutation(internal.ai.memory.cacheIntegration.writeToCache, {
           key: 'test-key',
           value: testData,
@@ -66,7 +66,7 @@ describe('CacheIntegration', () => {
         });
       });
 
-      const result = await test.query(async (ctx) => {
+      const result = await t.query(async (ctx) => {
         return await ctx.runQuery(internal.ai.memory.cacheIntegration.readFromCache, {
           key: 'test-key',
         });
@@ -79,7 +79,7 @@ describe('CacheIntegration', () => {
 
     it('should update hits on read', async () => {
     const ctx = await t.mutation(async (ctx) => ctx);
-      await test.mutation(async (ctx) => {
+      await t.mutation(async (ctx) => {
         await ctx.runMutation(internal.ai.memory.cacheIntegration.writeToCache, {
           key: 'hit-test',
           value: { data: 'hit test' },
@@ -88,7 +88,7 @@ describe('CacheIntegration', () => {
       });
 
       // First read
-      await test.query(async (ctx) => {
+      await t.query(async (ctx) => {
         return await ctx.runQuery(internal.ai.memory.cacheIntegration.readFromCache, {
           key: 'hit-test',
           updateHits: true,
@@ -96,7 +96,7 @@ describe('CacheIntegration', () => {
       });
 
       // Second read
-      const result = await test.query(async (ctx) => {
+      const result = await t.query(async (ctx) => {
         return await ctx.runQuery(internal.ai.memory.cacheIntegration.readFromCache, {
           key: 'hit-test',
           updateHits: true,
@@ -108,7 +108,7 @@ describe('CacheIntegration', () => {
 
     it('should handle cache expiration', async () => {
     const ctx = await t.mutation(async (ctx) => ctx);
-      await test.mutation(async (ctx) => {
+      await t.mutation(async (ctx) => {
         await ctx.runMutation(internal.ai.memory.cacheIntegration.writeToCache, {
           key: 'expire-test',
           value: { data: 'expires' },
@@ -118,7 +118,7 @@ describe('CacheIntegration', () => {
       });
 
       // Should be available immediately
-      const result1 = await test.query(async (ctx) => {
+      const result1 = await t.query(async (ctx) => {
         return await ctx.runQuery(internal.ai.memory.cacheIntegration.readFromCache, {
           key: 'expire-test',
         });
@@ -129,7 +129,7 @@ describe('CacheIntegration', () => {
       await new Promise(resolve => setTimeout(resolve, 150));
 
       // Should be expired
-      const result2 = await test.query(async (ctx) => {
+      const result2 = await t.query(async (ctx) => {
         return await ctx.runQuery(internal.ai.memory.cacheIntegration.readFromCache, {
           key: 'expire-test',
         });
@@ -147,17 +147,17 @@ describe('CacheIntegration', () => {
         createdAt: Date.now(),
       };
 
-      await test.mutation(async (ctx) => {
+      await t.mutation(async (ctx) => {
         await ctx.runMutation(internal.ai.memory.cacheIntegration.cacheMemoryLookup, {
-          memoryKey: 'test.memory.1',
+          memoryKey: 't.memory.1',
           memoryData,
           organizationId,
         });
       });
 
-      const cached = await test.query(async (ctx) => {
+      const cached = await t.query(async (ctx) => {
         return await ctx.runQuery(internal.ai.memory.cacheIntegration.getCachedMemory, {
-          memoryKey: 'test.memory.1',
+          memoryKey: 't.memory.1',
           organizationId,
         });
       });
@@ -173,7 +173,7 @@ describe('CacheIntegration', () => {
         timestamp: Date.now(),
       };
 
-      await test.mutation(async (ctx) => {
+      await t.mutation(async (ctx) => {
         await ctx.runMutation(internal.ai.memory.cacheIntegration.cacheAnalysisResult, {
           productId: 'prod123',
           analysis,
@@ -182,7 +182,7 @@ describe('CacheIntegration', () => {
         });
       });
 
-      const cached = await test.query(async (ctx) => {
+      const cached = await t.query(async (ctx) => {
         return await ctx.runQuery(internal.ai.memory.cacheIntegration.getCachedAnalysis, {
           productId: 'prod123',
           organizationId,
@@ -201,7 +201,7 @@ describe('CacheIntegration', () => {
         reasons: ['keyword match', 'description similarity'],
       };
 
-      await test.mutation(async (ctx) => {
+      await t.mutation(async (ctx) => {
         await ctx.runMutation(internal.ai.memory.cacheIntegration.cacheCategoryMatch, {
           productId: 'prod123',
           categoryMatch,
@@ -212,7 +212,7 @@ describe('CacheIntegration', () => {
 
       // Should use same key format
       const cacheKey = `crewai.category.${organizationId}.matcher-1.prod123`;
-      const cached = await test.query(async (ctx) => {
+      const cached = await t.query(async (ctx) => {
         return await ctx.runQuery(internal.ai.memory.cacheIntegration.readFromCache, {
           key: cacheKey,
         });
@@ -229,7 +229,7 @@ describe('CacheIntegration', () => {
         score: 0.95,
       };
 
-      await test.mutation(async (ctx) => {
+      await t.mutation(async (ctx) => {
         await ctx.runMutation(internal.ai.memory.cacheIntegration.cacheValidationResult, {
           productId: 'prod123',
           validation,
@@ -240,7 +240,7 @@ describe('CacheIntegration', () => {
 
       // Check it was cached
       const cacheKey = `crewai.validation.${organizationId}.validator-1.prod123`;
-      const cached = await test.query(async (ctx) => {
+      const cached = await t.query(async (ctx) => {
         return await ctx.runQuery(internal.ai.memory.cacheIntegration.readFromCache, {
           key: cacheKey,
         });
@@ -257,7 +257,7 @@ describe('CacheIntegration', () => {
         averageImportance: 0.75,
       };
 
-      await test.mutation(async (ctx) => {
+      await t.mutation(async (ctx) => {
         await ctx.runMutation(internal.ai.memory.cacheIntegration.cacheMemoryStats, {
           stats,
           organizationId,
@@ -266,7 +266,7 @@ describe('CacheIntegration', () => {
       });
 
       const cacheKey = `crewai.stats.${organizationId}.crew-1`;
-      const cached = await test.query(async (ctx) => {
+      const cached = await t.query(async (ctx) => {
         return await ctx.runQuery(internal.ai.memory.cacheIntegration.readFromCache, {
           key: cacheKey,
         });
@@ -285,7 +285,7 @@ describe('CacheIntegration', () => {
         { key: 'batch3', value: { data: 3 }, dataType: 'test' },
       ];
 
-      const results = await test.mutation(async (ctx) => {
+      const results = await t.mutation(async (ctx) => {
         return await ctx.runMutation(internal.ai.memory.cacheIntegration.batchCacheWrite, {
           entries,
         });
@@ -295,7 +295,7 @@ describe('CacheIntegration', () => {
       expect(results.every(r => r !== null)).toBe(true);
 
       // Verify all were written
-      const batch = await test.query(async (ctx) => {
+      const batch = await t.query(async (ctx) => {
         return await ctx.runQuery(internal.ai.memory.cacheIntegration.batchCacheRead, {
           keys: ['batch1', 'batch2', 'batch3'],
         });
@@ -310,7 +310,7 @@ describe('CacheIntegration', () => {
     it('should batch read multiple cache entries', async () => {
     const ctx = await t.mutation(async (ctx) => ctx);
       // Write test data
-      await test.mutation(async (ctx) => {
+      await t.mutation(async (ctx) => {
         await ctx.runMutation(internal.ai.memory.cacheIntegration.batchCacheWrite, {
           entries: [
             { key: 'read1', value: { value: 'a' }, dataType: 'test' },
@@ -320,7 +320,7 @@ describe('CacheIntegration', () => {
         });
       });
 
-      const results = await test.query(async (ctx) => {
+      const results = await t.query(async (ctx) => {
         return await ctx.runQuery(internal.ai.memory.cacheIntegration.batchCacheRead, {
           keys: ['read1', 'read2', 'read3', 'nonexistent'],
         });
@@ -338,7 +338,7 @@ describe('CacheIntegration', () => {
     it('should clear expired cache entries', async () => {
     const ctx = await t.mutation(async (ctx) => ctx);
       // Create entries with short TTL
-      await test.mutation(async (ctx) => {
+      await t.mutation(async (ctx) => {
         await ctx.runMutation(internal.ai.memory.cacheIntegration.batchCacheWrite, {
           entries: [
             { key: 'expire1', value: { data: 1 }, dataType: 'test', ttlMs: 100 },
@@ -352,7 +352,7 @@ describe('CacheIntegration', () => {
       await new Promise(resolve => setTimeout(resolve, 150));
 
       // Clear expired
-      const result = await test.mutation(async (ctx) => {
+      const result = await t.mutation(async (ctx) => {
         return await ctx.runMutation(internal.ai.memory.cacheIntegration.clearExpiredCache, {
           organizationId,
         });
@@ -361,7 +361,7 @@ describe('CacheIntegration', () => {
       expect(result.deleted).toBe(2);
 
       // Verify persistent entry still exists
-      const persistent = await test.query(async (ctx) => {
+      const persistent = await t.query(async (ctx) => {
         return await ctx.runQuery(internal.ai.memory.cacheIntegration.readFromCache, {
           key: 'persist1',
         });
@@ -374,7 +374,7 @@ describe('CacheIntegration', () => {
     it('should collect cache statistics', async () => {
     const ctx = await t.mutation(async (ctx) => ctx);
       // Create diverse cache entries
-      await test.mutation(async (ctx) => {
+      await t.mutation(async (ctx) => {
         await ctx.runMutation(internal.ai.memory.cacheIntegration.batchCacheWrite, {
           entries: [
             { key: 'stat1', value: { data: 'a'.repeat(100) }, dataType: 'memory', organizationId },
@@ -386,7 +386,7 @@ describe('CacheIntegration', () => {
       });
 
       // Read some entries to generate hits
-      await test.query(async (ctx) => {
+      await t.query(async (ctx) => {
         await ctx.runQuery(internal.ai.memory.cacheIntegration.readFromCache, { key: 'stat1' });
         await ctx.runQuery(internal.ai.memory.cacheIntegration.readFromCache, { key: 'stat1' });
         await ctx.runQuery(internal.ai.memory.cacheIntegration.readFromCache, { key: 'stat3' });
@@ -395,7 +395,7 @@ describe('CacheIntegration', () => {
       // Wait for one to expire
       await new Promise(resolve => setTimeout(resolve, 10));
 
-      const stats = await test.query(async (ctx) => {
+      const stats = await t.query(async (ctx) => {
         return await ctx.runQuery(internal.ai.memory.cacheIntegration.getCacheStats, {
           organizationId,
         });
@@ -412,7 +412,7 @@ describe('CacheIntegration', () => {
 
     it('should filter statistics by data type', async () => {
     const ctx = await t.mutation(async (ctx) => ctx);
-      await test.mutation(async (ctx) => {
+      await t.mutation(async (ctx) => {
         await ctx.runMutation(internal.ai.memory.cacheIntegration.batchCacheWrite, {
           entries: [
             { key: 'type1', value: { data: 1 }, dataType: 'memory', organizationId },
@@ -422,7 +422,7 @@ describe('CacheIntegration', () => {
         });
       });
 
-      const memoryStats = await test.query(async (ctx) => {
+      const memoryStats = await t.query(async (ctx) => {
         return await ctx.runQuery(internal.ai.memory.cacheIntegration.getCacheStats, {
           organizationId,
           dataType: 'memory',
