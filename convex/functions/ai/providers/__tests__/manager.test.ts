@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
-import { t } from '../../../../test.setup';
+import { t } from '../../../../t.setup';
 import { MultiProviderManager } from '../manager';
 import { ProviderRequest, ProviderError, BudgetExceededError } from '../types';
 

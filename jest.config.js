@@ -1,9 +1,25 @@
 /** @type {import('jest').Config} */
 module.exports = {
+  rootDir: '.',
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    '/.worktrees/',
+    '/.conductor/',
+    '/origin/',
+    '/.turbo/',
+    '/.next/'
+  ],
+  modulePathIgnorePatterns: [
+    '/.worktrees/',
+    '/.conductor/',
+    '/origin/',
+    '/.turbo/'
+  ],
   projects: [
     {
       displayName: 'web',
       testMatch: ['<rootDir>/apps/web/**/__tests__/**/*.(test|spec).(ts|tsx|js|jsx)'],
+      roots: ['<rootDir>/apps/web'],
       testEnvironment: 'jsdom',
       setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
       preset: 'ts-jest',
@@ -67,13 +83,20 @@ module.exports = {
         '^@convex/(.*)$': '<rootDir>/convex/$1',
       },
       moduleDirectories: ['node_modules', '<rootDir>'],
-      testPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/apps/web/.next/'],
+      testPathIgnorePatterns: [
+        '<rootDir>/node_modules/',
+        '<rootDir>/apps/web/.next/',
+        '<rootDir>/.worktrees/',
+        '<rootDir>/.conductor/',
+        '<rootDir>/origin/'
+      ],
       transformIgnorePatterns: ['node_modules/(?!(convex|@radix-ui.*|cmdk)/)'],
       moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
     },
     {
       displayName: 'convex',
       testMatch: ['<rootDir>/convex/**/__tests__/**/*.(test|spec).(ts|js)'],
+      roots: ['<rootDir>/convex'],
       testEnvironment: 'node',
       setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
       resolver: '<rootDir>/jest.resolver.js',
@@ -91,12 +114,19 @@ module.exports = {
         '^@/(.*)$': '<rootDir>/convex/$1',
       },
       transformIgnorePatterns: ['node_modules/(?!(convex|convex-test)/)'],
-      testPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/convex/_generated/'],
+      testPathIgnorePatterns: [
+        '<rootDir>/node_modules/',
+        '<rootDir>/convex/_generated/',
+        '<rootDir>/.worktrees/',
+        '<rootDir>/.conductor/',
+        '<rootDir>/origin/'
+      ],
       extensionsToTreatAsEsm: [],
     },
     {
       displayName: 'test-factories',
       testMatch: ['<rootDir>/packages/test-factories/**/__tests__/**/*.(test|spec).(ts|js)'],
+      roots: ['<rootDir>/packages/test-factories'],
       testEnvironment: 'node',
       preset: 'ts-jest',
       transform: {
@@ -114,6 +144,9 @@ module.exports = {
       testPathIgnorePatterns: [
         '<rootDir>/node_modules/',
         '<rootDir>/packages/test-factories/dist/',
+        '<rootDir>/.worktrees/',
+        '<rootDir>/.conductor/',
+        '<rootDir>/origin/'
       ],
     },
   ],
@@ -143,5 +176,5 @@ module.exports = {
   cache: true,
   cacheDirectory: '<rootDir>/.jest-cache',
   // Run tests in parallel within each project
-  maxConcurrency: 5,
+  maxConcurrency: 3,
 };

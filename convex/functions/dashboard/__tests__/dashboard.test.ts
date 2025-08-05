@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from '@jest/globals';
-import { t, resetMockState } from '../../../test.setup';
+import { t, resetMockState } from '../../../t.setup';
 import { createTestContext } from '../../../tests/helpers/convexTestCtx';
 import type { TestContext } from '../../../tests/helpers/convexTestCtx';
 import type { Id } from '../../../_generated/dataModel';

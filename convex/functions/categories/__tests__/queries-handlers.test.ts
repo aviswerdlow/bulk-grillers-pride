@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from '@jest/globals';
-import { t } from '../../../test.setup';
+import { t } from '../../../t.setup';
 import {
   createConvexTest,
   createQueryContext,
@@ -28,7 +28,7 @@ describe('Category Query Handlers', () => {
 
   beforeEach(async () => {
     
-    tes// t is already imported from test.setup
+    tes// t is already imported from t.setup
     
     // Set up common test data
     user = createMockUser({ _id: 'user_1' as Id<'users'> });

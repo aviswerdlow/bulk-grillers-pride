@@ -1,5 +1,5 @@
 import { api } from '../../../_generated/api';
-import { t } from '../../../test.setup';
+import { t } from '../../../t.setup';
 import { describe, it, expect, beforeEach } from '@jest/globals';
 import { Id } from '../../../_generated/dataModel';
 import { createCategoryHandler, updateCategoryHandler, deleteCategoryHandler } from '../handlers/mutations';
@@ -163,7 +163,7 @@ describe('Categories Functions', () => {
 
       // Try to create duplicate
       await expect(
-        test.mutation(api.categories.createCategory, {
+        t.mutation(api.categories.createCategory, {
           name: 'Electronics',
           organizationId: orgId,
           userId,

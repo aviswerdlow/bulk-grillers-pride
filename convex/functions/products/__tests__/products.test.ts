@@ -11,7 +11,7 @@ describe('Products Functions', () => {
   let projectId: Id<'projects'>;
 
   beforeEach(() => {
-    // t is already imported from test.setup
+    // t is already imported from t.setup
     userId = 'user123' as Id<'users'>;
     orgId = 'org123' as Id<'organizations'>;
     projectId = 'project123' as Id<'projects'>;
@@ -74,7 +74,7 @@ describe('Products Functions', () => {
         projectId,
       };
 
-      const result = await test.mutation(api.products.create, {
+      const result = await t.mutation(api.products.create, {
         ...productData,
         userId,
       });
@@ -105,7 +105,7 @@ describe('Products Functions', () => {
         projectId,
       };
 
-      const result = await test.mutation(api.products.create, {
+      const result = await t.mutation(api.products.create, {
         ...productData,
         userId,
       });
@@ -135,7 +135,7 @@ describe('Products Functions', () => {
 
       // Try to create product with duplicate SKU
       await expect(
-        test.mutation(api.products.create, {
+        t.mutation(api.products.create, {
           title: 'New Product',
           sku: 'DUPLICATE-SKU',
           handle: 'new-product',
@@ -166,7 +166,7 @@ describe('Products Functions', () => {
       });
 
       // Create product with same SKU (should succeed)
-      const result = await test.mutation(api.products.create, {
+      const result = await t.mutation(api.products.create, {
         title: 'New Product',
         sku: 'DUPLICATE-SKU',
         handle: 'new-product',
@@ -192,7 +192,7 @@ describe('Products Functions', () => {
       });
 
       await expect(
-        test.mutation(api.products.create, {
+        t.mutation(api.products.create, {
           title: 'Unauthorized Product',
           handle: 'unauthorized',
           status: 'active' as const,
@@ -233,7 +233,7 @@ describe('Products Functions', () => {
         status: 'draft' as const,
       };
 
-      const result = await test.mutation(api.products.update, {
+      const result = await t.mutation(api.products.update, {
         id: productId,
         ...updates,
         userId,
@@ -250,7 +250,7 @@ describe('Products Functions', () => {
     });
 
     it('should update SKU when allowed', async () => {
-      const result = await test.mutation(api.products.update, {
+      const result = await t.mutation(api.products.update, {
         id: productId,
         sku: 'NEW-SKU',
         userId,
@@ -280,7 +280,7 @@ describe('Products Functions', () => {
       });
 
       await expect(
-        test.mutation(api.products.update, {
+        t.mutation(api.products.update, {
           id: productId,
           sku: 'EXISTING-SKU',
           userId,
@@ -300,7 +300,7 @@ describe('Products Functions', () => {
       });
 
       await expect(
-        test.mutation(api.products.update, {
+        t.mutation(api.products.update, {
           id: productId,
           title: 'Unauthorized Update',
           userId: otherUserId,
@@ -352,7 +352,7 @@ describe('Products Functions', () => {
     });
 
     it('should list all products for organization', async () => {
-      const result = await test.query(api.products.list, {
+      const result = await t.query(api.products.list, {
         organizationId: orgId,
         userId,
       });
@@ -363,7 +363,7 @@ describe('Products Functions', () => {
     });
 
     it('should filter by status', async () => {
-      const result = await test.query(api.products.list, {
+      const result = await t.query(api.products.list, {
         organizationId: orgId,
         filters: { status: 'active' },
         userId,
@@ -374,7 +374,7 @@ describe('Products Functions', () => {
     });
 
     it('should filter by type', async () => {
-      const result = await test.query(api.products.list, {
+      const result = await t.query(api.products.list, {
         organizationId: orgId,
         filters: { type: 'digital' },
         userId,
@@ -385,7 +385,7 @@ describe('Products Functions', () => {
     });
 
     it('should search by title', async () => {
-      const result = await test.query(api.products.list, {
+      const result = await t.query(api.products.list, {
         organizationId: orgId,
         search: 'Product 2',
         userId,
@@ -396,7 +396,7 @@ describe('Products Functions', () => {
     });
 
     it('should paginate results', async () => {
-      const page1 = await test.query(api.products.list, {
+      const page1 = await t.query(api.products.list, {
         organizationId: orgId,
         limit: 2,
         userId,
@@ -406,7 +406,7 @@ describe('Products Functions', () => {
       expect(page1.hasMore).toBe(true);
       expect(page1.nextCursor).toBeDefined();
 
-      const page2 = await test.query(api.products.list, {
+      const page2 = await t.query(api.products.list, {
         organizationId: orgId,
         limit: 2,
         cursor: page1.nextCursor,
@@ -442,7 +442,7 @@ describe('Products Functions', () => {
     });
 
     it('should get product by id', async () => {
-      const result = await test.query(api.products.get, {
+      const result = await t.query(api.products.get, {
         id: productId,
         userId,
       });
@@ -458,7 +458,7 @@ describe('Products Functions', () => {
     });
 
     it('should return null for non-existent product', async () => {
-      const result = await test.query(api.products.get, {
+      const result = await t.query(api.products.get, {
         id: 'nonexistent' as Id<'products'>,
         userId,
       });
@@ -478,7 +478,7 @@ describe('Products Functions', () => {
       });
 
       await expect(
-        test.query(api.products.get, {
+        t.query(api.products.get, {
           id: productId,
           userId: otherUserId,
         })
@@ -488,12 +488,12 @@ describe('Products Functions', () => {
 
   describe('generateSku', () => {
     it('should generate unique SKU', async () => {
-      const result1 = await test.mutation(api.products.generateSku, {
+      const result1 = await t.mutation(api.products.generateSku, {
         organizationId: orgId,
         userId,
       });
 
-      const result2 = await test.mutation(api.products.generateSku, {
+      const result2 = await t.mutation(api.products.generateSku, {
         organizationId: orgId,
         userId,
       });
@@ -504,7 +504,7 @@ describe('Products Functions', () => {
     });
 
     it('should generate SKU with prefix', async () => {
-      const result = await test.mutation(api.products.generateSku, {
+      const result = await t.mutation(api.products.generateSku, {
         organizationId: orgId,
         prefix: 'TEST',
         userId,
@@ -536,7 +536,7 @@ describe('Products Functions', () => {
       // Generate multiple SKUs and ensure none match existing
       const skus = await Promise.all(
         Array(5).fill(null).map(() =>
-          test.mutation(api.products.generateSku, {
+          t.mutation(api.products.generateSku, {
             organizationId: orgId,
             userId,
           })

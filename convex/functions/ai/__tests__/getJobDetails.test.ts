@@ -116,10 +116,10 @@ const getJobDetailsLogic = async (ctx: any, jobId: Id<'aiCategorizationJobs'>) =
 };
 
 describe('getJobDetails', () => {
-  let t: ReturnType<typeof convexTest>;
+  // t is already imported
 
   beforeEach(() => {
-    // t is already imported from test.setup
+    // t is already imported from t.setup
   });
 
   afterEach(() => {

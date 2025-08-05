@@ -1,5 +1,5 @@
 import { internal } from "../../_generated/api";
-import { t } from '../../../../test.setup';
+import { t } from '../../../../t.setup';
 /**
  * Tests for CrewAI Shared Memory System
  */
@@ -18,9 +18,9 @@ describe('SharedMemory', () => {
 
   beforeEach(async () => {
     
-    tes// t is already imported from test.setup
+    tes// t is already imported from t.setup
     // Create test organization
-    organizationId = await test.mutation(async (ctx) => {
+    organizationId = await t.mutation(async (ctx) => {
       return await ctx.db.insert('organizations', {
         name: 'Test Organization',
         slug: 'test-org',
@@ -59,10 +59,10 @@ describe('SharedMemory', () => {
   describe('Memory Storage and Retrieval', () => {
     it('should store and retrieve memory successfully', async () => {
     const ctx = await t.mutation(async (ctx) => ctx);
-      await test.mutation(async (ctx) => {
+      await t.mutation(async (ctx) => {
         const memoryId = await ctx.runMutation(internal.ai.memory.sharedMemory.writeMemory, {
           organizationId,
-          memoryKey: 'test.memory.1',
+          memoryKey: 't.memory.1',
           memoryType: 'working',
           content: { data: 'test content', value: 123 },
           agentId: 'test-agent',
@@ -71,10 +71,10 @@ describe('SharedMemory', () => {
         expect(memoryId).toBeTruthy();
       });
 
-      const result = await test.query(async (ctx) => {
+      const result = await t.query(async (ctx) => {
         return await ctx.runQuery(internal.ai.memory.sharedMemory.readMemory, {
           organizationId,
-          memoryKey: 'test.memory.1',
+          memoryKey: 't.memory.1',
           agentId: 'test-agent',
         });
       });
@@ -87,10 +87,10 @@ describe('SharedMemory', () => {
     it('should update existing memory', async () => {
     const ctx = await t.mutation(async (ctx) => ctx);
       // First write
-      await test.mutation(async (ctx) => {
+      await t.mutation(async (ctx) => {
         await ctx.runMutation(internal.ai.memory.sharedMemory.writeMemory, {
           organizationId,
-          memoryKey: 'test.memory.update',
+          memoryKey: 't.memory.update',
           memoryType: 'working',
           content: { version: 1 },
           agentId: 'test-agent',
@@ -98,20 +98,20 @@ describe('SharedMemory', () => {
       });
 
       // Update
-      await test.mutation(async (ctx) => {
+      await t.mutation(async (ctx) => {
         await ctx.runMutation(internal.ai.memory.sharedMemory.writeMemory, {
           organizationId,
-          memoryKey: 'test.memory.update',
+          memoryKey: 't.memory.update',
           memoryType: 'working',
           content: { version: 2 },
           agentId: 'test-agent',
         });
       });
 
-      const result = await test.query(async (ctx) => {
+      const result = await t.query(async (ctx) => {
         return await ctx.runQuery(internal.ai.memory.sharedMemory.readMemory, {
           organizationId,
-          memoryKey: 'test.memory.update',
+          memoryKey: 't.memory.update',
         });
       });
 
@@ -122,10 +122,10 @@ describe('SharedMemory', () => {
 
     it('should handle memory expiration', async () => {
     const ctx = await t.mutation(async (ctx) => ctx);
-      await test.mutation(async (ctx) => {
+      await t.mutation(async (ctx) => {
         await ctx.runMutation(internal.ai.memory.sharedMemory.writeMemory, {
           organizationId,
-          memoryKey: 'test.memory.expiring',
+          memoryKey: 't.memory.expiring',
           memoryType: 'shortTerm',
           content: { data: 'expires soon' },
           options: { ttl: 1000 }, // 1 second
@@ -133,10 +133,10 @@ describe('SharedMemory', () => {
       });
 
       // Memory should be available immediately
-      const result1 = await test.query(async (ctx) => {
+      const result1 = await t.query(async (ctx) => {
         return await ctx.runQuery(internal.ai.memory.sharedMemory.readMemory, {
           organizationId,
-          memoryKey: 'test.memory.expiring',
+          memoryKey: 't.memory.expiring',
         });
       });
       expect(result1).toBeTruthy();
@@ -145,20 +145,20 @@ describe('SharedMemory', () => {
       await new Promise(resolve => setTimeout(resolve, 1500));
 
       // Memory should be expired
-      const result2 = await test.query(async (ctx) => {
+      const result2 = await t.query(async (ctx) => {
         return await ctx.runQuery(internal.ai.memory.sharedMemory.readMemory, {
           organizationId,
-          memoryKey: 'test.memory.expiring',
+          memoryKey: 't.memory.expiring',
           options: { includeExpired: false },
         });
       });
       expect(result2).toBeNull();
 
       // But still accessible with includeExpired
-      const result3 = await test.query(async (ctx) => {
+      const result3 = await t.query(async (ctx) => {
         return await ctx.runQuery(internal.ai.memory.sharedMemory.readMemory, {
           organizationId,
-          memoryKey: 'test.memory.expiring',
+          memoryKey: 't.memory.expiring',
           options: { includeExpired: true },
         });
       });
@@ -169,7 +169,7 @@ describe('SharedMemory', () => {
   describe('Memory Search', () => {
     beforeEach(async () => {
       // Create test memories
-      await test.mutation(async (ctx) => {
+      await t.mutation(async (ctx) => {
         const memories = [
           { key: 'crew.1.analysis.product1', type: 'semantic' as const, importance: 0.8 },
           { key: 'crew.1.analysis.product2', type: 'semantic' as const, importance: 0.6 },
@@ -193,7 +193,7 @@ describe('SharedMemory', () => {
 
     it('should search memories by pattern', async () => {
     const ctx = await t.mutation(async (ctx) => ctx);
-      const results = await test.query(async (ctx) => {
+      const results = await t.query(async (ctx) => {
         return await ctx.runQuery(internal.ai.memory.sharedMemory.searchMemories, {
           organizationId,
           pattern: 'analysis',
@@ -206,7 +206,7 @@ describe('SharedMemory', () => {
 
     it('should filter by memory type', async () => {
     const ctx = await t.mutation(async (ctx) => ctx);
-      const results = await test.query(async (ctx) => {
+      const results = await t.query(async (ctx) => {
         return await ctx.runQuery(internal.ai.memory.sharedMemory.searchMemories, {
           organizationId,
           memoryType: 'episodic',
@@ -219,7 +219,7 @@ describe('SharedMemory', () => {
 
     it('should filter by importance', async () => {
     const ctx = await t.mutation(async (ctx) => ctx);
-      const results = await test.query(async (ctx) => {
+      const results = await t.query(async (ctx) => {
         return await ctx.runQuery(internal.ai.memory.sharedMemory.searchMemories, {
           organizationId,
           options: { minImportance: 0.7 },
@@ -232,7 +232,7 @@ describe('SharedMemory', () => {
 
     it('should limit results', async () => {
     const ctx = await t.mutation(async (ctx) => ctx);
-      const results = await test.query(async (ctx) => {
+      const results = await t.query(async (ctx) => {
         return await ctx.runQuery(internal.ai.memory.sharedMemory.searchMemories, {
           organizationId,
           options: { maxResults: 2 },
@@ -246,17 +246,17 @@ describe('SharedMemory', () => {
   describe('Concurrency Control', () => {
     it('should lock memory for exclusive access', async () => {
     const ctx = await t.mutation(async (ctx) => ctx);
-      const memoryId = await test.mutation(async (ctx) => {
+      const memoryId = await t.mutation(async (ctx) => {
         return await ctx.runMutation(internal.ai.memory.sharedMemory.writeMemory, {
           organizationId,
-          memoryKey: 'test.lock',
+          memoryKey: 't.lock',
           memoryType: 'working',
           content: { data: 'locked content' },
         });
       });
 
       // Lock the memory
-      await test.mutation(async (ctx) => {
+      await t.mutation(async (ctx) => {
         const locked = await ctx.runMutation(internal.ai.memory.sharedMemory.lockMemory, {
           memoryId,
           agentId: 'agent1',
@@ -267,7 +267,7 @@ describe('SharedMemory', () => {
 
       // Another agent should fail to lock
       await expect(
-        test.mutation(async (ctx) => {
+        t.mutation(async (ctx) => {
           await ctx.runMutation(internal.ai.memory.sharedMemory.lockMemory, {
             memoryId,
             agentId: 'agent2',
@@ -276,7 +276,7 @@ describe('SharedMemory', () => {
       ).rejects.toThrow('Memory is locked by agent agent1');
 
       // Same agent can refresh lock
-      await test.mutation(async (ctx) => {
+      await t.mutation(async (ctx) => {
         const locked = await ctx.runMutation(internal.ai.memory.sharedMemory.lockMemory, {
           memoryId,
           agentId: 'agent1',
@@ -287,17 +287,17 @@ describe('SharedMemory', () => {
 
     it('should unlock memory', async () => {
     const ctx = await t.mutation(async (ctx) => ctx);
-      const memoryId = await test.mutation(async (ctx) => {
+      const memoryId = await t.mutation(async (ctx) => {
         return await ctx.runMutation(internal.ai.memory.sharedMemory.writeMemory, {
           organizationId,
-          memoryKey: 'test.unlock',
+          memoryKey: 't.unlock',
           memoryType: 'working',
           content: { data: 'unlock test' },
         });
       });
 
       // Lock and unlock
-      await test.mutation(async (ctx) => {
+      await t.mutation(async (ctx) => {
         await ctx.runMutation(internal.ai.memory.sharedMemory.lockMemory, {
           memoryId,
           agentId: 'agent1',
@@ -310,7 +310,7 @@ describe('SharedMemory', () => {
       });
 
       // Another agent should be able to lock now
-      await test.mutation(async (ctx) => {
+      await t.mutation(async (ctx) => {
         const locked = await ctx.runMutation(internal.ai.memory.sharedMemory.lockMemory, {
           memoryId,
           agentId: 'agent2',
@@ -321,17 +321,17 @@ describe('SharedMemory', () => {
 
     it('should handle lock expiration', async () => {
     const ctx = await t.mutation(async (ctx) => ctx);
-      const memoryId = await test.mutation(async (ctx) => {
+      const memoryId = await t.mutation(async (ctx) => {
         return await ctx.runMutation(internal.ai.memory.sharedMemory.writeMemory, {
           organizationId,
-          memoryKey: 'test.lock.expire',
+          memoryKey: 't.lock.expire',
           memoryType: 'working',
           content: { data: 'expire test' },
         });
       });
 
       // Lock with short duration
-      await test.mutation(async (ctx) => {
+      await t.mutation(async (ctx) => {
         await ctx.runMutation(internal.ai.memory.sharedMemory.lockMemory, {
           memoryId,
           agentId: 'agent1',
@@ -343,10 +343,10 @@ describe('SharedMemory', () => {
       await new Promise(resolve => setTimeout(resolve, 200));
 
       // Another agent should be able to write (lock expired)
-      await test.mutation(async (ctx) => {
+      await t.mutation(async (ctx) => {
         await ctx.runMutation(internal.ai.memory.sharedMemory.writeMemory, {
           organizationId,
-          memoryKey: 'test.lock.expire',
+          memoryKey: 't.lock.expire',
           memoryType: 'working',
           content: { data: 'updated after lock expired' },
           agentId: 'agent2',
@@ -359,11 +359,11 @@ describe('SharedMemory', () => {
     it('should summarize memories when limit exceeded', async () => {
     const ctx = await t.mutation(async (ctx) => ctx);
       // Create many memories
-      await test.mutation(async (ctx) => {
+      await t.mutation(async (ctx) => {
         for (let i = 0; i < 10; i++) {
           await ctx.runMutation(internal.ai.memory.sharedMemory.writeMemory, {
             organizationId,
-            memoryKey: `crew.test.memory.${i}`,
+            memoryKey: `crew.t.memory.${i}`,
             memoryType: 'semantic',
             content: { index: i, data: `Memory ${i}` },
             crewId: 'test',
@@ -373,7 +373,7 @@ describe('SharedMemory', () => {
       });
 
       // Summarize with low limit
-      const result = await test.mutation(async (ctx) => {
+      const result = await t.mutation(async (ctx) => {
         return await ctx.runMutation(internal.ai.memory.sharedMemory.summarizeMemories, {
           organizationId,
           crewId: 'test',
@@ -386,7 +386,7 @@ describe('SharedMemory', () => {
       expect(result.summarized).toBeGreaterThan(0);
 
       // Check that important memories are kept
-      const remaining = await test.query(async (ctx) => {
+      const remaining = await t.query(async (ctx) => {
         return await ctx.runQuery(internal.ai.memory.sharedMemory.searchMemories, {
           organizationId,
           crewId: 'test',
@@ -401,13 +401,13 @@ describe('SharedMemory', () => {
     it('should calculate memory statistics', async () => {
     const ctx = await t.mutation(async (ctx) => ctx);
       // Create test memories
-      await test.mutation(async (ctx) => {
+      await t.mutation(async (ctx) => {
         const types: Array<'shortTerm' | 'longTerm' | 'episodic'> = ['shortTerm', 'longTerm', 'episodic'];
         
         for (let i = 0; i < 5; i++) {
           await ctx.runMutation(internal.ai.memory.sharedMemory.writeMemory, {
             organizationId,
-            memoryKey: `test.stats.${i}`,
+            memoryKey: `t.stats.${i}`,
             memoryType: types[i % types.length],
             content: { index: i },
             crewId: 'stats-test',
@@ -419,7 +419,7 @@ describe('SharedMemory', () => {
         }
       });
 
-      const stats = await test.query(async (ctx) => {
+      const stats = await t.query(async (ctx) => {
         return await ctx.runQuery(internal.ai.memory.sharedMemory.getMemoryStats, {
           organizationId,
           crewId: 'stats-test',
@@ -439,11 +439,11 @@ describe('SharedMemory', () => {
     it('should clean up expired memories', async () => {
     const ctx = await t.mutation(async (ctx) => ctx);
       // Create memories with short TTL
-      await test.mutation(async (ctx) => {
+      await t.mutation(async (ctx) => {
         for (let i = 0; i < 3; i++) {
           await ctx.runMutation(internal.ai.memory.sharedMemory.writeMemory, {
             organizationId,
-            memoryKey: `test.cleanup.${i}`,
+            memoryKey: `t.cleanup.${i}`,
             memoryType: 'shortTerm',
             content: { index: i },
             options: { ttl: 100 }, // 100ms
@@ -455,7 +455,7 @@ describe('SharedMemory', () => {
       await new Promise(resolve => setTimeout(resolve, 200));
 
       // Clean up
-      const result = await test.mutation(async (ctx) => {
+      const result = await t.mutation(async (ctx) => {
         return await ctx.runMutation(internal.ai.memory.sharedMemory.cleanupExpiredMemories, {
           organizationId,
         });
@@ -468,7 +468,7 @@ describe('SharedMemory', () => {
   describe('MemoryManager', () => {
     it('should provide high-level memory operations', async () => {
     const ctx = await t.mutation(async (ctx) => ctx);
-      await test.mutation(async (ctx) => {
+      await t.mutation(async (ctx) => {
         const manager = new MemoryManager(ctx, organizationId, {
           agentId: 'test-agent',
           crewId: 'test-crew',
@@ -500,7 +500,7 @@ describe('SharedMemory', () => {
 
     it('should handle working memory', async () => {
     const ctx = await t.mutation(async (ctx) => ctx);
-      await test.mutation(async (ctx) => {
+      await t.mutation(async (ctx) => {
         const manager = new MemoryManager(ctx, organizationId, {
           agentId: 'test-agent',
         });
@@ -517,7 +517,7 @@ describe('SharedMemory', () => {
 
     it('should store errors', async () => {
     const ctx = await t.mutation(async (ctx) => ctx);
-      await test.mutation(async (ctx) => {
+      await t.mutation(async (ctx) => {
         const manager = new MemoryManager(ctx, organizationId, {
           agentId: 'test-agent',
         });
