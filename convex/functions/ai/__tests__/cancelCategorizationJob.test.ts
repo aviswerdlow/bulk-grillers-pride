@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
-import { t } from '../../../t.setup';
+import { t } from '../../../test.setup';
 import { cancelCategorizationJob } from '../categorization';
 describe('cancelCategorizationJob', () => {
   let ctx: any;

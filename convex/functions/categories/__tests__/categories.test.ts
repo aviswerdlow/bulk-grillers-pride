@@ -1,32 +1,61 @@
 import { api } from '../../../_generated/api';
-import { t } from '../../../t.setup';
+import { t } from '../../../test.setup';
 import { describe, it, expect, beforeEach } from '@jest/globals';
 import { Id } from '../../../_generated/dataModel';
 import { createCategoryHandler, updateCategoryHandler, deleteCategoryHandler } from '../handlers/mutations';
 import { getCategoryTreeHandler, getBreadcrumbHandler } from '../handlers/queries';
-import { setupAuthenticatedContext } from '../../../test-helpers';
+import {
+  createConvexTest,
+  setupAuth,
+  seedDatabase,
+  createMockUser,
+  createMockOrganization,
+  createMockOrganizationMembership,
+  createMockProject,
+  type ConvexTestContext
+} from '../../../__tests__/convex-test-standard';
 
 describe('Categories Functions', () => {
   let userId: Id<'users'>;
   let orgId: Id<'organizations'>;
   let projectId: Id<'projects'>;
   let ctx: any;
+  let user: any;
+  let org: any;
+  let project: any;
+  let membership: any;
 
   beforeEach(async () => {
     // Get the test context
     ctx = await t.run(async (runCtx) => runCtx);
     
-    // Setup authenticated context with test user, organization, and project
-    const setup = await setupAuthenticatedContext(ctx, {
-      userId: 'user123',
-      orgId: 'org123',
-      projectId: 'project123',
-      role: 'owner'
+    // Set up common test data
+    user = createMockUser({ _id: 'user123' as Id<'users'> });
+    org = createMockOrganization({ _id: 'org123' as Id<'organizations'> });
+    project = createMockProject({
+      _id: 'project123' as Id<'projects'>,
+      organizationId: org._id,
+      name: 'Test Project',
     });
+    membership = createMockOrganizationMembership({
+      _id: 'membership_1' as Id<'organizationMemberships'>,
+      userId: user._id,
+      organizationId: org._id,
+      role: 'owner',
+    });
+
+    await seedDatabase(t, {
+      users: [user],
+      organizations: [org],
+      projects: [project],
+      organizationMemberships: [membership],
+    });
+
+    await setupAuth(t, user);
     
-    userId = setup.user._id;
-    orgId = setup.org._id;
-    projectId = setup.project._id;
+    userId = user._id;
+    orgId = org._id;
+    projectId = project._id;
   });
 
   // Helper to create test category

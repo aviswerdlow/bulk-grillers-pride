@@ -11,7 +11,7 @@ describe('Products Functions', () => {
   let projectId: Id<'projects'>;
 
   beforeEach(() => {
-    // t is already imported from t.setup
+    // t is already imported from test.setup
     userId = 'user123' as Id<'users'>;
     orgId = 'org123' as Id<'organizations'>;
     projectId = 'project123' as Id<'projects'>;

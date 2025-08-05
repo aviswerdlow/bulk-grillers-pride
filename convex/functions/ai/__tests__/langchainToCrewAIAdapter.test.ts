@@ -1,8 +1,8 @@
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
-import { t } from '../../../t.setup';
+import { t } from '../../../test.setup';
 import { LangChainToCrewAIAdapter } from '../langchainToCrewAIAdapter';
 import { ConvexTestingHelper } from '../../../__tests__/convex-test-standard';
-import { productFactory, categoryFactory } from '@test-factories';
+import { productFactory, categoryFactory } from '@bulk-grillers-pride/test-factories';
 import { z } from 'zod';
 import {
   BatchCategorizationResultSchema,

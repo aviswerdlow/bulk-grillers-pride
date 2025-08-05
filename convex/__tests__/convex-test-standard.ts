@@ -153,6 +153,22 @@ export function createMockCategory(overrides?: any) {
   };
 }
 
+export function createMockOrganizationMembership(overrides?: any) {
+  return {
+    _id: overrides?._id || ('membership_' + Math.random().toString(36).substr(2, 9)) as Id<'organizationMemberships'>,
+    _creationTime: Date.now(),
+    userId: overrides?.userId,
+    organizationId: overrides?.organizationId,
+    role: overrides?.role || 'member',
+    status: overrides?.status || 'active',
+    invitedBy: overrides?.invitedBy,
+    joinedAt: overrides?.joinedAt || Date.now(),
+    createdAt: overrides?.createdAt || Date.now(),
+    updatedAt: overrides?.updatedAt || Date.now(),
+    ...overrides
+  };
+}
+
 export function createMockProduct(overrides?: any) {
   return {
     _id: overrides?._id || ('product_' + Math.random().toString(36).substr(2, 9)) as Id<'products'>,

@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
-import { t } from '../../../../t.setup';
+import { t } from '../../../../test.setup';
 import { Id } from '../../../../_generated/dataModel';
 import { internal } from '../../../../_generated/api';
 

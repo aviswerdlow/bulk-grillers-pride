@@ -119,7 +119,7 @@ describe('getJobDetails', () => {
   // t is already imported
 
   beforeEach(() => {
-    // t is already imported from t.setup
+    // t is already imported from test.setup
   });
 
   afterEach(() => {

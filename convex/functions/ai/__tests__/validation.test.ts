@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
-import { t } from '../../../t.setup';
+import { t } from '../../../test.setup';
 // Jest doesn't need explicit imports for describe, it, expect, beforeEach
 // Mock the langchain module
 jest.mock('../langchain', () => ({

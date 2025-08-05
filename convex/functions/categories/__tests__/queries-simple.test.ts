@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
-import { t } from '../../../t.setup';
+import { t } from '../../../test.setup';
 describe('Category Queries', () => {
   let ctx: any;
   let userId: string;

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from '@jest/globals';
-import { t } from '../../../t.setup';
+import { t } from '../../../test.setup';
 import {
   createConvexTest,
   createQueryContext,

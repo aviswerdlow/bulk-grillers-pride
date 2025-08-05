@@ -7,7 +7,7 @@ import { createOrganization, getOrganizationBySlug } from '../organizations';
 describe('Organizations Functions', () => {
   
   beforeEach(() => {
-    // t is already imported from t.setup
+    // t is already imported from test.setup
   });
 
   describe('create', () => {

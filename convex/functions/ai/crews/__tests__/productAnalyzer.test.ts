@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
-import { t } from '../../../../t.setup';
+import { t } from '../../../../test.setup';
 import { ProductAnalyzerAgent } from '../agents';
 import { Doc } from '../../../../_generated/dataModel';
 

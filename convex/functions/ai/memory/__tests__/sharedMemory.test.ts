@@ -1,10 +1,9 @@
-import { internal } from "../../_generated/api";
-import { t } from '../../../../t.setup';
 /**
  * Tests for CrewAI Shared Memory System
  */
 
 import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
+import { t } from '../../../../test.setup';
 import { createConvexTest } from '../../../../__tests__/convex-test-standard';
 import { MemoryManager, MemoryCache } from '../memoryManager';
 import { Id } from '../../../../_generated/dataModel';
