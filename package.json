@@ -84,8 +84,8 @@
     "@types/jest": "^30.0.0",
     "@types/jest-axe": "^3.5.9",
     "@types/node": "^24.1.0",
-    "@typescript-eslint/eslint-plugin": "^8.37.0",
-    "@typescript-eslint/parser": "^8.37.0",
+    "@typescript-eslint/eslint-plugin": "^8.39.0",
+    "@typescript-eslint/parser": "^8.39.0",
     "convex-test": "^0.0.38",
     "eslint": "^9.0.0",
     "eslint-config-prettier": "^10.1.8",
@@ -107,7 +107,7 @@
     "tsup": "^8.3.5",
     "tsx": "^4.20.3",
     "turbo": "^2.5.5",
-    "typescript": "^5.2.2"
+    "typescript": "^5.9.2"
   },
   "engines": {
     "node": ">=18.0.0",
