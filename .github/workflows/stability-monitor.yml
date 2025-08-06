@@ -1,0 +1,256 @@
+name: Main Branch Stability Monitor
+
+on:
+  schedule:
+    # Run daily at 9 AM UTC
+    - cron: '0 9 * * *'
+  workflow_dispatch:
+    inputs:
+      alert_threshold:
+        description: 'Stability score threshold for alerts (0-100)'
+        required: false
+        default: '90'
+        type: number
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: read
+  actions: read
+  checks: read
+
+jobs:
+  collect-metrics:
+    name: Collect Stability Metrics
+    runs-on: ubuntu-latest
+    outputs:
+      stability-score: ${{ steps.metrics.outputs.stability-score }}
+      test-coverage: ${{ steps.metrics.outputs.test-coverage }}
+      ci-success-rate: ${{ steps.metrics.outputs.ci-success-rate }}
+      test-pass-rate: ${{ steps.metrics.outputs.test-pass-rate }}
+      p0-bug-count: ${{ steps.metrics.outputs.p0-bug-count }}
+      p1-bug-count: ${{ steps.metrics.outputs.p1-bug-count }}
+      alert-triggered: ${{ steps.check-alerts.outputs.alert-triggered }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Need full history for trend analysis
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Collect metrics
+        id: metrics
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          node .github/scripts/collect-stability-metrics.js
+
+      - name: Check alert thresholds
+        id: check-alerts
+        env:
+          ALERT_THRESHOLD: ${{ github.event.inputs.alert_threshold || '90' }}
+        run: |
+          STABILITY_SCORE="${{ steps.metrics.outputs.stability-score }}"
+          COVERAGE="${{ steps.metrics.outputs.test-coverage }}"
+          CI_SUCCESS="${{ steps.metrics.outputs.ci-success-rate }}"
+          P0_BUGS="${{ steps.metrics.outputs.p0-bug-count }}"
+
+          ALERT_TRIGGERED=false
+          ALERT_REASONS=""
+
+          # Check stability score
+          if (( $(echo "$STABILITY_SCORE < $ALERT_THRESHOLD" | bc -l) )); then
+            ALERT_TRIGGERED=true
+            ALERT_REASONS="${ALERT_REASONS}\n- Stability score below threshold: ${STABILITY_SCORE}% < ${ALERT_THRESHOLD}%"
+          fi
+
+          # Check for P0 bugs
+          if [ "$P0_BUGS" -gt 0 ]; then
+            ALERT_TRIGGERED=true
+            ALERT_REASONS="${ALERT_REASONS}\n- Critical P0 bugs detected: ${P0_BUGS}"
+          fi
+
+          # Check CI success rate
+          if (( $(echo "$CI_SUCCESS < 70" | bc -l) )); then
+            ALERT_TRIGGERED=true
+            ALERT_REASONS="${ALERT_REASONS}\n- CI success rate critically low: ${CI_SUCCESS}%"
+          fi
+
+          echo "alert-triggered=$ALERT_TRIGGERED" >> $GITHUB_OUTPUT
+          echo "alert-reasons<<EOF" >> $GITHUB_OUTPUT
+          echo -e "$ALERT_REASONS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+  generate-report:
+    name: Generate Stability Report
+    runs-on: ubuntu-latest
+    needs: collect-metrics
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Generate report summary
+        env:
+          STABILITY_SCORE: ${{ needs.collect-metrics.outputs.stability-score }}
+          TEST_COVERAGE: ${{ needs.collect-metrics.outputs.test-coverage }}
+          CI_SUCCESS_RATE: ${{ needs.collect-metrics.outputs.ci-success-rate }}
+          TEST_PASS_RATE: ${{ needs.collect-metrics.outputs.test-pass-rate }}
+          P0_BUG_COUNT: ${{ needs.collect-metrics.outputs.p0-bug-count }}
+          P1_BUG_COUNT: ${{ needs.collect-metrics.outputs.p1-bug-count }}
+        run: |
+          echo "# 📊 Main Branch Stability Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Date:** $(date -u '+%Y-%m-%d %H:%M UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Determine stability status emoji
+          if (( $(echo "$STABILITY_SCORE >= 90" | bc -l) )); then
+            STATUS_EMOJI="✅"
+            STATUS_TEXT="Healthy"
+          elif (( $(echo "$STABILITY_SCORE >= 75" | bc -l) )); then
+            STATUS_EMOJI="⚠️"
+            STATUS_TEXT="Warning"
+          else
+            STATUS_EMOJI="🚨"
+            STATUS_TEXT="Critical"
+          fi
+
+          echo "## Overall Stability: $STATUS_EMOJI $STATUS_TEXT" >> $GITHUB_STEP_SUMMARY
+          echo "**Stability Score:** ${STABILITY_SCORE}%" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "## Key Metrics" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Value | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Test Coverage | ${TEST_COVERAGE}% | $([ $(echo "$TEST_COVERAGE >= 80" | bc -l) -eq 1 ] && echo '✅' || echo '⚠️') |" >> $GITHUB_STEP_SUMMARY
+          echo "| CI Success Rate (7d) | ${CI_SUCCESS_RATE}% | $([ $(echo "$CI_SUCCESS_RATE >= 90" | bc -l) -eq 1 ] && echo '✅' || echo '⚠️') |" >> $GITHUB_STEP_SUMMARY
+          echo "| Test Pass Rate | ${TEST_PASS_RATE}% | $([ $(echo "$TEST_PASS_RATE >= 95" | bc -l) -eq 1 ] && echo '✅' || echo '⚠️') |" >> $GITHUB_STEP_SUMMARY
+          echo "| P0 Bugs | ${P0_BUG_COUNT} | $([ $P0_BUG_COUNT -eq 0 ] && echo '✅' || echo '🚨') |" >> $GITHUB_STEP_SUMMARY
+          echo "| P1 Bugs | ${P1_BUG_COUNT} | $([ $P1_BUG_COUNT -le 5 ] && echo '✅' || echo '⚠️') |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Add trend analysis (placeholder for now)
+          echo "## Trends" >> $GITHUB_STEP_SUMMARY
+          echo "📈 Historical data and trends will be available after multiple runs." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Add recommendations
+          echo "## Recommendations" >> $GITHUB_STEP_SUMMARY
+          if [ "$P0_BUG_COUNT" -gt 0 ]; then
+            echo "- 🚨 **Immediate Action Required:** Address P0 bugs immediately" >> $GITHUB_STEP_SUMMARY
+          fi
+          if (( $(echo "$TEST_COVERAGE < 80" | bc -l) )); then
+            echo "- ⚠️ Increase test coverage to meet 80% target" >> $GITHUB_STEP_SUMMARY
+          fi
+          if (( $(echo "$CI_SUCCESS_RATE < 90" | bc -l) )); then
+            echo "- ⚠️ Investigate and fix CI failures to improve success rate" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Update stability dashboard
+        if: github.ref == 'refs/heads/main'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          STABILITY_SCORE: ${{ needs.collect-metrics.outputs.stability-score }}
+          TEST_COVERAGE: ${{ needs.collect-metrics.outputs.test-coverage }}
+          CI_SUCCESS_RATE: ${{ needs.collect-metrics.outputs.ci-success-rate }}
+          TEST_PASS_RATE: ${{ needs.collect-metrics.outputs.test-pass-rate }}
+          P0_BUG_COUNT: ${{ needs.collect-metrics.outputs.p0-bug-count }}
+          P1_BUG_COUNT: ${{ needs.collect-metrics.outputs.p1-bug-count }}
+        run: |
+          # Update dashboard with latest metrics
+          # This will be implemented when the dashboard file is created
+          echo "Dashboard update will be implemented"
+
+  create-alerts:
+    name: Create Alerts
+    runs-on: ubuntu-latest
+    needs: collect-metrics
+    if: needs.collect-metrics.outputs.alert-triggered == 'true'
+    steps:
+      - name: Create stability alert issue
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          STABILITY_SCORE: ${{ needs.collect-metrics.outputs.stability-score }}
+          TEST_COVERAGE: ${{ needs.collect-metrics.outputs.test-coverage }}
+          CI_SUCCESS_RATE: ${{ needs.collect-metrics.outputs.ci-success-rate }}
+          P0_BUG_COUNT: ${{ needs.collect-metrics.outputs.p0-bug-count }}
+        run: |
+          # Check if an open alert issue already exists
+          EXISTING_ISSUE=$(gh issue list --label "stability-alert" --state open --json number --jq '.[0].number' || echo "")
+
+          if [ -z "$EXISTING_ISSUE" ]; then
+            # Create new alert issue
+            gh issue create \
+              --title "🚨 Main Branch Stability Alert - $(date -u '+%Y-%m-%d')" \
+              --label "stability-alert,priority-P0,bug" \
+              --body "## 🚨 Stability Alert Triggered
+
+          **Date:** $(date -u '+%Y-%m-%d %H:%M UTC')
+          **Stability Score:** ${STABILITY_SCORE}%
+
+          ### Alert Reasons
+          ${{ needs.collect-metrics.outputs.alert-reasons }}
+
+          ### Current Metrics
+          - Test Coverage: ${TEST_COVERAGE}%
+          - CI Success Rate: ${CI_SUCCESS_RATE}%
+          - P0 Bugs: ${P0_BUG_COUNT}
+
+          ### Immediate Actions Required
+          1. Review and address P0 bugs if any
+          2. Investigate failing CI builds
+          3. Review recent merges for potential issues
+          4. Check test infrastructure health
+
+          ### Dashboard
+          View the full stability dashboard: [Stability Dashboard](.github/stability-dashboard.md)
+
+          cc: @aviswerdlow - Immediate attention required"
+          else
+            echo "Alert issue #$EXISTING_ISSUE already exists, skipping creation"
+          fi
+
+  store-metrics:
+    name: Store Historical Metrics
+    runs-on: ubuntu-latest
+    needs: collect-metrics
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Store metrics data
+        env:
+          STABILITY_SCORE: ${{ needs.collect-metrics.outputs.stability-score }}
+          TEST_COVERAGE: ${{ needs.collect-metrics.outputs.test-coverage }}
+          CI_SUCCESS_RATE: ${{ needs.collect-metrics.outputs.ci-success-rate }}
+          TEST_PASS_RATE: ${{ needs.collect-metrics.outputs.test-pass-rate }}
+          P0_BUG_COUNT: ${{ needs.collect-metrics.outputs.p0-bug-count }}
+          P1_BUG_COUNT: ${{ needs.collect-metrics.outputs.p1-bug-count }}
+        run: |
+          # Create metrics directory if it doesn't exist
+          mkdir -p .github/metrics
+
+          # Append metrics to historical data file
+          METRICS_FILE=".github/metrics/stability-history.jsonl"
+          TIMESTAMP=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
+
+          echo "{\"timestamp\":\"$TIMESTAMP\",\"stability_score\":$STABILITY_SCORE,\"test_coverage\":$TEST_COVERAGE,\"ci_success_rate\":$CI_SUCCESS_RATE,\"test_pass_rate\":$TEST_PASS_RATE,\"p0_bugs\":$P0_BUG_COUNT,\"p1_bugs\":$P1_BUG_COUNT}" >> "$METRICS_FILE"
+
+          # Keep only last 90 days of data
+          if [ -f "$METRICS_FILE" ]; then
+            tail -n 90 "$METRICS_FILE" > "$METRICS_FILE.tmp"
+            mv "$METRICS_FILE.tmp" "$METRICS_FILE"
+          fi
+
+          echo "Metrics stored successfully"

@@ -1,0 +1,12 @@
+{
+  "timestamp": "2025-08-06T13:27:24.974Z",
+  "stabilityScore": 22.4,
+  "metrics": {
+    "testCoverage": 7.2,
+    "ciSuccessRate": 14,
+    "testPassRate": 0,
+    "p0BugCount": 2,
+    "p1BugCount": 0
+  },
+  "status": "critical"
+}
