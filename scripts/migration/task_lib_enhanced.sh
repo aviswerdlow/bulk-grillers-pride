@@ -3,9 +3,11 @@
 # Implements task limits and status enforcement for agents
 # Based on Issue #144 requirements
 
-# Source the original task_lib.sh
+# Source the original task_lib.sh (if not already loaded)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$SCRIPT_DIR/task_lib.sh"
+if [ -z "$TASK_LIB_LOADED" ]; then
+    source "$SCRIPT_DIR/task_lib.sh"
+fi
 
 # Configuration
 MAX_ACTIVE_TASKS="${MAX_ACTIVE_TASKS:-3}"
@@ -122,7 +124,14 @@ get_active_tasks() {
 # Check for stale tasks and auto-revert
 check_stale_tasks() {
     local agent_name="${1:-all}"
-    local cutoff_date=$(date -u -v-${STALE_TASK_HOURS}H +%Y-%m-%dT%H:%M:%SZ)
+    # Handle both macOS and Linux date commands
+    if date -v-1H >/dev/null 2>&1; then
+        # macOS
+        local cutoff_date=$(date -u -v-${STALE_TASK_HOURS}H +%Y-%m-%dT%H:%M:%SZ)
+    else
+        # Linux
+        local cutoff_date=$(date -u -d "${STALE_TASK_HOURS} hours ago" +%Y-%m-%dT%H:%M:%SZ)
+    fi
     
     echo -e "${YELLOW}Checking for stale tasks (no update in ${STALE_TASK_HOURS}h)...${NC}"
     

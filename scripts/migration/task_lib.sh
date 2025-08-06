@@ -4,6 +4,9 @@
 # Provides unified interface for agents to work with both AGENTS_BOARD.md and GitHub Issues
 # Enhanced with Git Worktree support for isolated agent development
 
+# Mark as loaded to prevent circular sourcing
+export TASK_LIB_LOADED=1
+
 # Configuration
 TASK_SYSTEM="${TASK_SYSTEM:-board}"
 BOARD_FILE="${BOARD_FILE:-AGENTS_BOARD.md}"
@@ -562,4 +565,13 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
     echo "  AGENT_NAME=${AGENT_NAME}"
     echo "  ENABLE_WORKTREES=${ENABLE_WORKTREES} (true|false)"
     echo "  WORKTREE_BASE=${WORKTREE_BASE}"
+fi
+
+# Enable enhanced task library with active task limits (Issue #144)
+# This adds enforcement of max 3 active tasks per agent
+# Prevent circular sourcing
+TASK_LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ -z "$TASK_LIB_ENHANCED_LOADED" ] && [ -f "$TASK_LIB_DIR/task_lib_enhanced.sh" ]; then
+    export TASK_LIB_ENHANCED_LOADED=1
+    source "$TASK_LIB_DIR/task_lib_enhanced.sh" 2>&1
 fi
