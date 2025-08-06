@@ -15,6 +15,31 @@ export interface ConvexTestContext {
   action: any;
 }
 
+// ConvexTestingHelper class for tests that need setup/teardown
+export class ConvexTestingHelper {
+  private ctx: ConvexTestContext;
+
+  constructor() {
+    this.ctx = t;
+  }
+
+  async setup() {
+    // Reset any mock state before each test
+    jest.clearAllMocks();
+    // Additional setup can be added here if needed
+  }
+
+  async teardown() {
+    // Clean up after each test
+    jest.clearAllMocks();
+    // Additional teardown can be added here if needed
+  }
+
+  getContext() {
+    return this.ctx;
+  }
+}
+
 export function createConvexTest(): ConvexTestContext {
   return t;
 }
@@ -110,18 +135,6 @@ export function createMockOrganization(overrides?: any) {
   };
 }
 
-export function createMockOrganizationMembership(overrides?: any) {
-  return {
-    _id: overrides?._id || ('membership_' + Math.random().toString(36).substr(2, 9)) as Id<'organizationMemberships'>,
-    _creationTime: Date.now(),
-    userId: overrides?.userId,
-    organizationId: overrides?.organizationId,
-    role: overrides?.role || 'viewer',
-    status: overrides?.status || 'active',
-    joinedAt: overrides?.joinedAt || Date.now(),
-    ...overrides
-  };
-}
 
 export function createMockProject(overrides?: any) {
   return {
