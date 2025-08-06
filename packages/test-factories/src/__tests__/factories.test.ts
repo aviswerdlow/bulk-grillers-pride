@@ -229,7 +229,7 @@ describe('Test Factories', () => {
       const orgId = scenario.organization._id;
       expect(scenario.products[0].organizationId).toBe(orgId);
       expect(scenario.categories[0].organizationId).toBe(orgId);
-      expect(scenario.aiJob!.organizationId).toBe(orgId);
+      expect(scenario.aiJob?.organizationId).toBe(orgId);
     });
     
     it('should create deterministic scenarios with seed', () => {

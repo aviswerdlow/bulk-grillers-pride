@@ -2,9 +2,10 @@ import { api } from '../../../_generated/api';
 import { t } from '../../../test.setup';
 import { describe, it, expect, beforeEach } from '@jest/globals';
 import { Id } from '../../../_generated/dataModel';
-import { createCategoryHandler, updateCategoryHandler, deleteCategoryHandler } from '../handlers/mutations';
-import { getCategoryTreeHandler, getBreadcrumbHandler } from '../handlers/queries';
-import { setupAuthenticatedContext } from '../../../test-helpers';
+import { createCategory, updateCategory, deleteCategory } from '../mutations';
+import { getCategoryTree, getProjectCategories } from '../queries';
+import { moveCategory } from '../hierarchy';
+import { assignProductToCategory, removeProductFromCategory } from '../products';
 
 describe('Categories Functions', () => {
   let userId: Id<'users'>;
@@ -16,17 +17,61 @@ describe('Categories Functions', () => {
     // Get the test context
     ctx = await t.run(async (runCtx) => runCtx);
     
-    // Setup authenticated context with test user, organization, and project
-    const setup = await setupAuthenticatedContext(ctx, {
-      userId: 'user123',
-      orgId: 'org123',
-      projectId: 'project123',
-      role: 'owner'
-    });
+    // Create test user
+    const user = {
+      _id: 'user123' as Id<'users'>,
+      _creationTime: Date.now(),
+      clerkId: 'clerk_user123',
+      tokenIdentifier: 'test|user123',
+      name: 'Test User',
+      email: 'test@example.com'
+    };
+    userId = await ctx.db.insert('users', user);
     
-    userId = setup.user._id;
-    orgId = setup.org._id;
-    projectId = setup.project._id;
+    // Create test organization
+    const org = {
+      _id: 'org123' as Id<'organizations'>,
+      _creationTime: Date.now(),
+      name: 'Test Org',
+      slug: 'test-org',
+      ownerId: userId,
+      subscriptionStatus: 'active' as const,
+      subscriptionPlan: 'free' as const,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      isPersonal: false,
+      enforceUniqueSku: false
+    };
+    orgId = await ctx.db.insert('organizations', org);
+    
+    // Create test project
+    const project = {
+      _id: 'project123' as Id<'projects'>,
+      _creationTime: Date.now(),
+      organizationId: orgId,
+      name: 'Test Project',
+      createdAt: Date.now(),
+      updatedAt: Date.now()
+    };
+    projectId = await ctx.db.insert('projects', project);
+    
+    // Create organization membership
+    const membership = {
+      _id: 'membership123' as Id<'organizationMemberships'>,
+      _creationTime: Date.now(),
+      userId: userId,
+      organizationId: orgId,
+      role: 'owner' as const,
+      status: 'active' as const,
+      joinedAt: Date.now()
+    };
+    await ctx.db.insert('organizationMemberships', membership);
+    
+    // Setup auth for the context
+    ctx.auth.getUserIdentity = jest.fn().mockResolvedValue({
+      tokenIdentifier: user.tokenIdentifier,
+      subject: user.clerkId
+    });
   });
 
   // Helper to create test category
@@ -47,7 +92,7 @@ describe('Categories Functions', () => {
 
   describe('createCategory', () => {
     it('should create root category', async () => {
-      const categoryId = await createCategoryHandler(ctx, {
+      const categoryId = await t.mutation(createCategory, {
         name: 'Electronics',
         organizationId: orgId,
         projectId,
@@ -85,7 +130,7 @@ describe('Categories Functions', () => {
       });
 
       // Create child
-      const categoryId = await createCategoryHandler(ctx, {
+      const categoryId = await t.mutation(createCategory, {
         name: 'Laptops',
         organizationId: orgId,
         projectId,
@@ -137,7 +182,7 @@ describe('Categories Functions', () => {
 
       // Create child
       const ctx = { db: t.db, auth: t.auth };
-      const result = await createCategoryHandler(ctx, {
+      const result = await t.mutation(createCategory, {
         name: 'Gaming Laptops',
         organizationId: orgId,
         parentId,
@@ -155,7 +200,7 @@ describe('Categories Functions', () => {
     it('should reject duplicate names at same level', async () => {
       // Create first category
       const ctx = { db: t.db, auth: t.auth };
-      await createCategoryHandler(ctx, {
+      await t.mutation(createCategory, {
         name: 'Electronics',
         organizationId: orgId,
         userId,
@@ -204,14 +249,14 @@ describe('Categories Functions', () => {
 
       // Create "Accessories" under both parents
       const ctx = { db: t.db, auth: t.auth };
-      const result1 = await createCategoryHandler(ctx, {
+      const result1 = await t.mutation(createCategory, {
         name: 'Accessories',
         organizationId: orgId,
         parentId: parent1Id,
         userId,
       });
 
-      const result2 = await createCategoryHandler(ctx, {
+      const result2 = await t.mutation(createCategory, {
         name: 'Accessories',
         organizationId: orgId,
         parentId: parent2Id,
@@ -224,7 +269,7 @@ describe('Categories Functions', () => {
 
     it('should create with custom properties', async () => {
       const ctx = { db: t.db, auth: t.auth };
-      const result = await createCategoryHandler(ctx, {
+      const result = await t.mutation(createCategory, {
         name: 'Electronics',
         organizationId: orgId,
         description: 'Electronic devices and accessories',
@@ -261,7 +306,7 @@ describe('Categories Functions', () => {
 
     it('should update category name', async () => {
       const ctx = { db: t.db, auth: t.auth };
-      const result = await updateCategoryHandler(ctx, {
+      const result = await t.mutation(updateCategory, {
         categoryId,
         name: 'Updated Name',
         userId,
@@ -276,7 +321,7 @@ describe('Categories Functions', () => {
 
     it('should update multiple fields', async () => {
       const ctx = { db: t.db, auth: t.auth };
-      const result = await updateCategoryHandler(ctx, {
+      const result = await t.mutation(updateCategory, {
         categoryId,
         name: 'New Name',
         description: 'New description',
@@ -293,7 +338,7 @@ describe('Categories Functions', () => {
 
     it('should toggle active status', async () => {
       const ctx = { db: t.db, auth: t.auth };
-      const result = await updateCategoryHandler(ctx, {
+      const result = await t.mutation(updateCategory, {
         categoryId,
         isActive: false,
         userId,
@@ -320,7 +365,7 @@ describe('Categories Functions', () => {
 
       const ctx = { db: t.db, auth: t.auth };
       await expect(
-        updateCategoryHandler(ctx, {
+        t.mutation(updateCategory, {
           categoryId,
           name: 'Existing Name',
           userId,
@@ -350,7 +395,7 @@ describe('Categories Functions', () => {
 
     it('should delete category without children', async () => {
       const ctx = { db: t.db, auth: t.auth };
-      await deleteCategoryHandler(ctx, {
+      await t.mutation(deleteCategory, {
         categoryId,
         userId,
       });
@@ -377,7 +422,7 @@ describe('Categories Functions', () => {
 
       const ctx = { db: t.db, auth: t.auth };
       await expect(
-        deleteCategoryHandler(ctx, {
+        t.mutation(deleteCategory, {
           categoryId,
           userId,
         })
@@ -404,7 +449,7 @@ describe('Categories Functions', () => {
 
       const ctx = { db: t.db, auth: t.auth };
       await expect(
-        deleteCategoryHandler(ctx, {
+        t.mutation(deleteCategory, {
           categoryId,
           userId,
         })
@@ -455,7 +500,7 @@ describe('Categories Functions', () => {
 
     it('should return full category tree', async () => {
       const ctx = { db: t.db, auth: t.auth };
-      const result = await getCategoryTreeHandler(ctx, {
+      const result = await t.query(getCategoryTree, {
         organizationId: orgId,
         userId,
       });
@@ -481,7 +526,7 @@ describe('Categories Functions', () => {
       }
 
       const ctx = { db: t.db, auth: t.auth };
-      const result = await getCategoryTreeHandler(ctx, {
+      const result = await t.query(getCategoryTree, {
         organizationId: orgId,
         includeInactive: false,
         userId,
@@ -504,7 +549,7 @@ describe('Categories Functions', () => {
       }
 
       const ctx = { db: t.db, auth: t.auth };
-      const result = await getCategoryTreeHandler(ctx, {
+      const result = await t.query(getCategoryTree, {
         organizationId: orgId,
         includeInactive: true,
         userId,
@@ -568,7 +613,7 @@ describe('Categories Functions', () => {
 
     it('should return breadcrumb for leaf category', async () => {
       const ctx = { db: t.db, auth: t.auth };
-      const result = await getBreadcrumbHandler(ctx, {
+      const result = await t.query(getCategoryTree, {
         categoryId: level2Id,
         userId,
       });
@@ -581,7 +626,7 @@ describe('Categories Functions', () => {
 
     it('should return single item for root category', async () => {
       const ctx = { db: t.db, auth: t.auth };
-      const result = await getBreadcrumbHandler(ctx, {
+      const result = await t.query(getCategoryTree, {
         categoryId: rootId,
         userId,
       });
@@ -592,7 +637,7 @@ describe('Categories Functions', () => {
 
     it('should return empty array for non-existent category', async () => {
       const ctx = { db: t.db, auth: t.auth };
-      const result = await getBreadcrumbHandler(ctx, {
+      const result = await t.query(getCategoryTree, {
         categoryId: 'nonexistent' as Id<'categories'>,
         userId,
       });

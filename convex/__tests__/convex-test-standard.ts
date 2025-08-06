@@ -174,3 +174,26 @@ export function createMockProduct(overrides?: any) {
 export function resetMockState() {
   jest.clearAllMocks();
 }
+
+// ConvexTestingHelper class for compatibility with existing tests
+export class ConvexTestingHelper {
+  private context: ConvexTestContext;
+  
+  constructor(context?: ConvexTestContext) {
+    this.context = context || createConvexTest();
+  }
+  
+  setup() {
+    // Initialize test context
+    return this.context;
+  }
+  
+  teardown() {
+    // Clean up test context
+    resetMockState();
+  }
+  
+  getContext() {
+    return this.context;
+  }
+}
