@@ -48,8 +48,8 @@ describe('LangChainToCrewAIAdapter', () => {
     it('should transform LangChain request to CrewAI format', async () => {
       // Arrange
       const products = [
-        productFactory.build({ title: 'Test Product 1' }),
-        productFactory.build({ title: 'Test Product 2' }),
+        productFactory.create({ title: 'Test Product 1' }),
+        productFactory.create({ title: 'Test Product 2' }),
       ];
       const categories = [
         { id: 'cat1', name: 'Category 1', handle: 'cat-1', path: '/cat-1' },
@@ -142,7 +142,7 @@ describe('LangChainToCrewAIAdapter', () => {
   describe('Response Transformation', () => {
     it('should transform CrewAI response to LangChain format', async () => {
       // Arrange
-      const product = productFactory.build({ title: 'Test Product' });
+      const product = productFactory.create({ title: 'Test Product' });
       const categories = [
         { id: 'cat1', name: 'Category 1', handle: 'cat-1', path: '/cat-1' },
       ];
@@ -222,7 +222,7 @@ describe('LangChainToCrewAIAdapter', () => {
 
     it('should handle CrewAI errors and transform to LangChain error format', async () => {
       // Arrange
-      const product = productFactory.build();
+      const product = productFactory.create();
       const categories = [{ id: 'cat1', name: 'Category 1', handle: 'cat-1', path: '/cat-1' }];
       
       // Mock CrewAI response with error
@@ -272,8 +272,8 @@ describe('LangChainToCrewAIAdapter', () => {
   describe('Caching', () => {
     it('should return cached results without calling CrewAI', async () => {
       // Arrange
-      const product1 = productFactory.build({ title: 'Cached Product', vendor: 'TestVendor' });
-      const product2 = productFactory.build({ title: 'New Product', vendor: 'OtherVendor' });
+      const product1 = productFactory.create({ title: 'Cached Product', vendor: 'TestVendor' });
+      const product2 = productFactory.create({ title: 'New Product', vendor: 'OtherVendor' });
       const categories = [{ id: 'cat1', name: 'Category 1', handle: 'cat-1', path: '/cat-1' }];
       
       // Pre-populate cache with product1
@@ -336,7 +336,7 @@ describe('LangChainToCrewAIAdapter', () => {
   describe('Error Handling', () => {
     it('should handle CrewAI action failure and return error results', async () => {
       // Arrange
-      const products = [productFactory.build(), productFactory.build()];
+      const products = [productFactory.create(), productFactory.create()];
       const categories = [{ id: 'cat1', name: 'Category 1', handle: 'cat-1', path: '/cat-1' }];
       
       mockCtx.runAction.mockRejectedValue(new Error('CrewAI service unavailable'));
@@ -365,9 +365,9 @@ describe('LangChainToCrewAIAdapter', () => {
     it('should handle missing products in CrewAI response', async () => {
       // Arrange
       const products = [
-        productFactory.build({ title: 'Product 1' }),
-        productFactory.build({ title: 'Product 2' }),
-        productFactory.build({ title: 'Product 3' }),
+        productFactory.create({ title: 'Product 1' }),
+        productFactory.create({ title: 'Product 2' }),
+        productFactory.create({ title: 'Product 3' }),
       ];
       const categories = [{ id: 'cat1', name: 'Category 1', handle: 'cat-1', path: '/cat-1' }];
       
