@@ -74,6 +74,32 @@ export ENABLE_WORKTREES=true
 
 Each agent will have their own worktree at `.worktrees/[agent-name]` for isolated development.
 
+## Task Management Rules (Issue #144)
+
+### Active Task Limits
+- **Maximum 3 active tasks per agent** - Enforced automatically
+- When claiming tasks: `claim_task <task-id> <agent-name>` (will fail if at limit)
+- When starting work: `start_task <task-id> <agent-name>` to mark as in-progress
+- Monitor limits: `./scripts/monitor-task-limits.sh`
+
+### Task Status Workflow
+1. **claim_task** → Creates `status-not-started` label
+2. **start_task** → Updates to `status-in-progress` (max 3 per agent)
+3. **update_task_status** → Changes status (blocked/review/done)
+
+### Monitoring Commands
+```bash
+# Check your active task count
+source scripts/migration/task_lib.sh
+get_active_task_count <agent-name>
+
+# View all agent workloads
+get_agent_workload_summary
+
+# Check for stale tasks
+check_stale_tasks
+```
+
 ## Phase 3: Launch the Multi-Agent System (10 Agents Total)
 
 ### **Terminal 1: Frontend Agent**
