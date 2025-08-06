@@ -3,7 +3,7 @@ declare global {
   interface Window {
     [key: string]: any;
   }
-  
+
   interface CSSStyleDeclaration {
     webkitOverflowScrolling?: string;
     [key: string]: any;
@@ -19,6 +19,7 @@ declare module '@radix-ui/react-dialog' {
 // Extend console interface
 declare global {
   interface Console {
+    // eslint-disable-next-line no-unused-vars
     error(...args: any[]): void;
   }
 }
