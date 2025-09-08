@@ -83,7 +83,7 @@ jobs:
 
       - name: Create issue if protection disabled
         if: failure()
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const title = '🚨 Branch Protection Disabled on Main Branch';
