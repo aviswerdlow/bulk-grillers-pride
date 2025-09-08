@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check issue title for task ID
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const { issue, repository } = context.payload;
@@ -93,7 +93,7 @@ jobs:
     if: github.event.issue
     steps:
       - name: Move based on status label
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const { issue } = context.payload;
