@@ -71,7 +71,7 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.10.2",
-    "@babel/preset-env": "^7.28.0",
+    "@babel/preset-env": "^7.28.3",
     "@babel/preset-react": "^7.27.1",
     "@babel/preset-typescript": "^7.27.1",
     "@eslint/eslintrc": "^3.3.0",
@@ -103,10 +103,10 @@
     "next-router-mock": "^1.0.2",
     "playwright": "^1.54.1",
     "prettier": "^3.6.2",
-    "ts-jest": "^29.4.0",
+    "ts-jest": "^29.4.4",
     "tsup": "^8.3.5",
-    "tsx": "^4.20.3",
-    "turbo": "^2.5.5",
+    "tsx": "^4.20.6",
+    "turbo": "^2.5.8",
     "typescript": "^5.9.2"
   },
   "engines": {
@@ -125,7 +125,7 @@
   "license": "MIT",
   "dependencies": {
     "@langchain/openai": "^0.5.18",
-    "@radix-ui/react-switch": "^1.2.5",
+    "@radix-ui/react-switch": "^1.2.6",
     "convex": "^1.25.4",
     "recharts": "^3.1.0"
   },
