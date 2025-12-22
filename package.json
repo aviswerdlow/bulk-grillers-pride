@@ -71,10 +71,10 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.10.2",
-    "@babel/preset-env": "^7.28.0",
+    "@babel/preset-env": "^7.28.5",
     "@babel/preset-react": "^7.27.1",
     "@babel/preset-typescript": "^7.27.1",
-    "@eslint/eslintrc": "^3.3.0",
+    "@eslint/eslintrc": "^3.3.3",
     "@eslint/js": "^9.0.0",
     "@next/eslint-plugin-next": "^15.4.4",
     "@playwright/test": "^1.54.1",
@@ -86,7 +86,7 @@
     "@types/node": "^24.1.0",
     "@typescript-eslint/eslint-plugin": "^8.39.0",
     "@typescript-eslint/parser": "^8.39.0",
-    "convex-test": "^0.0.38",
+    "convex-test": "^0.0.41",
     "eslint": "^9.0.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-jsx-a11y": "^6.10.2",
@@ -100,14 +100,14 @@
     "jest-junit": "^16.0.0",
     "jest-watch-typeahead": "^3.0.1",
     "lint-staged": "^16.1.2",
-    "next-router-mock": "^1.0.2",
+    "next-router-mock": "^1.0.4",
     "playwright": "^1.54.1",
     "prettier": "^3.6.2",
-    "ts-jest": "^29.4.0",
-    "tsup": "^8.3.5",
+    "ts-jest": "^29.4.6",
+    "tsup": "^8.5.1",
     "tsx": "^4.20.3",
     "turbo": "^2.5.5",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.3"
   },
   "engines": {
     "node": ">=18.0.0",
@@ -125,7 +125,7 @@
   "license": "MIT",
   "dependencies": {
     "@langchain/openai": "^0.5.18",
-    "@radix-ui/react-switch": "^1.2.5",
+    "@radix-ui/react-switch": "^1.2.6",
     "convex": "^1.25.4",
     "recharts": "^3.1.0"
   },
